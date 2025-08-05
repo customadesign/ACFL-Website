@@ -23,7 +23,7 @@ services:
     name: therapist-matcher-frontend
     env: node
     plan: free
-    buildCommand: cd frontend && npm ci && npm run build
+    buildCommand: cd frontend && npm install && npm run build
     startCommand: cd frontend && npm start
     envVars:
       - key: NODE_ENV
@@ -42,7 +42,7 @@ services:
     name: therapist-matcher-coaches
     env: node
     plan: free
-    buildCommand: cd coaches-dashboard && npm ci && npm run build
+    buildCommand: cd coaches-dashboard && npm install && npm run build
     startCommand: cd coaches-dashboard && npm start
     envVars:
       - key: NODE_ENV
@@ -61,7 +61,7 @@ services:
     name: therapist-matcher-admin
     env: node
     plan: free
-    buildCommand: cd admin-dashboard && npm ci && npm run build
+    buildCommand: cd admin-dashboard && npm install && npm run build
     startCommand: cd admin-dashboard && npm start
     envVars:
       - key: NODE_ENV
