@@ -3,7 +3,7 @@ services:
   - type: web
     name: therapist-matcher-backend
     env: node
-    plan: starter
+    plan: free
     buildCommand: cd backend && npm ci && npm run build
     startCommand: cd backend && npm start
     envVars:
@@ -22,7 +22,7 @@ services:
   - type: web
     name: therapist-matcher-frontend
     env: node
-    plan: starter
+    plan: free
     buildCommand: cd frontend && npm ci && npm run build
     startCommand: cd frontend && npm start
     envVars:
@@ -41,7 +41,7 @@ services:
   - type: web
     name: therapist-matcher-coaches
     env: node
-    plan: starter
+    plan: free
     buildCommand: cd coaches-dashboard && npm ci && npm run build
     startCommand: cd coaches-dashboard && npm start
     envVars:
@@ -60,7 +60,7 @@ services:
   - type: web
     name: therapist-matcher-admin
     env: node
-    plan: starter
+    plan: free
     buildCommand: cd admin-dashboard && npm ci && npm run build
     startCommand: cd admin-dashboard && npm start
     envVars:
