@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt = require('jsonwebtoken');
-import { JWTPayload, AuthRequest } from '../types/auth';
+import { JWTPayload } from '../types/auth';
+
+interface AuthRequest extends Request {
+  user?: JWTPayload;
+}
 
 export const authenticate = async (
   req: AuthRequest,
