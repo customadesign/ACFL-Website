@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 export interface User {
   id: string;
   email: string;
@@ -35,7 +37,7 @@ export interface Coach extends User {
   totalSessions?: number;
 }
 
-export interface AuthRequest extends Express.Request {
+export interface AuthRequest extends Request {
   user?: User | Client | Coach;
 }
 
