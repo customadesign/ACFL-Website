@@ -56,7 +56,7 @@ export default function Results() {
     
     try {
       const newMatches = await findMatches(updatedFormData)
-      setMatches(newMatches)
+      setMatches(newMatches.matches)
       setFormData(updatedFormData)
       localStorage.setItem('formData', JSON.stringify(updatedFormData))
       localStorage.setItem('matches', JSON.stringify(newMatches))

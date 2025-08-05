@@ -37,9 +37,9 @@ class x {
   #t: any;
   size = { width: 0, height: 0, wWidth: 0, wHeight: 0, ratio: 0, pixelRatio: 0 };
   render = this.#i;
-  onBeforeRender = () => { };
-  onAfterRender = () => { };
-  onAfterResize = () => { };
+  onBeforeRender = (e?: any) => { };
+  onAfterRender = (e?: any) => { };
+  onAfterResize = (e?: any) => { };
   #s = false;
   #n = false;
   isDisposed = false;
@@ -109,7 +109,7 @@ class x {
     this.#o?.disconnect();
     document.removeEventListener("visibilitychange", this.#v.bind(this));
   }
-  #u(e) {
+  #u(e: IntersectionObserverEntry[]) {
     this.#s = e[0].isIntersecting;
     this.#s ? this.#w() : this.#z();
   }
@@ -140,7 +140,7 @@ class x {
     this.size.ratio = e / t;
     this.#x();
     this.#b();
-    this.onAfterResize(this.size);
+    this.onAfterResize();
   }
   #x() {
     this.camera.aspect = this.size.width / this.size.height;
@@ -156,7 +156,7 @@ class x {
     this.camera.updateProjectionMatrix();
     this.updateWorldSize();
   }
-  #A(e) {
+  #A(e: number) {
     const t = Math.tan(o.degToRad(this.cameraFov / 2)) / (this.camera.aspect / e);
     this.camera.fov = 2 * o.radToDeg(Math.atan(t));
   }
@@ -196,9 +196,9 @@ class x {
       this.#l = requestAnimationFrame(animate);
       this.#h.delta = this.#c.getDelta();
       this.#h.elapsed += this.#h.delta;
-      this.onBeforeRender(this.#h);
+      this.onBeforeRender();
       this.render();
-      this.onAfterRender(this.#h);
+      this.onAfterRender();
     };
     this.#n = true;
     this.#c.start();
@@ -215,7 +215,7 @@ class x {
     this.renderer.render(this.scene, this.camera);
   }
   clear() {
-    this.scene.traverse((e) => {
+    this.scene.traverse((e: any) => {
       if (
         e.isMesh &&
         typeof e.material === "object" &&
@@ -246,7 +246,7 @@ class x {
 const b = new Map(),
   A = new r();
 let R = false;
-function S(e) {
+function S(e: any) {
   const t = {
     position: new r(),
     nPosition: new r(),
@@ -257,7 +257,7 @@ function S(e) {
     onLeave() { },
     ...e,
   };
-  (function (e, t) {
+  (function (e: any, t: any) {
     if (!b.has(e)) {
       b.set(e, t);
       if (!R) {
@@ -279,7 +279,7 @@ function S(e) {
   };
   return t;
 }
-function M(e) {
+function M(e: any) {
   A.x = e.clientX;
   A.y = e.clientY;
   for (const [elem, t] of b) {
@@ -297,7 +297,7 @@ function M(e) {
     }
   }
 }
-function C(e) {
+function C(e: any) {
   A.x = e.clientX;
   A.y = e.clientY;
   for (const [elem, t] of b) {
@@ -314,14 +314,14 @@ function L() {
     }
   }
 }
-function P(e, t) {
+function P(e: any, t: any) {
   const { position: i, nPosition: s } = e;
   i.x = A.x - t.left;
   i.y = A.y - t.top;
   s.x = (i.x / t.width) * 2 - 1;
   s.y = (-i.y / t.height) * 2 + 1;
 }
-function D(e) {
+function D(e: any) {
   const { x: t, y: i } = A;
   const { left: s, top: n, width: o, height: r } = e;
   return t >= s && t <= s + o && i >= n && i <= n + r;
@@ -340,7 +340,13 @@ const H = new a();
 const T = new a();
 
 class W {
-  constructor(e) {
+  config: any;
+  positionData: Float32Array;
+  velocityData: Float32Array;
+  sizeData: Float32Array;
+  center: any;
+  
+  constructor(e: any) {
     this.config = e;
     this.positionData = new Float32Array(3 * e.count).fill(0);
     this.velocityData = new Float32Array(3 * e.count).fill(0);
@@ -366,7 +372,7 @@ class W {
       t[i] = k(e.minSize, e.maxSize);
     }
   }
-  update(e) {
+  update(e: any) {
     const { config: t, center: i, positionData: s, sizeData: n, velocityData: o } = this;
     let r = 0;
     if (t.controlSphere0) {
@@ -451,7 +457,12 @@ class W {
 }
 
 class Y extends c {
-  constructor(e) {
+  uniforms: any;
+  defines: any;
+  onBeforeCompile: any;
+  onBeforeCompile2: any;
+  
+  constructor(e: any) {
     super(e);
     this.uniforms = {
       thicknessDistortion: { value: 0.1 },
@@ -461,7 +472,7 @@ class Y extends c {
       thicknessScale: { value: 10 },
     };
     this.defines.USE_UV = "";
-    this.onBeforeCompile = (e) => {
+    this.onBeforeCompile = (e: any) => {
       Object.assign(e.uniforms, this.uniforms);
       e.fragmentShader =
         "\n        uniform float thicknessPower;\n        uniform float thicknessScale;\n        uniform float thicknessDistortion;\n        uniform float thicknessAmbient;\n        uniform float thicknessAttenuation;\n      " +
@@ -509,10 +520,16 @@ const X = {
 const U = new m();
 
 class Z extends d {
-  constructor(e, t = {}) {
+  config: any;
+  physics: any;
+  ambientLight: any;
+  light: any;
+  instanceColor: any;
+  
+  constructor(e: any, t: any = {}) {
     const i = { ...X, ...t };
     const s = new z();
-    const n = new p(e, 0.04).fromScene(s).texture;
+    const n = new p(e).fromScene(s).texture;
     const o = new g();
     const r = new Y({ envMap: n, ...i.materialParams });
     r.envMapRotation.x = -Math.PI / 2;
@@ -531,21 +548,21 @@ class Z extends d {
     this.light = new u(this.config.colors[0], this.config.lightIntensity);
     this.add(this.light);
   }
-  setColors(e) {
+  setColors(e: any) {
     if (Array.isArray(e) && e.length > 1) {
-      const t = (function (e) {
-        let t, i;
-        function setColors(e) {
+      const t = (function (e: any) {
+        let t: any, i: any;
+        function setColors(e: any) {
           t = e;
           i = [];
-          t.forEach((col) => {
+          t.forEach((col: any) => {
             i.push(new l(col));
           });
         }
         setColors(e);
         return {
           setColors,
-          getColorAt: function (ratio, out = new l()) {
+          getColorAt: function (ratio: any, out = new l()) {
             const scaled = Math.max(0, Math.min(1, ratio)) * (t.length - 1);
             const idx = Math.floor(scaled);
             const start = i[idx];
@@ -565,10 +582,10 @@ class Z extends d {
           this.light.color.copy(t.getColorAt(idx / this.count));
         }
       }
-      this.instanceColor.needsUpdate = true;
+      if (this.instanceColor) this.instanceColor.needsUpdate = true;
     }
   }
-  update(e) {
+  update(e: any) {
     this.physics.update(e);
     for (let idx = 0; idx < this.count; idx++) {
       U.position.fromArray(this.physics.positionData, 3 * idx);
@@ -585,13 +602,13 @@ class Z extends d {
   }
 }
 
-function createBallpit(e, t = {}) {
+function createBallpit(e: any, t: any = {}) {
   const i = new x({
     canvas: e,
     size: "parent",
     rendererOptions: { antialias: true, alpha: true },
   });
-  let s;
+  let s: any;
   i.renderer.toneMapping = v;
   i.camera.position.set(0, 0, 20);
   i.camera.lookAt(0, 0, 0);
@@ -615,7 +632,7 @@ function createBallpit(e, t = {}) {
       s.config.controlSphere0 = false;
     },
   });
-  function initialize(e) {
+  function initialize(e: any) {
     if (s) {
       i.clear();
       i.scene.remove(s);
@@ -635,7 +652,7 @@ function createBallpit(e, t = {}) {
     get spheres() {
       return s;
     },
-    setCount(e) {
+    setCount(e: any) {
       initialize({ ...s.config, count: e });
     },
     togglePause() {
@@ -648,9 +665,9 @@ function createBallpit(e, t = {}) {
   };
 }
 
-const Ballpit = ({ className = '', followCursor = true, ...props }) => {
-  const canvasRef = useRef(null);
-  const spheresInstanceRef = useRef(null);
+const Ballpit = ({ className = '', followCursor = true, ...props }: any) => {
+  const canvasRef = useRef<any>(null);
+  const spheresInstanceRef = useRef<any>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;

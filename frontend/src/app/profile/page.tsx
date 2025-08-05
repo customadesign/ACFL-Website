@@ -577,7 +577,7 @@ function ProfileContent() {
                                             checked={field.value?.includes(option.id)}
                                             onCheckedChange={(checked) => {
                                               return checked
-                                                ? field.onChange([...field.value, option.id])
+                                                ? field.onChange([...(field.value || []), option.id])
                                                 : field.onChange(
                                                     field.value?.filter((value) => value !== option.id)
                                                   )
@@ -617,7 +617,7 @@ function ProfileContent() {
                                             checked={field.value?.includes(option.id)}
                                             onCheckedChange={(checked) => {
                                               return checked
-                                                ? field.onChange([...field.value, option.id])
+                                                ? field.onChange([...(field.value || []), option.id])
                                                 : field.onChange(
                                                     field.value?.filter((value) => value !== option.id)
                                                   )
@@ -715,11 +715,11 @@ function ProfileContent() {
                           </div>
                         </div>
 
-                        {form.watch('areaOfConcern')?.length > 0 && (
+                        {(form.watch('areaOfConcern')?.length ?? 0) > 0 && (
                           <div>
                             <p className="font-medium text-gray-700 mb-2">Areas of Concern</p>
                             <div className="flex flex-wrap gap-2">
-                              {form.watch('areaOfConcern').map((concern) => {
+                              {form.watch('areaOfConcern')?.map((concern) => {
                                 const option = concernOptions.find(c => c.id === concern)
                                 return (
                                   <span key={concern} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
@@ -731,11 +731,11 @@ function ProfileContent() {
                           </div>
                         )}
 
-                        {form.watch('availability')?.length > 0 && (
+                        {(form.watch('availability')?.length ?? 0) > 0 && (
                           <div>
                             <p className="font-medium text-gray-700 mb-2">Preferred Availability</p>
                             <div className="flex flex-wrap gap-2">
-                              {form.watch('availability').map((avail) => {
+                              {form.watch('availability')?.map((avail) => {
                                 const option = availabilityOptions.find(a => a.id === avail)
                                 return (
                                   <span key={avail} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
