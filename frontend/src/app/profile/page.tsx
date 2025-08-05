@@ -277,7 +277,7 @@ function ProfileContent() {
                   </div>
                   <div className="flex items-center space-x-2 text-gray-600">
                     <Calendar className="w-4 h-4" />
-                    <span>Member since {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</span>
+                    <span>Member since N/A</span>
                   </div>
                 </div>
               </CardContent>
