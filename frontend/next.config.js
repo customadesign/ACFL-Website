@@ -1,9 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
-  // Enable static optimization where possible
   reactStrictMode: true,
-  // Disable image optimization in dev (faster builds)
   images: {
     unoptimized: process.env.NODE_ENV === "development",
   },
@@ -26,12 +24,15 @@ const nextConfig = {
     ];
   },
   async rewrites() {
+    // Provide a safe default for production to avoid build-time error
+    const backendURL = process.env.NEXT_PUBLIC_API_URL?.startsWith("http")
+      ? process.env.NEXT_PUBLIC_API_URL
+      : "http://localhost:3001";
+
     return [
       {
         source: "/api/:path*",
-        destination: `${
-          process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001"
-        }/api/:path*`,
+        destination: `${backendURL}/api/:path*`,
       },
     ];
   },
