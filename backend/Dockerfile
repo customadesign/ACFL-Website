@@ -1,7 +1,10 @@
 FROM node:18-alpine
 WORKDIR /app
-COPY backend/package*.json ./
-RUN npm install
-COPY backend/ .
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+RUN npm prune --production
+ENV NODE_ENV=production
 EXPOSE 3001
-CMD ["npm", "run", "dev"]
+CMD ["npm", "start"]
