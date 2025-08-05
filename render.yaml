@@ -1,5 +1,5 @@
 services:
-  # Backend API Service
+  # Backend API Service - Updated for deployment compatibility
   - type: web
     name: therapist-matcher-backend
     env: node
