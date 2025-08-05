@@ -2,9 +2,24 @@
 
 import { useState, useEffect } from 'react'
 
+interface Appointment {
+  id: number;
+  clientName: string;
+  date: string;
+  time: string;
+  status: string;
+}
+
+interface Client {
+  id: number;
+  name: string;
+  sessions: number;
+  lastSession: string;
+}
+
 export default function CoachDashboard() {
-  const [appointments, setAppointments] = useState([])
-  const [clients, setClients] = useState([])
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [clients, setClients] = useState<Client[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
