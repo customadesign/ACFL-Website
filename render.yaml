@@ -1,0 +1,76 @@
+services:
+  # Backend API Service
+  - type: web
+    name: therapist-matcher-backend
+    env: node
+    plan: starter
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: CORS_ORIGIN
+        fromService:
+          type: web
+          name: therapist-matcher-frontend
+          property: host
+    autoDeploy: false
+
+  # Frontend Web Service
+  - type: web
+    name: therapist-matcher-frontend
+    env: node
+    plan: starter
+    buildCommand: cd frontend && npm ci && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: therapist-matcher-backend
+          property: host
+    autoDeploy: false
+
+  # Coaches Dashboard
+  - type: web
+    name: therapist-matcher-coaches
+    env: node
+    plan: starter
+    buildCommand: cd coaches-dashboard && npm ci && npm run build
+    startCommand: cd coaches-dashboard && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: therapist-matcher-backend
+          property: host
+    autoDeploy: false
+
+  # Admin Dashboard
+  - type: web
+    name: therapist-matcher-admin
+    env: node
+    plan: starter
+    buildCommand: cd admin-dashboard && npm ci && npm run build
+    startCommand: cd admin-dashboard && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: therapist-matcher-backend
+          property: host
+    autoDeploy: false
