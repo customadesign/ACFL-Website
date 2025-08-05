@@ -470,19 +470,19 @@ const coachDashboardHTML = `
                                     <p class="text-sm font-medium text-gray-700">Session Details</p>
                                     <p class="text-sm text-gray-900">${appointment.sessionType}</p>
                                     <p class="text-sm text-gray-600">${appointment.duration} minutes • ${appointment.type === 'virtual' ? '📹 Virtual' : '📍 In-Person'}</p>
-                                    ${appointment.type === 'in-person' ? `<p class="text-sm text-gray-600">📍 ${appointment.location}</p>` : ''}
+                                    ${appointment.type === 'in-person' ? '<p class="text-sm text-gray-600">📍 ' + appointment.location + '</p>' : ''}
                                 </div>
                                 <div>
                                     <p class="text-sm font-medium text-gray-700">Date & Time</p>
                                     <p class="text-sm text-gray-900">${appointment.date} at ${appointment.time}</p>
-                                    ${appointment.videoSDKMeetingId ? `<p class="text-sm text-gray-600">Meeting ID: ${appointment.videoSDKMeetingId}</p>` : ''}
+                                    ${appointment.videoSDKMeetingId ? '<p class="text-sm text-gray-600">Meeting ID: ' + appointment.videoSDKMeetingId + '</p>' : ''}
                                 </div>
                             </div>
                             
                             <div class="mb-4">
                                 <p class="text-sm font-medium text-gray-700 mb-1">Client Goals</p>
                                 <ul class="text-sm text-gray-600">
-                                    ${appointment.clientGoals.map(goal => `<li>• ${goal}</li>`).join('')}
+                                    ${appointment.clientGoals.map(goal => '<li>• ' + goal + '</li>').join('')}
                                 </ul>
                             </div>
                             
@@ -569,7 +569,7 @@ const coachDashboardHTML = `
                                 <div>
                                     <p class="text-sm text-gray-600">Primary Goals</p>
                                     <ul class="text-sm text-gray-900">
-                                        ${client.primaryGoals.map(goal => `<li>• ${goal}</li>`).join('')}
+                                        ${client.primaryGoals.map(goal => '<li>• ' + goal + '</li>').join('')}
                                     </ul>
                                 </div>
                                 
@@ -723,7 +723,7 @@ const coachDashboardHTML = `
         function acceptAppointment(appointmentId) {
             if (confirm('Accept this appointment request?')) {
                 // Update appointment status in the UI
-                const card = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+                const card = document.querySelector('[data-appointment-id="' + appointmentId + '"]');
                 if (card) {
                     const statusBadge = card.querySelector('[data-status]');
                     statusBadge.textContent = 'Confirmed';
@@ -759,7 +759,7 @@ const coachDashboardHTML = `
         function rejectAppointment(appointmentId) {
             if (confirm('Reject this appointment request?')) {
                 // Remove appointment card from UI
-                const card = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+                const card = document.querySelector('[data-appointment-id="' + appointmentId + '"]');
                 if (card) {
                     card.remove();
                 }
@@ -773,7 +773,7 @@ const coachDashboardHTML = `
         function cancelAppointment(appointmentId) {
             if (confirm('Cancel this appointment? This will notify the client.')) {
                 // Update appointment status in the UI
-                const card = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+                const card = document.querySelector('[data-appointment-id="' + appointmentId + '"]');
                 if (card) {
                     const statusBadge = card.querySelector('[data-status]');
                     statusBadge.textContent = 'Cancelled';
@@ -797,10 +797,10 @@ const coachDashboardHTML = `
             
             if (newDate && newTime) {
                 // Update appointment in the UI
-                const card = document.querySelector(`[data-appointment-id="${appointmentId}"]`);
+                const card = document.querySelector('[data-appointment-id="' + appointmentId + '"]');
                 if (card) {
                     const dateTimeElement = card.querySelector('.text-sm.text-gray-900');
-                    dateTimeElement.textContent = `${newDate} at ${newTime}`;
+                    dateTimeElement.textContent = newDate + ' at ' + newTime;
                 }
                 
                 // Send to backend (mock)
@@ -811,13 +811,13 @@ const coachDashboardHTML = `
 
         function joinSession(meetingId) {
             // Open VideoSDK session
-            const sessionUrl = `https://app.videosdk.live/meeting/${meetingId}`;
+            const sessionUrl = 'https://app.videosdk.live/meeting/' + meetingId;
             window.open(sessionUrl, '_blank');
             showNotification('Opening VideoSDK session...', 'info');
         }
 
         function saveCoachNotes(appointmentId) {
-            const notesTextarea = document.getElementById(`coach-notes-${appointmentId}`);
+            const notesTextarea = document.getElementById('coach-notes-' + appointmentId);
             const notes = notesTextarea.value;
             
             // Send to backend (mock)
@@ -827,18 +827,18 @@ const coachDashboardHTML = `
 
         function viewClientDetails(clientId) {
             // Navigate to client details page or show modal
-            alert(`Viewing details for client: ${clientId}`);
+            alert('Viewing details for client: ' + clientId);
             // In a real app, this would open a modal or navigate to client details
         }
 
         function showNotification(message, type) {
             // Create notification element
             const notification = document.createElement('div');
-            notification.className = `fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ${
+            notification.className = 'fixed top-4 right-4 px-6 py-3 rounded-lg text-white font-medium z-50 ' + (
                 type === 'success' ? 'bg-green-600' : 
                 type === 'error' ? 'bg-red-600' : 
                 'bg-blue-600'
-            }`;
+            );
             notification.textContent = message;
             
             // Add to page

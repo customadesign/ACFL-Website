@@ -140,7 +140,7 @@ class x {
     this.size.ratio = e / t;
     this.#x();
     this.#b();
-    this.onAfterResize();
+    this.onAfterResize(this.size);
   }
   #x() {
     this.camera.aspect = this.size.width / this.size.height;
@@ -196,9 +196,9 @@ class x {
       this.#l = requestAnimationFrame(animate);
       this.#h.delta = this.#c.getDelta();
       this.#h.elapsed += this.#h.delta;
-      this.onBeforeRender();
+      this.onBeforeRender(this.#h);
       this.render();
-      this.onAfterRender();
+      this.onAfterRender(this.#h);
     };
     this.#n = true;
     this.#c.start();

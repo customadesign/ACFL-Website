@@ -62,6 +62,7 @@ function MessagesContent() {
 
   const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
   
+  
   // Cache duration: 1 minute for conversations, 30 seconds for messages
   const CONVERSATIONS_CACHE_DURATION = 1 * 60 * 1000
   const MESSAGES_CACHE_DURATION = 30 * 1000
