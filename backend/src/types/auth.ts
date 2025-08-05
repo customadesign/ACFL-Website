@@ -38,7 +38,7 @@ export interface Coach extends User {
 }
 
 export interface AuthRequest extends Request {
-  user?: User | Client | Coach;
+  user?: JWTPayload;
 }
 
 export interface JWTPayload {
