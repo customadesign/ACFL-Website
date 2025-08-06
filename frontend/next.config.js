@@ -4,6 +4,14 @@ const nextConfig = {
   reactStrictMode: true,
   images: {
     unoptimized: process.env.NODE_ENV === "development",
+    domains: ['storage.googleapis.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'storage.googleapis.com',
+        pathname: '/msgsndr/**',
+      },
+    ],
   },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === "development";
