@@ -6,19 +6,6 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
-
-const SPECIALTIES = [
-  'Anxiety', 'Depression', 'PTSD', 'Addiction', 'Relationships', 'Stress Management',
-  'Career Coaching', 'Life Coaching', 'Grief Counseling', 'Anger Management',
-  'Eating Disorders', 'Family Therapy', 'Couples Therapy', 'Teen Counseling'
-];
-
-const LANGUAGES = [
-  'English', 'Spanish', 'French', 'German', 'Italian', 'Portuguese',
-  'Mandarin', 'Japanese', 'Korean', 'Arabic', 'Russian', 'Dutch'
-];
-
 export default function CoachRegister() {
   const [formData, setFormData] = useState({
     firstName: '',
@@ -26,14 +13,8 @@ export default function CoachRegister() {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
-    bio: '',
-    experience: '',
-    hourlyRate: '',
-    qualifications: ''
+    phone: ''
   });
-  const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [passwordError, setPasswordError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,21 +59,6 @@ export default function CoachRegister() {
     }
   };
 
-  const handleSpecialtyChange = (specialty: string, checked: boolean) => {
-    if (checked) {
-      setSelectedSpecialties(prev => [...prev, specialty]);
-    } else {
-      setSelectedSpecialties(prev => prev.filter(s => s !== specialty));
-    }
-  };
-
-  const handleLanguageChange = (language: string, checked: boolean) => {
-    if (checked) {
-      setSelectedLanguages(prev => [...prev, language]);
-    } else {
-      setSelectedLanguages(prev => prev.filter(l => l !== language));
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,7 +228,6 @@ export default function CoachRegister() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
-              </div>
 
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Creating Account...' : 'Create Coach Account'}
