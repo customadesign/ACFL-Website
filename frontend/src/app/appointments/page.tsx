@@ -10,6 +10,7 @@ import RescheduleModal from '@/components/RescheduleModal'
 import CancelModal from '@/components/CancelModal'
 import MessageCoachModal from '@/components/MessageCoachModal'
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 
 interface Appointment {
@@ -71,7 +72,7 @@ function AppointmentsContent() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const API_URL = getApiUrl()
 
   const loadAppointments = async (forceRefresh = false, tab = 'upcoming') => {
     // Don't load if already loaded and not forcing refresh

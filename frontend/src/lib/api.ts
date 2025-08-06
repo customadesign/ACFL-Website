@@ -1,4 +1,14 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+// Utility function to get API URL based on environment
+export const getApiUrl = () => {
+  // In production, use relative paths so Next.js rewrites can handle the proxying
+  if (process.env.NODE_ENV === 'production') {
+    return '';
+  }
+  // Otherwise use environment variable or localhost
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+};
+
+const API_BASE_URL = getApiUrl();
 
 export async function getAllCoaches() {
   try {

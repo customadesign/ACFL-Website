@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { MessageCircle, Send, User, Clock, Star, Search, Filter, RefreshCw } from "lucide-react"
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 
 interface Message {
@@ -60,7 +61,7 @@ function MessagesContent() {
   const [lastConversationsFetch, setLastConversationsFetch] = useState<number>(0)
   const [messagesCache, setMessagesCache] = useState<Record<string, { messages: Message[], timestamp: number }>>({})
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const API_URL = getApiUrl()
   
   
   // Cache duration: 1 minute for conversations, 30 seconds for messages

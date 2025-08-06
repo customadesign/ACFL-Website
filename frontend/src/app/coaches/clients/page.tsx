@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { X, MessageCircle, User, Calendar, Clock, FileText } from 'lucide-react';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
 
 interface Client {
@@ -37,7 +38,7 @@ export default function MyClientsPage() {
   const [messageContent, setMessageContent] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = getApiUrl();
 
   useEffect(() => {
     loadClients();

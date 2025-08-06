@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { ChevronDown, ChevronUp, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { getApiUrl } from "@/lib/api";
 import Link from 'next/link';
 
 function getMatchStyles(matchScore: number, isBestMatch?: boolean) {
@@ -69,7 +70,7 @@ export const ProviderCard = ({
   const handleSaveToggle = async () => {
     try {
       const coachId = id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const API_URL = getApiUrl()
       
       if (isSaved) {
         // Remove from saved

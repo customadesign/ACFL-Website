@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
+import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
 
 const SPECIALTIES = [
@@ -47,7 +48,7 @@ export default function CoachProfilePage() {
     completionRate: 0
   });
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  const API_URL = getApiUrl();
 
   useEffect(() => {
     loadProfile();

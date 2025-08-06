@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Send, User, Clock, Star, Search, Filter } from "lucide-react"
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 
 interface Message {
@@ -56,7 +57,7 @@ export default function CoachMessagesPage() {
   const [newMessage, setNewMessage] = useState('')
   const [sendingMessage, setSendingMessage] = useState(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const API_URL = getApiUrl()
 
   useEffect(() => {
     loadConversations()

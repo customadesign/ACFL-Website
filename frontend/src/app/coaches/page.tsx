@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import CoachPageWrapper from '@/components/CoachPageWrapper'
+import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 
 export default function CoachDashboardPage() {
@@ -9,7 +10,7 @@ export default function CoachDashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const API_URL = getApiUrl()
 
   useEffect(() => {
     loadDashboardData()

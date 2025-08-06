@@ -9,6 +9,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import BookingModal from '@/components/BookingModal'
 import MessageCoachModal from '@/components/MessageCoachModal'
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 
 interface SavedCoach {
@@ -38,7 +39,7 @@ function SavedCoachesContent() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+  const API_URL = getApiUrl()
 
   const loadSavedCoaches = async (forceRefresh = false) => {
     // Don't load if already loaded and not forcing refresh

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import axios from 'axios';
+import { getApiUrl } from '@/lib/api';
 
 interface User {
   id: string;
@@ -46,16 +47,6 @@ interface RegisterCoachData {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Determine API URL based on environment
-const getApiUrl = () => {
-  // If we're in the browser and on a Render domain, use the production backend
-  if (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com')) {
-    return 'https://therapist-matcher-backend.onrender.com';
-  }
-  // Otherwise use environment variable or localhost
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-};
 
 const API_URL = getApiUrl();
 

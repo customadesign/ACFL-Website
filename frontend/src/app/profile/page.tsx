@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 import { User, Edit, Save, X, Calendar, MapPin, Phone, Mail, Shield, Settings, Search, Heart } from 'lucide-react'
 import { STATE_NAMES } from '@/constants/states'
 import { 
@@ -76,7 +77,7 @@ function ProfileContent() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+        const API_URL = getApiUrl()
         const response = await fetch(`${API_URL}/api/client/profile`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -117,7 +118,7 @@ function ProfileContent() {
     setSuccess(null)
 
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+      const API_URL = getApiUrl()
       const response = await fetch(`${API_URL}/api/client/profile`, {
         method: 'PUT',
         headers: {
