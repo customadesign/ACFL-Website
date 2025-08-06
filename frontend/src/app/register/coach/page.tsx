@@ -102,48 +102,23 @@ export default function CoachRegister() {
       return;
     }
 
-    if (selectedSpecialties.length === 0) {
-      setError('Please select at least one specialty');
-      return;
-    }
-
-    if (selectedLanguages.length === 0) {
-      setError('Please select at least one language');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      const qualifications = formData.qualifications
-        ? formData.qualifications.split(',').map(q => q.trim()).filter(q => q)
-        : [];
-
       const registrationData: any = {
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        specialties: selectedSpecialties,
-        languages: selectedLanguages
+        // Set default values for required fields - coach can update these in their profile later
+        specialties: ['General Coaching'],
+        languages: ['English']
       };
 
       // Only include optional fields if they have values
       if (formData.phone) {
         registrationData.phone = formData.phone;
-      }
-      if (formData.bio) {
-        registrationData.bio = formData.bio;
-      }
-      if (qualifications.length > 0) {
-        registrationData.qualifications = qualifications;
-      }
-      if (formData.experience) {
-        registrationData.experience = parseInt(formData.experience);
-      }
-      if (formData.hourlyRate) {
-        registrationData.hourlyRate = parseFloat(formData.hourlyRate);
       }
 
       console.log('Sending registration data:', registrationData);
@@ -156,8 +131,8 @@ export default function CoachRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 p-4">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
         {/* Back to Home Button */}
         <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
           <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -177,201 +152,86 @@ export default function CoachRegister() {
             </div>
             <CardTitle className="text-2xl font-bold">Become a Coach</CardTitle>
             <CardDescription>
-              Join our network of professional coaches and help clients achieve their goals
+              Create your coach account now and complete your professional profile later
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                   {error}
                 </div>
               )}
               
-              {/* Personal Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                      First Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="firstName"
-                      name="firstName"
-                      required
-                      value={formData.firstName}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                      Last Name *
-                    </label>
-                    <input
-                      type="text"
-                      id="lastName"
-                      name="lastName"
-                      required
-                      value={formData.lastName}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                    Phone Number
-                  </label>
-                  <input
-                    type="tel"
-                    id="phone"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
-
-              {/* Professional Information */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Professional Information</h3>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Specialties * (Select all that apply)
-                  </label>
-                  <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto border border-gray-300 rounded-md p-3">
-                    {SPECIALTIES.map((specialty) => (
-                      <div key={specialty} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={specialty}
-                          checked={selectedSpecialties.includes(specialty)}
-                          onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
-                        />
-                        <label htmlFor={specialty} className="text-sm text-gray-700">
-                          {specialty}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Languages * (Select all that apply)
-                  </label>
-                  <div className="grid grid-cols-3 gap-2 max-h-32 overflow-y-auto border border-gray-300 rounded-md p-3">
-                    {LANGUAGES.map((language) => (
-                      <div key={language} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={language}
-                          checked={selectedLanguages.includes(language)}
-                          onCheckedChange={(checked) => handleLanguageChange(language, checked as boolean)}
-                        />
-                        <label htmlFor={language} className="text-sm text-gray-700">
-                          {language}
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="bio" className="block text-sm font-medium text-gray-700 mb-1">
-                    Professional Bio
-                  </label>
-                  <textarea
-                    id="bio"
-                    name="bio"
-                    rows={4}
-                    value={formData.bio}
-                    onChange={handleChange}
-                    placeholder="Tell clients about your approach, experience, and what makes you unique..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label htmlFor="experience" className="block text-sm font-medium text-gray-700 mb-1">
-                      Years of Experience
-                    </label>
-                    <input
-                      type="number"
-                      id="experience"
-                      name="experience"
-                      min="0"
-                      value={formData.experience}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                  <div>
-                    <label htmlFor="hourlyRate" className="block text-sm font-medium text-gray-700 mb-1">
-                      Hourly Rate ($)
-                    </label>
-                    <input
-                      type="number"
-                      id="hourlyRate"
-                      name="hourlyRate"
-                      min="0"
-                      step="0.01"
-                      value={formData.hourlyRate}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label htmlFor="qualifications" className="block text-sm font-medium text-gray-700 mb-1">
-                    Qualifications & Certifications
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                    First Name *
                   </label>
                   <input
                     type="text"
-                    id="qualifications"
-                    name="qualifications"
-                    value={formData.qualifications}
+                    id="firstName"
+                    name="firstName"
+                    required
+                    value={formData.firstName}
                     onChange={handleChange}
-                    placeholder="Separate multiple qualifications with commas"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                    Last Name *
+                  </label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    required
+                    value={formData.lastName}
+                    onChange={handleChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
-              {/* Account Security */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold text-gray-900">Account Security</h3>
-                
-                <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                    Password *
-                  </label>
-                  <input
-                    type="password"
-                    id="password"
-                    name="password"
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  id="email"
+                  name="email"
+                  required
+                  value={formData.email}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <input
+                  type="tel"
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="(123) 456-7890"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                  Password *
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  name="password"
                     required
                     value={formData.password}
                     onChange={handleChange}
