@@ -1,8 +1,8 @@
 // Utility function to get API URL based on environment
 export const getApiUrl = () => {
-  // In production, use relative paths so Next.js rewrites can handle the proxying
+  // In production, directly call the backend service
   if (process.env.NODE_ENV === 'production') {
-    return '';
+    return 'https://therapist-matcher-backend.onrender.com';
   }
   // Otherwise use environment variable or localhost
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
