@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 
 interface Coach {
   id: number
@@ -26,8 +27,23 @@ export default function AdminDashboard() {
   const [members, setMembers] = useState<Member[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const router = useRouter()
 
   useEffect(() => {
+    // Check if user is admin
+    const checkAuth = () => {
+      const user = localStorage.getItem('user')
+      if (user) {
+        const userData = JSON.parse(user)
+        if (userData.role !== 'admin') {
+          router.push('/')
+        }
+      } else {
+        router.push('/login')
+      }
+    }
+    checkAuth()
+
     // Mock data for demonstration
     setCoaches([
       { id: 1, name: 'Dr. Sarah Mitchell', specialties: ['Anxiety', 'Depression'], status: 'Active', rating: 4.9, totalSessions: 45, joinDate: '2024-01-15' },
@@ -42,7 +58,7 @@ export default function AdminDashboard() {
     ])
     
     setIsLoading(false)
-  }, [])
+  }, [router])
 
   if (isLoading) {
     return (
@@ -68,6 +84,15 @@ export default function AdminDashboard() {
             </div>
             <div className="hidden sm:flex items-center space-x-4">
               <span className="text-sm text-gray-500">System Administrator</span>
+              <button 
+                onClick={() => {
+                  localStorage.clear()
+                  router.push('/login')
+                }}
+                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
+              >
+                Logout
+              </button>
             </div>
           </div>
         </div>

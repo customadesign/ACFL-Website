@@ -84,7 +84,7 @@ interface Coach {
 }
 
 function SearchCoachesContent() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAuthenticated } = useAuth()
   const router = useRouter();
   const [showForm, setShowForm] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -301,22 +301,9 @@ function SearchCoachesContent() {
               <span className="text-sm text-gray-500">
                 Welcome, {user?.firstName || user?.email}!
               </span>
-              <button
-                onClick={loadAllCoaches}
-                disabled={isLoading}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-1"
-              >
-                <RefreshCw
-                  className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-                />
-                <span>Refresh</span>
-              </button>
-              <button
-                onClick={() => logout()}
-                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded-md text-sm font-medium transition-colors"
-              >
+              <Button variant="outline" onClick={logout}>
                 Logout
-              </button>
+              </Button>
             </div>
           </div>
         </div>
