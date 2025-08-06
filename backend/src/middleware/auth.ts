@@ -4,6 +4,7 @@ import { JWTPayload } from '../types/auth';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
+  headers: any;
 }
 
 export const authenticate = async (
