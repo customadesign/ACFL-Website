@@ -99,7 +99,7 @@ function MessagesContent() {
     } finally {
       setLoading(false)
     }
-  }, [lastConversationsFetch, API_URL])
+  }, [API_URL, conversations.length, lastConversationsFetch, loading])
 
   const loadMessages = useCallback(async (partnerId: string, forceRefresh = false) => {
     const now = Date.now()
@@ -141,19 +141,10 @@ function MessagesContent() {
     } finally {
       setMessagesLoading(false)
     }
-  }, [API_URL, user?.id])
+  }, [API_URL, user?.id, messagesCache])
 
-  useEffect(() => {
-    loadConversations()
-  }, [loadConversations])
-
-  useEffect(() => {
-    if (selectedConversation) {
-      loadMessages(selectedConversation)
-    }
-  }, [selectedConversation, loadMessages])
-
-  const markAsRead = async (messageId: string) => {
+  // Memoize markAsRead to prevent recreation
+  const markAsRead = useCallback(async (messageId: string) => {
     try {
       await axios.put(`${API_URL}/api/client/messages/${messageId}/read`, {}, {
         headers: {
@@ -163,9 +154,10 @@ function MessagesContent() {
     } catch (error) {
       console.error('Error marking message as read:', error)
     }
-  }
+  }, [API_URL])
 
-  const sendMessage = async () => {
+  // Memoize sendMessage to prevent recreation
+  const sendMessage = useCallback(async () => {
     if (!selectedConversation || !newMessage.trim()) return
 
     try {
@@ -193,9 +185,21 @@ function MessagesContent() {
     } finally {
       setSendingMessage(false)
     }
-  }
+  }, [API_URL, selectedConversation, newMessage, loadMessages, loadConversations])
 
-  const formatDate = (dateString: string) => {
+  // Load conversations only once on mount
+  useEffect(() => {
+    loadConversations()
+  }, []) // Empty dependency array
+
+  // Load messages when conversation selection changes
+  useEffect(() => {
+    if (selectedConversation) {
+      loadMessages(selectedConversation)
+    }
+  }, [selectedConversation]) // Only depend on selectedConversation
+
+  const formatDate = useCallback((dateString: string) => {
     const date = new Date(dateString)
     const now = new Date()
     const diff = now.getTime() - date.getTime()
@@ -210,13 +214,13 @@ function MessagesContent() {
     } else {
       return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
     }
-  }
+  }, [])
 
-  const getSelectedPartner = () => {
+  const getSelectedPartner = useCallback(() => {
     return conversations.find(c => c.partnerId === selectedConversation)?.partner
-  }
+  }, [conversations, selectedConversation])
 
-  const getMessageSenderName = (message: Message) => {
+  const getMessageSenderName = useCallback((message: Message) => {
     if (message.sender_id === user?.id) {
       return 'You'
     }
@@ -233,7 +237,7 @@ function MessagesContent() {
     }
     
     return 'Unknown User'
-  }
+  }, [user?.id, conversations])
 
   if (loading && conversations.length === 0) {
     return (
@@ -284,12 +288,7 @@ function MessagesContent() {
             </Link>
             <Link href="/search-coaches">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Search Coaches
-              </button>
-            </Link>
-            <Link href="/saved-coaches">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Saved Coaches
+                Search & Save Coaches
               </button>
             </Link>
             <Link href="/appointments">

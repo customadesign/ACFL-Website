@@ -47,9 +47,9 @@ export default function HomePage() {
       language: ''
     }))
     
-    // For now, redirect to find-coach to complete the full form
+    // For now, redirect to search-coaches to complete the full form
     // Later this could trigger an API call to find matches directly
-    router.push('/find-coach?from=assessment')
+    router.push('/search-coaches?from=assessment')
   }
 
   return (
@@ -906,7 +906,7 @@ export default function HomePage() {
             <div>
               <h3 className="font-semibold mb-4">Services</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="/find-coach" className="hover:text-white transition-colors">Find a Coach</a></li>
+                <li><a href="/search-coaches" className="hover:text-white transition-colors">Find a Coach</a></li>
                 <li><a href="/group-coaching" className="hover:text-white transition-colors">Group Coaching</a></li>
                 <li><a href="/corporate" className="hover:text-white transition-colors">Corporate Programs</a></li>
                 <li><a href="/resources" className="hover:text-white transition-colors">Resources</a></li>

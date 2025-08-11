@@ -74,4 +74,68 @@ export async function findMatches(preferences: any) {
     console.error('API Error:', error);
     throw error;
   }
+}
+
+export async function getClientActivity() {
+  try {
+    console.log('Making API call to:', `${API_BASE_URL}/api/client/activity`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/client/activity`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch client activity: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('API result:', result);
+    
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error('Failed to get client activity');
+    }
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
+}
+
+export async function getSavedCoaches() {
+  try {
+    console.log('Making API call to:', `${API_BASE_URL}/api/client/saved-coaches`);
+    
+    const response = await fetch(`${API_BASE_URL}/api/client/saved-coaches`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+
+    console.log('Response status:', response.status);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch saved coaches: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log('API result:', result);
+    
+    if (result.success) {
+      return result.data;
+    } else {
+      throw new Error('Failed to get saved coaches');
+    }
+  } catch (error) {
+    console.error('API Error:', error);
+    throw error;
+  }
 } 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
@@ -13,7 +13,7 @@ import { Textarea } from '@/components/ui/textarea'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { User, Edit, Save, X, Calendar, MapPin, Phone, Mail, Shield, Settings, Search, Heart } from 'lucide-react'
+import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart } from 'lucide-react'
 import { STATE_NAMES } from '@/constants/states'
 import { 
   concernOptions, 
@@ -51,8 +51,15 @@ function ProfileContent() {
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [loadingProfile, setLoadingProfile] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [stats, setStats] = useState({
+    totalSessions: 0,
+    upcomingSessions: 0,
+    savedCoaches: 0,
+    memberSince: 'N/A'
+  })
 
   const form = useForm<ProfileFormData>({
     resolver: zodResolver(profileFormSchema),
@@ -73,11 +80,14 @@ function ProfileContent() {
     },
   })
 
-  // Load user profile data
+  // Load user profile data and stats
   useEffect(() => {
-    const loadProfile = async () => {
+    const loadProfileAndStats = async () => {
       try {
+        setLoadingProfile(true)
         const API_URL = getApiUrl()
+        
+        // Load profile data
         const response = await fetch(`${API_URL}/api/client/profile`, {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -101,15 +111,34 @@ function ProfileContent() {
             form.setValue('availability', userData.availability || userData.preferences?.availability || [])
             form.setValue('therapistGender', userData.therapistGender || userData.preferences?.therapistGender || '')
             form.setValue('bio', userData.bio || '')
+            
+            // Set member since date
+            if (userData.created_at) {
+              setStats(prev => ({
+                ...prev,
+                memberSince: new Date(userData.created_at).toLocaleDateString()
+              }))
+            }
           }
         }
+        
+        // Load stats (placeholder - could be expanded with real API calls)
+        setStats(prev => ({
+          ...prev,
+          totalSessions: 0, // TODO: Get from appointments API
+          upcomingSessions: 0, // TODO: Get from appointments API  
+          savedCoaches: 0 // TODO: Get from saved coaches API
+        }))
+        
       } catch (error) {
         console.error('Error loading profile:', error)
         setError('Failed to load profile data')
+      } finally {
+        setLoadingProfile(false)
       }
     }
 
-    loadProfile()
+    loadProfileAndStats()
   }, [form])
 
   const handleSubmit = async (data: ProfileFormData) => {
@@ -151,6 +180,21 @@ function ProfileContent() {
     form.reset()
   }
 
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+              <p className="text-gray-600">Loading profile...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
       {/* Header */}
@@ -189,12 +233,7 @@ function ProfileContent() {
             </Link>
             <Link href="/search-coaches">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Search Coaches
-              </button>
-            </Link>
-            <Link href="/saved-coaches">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Saved Coaches
+                Search & Save Coaches
               </button>
             </Link>
             <Link href="/appointments">
@@ -215,7 +254,7 @@ function ProfileContent() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">My Profile</h1>
@@ -226,535 +265,282 @@ function ProfileContent() {
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error}
-            <button 
-              onClick={() => setError(null)}
-              className="ml-2 text-red-500 hover:text-red-700 font-medium"
-            >
-              ×
-            </button>
           </div>
         )}
 
         {success && (
           <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
             {success}
-            <button 
-              onClick={() => setSuccess(null)}
-              className="ml-2 text-green-500 hover:text-green-700 font-medium"
-            >
-              ×
-            </button>
           </div>
         )}
 
-        <div className="grid md:grid-cols-3 gap-6">
-          {/* Left Column - Profile Info */}
-          <div className="md:col-span-1 space-y-6">
-            {/* Profile Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5" />
-                  <span>Profile Information</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-blue-600" />
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {user?.firstName} {user?.lastName}
-                    </p>
-                    <p className="text-sm text-gray-500">{user?.email}</p>
-                  </div>
+        {/* Stats Overview */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <Calendar className="w-6 h-6 text-blue-600" />
                 </div>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Mail className="w-4 h-4" />
-                    <span>{user?.email}</span>
-                  </div>
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Calendar className="w-4 h-4" />
-                    <span>Member since N/A</span>
-                  </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Total Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <Clock className="w-6 h-6 text-green-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Upcoming Sessions</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.upcomingSessions}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 rounded-lg">
+                  <Heart className="w-6 h-6 text-purple-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Saved Coaches</p>
+                  <p className="text-2xl font-bold text-gray-900">{stats.savedCoaches}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 rounded-lg">
+                  <User className="w-6 h-6 text-yellow-600" />
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-600">Member Since</p>
+                  <p className="text-xl font-bold text-gray-900">{stats.memberSince}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
-            {/* Quick Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="w-5 h-5" />
-                  <span>Quick Actions</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => router.push('/search-coaches')}
-                >
-                  <Search className="w-4 h-4 mr-2" />
-                  Find New Coaches
+        {/* Profile Form */}
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-center">
+              <div>
+                <CardTitle>Profile Information</CardTitle>
+                <CardDescription>Update your personal details and preferences</CardDescription>
+              </div>
+              {!isEditing ? (
+                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+                  Edit Profile
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => router.push('/saved-coaches')}
-                >
-                  <Heart className="w-4 h-4 mr-2" />
-                  View Saved Coaches
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
-                  onClick={() => router.push('/appointments')}
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Manage Appointments
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Edit Form */}
-          <div className="md:col-span-2">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle className="flex items-center space-x-2">
-                    <Edit className="w-5 h-5" />
-                    <span>Edit Profile</span>
-                  </CardTitle>
-                  <div className="flex space-x-2">
-                    {!isEditing ? (
-                      <Button onClick={() => setIsEditing(true)}>
-                        <Edit className="w-4 h-4 mr-2" />
-                        Edit
-                      </Button>
-                    ) : (
-                      <>
-                        <Button variant="outline" onClick={handleCancel}>
-                          <X className="w-4 h-4 mr-2" />
-                          Cancel
-                        </Button>
-                        <Button onClick={form.handleSubmit(handleSubmit)} disabled={isLoading}>
-                          <Save className="w-4 h-4 mr-2" />
-                          {isLoading ? 'Saving...' : 'Save'}
-                        </Button>
-                      </>
-                    )}
-                  </div>
+              ) : (
+                <div className="flex space-x-2">
+                  <Button
+                    onClick={form.handleSubmit(handleSubmit)}
+                    disabled={isLoading}
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    {isLoading ? 'Saving...' : 'Save Changes'}
+                  </Button>
+                  <Button
+                    onClick={handleCancel}
+                    variant="outline"
+                    disabled={isLoading}
+                  >
+                    Cancel
+                  </Button>
                 </div>
-              </CardHeader>
-              <CardContent>
-                <Form {...form}>
-                  <form className="space-y-6">
-                    {/* Personal Information */}
-                    <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Form {...form}>
+              <form className="space-y-6">
+                {/* Personal Information */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
                       
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="firstName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>First Name</FormLabel>
-                              <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="lastName"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Last Name</FormLabel>
-                              <FormControl>
-                                <Input {...field} disabled={!isEditing} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input {...field} disabled={!isEditing} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="location"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Location</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!isEditing}>
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder="Select your state" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {Object.entries(STATE_NAMES).map(([code, name]) => (
-                                  <SelectItem key={code} value={code}>
-                                    {name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={form.watch('firstName')}
+                        onChange={(e) => form.setValue('firstName', e.target.value)}
+                        disabled={!isEditing}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                       />
                     </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={form.watch('lastName')}
+                        onChange={(e) => form.setValue('lastName', e.target.value)}
+                        disabled={!isEditing}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <input
+                        type="email"
+                        value={form.watch('email')}
+                        disabled
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
+                      <input
+                        type="tel"
+                        value={form.watch('phone')}
+                        onChange={(e) => form.setValue('phone', e.target.value)}
+                        disabled={!isEditing}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                      />
+                    </div>
+                  </div>
 
-                    {/* Demographics */}
-                    {isEditing && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Demographics</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="genderIdentity"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Gender Identity</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select gender identity" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {genderIdentityOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                    <select
+                      value={form.watch('location')}
+                      onChange={(e) => form.setValue('location', e.target.value)}
+                      disabled={!isEditing}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    >
+                      <option value="">Select your state</option>
+                      {Object.entries(STATE_NAMES).map(([code, name]) => (
+                        <option key={code} value={code}>
+                          {name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
 
-                          <FormField
-                            control={form.control}
-                            name="ethnicIdentity"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Ethnic Identity</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select ethnic identity" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {ethnicIdentityOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                {/* Bio */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">About Me</h3>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                    <textarea
+                      value={form.watch('bio') || ''}
+                      onChange={(e) => form.setValue('bio', e.target.value)}
+                      disabled={!isEditing}
+                      placeholder="Tell coaches about yourself, your goals, or what you're looking for in coaching..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    />
+                  </div>
+                </div>
+
+                {/* Preferences */}
+                {isEditing && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Preferences</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Preferred Language</label>
+                        <select
+                          value={form.watch('language')}
+                          onChange={(e) => form.setValue('language', e.target.value)}
+                          disabled={!isEditing}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="">Select preferred language</option>
+                          {LANGUAGES.map((language) => (
+                            <option key={language} value={language}>
+                              {language}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Gender Identity</label>
+                        <select
+                          value={form.watch('genderIdentity')}
+                          onChange={(e) => form.setValue('genderIdentity', e.target.value)}
+                          disabled={!isEditing}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                        >
+                          <option value="">Select gender identity</option>
+                          {genderIdentityOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Read-only view when not editing */}
+                {!isEditing && (
+                  <div className="space-y-6">
+                    <h3 className="text-lg font-semibold text-gray-900">Current Information</h3>
+                    
+                    <div className="bg-gray-50 p-4 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-3">Basic Information</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="font-medium text-gray-700">First Name</p>
+                          <p className="text-gray-900">{form.watch('firstName') || 'Not specified'}</p>
                         </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Last Name</p>
+                          <p className="text-gray-900">{form.watch('lastName') || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Email</p>
+                          <p className="text-gray-900">{form.watch('email') || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Phone Number</p>
+                          <p className="text-gray-900">{form.watch('phone') || 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Location</p>
+                          <p className="text-gray-900">{form.watch('location') ? STATE_NAMES[form.watch('location')] : 'Not specified'}</p>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-700">Language</p>
+                          <p className="text-gray-900">{form.watch('language') || 'Not specified'}</p>
+                        </div>
+                      </div>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="religiousBackground"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Religious Background</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select religious background" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {religiousBackgroundOptions.map((option) => (
-                                      <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-
-                          <FormField
-                            control={form.control}
-                            name="language"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Preferred Language</FormLabel>
-                                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select preferred language" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {LANGUAGES.map((language) => (
-                                      <SelectItem key={language} value={language}>
-                                        {language}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
+                    {form.watch('bio') && (
+                      <div>
+                        <p className="font-medium text-gray-700 mb-2">Bio</p>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                          <p className="text-sm text-gray-900">{form.watch('bio')}</p>
                         </div>
                       </div>
                     )}
-
-                    {/* Coaching Preferences */}
-                    {isEditing && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Coaching Preferences</h3>
-                        
-                        <FormField
-                          control={form.control}
-                          name="areaOfConcern"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>Areas of Concern</FormLabel>
-                              <FormDescription>Select all that apply</FormDescription>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                                {concernOptions.map((option) => (
-                                  <FormField
-                                    key={option.id}
-                                    control={form.control}
-                                    name="areaOfConcern"
-                                    render={({ field }) => (
-                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(option.id)}
-                                            onCheckedChange={(checked) => {
-                                              return checked
-                                                ? field.onChange([...(field.value || []), option.id])
-                                                : field.onChange(
-                                                    field.value?.filter((value) => value !== option.id)
-                                                  )
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="font-normal text-sm">
-                                          {option.label}
-                                        </FormLabel>
-                                      </FormItem>
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="availability"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel>Preferred Availability</FormLabel>
-                              <FormDescription>Select all that apply</FormDescription>
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
-                                {availabilityOptions.map((option) => (
-                                  <FormField
-                                    key={option.id}
-                                    control={form.control}
-                                    name="availability"
-                                    render={({ field }) => (
-                                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(option.id)}
-                                            onCheckedChange={(checked) => {
-                                              return checked
-                                                ? field.onChange([...(field.value || []), option.id])
-                                                : field.onChange(
-                                                    field.value?.filter((value) => value !== option.id)
-                                                  )
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="font-normal text-sm">
-                                          {option.label}
-                                        </FormLabel>
-                                      </FormItem>
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="therapistGender"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Preferred Coach Gender</FormLabel>
-                              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select preferred coach gender" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="any">Any gender</SelectItem>
-                                  {genderIdentityOptions.map((option) => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-
-                    {/* Bio */}
-                    {isEditing && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">About Me</h3>
-                        
-                        <FormField
-                          control={form.control}
-                          name="bio"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Bio</FormLabel>
-                              <FormDescription>Tell coaches a bit about yourself</FormDescription>
-                              <FormControl>
-                                <Textarea 
-                                  {...field} 
-                                  placeholder="Share your background, goals, or what you're looking for in coaching..."
-                                  rows={4}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    )}
-
-                    {/* Read-only view when not editing */}
-                    {!isEditing && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-semibold text-gray-900">Current Information</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="font-medium text-gray-700">Location</p>
-                            <p className="text-gray-900">{form.watch('location') ? STATE_NAMES[form.watch('location')] : 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">Language</p>
-                            <p className="text-gray-900">{form.watch('language') || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">Gender Identity</p>
-                            <p className="text-gray-900">{form.watch('genderIdentity') || 'Not specified'}</p>
-                          </div>
-                          <div>
-                            <p className="font-medium text-gray-700">Preferred Coach Gender</p>
-                            <p className="text-gray-900">{form.watch('therapistGender') === 'any' ? 'Any gender' : form.watch('therapistGender') || 'Not specified'}</p>
-                          </div>
-                        </div>
-
-                        {(form.watch('areaOfConcern')?.length ?? 0) > 0 && (
-                          <div>
-                            <p className="font-medium text-gray-700 mb-2">Areas of Concern</p>
-                            <div className="flex flex-wrap gap-2">
-                              {form.watch('areaOfConcern')?.map((concern) => {
-                                const option = concernOptions.find(c => c.id === concern)
-                                return (
-                                  <span key={concern} className="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">
-                                    {option?.label || concern}
-                                  </span>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {(form.watch('availability')?.length ?? 0) > 0 && (
-                          <div>
-                            <p className="font-medium text-gray-700 mb-2">Preferred Availability</p>
-                            <div className="flex flex-wrap gap-2">
-                              {form.watch('availability')?.map((avail) => {
-                                const option = availabilityOptions.find(a => a.id === avail)
-                                return (
-                                  <span key={avail} className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">
-                                    {option?.label || avail}
-                                  </span>
-                                )
-                              })}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                  </div>
+                )}
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

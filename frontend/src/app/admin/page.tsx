@@ -1,7 +1,10 @@
-"use client"
+'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 
 interface Coach {
   id: number
@@ -22,43 +25,78 @@ interface Member {
   status: string
 }
 
+interface AdminStats {
+  totalUsers: number
+  activeClients: number
+  verifiedCoaches: number
+  pendingApplications: number
+  totalSessions: number
+  monthlyRevenue: number
+  complianceScore: number
+  activeIncidents: number
+}
+
 export default function AdminDashboard() {
   const [coaches, setCoaches] = useState<Coach[]>([])
   const [members, setMembers] = useState<Member[]>([])
+  const [stats, setStats] = useState<AdminStats | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const { user, logout } = useAuth()
   const router = useRouter()
 
   useEffect(() => {
     // Check if user is admin
-    const checkAuth = () => {
-      const user = localStorage.getItem('user')
-      if (user) {
-        const userData = JSON.parse(user)
-        if (userData.role !== 'admin') {
-          router.push('/')
-        }
-      } else {
-        router.push('/login')
-      }
+    if (!user) {
+      router.push('/login')
+      return
     }
-    checkAuth()
 
-    // Mock data for demonstration
-    setCoaches([
-      { id: 1, name: 'Dr. Sarah Mitchell', specialties: ['Anxiety', 'Depression'], status: 'Active', rating: 4.9, totalSessions: 45, joinDate: '2024-01-15' },
-      { id: 2, name: 'Dr. James Wilson', specialties: ['PTSD', 'Addiction'], status: 'Active', rating: 4.8, totalSessions: 38, joinDate: '2024-02-20' },
-      { id: 3, name: 'Dr. Emily Chen', specialties: ['Relationships', 'Stress'], status: 'Active', rating: 4.7, totalSessions: 52, joinDate: '2024-01-10' },
-    ])
-    
-    setMembers([
-      { id: 1, name: 'John Doe', email: 'john@example.com', joinDate: '2024-03-01', totalSessions: 8, status: 'Active' },
-      { id: 2, name: 'Jane Smith', email: 'jane@example.com', joinDate: '2024-03-15', totalSessions: 5, status: 'Active' },
-      { id: 3, name: 'Mike Johnson', email: 'mike@example.com', joinDate: '2024-02-28', totalSessions: 12, status: 'Active' },
-    ])
-    
-    setIsLoading(false)
-  }, [router])
+    if (user.role !== 'admin') {
+      router.push('/')
+      return
+    }
+
+    // Load dashboard data
+    loadDashboardData()
+  }, [user, router])
+
+  const loadDashboardData = async () => {
+    try {
+      // Mock data for demonstration - replace with actual API calls
+      setStats({
+        totalUsers: 156,
+        activeClients: 89,
+        verifiedCoaches: 23,
+        pendingApplications: 5,
+        totalSessions: 342,
+        monthlyRevenue: 41040,
+        complianceScore: 98,
+        activeIncidents: 0,
+      })
+
+      setCoaches([
+        { id: 1, name: 'Dr. Sarah Mitchell', specialties: ['Anxiety', 'Depression'], status: 'Active', rating: 4.9, totalSessions: 45, joinDate: '2024-01-15' },
+        { id: 2, name: 'Dr. James Wilson', specialties: ['PTSD', 'Addiction'], status: 'Active', rating: 4.8, totalSessions: 38, joinDate: '2024-02-20' },
+        { id: 3, name: 'Dr. Emily Chen', specialties: ['Relationships', 'Stress'], status: 'Active', rating: 4.7, totalSessions: 52, joinDate: '2024-01-10' },
+      ])
+      
+      setMembers([
+        { id: 1, name: 'John Doe', email: 'john@example.com', joinDate: '2024-03-01', totalSessions: 8, status: 'Active' },
+        { id: 2, name: 'Jane Smith', email: 'jane@example.com', joinDate: '2024-03-15', totalSessions: 5, status: 'Active' },
+        { id: 3, name: 'Mike Johnson', email: 'mike@example.com', joinDate: '2024-02-28', totalSessions: 12, status: 'Active' },
+      ])
+      
+      setIsLoading(false)
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error)
+      setIsLoading(false)
+    }
+  }
+
+  const handleLogout = () => {
+    logout()
+  }
 
   if (isLoading) {
     return (
@@ -83,16 +121,13 @@ export default function AdminDashboard() {
               <h1 className="text-xl font-semibold text-gray-900">ACT Coaching For Life - Admin Dashboard</h1>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
-              <span className="text-sm text-gray-500">System Administrator</span>
-              <button 
-                onClick={() => {
-                  localStorage.clear()
-                  router.push('/login')
-                }}
-                className="px-4 py-2 text-sm bg-red-600 text-white rounded-lg hover:bg-red-700"
-              >
+              <span className="text-sm text-gray-500">Welcome, {user?.firstName} {user?.lastName}</span>
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                {user?.role}
+              </span>
+              <Button variant="outline" onClick={handleLogout}>
                 Logout
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -123,14 +158,14 @@ export default function AdminDashboard() {
               Coaches
             </button>
             <button 
-              onClick={() => setActiveTab('members')}
+              onClick={() => setActiveTab('clients')}
               className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
-                activeTab === 'members' 
+                activeTab === 'clients' 
                   ? 'border-blue-500 text-blue-600' 
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              Members
+              Clients
             </button>
             <button 
               onClick={() => setActiveTab('analytics')}
@@ -142,6 +177,16 @@ export default function AdminDashboard() {
             >
               Analytics
             </button>
+            <button 
+              onClick={() => setActiveTab('compliance')}
+              className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                activeTab === 'compliance' 
+                  ? 'border-blue-500 text-blue-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              Compliance
+            </button>
           </div>
         </div>
       </div>
@@ -150,96 +195,179 @@ export default function AdminDashboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         {/* Overview Tab */}
-        {activeTab === 'overview' && (
+        {activeTab === 'overview' && stats && (
           <>
             {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-blue-100 rounded-lg">
+                      <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Total Users</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalUsers}</p>
+                      <p className="text-sm text-green-600 mt-1">+12% from last month</p>
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Coaches</p>
-                    <p className="text-2xl font-bold text-gray-900">{coaches.length}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-green-100 rounded-lg">
+                      <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Active Clients</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.activeClients}</p>
+                      <p className="text-sm text-green-600 mt-1">+8% from last month</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                    </svg>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-purple-100 rounded-lg">
+                      <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Verified Coaches</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.verifiedCoaches}</p>
+                      {stats.pendingApplications > 0 && (
+                        <p className="text-sm text-yellow-600 mt-1">{stats.pendingApplications} pending</p>
+                      )}
+                    </div>
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Members</p>
-                    <p className="text-2xl font-bold text-gray-900">{members.length}</p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 bg-orange-100 rounded-lg">
+                      <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div className="ml-4">
+                      <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                      <p className="text-2xl font-bold text-gray-900">${stats.monthlyRevenue.toLocaleString()}</p>
+                      <p className="text-sm text-green-600 mt-1">+15% from last month</p>
+                    </div>
                   </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-purple-100 rounded-lg">
-                    <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                    <p className="text-2xl font-bold text-gray-900">{coaches.reduce((sum, c) => sum + c.totalSessions, 0)}</p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center">
-                  <div className="p-2 bg-yellow-100 rounded-lg">
-                    <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                    </svg>
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Avg Rating</p>
-                    <p className="text-2xl font-bold text-gray-900">{(coaches.reduce((sum, c) => sum + c.rating, 0) / coaches.length).toFixed(1)}</p>
-                  </div>
-                </div>
-              </div>
+                </CardContent>
+              </Card>
             </div>
 
-            {/* Recent Activity */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+            {/* Platform Health Overview */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Platform Health Overview</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg">
+                      <div className="flex items-center">
+                        <svg className="h-5 w-5 text-green-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <div>
+                          <p className="font-medium text-green-900">System Status</p>
+                          <p className="text-sm text-green-700">All systems operational</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Healthy
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center">
+                        <svg className="h-5 w-5 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                        </svg>
+                        <div>
+                          <p className="font-medium text-blue-900">HIPAA Compliance</p>
+                          <p className="text-sm text-blue-700">Score: {stats.complianceScore}%</p>
+                        </div>
+                      </div>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Compliant
+                      </span>
+                    </div>
+
+                    {stats.pendingApplications > 0 && (
+                      <div className="flex items-center justify-between p-4 bg-yellow-50 rounded-lg">
+                        <div className="flex items-center">
+                          <svg className="h-5 w-5 text-yellow-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div>
+                            <p className="font-medium text-yellow-900">Pending Reviews</p>
+                            <p className="text-sm text-yellow-700">{stats.pendingApplications} coach applications</p>
+                          </div>
+                        </div>
+                        <Button size="sm" onClick={() => setActiveTab('coaches')}>
+                          Review
+                        </Button>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">New coach registration</p>
-                      <p className="text-sm text-gray-500">Dr. Sarah Mitchell joined the platform</p>
-                    </div>
-                    <span className="text-sm text-gray-500">2 hours ago</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">Member feedback received</p>
-                      <p className="text-sm text-gray-500">5-star rating from John Doe</p>
-                    </div>
-                    <span className="text-sm text-gray-500">4 hours ago</span>
-                  </div>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div>
-                      <p className="font-medium text-gray-900">System maintenance completed</p>
-                      <p className="text-sm text-gray-500">Database optimization finished</p>
-                    </div>
-                    <span className="text-sm text-gray-500">1 day ago</span>
-                  </div>
-                </div>
+
+              <div>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Quick Actions</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('coaches')}>
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                      Review Coach Applications
+                      {stats.pendingApplications > 0 && (
+                        <span className="ml-auto bg-red-100 text-red-800 text-xs font-medium px-2 py-1 rounded-full">
+                          {stats.pendingApplications}
+                        </span>
+                      )}
+                    </Button>
+
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('clients')}>
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                      Manage Users
+                    </Button>
+
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('analytics')}>
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                      View Analytics
+                    </Button>
+
+                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('compliance')}>
+                      <svg className="h-4 w-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                      Compliance Center
+                    </Button>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </>
@@ -247,143 +375,161 @@ export default function AdminDashboard() {
 
         {/* Coaches Tab */}
         {activeTab === 'coaches' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">All Coaches</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialties</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {coaches.map((coach) => (
-                    <tr key={coach.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{coach.name}</div>
-                          <div className="text-sm text-gray-500">Joined {coach.joinDate}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex flex-wrap gap-1">
-                          {coach.specialties.map((specialty, index) => (
-                            <span key={index} className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-                              {specialty}
-                            </span>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {coach.rating}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {coach.totalSessions}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          coach.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {coach.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900">Edit</button>
-                      </td>
+          <Card>
+            <CardHeader>
+              <CardTitle>Coach Management</CardTitle>
+              <CardDescription>
+                Manage coach applications, verification, and status
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Coach</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Specialties</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rating</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {coaches.map((coach) => (
+                      <tr key={coach.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div>
+                            <div className="text-sm font-medium text-gray-900">{coach.name}</div>
+                            <div className="text-sm text-gray-500">Joined {coach.joinDate}</div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="flex flex-wrap gap-1">
+                            {coach.specialties.map((specialty, index) => (
+                              <span key={index} className="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                {specialty}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {coach.rating} ⭐
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {coach.totalSessions}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            coach.status === 'Active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {coach.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Button variant="outline" size="sm">View Details</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
-        {/* Members Tab */}
-        {activeTab === 'members' && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">All Members</h3>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Member</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {members.map((member) => (
-                    <tr key={member.id}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{member.name}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {member.email}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {member.joinDate}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {member.totalSessions}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          member.status === 'Active' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {member.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <button className="text-blue-600 hover:text-blue-900">View</button>
-                      </td>
+        {/* Clients Tab */}
+        {activeTab === 'clients' && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Client Management</CardTitle>
+              <CardDescription>
+                View and manage client accounts and activity
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Join Date</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sessions</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {members.map((member) => (
+                      <tr key={member.id}>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{member.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {member.email}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {member.joinDate}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {member.totalSessions}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                            member.status === 'Active' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {member.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <Button variant="outline" size="sm">View Profile</Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Analytics Tab */}
-        {activeTab === 'analytics' && (
+        {activeTab === 'analytics' && stats && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Platform Growth</h3>
-              <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Platform Growth</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">New Coaches This Month</span>
                   <span className="text-sm font-medium text-gray-900">12</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600">New Members This Month</span>
+                  <span className="text-sm text-gray-600">New Clients This Month</span>
                   <span className="text-sm font-medium text-gray-900">45</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-gray-600">Total Sessions This Month</span>
-                  <span className="text-sm font-medium text-gray-900">128</span>
+                  <span className="text-sm font-medium text-gray-900">{stats.totalSessions}</span>
                 </div>
-              </div>
-            </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Revenue Growth</span>
+                  <span className="text-sm font-medium text-green-600">+15.2%</span>
+                </div>
+              </CardContent>
+            </Card>
             
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Top Performing Coaches</h3>
-              <div className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Top Performing Coaches</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 {coaches.sort((a, b) => b.rating - a.rating).slice(0, 3).map((coach, index) => (
                   <div key={coach.id} className="flex justify-between items-center">
                     <div>
@@ -393,8 +539,61 @@ export default function AdminDashboard() {
                     <span className="text-sm text-gray-600">{coach.rating} ⭐</span>
                   </div>
                 ))}
-              </div>
-            </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Compliance Tab */}
+        {activeTab === 'compliance' && stats && (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>HIPAA Compliance Status</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Compliance Score</span>
+                  <span className="text-sm font-medium text-green-600">{stats.complianceScore}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Active Incidents</span>
+                  <span className="text-sm font-medium text-gray-900">{stats.activeIncidents}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Last Audit</span>
+                  <span className="text-sm font-medium text-gray-900">December 15, 2024</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Next Review</span>
+                  <span className="text-sm font-medium text-gray-900">March 15, 2025</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Security Monitoring</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Failed Login Attempts</span>
+                  <span className="text-sm font-medium text-yellow-600">3 (last 24h)</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Data Encryption</span>
+                  <span className="text-sm font-medium text-green-600">Active</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">Backup Status</span>
+                  <span className="text-sm font-medium text-green-600">Complete</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-sm text-gray-600">SSL Certificate</span>
+                  <span className="text-sm font-medium text-green-600">Valid</span>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
       </div>

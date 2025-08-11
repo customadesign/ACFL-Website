@@ -24,8 +24,25 @@ export const validateRegisterClient: ValidationChain[] = [
     .withMessage('Last name must be between 2 and 50 characters'),
   body('phone')
     .optional()
-    .isMobilePhone('any')
-    .withMessage('Valid phone number is required'),
+    .custom((value) => {
+      if (!value) return true; // Allow empty/optional
+      
+      // Remove all non-digit characters except +
+      const cleaned = value.replace(/[^\d+]/g, '');
+      
+      // Must start with + and have at least 10 digits total
+      if (!cleaned.startsWith('+')) {
+        throw new Error('Phone number must start with country code (e.g., +1, +63)');
+      }
+      
+      const digits = cleaned.replace('+', '');
+      if (digits.length < 7 || digits.length > 15) {
+        throw new Error('Phone number must be between 7-15 digits (including country code)');
+      }
+      
+      return true;
+    })
+    .withMessage('Valid international phone number is required'),
   body('dateOfBirth')
     .optional()
     .isISO8601()
@@ -56,8 +73,25 @@ export const validateRegisterCoach: ValidationChain[] = [
     .withMessage('Last name must be between 2 and 50 characters'),
   body('phone')
     .optional()
-    .isMobilePhone('any')
-    .withMessage('Valid phone number is required'),
+    .custom((value) => {
+      if (!value) return true; // Allow empty/optional
+      
+      // Remove all non-digit characters except +
+      const cleaned = value.replace(/[^\d+]/g, '');
+      
+      // Must start with + and have at least 10 digits total
+      if (!cleaned.startsWith('+')) {
+        throw new Error('Phone number must start with country code (e.g., +1, +63)');
+      }
+      
+      const digits = cleaned.replace('+', '');
+      if (digits.length < 7 || digits.length > 15) {
+        throw new Error('Phone number must be between 7-15 digits (including country code)');
+      }
+      
+      return true;
+    })
+    .withMessage('Valid international phone number is required'),
   body('specialties')
     .isArray({ min: 1 })
     .withMessage('At least one specialty is required'),
@@ -70,8 +104,9 @@ export const validateRegisterCoach: ValidationChain[] = [
     .withMessage('Bio must be less than 1000 characters'),
   body('qualifications')
     .optional()
-    .isArray()
-    .withMessage('Qualifications must be an array'),
+    .isString()
+    .isLength({ max: 1000 })
+    .withMessage('Qualifications must be a string with max 1000 characters'),
   body('experience')
     .optional()
     .isInt({ min: 0 })

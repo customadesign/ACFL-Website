@@ -10,16 +10,17 @@ import axios from 'axios';
 interface Appointment {
   id: string;
   client_id: string;
-  scheduled_at: string;
-  duration: number;
+  starts_at: string;
+  ends_at: string;
   status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
-  session_type?: string;
   notes?: string;
+  zoom_link: string;  // Required for online-only sessions
   clients?: {
     first_name: string;
     last_name: string;
     phone?: string;
-    users: {
+    email?: string;
+    users?: {
       email: string;
     };
   };
@@ -105,7 +106,8 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
+    <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">      
+
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           {error}
@@ -134,7 +136,7 @@ export default function AppointmentsPage() {
                 {tab.label}
                 <span className="ml-2 text-xs bg-gray-100 text-gray-600 py-1 px-2 rounded-full">
                   {appointments.filter(apt => {
-                    const appointmentDate = new Date(apt.scheduled_at);
+                    const appointmentDate = new Date(apt.starts_at);
                     const today = new Date();
                     today.setHours(0, 0, 0, 0);
 
@@ -162,7 +164,7 @@ export default function AppointmentsPage() {
         {(() => {
           // Filter appointments based on selected tab
           const filteredAppointments = appointments.filter(apt => {
-            const appointmentDate = new Date(apt.scheduled_at);
+            const appointmentDate = new Date(apt.starts_at);
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
@@ -196,7 +198,12 @@ export default function AppointmentsPage() {
                         <h3 className="text-lg font-semibold text-gray-900">
                           {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                         </h3>
-                        <p className="text-sm text-gray-500">{appointment.clients?.users?.email}</p>
+                        <p className="text-sm text-gray-500">{appointment.clients?.email || appointment.clients?.users?.email}</p>
+                        <p className="text-xs text-blue-600 hover:text-blue-800 cursor-pointer mt-1">
+                          <a href="/coaches/clients" className="hover:underline">
+                            View in My Clients →
+                          </a>
+                        </p>
                       </div>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
                         {appointment.status}
@@ -207,17 +214,17 @@ export default function AppointmentsPage() {
                       <div>
                         <p className="text-sm font-medium text-gray-500">Date & Time</p>
                         <p className="text-sm text-gray-900">
-                          {new Date(appointment.scheduled_at).toLocaleDateString()} at {' '}
-                          {new Date(appointment.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          {new Date(appointment.starts_at).toLocaleDateString()} at {' '}
+                          {new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-500">Duration</p>
-                        <p className="text-sm text-gray-900">{appointment.duration || 60} minutes</p>
+                        <p className="text-sm text-gray-900">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
                       </div>
                       <div>
                         <p className="text-sm font-medium text-gray-500">Session Type</p>
-                        <p className="text-sm text-gray-900">{appointment.session_type || 'Coaching Session'}</p>
+                        <p className="text-sm text-gray-900">Virtual Session</p>
                       </div>
                     </div>
 
@@ -248,8 +255,17 @@ export default function AppointmentsPage() {
                       </div>
                     )}
 
-                    {appointment.status === 'confirmed' && new Date(appointment.scheduled_at) >= new Date() && (
+                    {appointment.status === 'confirmed' && new Date(appointment.starts_at) >= new Date() && (
                       <div className="mt-4 flex space-x-2">
+                        {appointment.zoom_link && (
+                          <Button
+                            onClick={() => window.open(appointment.zoom_link, '_blank')}
+                            className="bg-green-600 hover:bg-green-700"
+                            size="sm"
+                          >
+                            📹 Join Session
+                          </Button>
+                        )}
                         <Button
                           onClick={() => handleStatusChange(appointment.id, 'completed')}
                           className="bg-blue-600 hover:bg-blue-700"

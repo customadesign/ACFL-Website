@@ -16,25 +16,11 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
       });
     }
 
-    // Get user data
-    const { data: user, error: userError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', req.user.userId)
-      .single();
-
-    if (userError || !user) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'User not found' 
-      });
-    }
-
-    // Get client profile
+    // Get client profile (contains all user data now)
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('*')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (profileError || !clientProfile) {
@@ -44,20 +30,40 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
       });
     }
 
-    // Get latest assessment if exists
-    const { data: assessment } = await supabase
-      .from('client_assessments')
-      .select('*')
-      .eq('client_id', clientProfile.id)
-      .eq('is_current', true)
-      .single();
+    // No need for separate assessment query - all data is in clients table now
 
     res.json({
       success: true,
       data: {
-        ...user,
-        ...clientProfile,
-        preferences: assessment || {}
+        id: req.user.userId,
+        email: clientProfile.email,
+        role: req.user.role,
+        firstName: clientProfile.first_name,
+        lastName: clientProfile.last_name,
+        first_name: clientProfile.first_name,
+        last_name: clientProfile.last_name,
+        phone: clientProfile.phone,
+        dob: clientProfile.dob,
+        location: clientProfile.location_state,
+        genderIdentity: clientProfile.gender_identity,
+        ethnicIdentity: clientProfile.ethnic_identity,
+        religiousBackground: clientProfile.religious_background,
+        language: clientProfile.preferred_language,
+        areaOfConcern: clientProfile.areas_of_concern || [],
+        availability: clientProfile.availability || [],
+        therapistGender: clientProfile.preferred_coach_gender,
+        bio: clientProfile.bio,
+        // Keep legacy format for compatibility
+        preferences: {
+          location: clientProfile.location_state,
+          genderIdentity: clientProfile.gender_identity,
+          ethnicIdentity: clientProfile.ethnic_identity,
+          religiousBackground: clientProfile.religious_background,
+          language: clientProfile.preferred_language,
+          areaOfConcern: clientProfile.areas_of_concern || [],
+          availability: clientProfile.availability || [],
+          therapistGender: clientProfile.preferred_coach_gender,
+        }
       }
     });
   } catch (error) {
@@ -75,6 +81,7 @@ router.put('/client/profile', [
   body('firstName').optional().isString(),
   body('lastName').optional().isString(),
   body('phone').optional().isString(),
+  body('dob').optional().isISO8601(),
   body('location').optional().isString(),
   body('genderIdentity').optional().isString(),
   body('ethnicIdentity').optional().isString(),
@@ -105,7 +112,7 @@ router.put('/client/profile', [
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('*')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)  // Changed from user_id to id
       .single();
 
     if (profileError || !clientProfile) {
@@ -115,51 +122,38 @@ router.put('/client/profile', [
       });
     }
 
-    // Update client profile
+    // Update client profile - all fields in the main clients table now
     const updateData: any = {}
-    if (req.body.firstName) updateData.first_name = req.body.firstName
-    if (req.body.lastName) updateData.last_name = req.body.lastName
-    if (req.body.phone) updateData.phone = req.body.phone
-    if (req.body.bio) updateData.bio = req.body.bio
+    
+    // Basic info
+    if (req.body.firstName !== undefined) updateData.first_name = req.body.firstName
+    if (req.body.lastName !== undefined) updateData.last_name = req.body.lastName
+    if (req.body.phone !== undefined) updateData.phone = req.body.phone
+    if (req.body.dob !== undefined) updateData.dob = req.body.dob
+    
+    // Personal info
+    if (req.body.location !== undefined) updateData.location_state = req.body.location
+    if (req.body.genderIdentity !== undefined) updateData.gender_identity = req.body.genderIdentity
+    if (req.body.ethnicIdentity !== undefined) updateData.ethnic_identity = req.body.ethnicIdentity
+    if (req.body.religiousBackground !== undefined) updateData.religious_background = req.body.religiousBackground
+    if (req.body.language !== undefined) updateData.preferred_language = req.body.language
+    
+    // Preferences
+    if (req.body.areaOfConcern !== undefined) updateData.areas_of_concern = req.body.areaOfConcern
+    if (req.body.availability !== undefined) updateData.availability = req.body.availability
+    if (req.body.therapistGender !== undefined) updateData.preferred_coach_gender = req.body.therapistGender
+    if (req.body.bio !== undefined) updateData.bio = req.body.bio
 
-    const { error: updateError } = await supabase
-      .from('clients')
-      .update(updateData)
-      .eq('id', clientProfile.id)
+    // Only update if there are fields to update
+    if (Object.keys(updateData).length > 0) {
+      const { error: updateError } = await supabase
+        .from('clients')
+        .update(updateData)
+        .eq('id', clientProfile.id)
 
-    if (updateError) {
-      throw updateError
-    }
-
-    // Update or create assessment with preferences
-    const assessmentData = {
-      client_id: clientProfile.id,
-      location: req.body.location,
-      gender_identity: req.body.genderIdentity,
-      ethnic_identity: req.body.ethnicIdentity,
-      religious_background: req.body.religiousBackground,
-      language: req.body.language,
-      area_of_concern: req.body.areaOfConcern,
-      availability: req.body.availability,
-      preferred_therapist_gender: req.body.therapistGender,
-      is_current: true,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
-
-    // First, set all existing assessments to not current
-    await supabase
-      .from('client_assessments')
-      .update({ is_current: false })
-      .eq('client_id', clientProfile.id)
-
-    // Insert new assessment
-    const { error: assessmentError } = await supabase
-      .from('client_assessments')
-      .insert(assessmentData)
-
-    if (assessmentError) {
-      throw assessmentError
+      if (updateError) {
+        throw updateError
+      }
     }
 
     res.json({
@@ -191,7 +185,7 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (profileError || !clientProfile) {
@@ -214,14 +208,14 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
         )
       `)
       .eq('client_id', clientProfile.id)
-      .order('scheduled_at', { ascending: true });
+      .order('starts_at', { ascending: true });
 
     // Apply filters
     const now = new Date().toISOString();
     if (filter === 'upcoming') {
-      query = query.gte('scheduled_at', now).in('status', ['scheduled', 'confirmed']);
+      query = query.gte('starts_at', now).in('status', ['scheduled', 'confirmed']);
     } else if (filter === 'past') {
-      query = query.or(`scheduled_at.lt.${now},status.eq.completed`);
+      query = query.or(`starts_at.lt.${now},status.eq.completed`);
     } else if (filter === 'pending') {
       query = query.eq('status', 'scheduled');
     }
@@ -259,7 +253,7 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (profileError || !clientProfile) {
@@ -306,10 +300,9 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
         bio: coach.bio || '',
         sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
         experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
-        rating: coach.rating || 0,
+        rating: 0, // Will be calculated dynamically from reviews
         savedDate: coach.created_at, // Use coach's creation date as fallback
         virtualAvailable: coach.is_available,
-        inPersonAvailable: coach.is_available,
         email: coach.users?.email
       };
     }) || [];
@@ -354,7 +347,7 @@ router.post('/client/saved-coaches', [
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (profileError || !clientProfile) {
@@ -423,7 +416,7 @@ router.delete('/client/saved-coaches/:coachId', authenticate, async (req: Reques
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (profileError || !clientProfile) {
@@ -469,7 +462,7 @@ router.get('/client/coaches', [
       });
     }
 
-    // Get all available coaches
+    // Get all available coaches (main query)
     const { data: coaches, error: coachesError } = await supabase
       .from('coaches')
       .select(`
@@ -479,47 +472,65 @@ router.get('/client/coaches', [
         bio,
         specialties,
         languages,
-        hourly_rate,
-        experience,
+        hourly_rate_usd,
+        years_experience,
         rating,
         is_available,
         created_at,
-        users (email),
-        coach_demographics (
-          gender,
-          ethnicity,
-          religion,
-          location_states,
-          available_times,
-          video_available,
-          in_person_available,
-          phone_available,
-          insurance_accepted,
-          min_age,
-          max_age
-        )
+        email
       `)
       .eq('is_available', true);
 
     if (coachesError) {
+      console.error('Coaches query error:', coachesError);
       throw coachesError;
     }
 
+    // Get coach demographics separately (if needed)
+    let demographics = [];
+    if (coaches && coaches.length > 0) {
+      const coachIds = coaches.map(c => c.id);
+      const { data: demoData } = await supabase
+        .from('coach_demographics')
+        .select(`
+          coach_id,
+          gender_identity,
+          ethnic_identity,
+          religious_background,
+          languages,
+          accepts_insurance,
+          accepts_sliding_scale,
+          timezone,
+          meta
+        `)
+        .in('coach_id', coachIds);
+      demographics = demoData || [];
+    }
+
+    // Create demographics lookup
+    const demographicsMap = new Map();
+    demographics.forEach(demo => {
+      demographicsMap.set(demo.coach_id, demo);
+    });
+
     // Format response
-    const formattedCoaches = coaches?.map((coach: any) => ({
-      id: coach.id,
-      name: `${coach.first_name} ${coach.last_name}`,
-      specialties: coach.specialties || [],
-      languages: coach.languages || [],
-      bio: coach.bio || '',
-      sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
-      experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
-      rating: coach.rating || 0,
-      matchScore: 50, // Default score for all coaches
-      virtualAvailable: coach.coach_demographics?.video_available || false,
-      inPersonAvailable: coach.coach_demographics?.in_person_available || false,
-      email: coach.users?.email
-    })) || [];
+    const formattedCoaches = coaches?.map((coach: any) => {
+      const coachDemo = demographicsMap.get(coach.id);
+      return {
+        id: coach.id,
+        name: `${coach.first_name} ${coach.last_name}`,
+        specialties: coach.specialties || [],
+        languages: coach.languages || [],
+        bio: coach.bio || '',
+        sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : 'Rate not specified',
+        experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
+        rating: 0, // Will be calculated dynamically from reviews
+        matchScore: 50, // Default score for all coaches
+        virtualAvailable: coachDemo?.meta?.video_available || false,
+        inPersonAvailable: coachDemo?.meta?.in_person_available || false,
+        email: coach.email
+      };
+    }) || [];
 
     res.json({
       success: true,
@@ -580,8 +591,6 @@ router.post('/client/search-coaches', [
           location_states,
           available_times,
           video_available,
-          in_person_available,
-          phone_available,
           insurance_accepted,
           min_age,
           max_age
@@ -706,10 +715,9 @@ router.post('/client/search-coaches', [
         bio: coach.bio || '',
         sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
         experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
-        rating: coach.rating || 0,
+        rating: 0, // Will be calculated dynamically from reviews
         matchScore: Math.min(Math.round(matchScore), 100),
         virtualAvailable: coach.is_available,
-        inPersonAvailable: coach.is_available,
         email: coach.users?.email
       };
     }) || [];
@@ -760,7 +768,7 @@ router.post('/client/book-appointment', [
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (clientError || !clientProfile) {
@@ -794,12 +802,16 @@ router.post('/client/book-appointment', [
     // Check for scheduling conflicts (simplified)  
     const scheduledDate = new Date(scheduledAt);
     const startTime = scheduledDate.toISOString();
+    
+    // Calculate session duration and end time (default 60 minutes)
+    const duration = 60; // minutes
+    const endTime = new Date(scheduledDate.getTime() + (duration * 60 * 1000)).toISOString();
 
     const { data: conflicts, error: conflictError } = await supabase
       .from('sessions')
       .select('id')
       .eq('coach_id', coachId)
-      .eq('scheduled_at', startTime);
+              .eq('starts_at', startTime);
 
     if (conflictError) {
       console.log('Conflict check error:', conflictError);
@@ -813,14 +825,18 @@ router.post('/client/book-appointment', [
       });
     }
 
+    // Generate Zoom link for the session (placeholder - integrate with Zoom API later)
+    const zoomLink = `https://zoom.us/j/${Math.random().toString().substr(2, 10)}`;
+    
     // Create the session with all fields matching the database schema
     const sessionData: any = {
       client_id: clientProfile.id,
       coach_id: coachId,
-      scheduled_at: startTime,
+      starts_at: startTime,
+      ends_at: endTime,
       status: 'scheduled',
-      session_type: sessionType || 'consultation',
       notes: notes || '',
+      zoom_link: zoomLink, // Required field for online-only sessions
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -841,14 +857,14 @@ router.post('/client/book-appointment', [
 
     res.json({
       success: true,
-      message: `${sessionType === 'consultation' ? 'Consultation' : 'Session'} scheduled successfully`,
+      message: 'Session scheduled successfully',
       data: {
         sessionId: session.id,
-        scheduledAt: session.scheduled_at,
+        scheduledAt: session.starts_at,
         coachName: `${coach.first_name} ${coach.last_name}`,
-        sessionType: session.session_type,
-        format: 'virtual', // All sessions are virtual
-        duration: sessionType === 'consultation' ? 15 : 60
+        format: 'virtual', // All sessions are virtual/online
+        zoomLink: session.zoom_link,
+        duration: duration
       }
     });
   } catch (error) {
@@ -874,7 +890,7 @@ router.put('/client/appointments/:id/reschedule', [
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (clientError || !clientProfile) {
@@ -901,7 +917,8 @@ router.put('/client/appointments/:id/reschedule', [
     const { data: updatedAppointment, error: updateError } = await supabase
       .from('sessions')
       .update({
-        scheduled_at: newScheduledAt,
+        starts_at: newScheduledAt,
+        ends_at: new Date(new Date(newScheduledAt).getTime() + (60 * 60 * 1000)).toISOString(),
         status: 'scheduled', // Reset to scheduled if it was confirmed
         updated_at: new Date().toISOString()
       })
@@ -937,7 +954,7 @@ router.put('/client/appointments/:id/cancel', [
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('user_id', req.user.userId)
+      .eq('id', req.user.userId)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1003,11 +1020,11 @@ router.post('/client/message-coach', [
   try {
     const { coachId, subject, message, appointmentId } = req.body;
 
-    // Get client profile
+    // Get client profile by email first
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id, first_name, last_name')
-      .eq('user_id', req.user.userId)
+      .eq('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1017,7 +1034,7 @@ router.post('/client/message-coach', [
     // Verify coach exists
     const { data: coach, error: coachError } = await supabase
       .from('coaches')
-      .select('id, first_name, last_name, users(email)')
+      .select('id, first_name, last_name, email')
       .eq('id', coachId)
       .single();
 
@@ -1025,23 +1042,12 @@ router.post('/client/message-coach', [
       return res.status(404).json({ success: false, message: 'Coach not found' });
     }
 
-    // Get coach user_id
-    const { data: coachUser, error: coachUserError } = await supabase
-      .from('coaches')
-      .select('user_id')
-      .eq('id', coachId)
-      .single();
-
-    if (coachUserError || !coachUser) {
-      return res.status(404).json({ success: false, message: 'Coach user not found' });
-    }
-
     // Store message in database
     const { data: newMessage, error: messageError } = await supabase
       .from('messages')
       .insert({
-        sender_id: req.user.userId,
-        receiver_id: coachUser.user_id,
+        sender_id: clientProfile.id,
+        receiver_id: coach.id,
         session_id: appointmentId || null,
         subject: subject,
         content: message,
@@ -1078,35 +1084,19 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
     const { page = 1, limit = 20, conversation_with } = req.query;
     const offset = (Number(page) - 1) * Number(limit);
 
-    let query = supabase
-      .from('messages')
-      .select(`
-        id,
-        sender_id,
-        receiver_id,
-        session_id,
-        subject,
-        content,
-        is_read,
-        message_type,
-        priority,
-        created_at,
-        sender:sender_id(first_name, last_name, email, role),
-        receiver:receiver_id(first_name, last_name, email, role)
-      `)
-      .or(`sender_id.eq.${req.user.userId},receiver_id.eq.${req.user.userId}`)
-      .order('created_at', { ascending: false })
-      .range(offset, offset + Number(limit) - 1);
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
 
-    if (conversation_with) {
-      query = query.or(`and(sender_id.eq.${req.user.userId},receiver_id.eq.${conversation_with}),and(sender_id.eq.${conversation_with},receiver_id.eq.${req.user.userId})`);
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
 
-    const { data: messages, error } = await query;
-
-    if (error) {
-      throw error;
-    }
+    // For now, return empty messages array
+    const messages: any[] = [];
 
     res.json({
       success: true,
@@ -1126,36 +1116,29 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
 // Get client conversations (unique participants)
 router.get('/client/conversations', authenticate, async (req: Request & { user?: any }, res: Response) => {
   try {
-    const { data: messages, error } = await supabase
-      .from('messages')
-      .select(`
-        sender_id,
-        receiver_id,
-        subject,
-        content,
-        is_read,
-        created_at,
-        sender:sender_id(first_name, last_name, email, role),
-        receiver:receiver_id(first_name, last_name, email, role)
-      `)
-      .or(`sender_id.eq.${req.user.userId},receiver_id.eq.${req.user.userId}`)
-      .order('created_at', { ascending: false });
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
 
-    if (error) {
-      throw error;
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
+
+    // For now, return empty messages array
+    const messages: any[] = [];
 
     // Group by conversation partners
     const conversationsMap = new Map();
     
     messages?.forEach(message => {
-      const partnerId = message.sender_id === req.user.userId ? message.receiver_id : message.sender_id;
-      const partner = message.sender_id === req.user.userId ? message.receiver : message.sender;
+      const partnerId = message.sender_id === clientProfile.id ? message.receiver_id : message.sender_id;
       
       if (!conversationsMap.has(partnerId)) {
         conversationsMap.set(partnerId, {
           partnerId,
-          partner,
           lastMessage: message,
           unreadCount: 0,
           totalMessages: 0
@@ -1166,7 +1149,7 @@ router.get('/client/conversations', authenticate, async (req: Request & { user?:
       conversation.totalMessages++;
       
       // Count unread messages (received by current user and not read)
-      if (message.receiver_id === req.user.userId && !message.is_read) {
+      if (message.receiver_id === clientProfile.id && !message.is_read) {
         conversation.unreadCount++;
       }
     });
@@ -1188,11 +1171,22 @@ router.put('/client/messages/:messageId/read', authenticate, async (req: Request
   try {
     const { messageId } = req.params;
 
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
     const { error } = await supabase
       .from('messages')
       .update({ is_read: true })
       .eq('id', messageId)
-      .eq('receiver_id', req.user.userId); // Only mark as read if current user is receiver
+      .eq('receiver_id', clientProfile.id); // Only mark as read if current user is receiver
 
     if (error) {
       throw error;
@@ -1225,22 +1219,48 @@ router.post('/client/send-message', [
 
     const { receiverId, subject, content, messageType = 'general', priority = 'normal', sessionId } = req.body;
 
-    // Verify receiver exists
-    const { data: receiver, error: receiverError } = await supabase
-      .from('users')
-      .select('id, first_name, last_name, email, role')
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    // Verify receiver exists (could be coach or client)
+    let receiver: any = null;
+    
+    const { data: coachReceiver, error: coachReceiverError } = await supabase
+      .from('coaches')
+      .select('id, first_name, last_name, email')
       .eq('id', receiverId)
       .single();
 
-    if (receiverError || !receiver) {
-      return res.status(404).json({ success: false, message: 'Receiver not found' });
+    if (!coachReceiverError && coachReceiver) {
+      receiver = coachReceiver;
+    } else {
+      // Try to find in clients table
+      const { data: clientReceiver, error: clientReceiverError } = await supabase
+        .from('clients')
+        .select('id, first_name, last_name, email')
+        .eq('id', receiverId)
+        .single();
+
+      if (clientReceiverError || !clientReceiver) {
+        return res.status(404).json({ success: false, message: 'Receiver not found' });
+      }
+      
+      receiver = clientReceiver;
     }
 
     // Store message in database
     const { data: newMessage, error: messageError } = await supabase
       .from('messages')
       .insert({
-        sender_id: req.user.userId,
+        sender_id: clientProfile.id,
         receiver_id: receiverId,
         session_id: sessionId || null,
         subject: subject,
@@ -1254,9 +1274,7 @@ router.post('/client/send-message', [
         content,
         message_type,
         priority,
-        created_at,
-        sender:sender_id(first_name, last_name, email),
-        receiver:receiver_id(first_name, last_name, email)
+        created_at
       `)
       .single();
 
@@ -1273,6 +1291,253 @@ router.post('/client/send-message', [
   } catch (error) {
     console.error('Send message error:', error);
     res.status(500).json({ success: false, message: 'Failed to send message' });
+  }
+});
+
+// Get client activity for dashboard
+router.get('/client/activity', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Client role required.' 
+      });
+    }
+
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    const clientId = clientProfile.id;
+
+    // Get recent sessions/appointments
+    const { data: recentSessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select(`
+        id,
+        scheduled_at,
+        status,
+        session_type,
+        duration,
+        coach_id
+      `)
+      .eq('client_id', clientId)
+      .order('scheduled_at', { ascending: false })
+      .limit(5);
+
+    if (sessionsError) {
+      console.error('Sessions query error:', sessionsError);
+    }
+
+    // Get recent messages - we'll need to handle the relationship logic in the processing
+    const { data: recentMessages, error: messagesError } = await supabase
+      .from('messages')
+      .select(`
+        id,
+        content,
+        created_at,
+        sender_id,
+        receiver_id
+      `)
+      .or(`sender_id.eq.${clientId},receiver_id.eq.${clientId}`)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (messagesError) {
+      console.error('Messages query error:', messagesError);
+    }
+
+    // Get recent saved coaches
+    const { data: recentSavedCoaches, error: savedError } = await supabase
+      .from('saved_coaches')
+      .select(`
+        saved_at,
+        coach_id
+      `)
+      .eq('client_id', clientId)
+      .order('saved_at', { ascending: false })
+      .limit(5);
+
+    if (savedError) {
+      console.error('Saved coaches query error:', savedError);
+    }
+
+    // Get recent search activity
+    const { data: recentSearches, error: searchError } = await supabase
+      .from('search_history')
+      .select(`
+        id,
+        search_criteria,
+        results_count,
+        created_at
+      `)
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .limit(5);
+
+    if (searchError) {
+      console.error('Search history query error:', searchError);
+    }
+
+    // Combine and format all activities
+    const activities = [];
+
+    // Add sessions
+    if (recentSessions) {
+      for (const session of recentSessions) {
+        let coachName = 'Unknown Coach';
+        
+        if (session.coach_id) {
+          // Look up coach name from coaches table
+          const { data: coach } = await supabase
+            .from('coaches')
+            .select('first_name, last_name')
+            .eq('id', session.coach_id)
+            .single();
+          
+          if (coach) {
+            coachName = `${coach.first_name} ${coach.last_name}`;
+          }
+        }
+        
+        activities.push({
+          id: session.id,
+          type: 'appointment',
+          title: `Session with ${coachName}`,
+          subtitle: `${session.session_type} session - ${session.status}`,
+          date: session.scheduled_at,
+          time: new Date(session.scheduled_at).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          timestamp: new Date(session.scheduled_at).getTime(),
+          data: session
+        });
+      }
+    }
+
+    // Add messages
+    if (recentMessages) {
+      for (const message of recentMessages) {
+        let partnerName = 'Unknown User';
+        const partnerId = message.sender_id === clientId ? message.receiver_id : message.sender_id;
+        
+        // Try to find the partner in coaches table first
+        const { data: coachPartner } = await supabase
+          .from('coaches')
+          .select('first_name, last_name')
+          .eq('id', partnerId)
+          .single();
+        
+        if (coachPartner) {
+          partnerName = `${coachPartner.first_name} ${coachPartner.last_name}`;
+        } else {
+          // Try to find in clients table
+          const { data: clientPartner } = await supabase
+            .from('clients')
+            .select('first_name, last_name')
+            .eq('id', partnerId)
+            .single();
+          
+          if (clientPartner) {
+            partnerName = `${clientPartner.first_name} ${clientPartner.last_name}`;
+          }
+        }
+
+        const isSender = message.sender_id === clientId;
+        activities.push({
+          id: message.id,
+          type: 'message',
+          title: `${isSender ? 'Message to' : 'Message from'} ${partnerName}`,
+          subtitle: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
+          date: message.created_at,
+          time: new Date(message.created_at).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          timestamp: new Date(message.created_at).getTime(),
+          data: message
+        });
+      }
+    }
+
+    // Add saved coaches
+    if (recentSavedCoaches) {
+      for (const saved of recentSavedCoaches) {
+        let coachName = 'Unknown Coach';
+        let coachId = 'unknown';
+        
+        if (saved.coach_id) {
+          // Look up coach name from coaches table
+          const { data: coach } = await supabase
+            .from('coaches')
+            .select('id, first_name, last_name')
+            .eq('id', saved.coach_id)
+            .single();
+          
+          if (coach) {
+            coachName = `${coach.first_name} ${coach.last_name}`;
+            coachId = coach.id;
+          }
+        }
+        
+        activities.push({
+          id: coachId,
+          type: 'saved',
+          title: `Saved ${coachName}`,
+          subtitle: 'Added to your favorites',
+          date: saved.saved_at,
+          time: new Date(saved.saved_at).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          timestamp: new Date(saved.saved_at).getTime(),
+          data: saved
+        });
+      }
+    }
+
+    // Add search activity
+    if (recentSearches) {
+      recentSearches.forEach(search => {
+        activities.push({
+          id: search.id,
+          type: 'search',
+          title: 'Coach Search',
+          subtitle: `Found ${search.results_count} coaches`,
+          date: search.created_at,
+          time: new Date(search.created_at).toLocaleTimeString([], { 
+            hour: '2-digit', 
+            minute: '2-digit' 
+          }),
+          timestamp: new Date(search.created_at).getTime(),
+          data: search
+        });
+      });
+    }
+
+    // Sort all activities by timestamp (most recent first) and limit to 10
+    const sortedActivities = activities
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 10);
+
+    res.json({
+      success: true,
+      data: sortedActivities
+    });
+  } catch (error) {
+    console.error('Get client activity error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get client activity' 
+    });
   }
 });
 

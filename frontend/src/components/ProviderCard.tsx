@@ -23,9 +23,9 @@ export interface ProviderCardProps {
   experience: string;
   rating: number;
   virtualAvailable: boolean;
-  inPersonAvailable: boolean;
   email?: string;
   isBestMatch?: boolean;
+  onSaveChange?: () => void;
 }
 
 export const ProviderCard = ({
@@ -39,9 +39,9 @@ export const ProviderCard = ({
   experience,
   rating,
   virtualAvailable,
-  inPersonAvailable,
   email,
-  isBestMatch
+  isBestMatch,
+  onSaveChange
 }: ProviderCardProps) => {
   const [showAllSpecialties, setShowAllSpecialties] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -81,6 +81,10 @@ export const ProviderCard = ({
           }
         })
         setIsSaved(false)
+        // Update localStorage
+        const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+        const updatedCoaches = savedCoaches.filter((coach: any) => coach.id !== coachId)
+        localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
       } else {
         // Add to saved
         await fetch(`${API_URL}/api/client/saved-coaches`, {
@@ -92,6 +96,23 @@ export const ProviderCard = ({
           body: JSON.stringify({ coachId })
         })
         setIsSaved(true)
+        // Update localStorage
+        const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+        const coachData = {
+          id: coachId,
+          name,
+          specialties,
+          languages,
+          bio,
+          sessionRate,
+          experience,
+          rating,
+          matchScore,
+          virtualAvailable,
+          email
+        }
+        savedCoaches.push(coachData)
+        localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
       }
     } catch (error) {
       console.error('Error saving coach:', error)
@@ -101,17 +122,19 @@ export const ProviderCard = ({
 
   return (
     <div className={cn(
-      "bg-white rounded-2xl shadow-xl hover:shadow-2xl p-6 transition-all duration-300 hover:transform hover:scale-[1.02] border-0",
+      "bg-white rounded-2xl shadow-xl hover:shadow-2xl p-6 transition-all duration-300 hover:transform hover:scale-[1.01] border-0",
+      "flex flex-col md:flex-row md:items-start md:space-x-6 md:space-y-0 space-y-4",
       isBestMatch && "ring-2 ring-blue-500 ring-opacity-50 bg-gradient-to-br from-blue-50 to-white"
     )}>
-      {isBestMatch && (
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold inline-block mb-4">
-          🏆 Best Match
-        </div>
-      )}
-      
-      <div className="flex-1">
-        <div className="flex justify-between items-start mb-4">
+      {/* Left side - Main info (takes more space on large screens) */}
+      <div className="flex-1 md:flex-[2]">
+        {isBestMatch && (
+          <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-3 py-1 rounded-full text-xs font-semibold inline-block mb-4">
+            🏆 Best Match
+          </div>
+        )}
+        
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4">
           <div className="flex-1">
             <Link href={`/coach/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
               <h3 className="text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors">{name}</h3>
@@ -126,7 +149,7 @@ export const ProviderCard = ({
           <p className="text-sm text-gray-700 leading-relaxed">{bio}</p>
         </div>
         
-        <div className="mt-4 space-y-2">
+        <div className="space-y-3 md:space-y-2">
           <div>
             <p className="text-sm font-medium">Specialties</p>
             <div className="flex flex-wrap gap-1 mt-1">
@@ -174,59 +197,58 @@ export const ProviderCard = ({
               ))}
             </div>
           </div>
+        </div>
+      </div>
 
-          <div>
-            <p className="text-sm font-medium">Provider Details</p>
-            <div className="grid grid-cols-2 gap-4 mt-2">
-              <div>
-                <p className="text-xs text-muted-foreground">Experience</p>
-                <p className="text-sm">{experience}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Rating</p>
-                <p className="text-sm">⭐ {rating}/5</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Session Rate</p>
-                <p className="text-sm">{sessionRate}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Availability</p>
-                <div className="flex gap-1">
-                  {virtualAvailable && (
-                    <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
-                      Virtual
-                    </span>
-                  )}
-                  {inPersonAvailable && (
-                    <span className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md">
-                      In-Person
-                    </span>
-                  )}
-                </div>
+      {/* Right side - Provider details and actions (sidebar on large screens) */}
+      <div className="md:flex-1 md:min-w-0 space-y-4">
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4">
+          <p className="text-sm font-medium mb-3">Provider Details</p>
+          <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
+            <div>
+              <p className="text-xs text-gray-500">Experience</p>
+              <p className="text-sm font-medium">{experience}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Rating</p>
+              <p className="text-sm font-medium">⭐ {rating}/5</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Session Rate</p>
+              <p className="text-sm font-medium">{sessionRate}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-500">Session Format</p>
+              <div className="flex gap-1 mt-1">
+                {virtualAvailable && (
+                  <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
+                    Video Sessions
+                  </span>
+                )}
               </div>
             </div>
           </div>
+        </div>
           
-          {/* Action Buttons */}
-          <div className="mt-4 flex gap-2">
-            <Link href={`/coach/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="flex-1">
-              <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
-                View Full Profile
-              </button>
-            </Link>
-            <button
-              onClick={handleSaveToggle}
-              className={`p-2 rounded-lg border transition-colors ${
-                isSaved
-                  ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
-              }`}
-              title={isSaved ? 'Remove from saved' : 'Save coach'}
-            >
-              <Heart className={`w-5 h-5 ${isSaved ? 'fill-current' : ''}`} />
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row md:flex-col gap-2">
+          <Link href={`/coach/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="flex-1">
+            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+              View Full Profile
             </button>
-          </div>
+          </Link>
+          <button
+            onClick={handleSaveToggle}
+            className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border transition-colors font-medium ${
+              isSaved
+                ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
+                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+            }`}
+            title={isSaved ? 'Remove from saved' : 'Save coach'}
+          >
+            <Heart className={`w-4 h-4 ${isSaved ? 'fill-current' : ''}`} />
+            <span className="text-sm">{isSaved ? 'Saved' : 'Save'}</span>
+          </button>
         </div>
       </div>
     </div>

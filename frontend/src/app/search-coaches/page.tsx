@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -22,10 +22,31 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { ProviderCard } from "@/components/ProviderCard";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
-import { Filter, Search, RefreshCw } from "lucide-react";
+import { 
+  Filter, 
+  Search, 
+  RefreshCw, 
+  Heart, 
+  Star, 
+  Video, 
+  MapPin, 
+  MessageCircle, 
+  Calendar, 
+  Trash2, 
+  X,
+  SlidersHorizontal,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  DollarSign,
+  Award,
+  Languages,
+  Users
+} from "lucide-react";
 import { STATE_NAMES } from "@/constants/states";
 import {
   concernOptions,
@@ -40,9 +61,11 @@ import { LANGUAGES } from "@/constants/languages";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { findMatches, getAllCoaches } from "@/lib/api";
+import { findMatches, getAllCoaches, getSavedCoaches } from "@/lib/api";
+import axios from 'axios';
+import { getApiUrl } from '@/lib/api';
 
-// Simplified form validation schema
+// Enhanced form validation schema
 const searchFormSchema = z.object({
   areaOfConcern: z
     .array(z.string())
@@ -53,11 +76,14 @@ const searchFormSchema = z.object({
     .min(1, "Please select at least one availability option"),
   therapistGender: z.string().optional().or(z.literal("any")),
   language: z.string().optional().or(z.literal("any")),
+  maxPrice: z.number().optional(),
+  experience: z.string().optional(),
+  modalities: z.array(z.string()).optional(),
+  insurance: z.array(z.string()).optional(),
 });
 
 type SearchFormData = z.infer<typeof searchFormSchema>;
 
-// Coach interface to match the API response from database
 interface Coach {
   id: string;
   name: string;
@@ -83,6 +109,10 @@ interface Coach {
   };
 }
 
+interface SavedCoach extends Coach {
+  savedDate: string;
+}
+
 function SearchCoachesContent() {
   const { user, logout, isAuthenticated } = useAuth()
   const router = useRouter();
@@ -91,195 +121,197 @@ function SearchCoachesContent() {
   const [matches, setMatches] = useState<Coach[]>([]);
   const [allCoaches, setAllCoaches] = useState<Coach[]>([]);
   const [filteredCoaches, setFilteredCoaches] = useState<Coach[]>([]);
+  const [savedCoaches, setSavedCoaches] = useState<SavedCoach[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [activeTab, setActiveTab] = useState<'search' | 'saved'>('saved');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("match");
   const [currentPage, setCurrentPage] = useState(1);
-  const coachesPerPage = 9;
+  const [coachesPerPage] = useState(12);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
+  const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
 
   const form = useForm<SearchFormData>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
       areaOfConcern: [],
+      location: '',
       availability: [],
-      location: "",
-      therapistGender: "",
-      language: "",
+      therapistGender: 'any',
+      language: 'any',
+      maxPrice: 500,
+      experience: '',
+      modalities: [],
+      insurance: [],
     },
   });
 
-  // Load user's previous search preferences from localStorage
-  useEffect(() => {
-    const loadUserPreferences = () => {
-      try {
-        const savedFormData = localStorage.getItem("formData");
-        if (savedFormData) {
-          const data = JSON.parse(savedFormData);
-          form.setValue("location", data.location || "");
-          form.setValue("language", data.language || "any");
-          form.setValue("therapistGender", data.therapistGender || "any");
-          form.setValue("areaOfConcern", data.areaOfConcern || []);
-          form.setValue("availability", data.availability || []);
-        }
-      } catch (error) {
-        console.error("Error loading saved preferences:", error);
-      }
-    };
+  // Load user preferences from profile
+  const loadUserPreferences = () => {
+    // This would load from user profile if available
+    // For now, we'll use default values
+  };
 
-    loadUserPreferences();
-    loadAllCoaches();
-  }, [form]);
-
-  // Load all coaches for modern search
+  // Load all coaches from database
   const loadAllCoaches = async () => {
     try {
       setIsLoading(true);
-      setError(null); // Clear any previous errors
-
-      console.log("Loading coaches from database...");
+      setError(null);
       const coaches = await getAllCoaches();
-
-      console.log("Loaded coaches from database:", coaches);
-      console.log("Number of coaches loaded:", coaches.length);
-
       setAllCoaches(coaches);
       setFilteredCoaches(coaches);
     } catch (error) {
-      console.error("Error loading coaches:", error);
-      setError(
-        `Failed to load coaches: ${
-          error instanceof Error ? error.message : "Network error"
-        }`
-      );
-
-      // Temporary fallback with test data to show the UI is working
-      console.log("Using fallback test data...");
-      const fallbackCoaches = [
-        {
-          id: "test-1",
-          name: "Dr. Lisa Thompson",
-          specialties: ["Anxiety", "Depression", "Work Stress"],
-          languages: ["English", "Spanish"],
-          bio: "Dr. Thompson is a licensed clinical psychologist with over 10 years of experience specializing in Acceptance and Commitment Therapy (ACT).",
-          sessionRate: "$120/session",
-          experience: "10 years",
-          rating: 4.8,
-          matchScore: 85,
-          virtualAvailable: true,
-          inPersonAvailable: true,
-          email: "lisa.thompson@example.com",
-        },
-        {
-          id: "test-2",
-          name: "Dr. James Wilson",
-          specialties: ["Trauma", "PTSD", "Anxiety"],
-          languages: ["English"],
-          bio: "Dr. Wilson specializes in trauma recovery and PTSD treatment using ACT principles.",
-          sessionRate: "$110/session",
-          experience: "8 years",
-          rating: 4.9,
-          matchScore: 78,
-          virtualAvailable: true,
-          inPersonAvailable: false,
-          email: "james.wilson@example.com",
-        },
-      ];
-      setAllCoaches(fallbackCoaches);
-      setFilteredCoaches(fallbackCoaches);
+      console.error('Error loading coaches:', error);
+      setError('Failed to load coaches. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handle quick search
-  const handleQuickSearch = () => {
-    if (!searchQuery.trim()) {
-      setFilteredCoaches(allCoaches);
-      return;
+  // Load saved coaches
+  const loadSavedCoaches = async () => {
+    try {
+      const savedCoachesData = await getSavedCoaches();
+      setSavedCoaches(savedCoachesData);
+      // Set filtered coaches to saved coaches by default
+      setFilteredCoaches(savedCoachesData);
+    } catch (error) {
+      console.error('Error loading saved coaches:', error);
+      setSavedCoaches([]);
+      setFilteredCoaches([]);
     }
+  };
 
-    const filtered = allCoaches.filter(
-      (coach) =>
+  // Toggle save/unsave coach
+  const handleSaveToggle = async (coach: Coach) => {
+    try {
+      // This would call the save/unsave API
+      // For now, we'll just toggle locally
+      const isSaved = savedCoaches.some(sc => sc.id === coach.id);
+      if (isSaved) {
+        setSavedCoaches(prev => prev.filter(sc => sc.id !== coach.id));
+      } else {
+        setSavedCoaches(prev => [...prev, { ...coach, savedDate: new Date().toISOString() }]);
+      }
+    } catch (error) {
+      console.error('Error toggling save:', error);
+    }
+  };
+
+  // Refresh saved coaches from API
+  const refreshSavedCoaches = async () => {
+    try {
+      const savedCoachesData = await getSavedCoaches();
+      setSavedCoaches(savedCoachesData);
+      if (activeTab === 'saved') {
+        setFilteredCoaches(savedCoachesData);
+      }
+    } catch (error) {
+      console.error('Error refreshing saved coaches:', error);
+    }
+  };
+
+  // Quick search without form submission
+  const handleQuickSearch = () => {
+    if (searchQuery.trim()) {
+      const filtered = allCoaches.filter(coach => 
         coach.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        coach.specialties.some((specialty) =>
+        coach.specialties.some(specialty => 
           specialty.toLowerCase().includes(searchQuery.toLowerCase())
         ) ||
         coach.bio.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setFilteredCoaches(filtered);
+      );
+      setFilteredCoaches(filtered);
+      setHasSearched(true);
+    } else {
+      setFilteredCoaches(allCoaches);
+      setHasSearched(false);
+    }
   };
 
-  // Sort coaches
-  useEffect(() => {
-    const sorted = [...filteredCoaches].sort((a, b) => {
-      switch (sortBy) {
-        case "rating":
-          return b.rating - a.rating;
-        case "experience":
-          return parseInt(b.experience) - parseInt(a.experience);
-        case "name":
-          return a.name.localeCompare(b.name);
-        case "match":
-        default:
-          return b.matchScore - a.matchScore;
-      }
-    });
-    setFilteredCoaches(sorted);
-  }, [sortBy, allCoaches]);
-
-  // Pagination logic
-  const indexOfLastCoach = currentPage * coachesPerPage;
-  const indexOfFirstCoach = indexOfLastCoach - coachesPerPage;
-  const currentCoaches = filteredCoaches.slice(
-    indexOfFirstCoach,
-    indexOfLastCoach
-  );
-  const totalPages = Math.ceil(filteredCoaches.length / coachesPerPage);
-
-  // Reset to first page when search results change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [filteredCoaches.length]);
-
+  // Handle pagination
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  // Handle form submission
   const handleSubmit = async (data: SearchFormData) => {
-    setIsLoading(true);
-    setShowForm(false);
-    setError(null); // Clear any previous errors
-
     try {
-      // Prepare data for API call, converting 'any' to empty strings
-      const apiData = {
-        ...data,
-        language: data.language === "any" ? "" : data.language,
-        therapistGender:
-          data.therapistGender === "any" ? "" : data.therapistGender,
-      };
-
-      // Call the real API
-      const result = await findMatches(apiData);
-
+      setIsLoading(true);
+      setError(null);
+      
+      // Use the findMatches API for advanced search
+      const result = await findMatches(data);
       setMatches(result.matches);
+      setFilteredCoaches(result.matches);
       setHasSearched(true);
-
-      // Save form data to localStorage
-      localStorage.setItem("formData", JSON.stringify(data));
-      localStorage.setItem("matches", JSON.stringify(result.matches));
+      setCurrentPage(1);
     } catch (error) {
-      console.error("Error searching coaches:", error);
-      setError("Failed to search coaches. Please try again.");
-      setShowForm(true); // Show form again on error
+      console.error('Search error:', error);
+      setError('Search failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Get current coaches for pagination
+  const getCurrentCoaches = () => {
+    const startIndex = (currentPage - 1) * coachesPerPage;
+    const endIndex = startIndex + coachesPerPage;
+    return filteredCoaches.slice(startIndex, endIndex);
+  };
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredCoaches.length / coachesPerPage);
+
+  // Apply real-time filters
+  const applyFilters = () => {
+    let filtered = allCoaches;
+
+    // Apply search query
+    if (searchQuery.trim()) {
+      filtered = filtered.filter(coach => 
+        coach.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        coach.specialties.some(specialty => 
+          specialty.toLowerCase().includes(searchQuery.toLowerCase())
+        ) ||
+        coach.bio.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    // Apply price filter
+    filtered = filtered.filter(coach => {
+      const price = parseInt(coach.sessionRate.replace(/[^0-9]/g, ''));
+      return price >= priceRange[0] && price <= priceRange[1];
+    });
+
+    // Apply selected filters
+    if (selectedFilters.size > 0) {
+      filtered = filtered.filter(coach => {
+        return Array.from(selectedFilters).every(filter => {
+          if (filter === 'virtual') return coach.virtualAvailable;
+          if (filter === 'verified') return true; // Assuming verified coaches
+          if (filter === 'accepts-insurance') return coach.insuranceAccepted && coach.insuranceAccepted.length > 0;
+          return true;
+        });
+      });
+    }
+
+    setFilteredCoaches(filtered);
+    setCurrentPage(1);
+  };
+
+  // Load data on component mount
+  useEffect(() => {
+    loadUserPreferences();
+    loadSavedCoaches(); // Only load saved coaches initially
+  }, []);
+
+  // Apply filters when dependencies change
+  useEffect(() => {
+    applyFilters();
+  }, [searchQuery, priceRange, selectedFilters]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
@@ -319,14 +351,8 @@ function SearchCoachesContent() {
               </button>
             </Link>
             <button className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm whitespace-nowrap">
-              Search Coaches
+              Search & Save Coaches
             </button>
-
-            <Link href="/saved-coaches">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Saved Coaches
-              </button>
-            </Link>
             <Link href="/appointments">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
                 Appointments
@@ -351,12 +377,63 @@ function SearchCoachesContent() {
         {/* Page Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Find Your Perfect Coach
+            Your Saved Coaches
           </h1>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Complete the assessment below to get personalized coach matches
-            based on your goals, preferences, and needs.
+            View and manage your favorite coaches. Use the search tab to find new coaches to save.
           </p>
+        </div>
+
+        {/* Tab Navigation */}
+        <div className="flex justify-center mb-8">
+          <div className="flex bg-gray-100 rounded-lg p-1">
+            <button
+              onClick={() => {
+                setActiveTab('saved');
+                // Show saved coaches when switching to saved tab
+                setFilteredCoaches(savedCoaches);
+                setHasSearched(false);
+              }}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeTab === 'saved'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Heart className="w-4 h-4 inline mr-2" />
+              Saved Coaches ({savedCoaches.length})
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('search');
+                // Load all coaches when switching to search tab
+                if (allCoaches.length === 0) {
+                  loadAllCoaches();
+                }
+                setFilteredCoaches(allCoaches);
+                setHasSearched(false);
+              }}
+              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+                activeTab === 'search'
+                  ? 'bg-white text-blue-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-800'
+              }`}
+            >
+              <Search className="w-4 h-4 inline mr-2" />
+              Search New Coaches
+            </button>
+          </div>
+          {/* Refresh button for saved coaches */}
+          {activeTab === 'saved' && (
+            <Button
+              onClick={refreshSavedCoaches}
+              variant="outline"
+              className="ml-4 flex items-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refresh
+            </Button>
+          )}
         </div>
 
         {/* Loading State */}
@@ -378,645 +455,497 @@ function SearchCoachesContent() {
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {error}
-            <button
-              onClick={() => setError(null)}
-              className="ml-2 text-red-500 hover:text-red-700 font-medium"
-            >
-              ×
-            </button>
           </div>
         )}
 
-        {/* Debug Info - Temporary */}
-        <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
-          <strong>Debug Info:</strong>
-          <br />
-          All Coaches Count: {allCoaches.length}
-          <br />
-          Filtered Coaches Count: {filteredCoaches.length}
-          <br />
-          Current Page: {currentPage}
-          <br />
-          Coaches Per Page: {coachesPerPage}
-          <br />
-          Total Pages: {totalPages}
-          <br />
-          Current Coaches Showing: {currentCoaches.length}
-          <br />
-          Loading: {isLoading ? "Yes" : "No"}
-          <br />
-          Has Searched: {hasSearched ? "Yes" : "No"}
-          <br />
-          Show Form: {showForm ? "Yes" : "No"}
-          <br />
-          {allCoaches.length > 0 && (
-            <>
-              First Coach: {allCoaches[0]?.name} (ID: {allCoaches[0]?.id})
-              <br />
-              Data Source:{" "}
-              {allCoaches[0]?.id?.startsWith("test-")
-                ? "Fallback Test Data"
-                : "Database"}
-            </>
-          )}
-        </div>
-
-        {/* Modern Search Interface */}
-        {showForm && !isLoading && (
-          <div className="max-w-6xl mx-auto">
-            {/* Quick Search Bar */}
-            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-6 mb-8">
-              <div className="flex items-center space-x-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="text"
-                      placeholder="Search by specialty, location, or coach name..."
-                      className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+        {/* Search Form - Only show when on search tab */}
+        {activeTab === 'search' && showForm && (
+          <Card className="mb-8 shadow-lg border-0">
+            <CardContent className="p-6">
+              {/* Modern Search Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-blue-100 rounded-lg">
+                    <SlidersHorizontal className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Smart Search Filters</h2>
+                    <p className="text-sm text-gray-600">Find coaches that match your preferences</p>
                   </div>
                 </div>
                 <Button
-                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                   variant="outline"
-                  className="px-6 py-3"
+                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                  className="flex items-center space-x-2 bg-white hover:bg-gray-50"
                 >
-                  <Filter className="w-4 h-4 mr-2" />
-                  {showAdvancedFilters ? "Hide" : "Show"} Filters
-                </Button>
-                <Button
-                  onClick={handleQuickSearch}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                >
-                  Search
+                  {showAdvancedFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                  <span>{showAdvancedFilters ? "Hide" : "Show"} Advanced</span>
                 </Button>
               </div>
-            </div>
 
-            {/* Advanced Filters */}
-            {showAdvancedFilters && (
-              <Card className="bg-white shadow-lg border-0 rounded-2xl overflow-hidden mb-8">
-                <CardContent className="p-6">
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(handleSubmit)}
-                      className="space-y-6"
+              {/* Quick Search Bar */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Input
+                    type="text"
+                    placeholder="Search by name, specialty, or description..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 pr-4 py-3 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
                     >
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {/* Areas of Concern */}
-                        <FormField
-                          control={form.control}
-                          name="areaOfConcern"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold">
-                                Areas of Concern
-                              </FormLabel>
-                              <div className="space-y-2 mt-2">
-                                {concernOptions.slice(0, 6).map((option) => (
-                                  <FormField
-                                    key={option.id}
-                                    control={form.control}
-                                    name="areaOfConcern"
-                                    render={({ field }) => (
-                                      <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                        <FormControl>
-                                          <Checkbox
-                                            checked={field.value?.includes(
-                                              option.id
-                                            )}
-                                            onCheckedChange={(checked) => {
-                                              return checked
-                                                ? field.onChange([
-                                                    ...field.value,
-                                                    option.id,
-                                                  ])
-                                                : field.onChange(
-                                                    field.value?.filter(
-                                                      (value) =>
-                                                        value !== option.id
-                                                    )
-                                                  );
-                                            }}
-                                          />
-                                        </FormControl>
-                                        <FormLabel className="font-normal text-xs">
-                                          {option.label}
-                                        </FormLabel>
-                                      </FormItem>
-                                    )}
-                                  />
-                                ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Location */}
-                        <FormField
-                          control={form.control}
-                          name="location"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold">
-                                Location
-                              </FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select your state" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent className="max-h-[200px]">
-                                  {Object.entries(STATE_NAMES).map(
-                                    ([code, name]) => (
-                                      <SelectItem key={code} value={code}>
-                                        {name}
-                                      </SelectItem>
-                                    )
-                                  )}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Availability */}
-                        <FormField
-                          control={form.control}
-                          name="availability"
-                          render={() => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold">
-                                Availability
-                              </FormLabel>
-                              <div className="space-y-2 mt-2">
-                                {availabilityOptions
-                                  .slice(0, 4)
-                                  .map((option) => (
-                                    <FormField
-                                      key={option.id}
-                                      control={form.control}
-                                      name="availability"
-                                      render={({ field }) => (
-                                        <FormItem className="flex flex-row items-start space-x-2 space-y-0">
-                                          <FormControl>
-                                            <Checkbox
-                                              checked={field.value?.includes(
-                                                option.id
-                                              )}
-                                              onCheckedChange={(checked) => {
-                                                return checked
-                                                  ? field.onChange([
-                                                      ...field.value,
-                                                      option.id,
-                                                    ])
-                                                  : field.onChange(
-                                                      field.value?.filter(
-                                                        (value) =>
-                                                          value !== option.id
-                                                      )
-                                                    );
-                                              }}
-                                            />
-                                          </FormControl>
-                                          <FormLabel className="font-normal text-xs">
-                                            {option.label}
-                                          </FormLabel>
-                                        </FormItem>
-                                      )}
-                                    />
-                                  ))}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Coach Gender */}
-                        <FormField
-                          control={form.control}
-                          name="therapistGender"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold">
-                                Coach Gender
-                              </FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Any gender" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="any">
-                                    Any gender
-                                  </SelectItem>
-                                  {genderIdentityOptions.map((option) => (
-                                    <SelectItem
-                                      key={option.value}
-                                      value={option.value}
-                                    >
-                                      {option.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Language */}
-                        <FormField
-                          control={form.control}
-                          name="language"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel className="text-sm font-semibold">
-                                Language
-                              </FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Any language" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  <SelectItem value="any">
-                                    Any language
-                                  </SelectItem>
-                                  {LANGUAGES.slice(0, 8).map((language) => (
-                                    <SelectItem key={language} value={language}>
-                                      {language}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        {/* Search Button */}
-                        <div className="flex items-end">
-                          <Button
-                            type="submit"
-                            className="w-full px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800"
-                          >
-                            🔍 Search Coaches
-                          </Button>
-                        </div>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Quick Results Preview */}
-            {!isLoading && allCoaches.length > 0 && (
-              <div className="mb-8">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-2xl font-bold text-gray-900">
-                    Available Coaches ({filteredCoaches.length})
-                  </h2>
-                  <div className="flex items-center space-x-2 text-sm text-gray-600">
-                    <span>Sort by:</span>
-                    <Select value={sortBy} onValueChange={setSortBy}>
-                      <SelectTrigger className="w-32">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="match">Best Match</SelectItem>
-                        <SelectItem value="rating">Highest Rating</SelectItem>
-                        <SelectItem value="experience">
-                          Most Experience
-                        </SelectItem>
-                        <SelectItem value="name">Name A-Z</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
                 </div>
+              </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {currentCoaches.map((coach, index) => (
-                    <div
-                      key={coach.id}
-                      className="transform transition-all duration-300 hover:scale-[1.02]"
+              {/* Quick Filter Chips */}
+              <div className="mb-6">
+                <div className="flex flex-wrap gap-2">
+                  {['virtual', 'verified', 'accepts-insurance'].map((filter) => (
+                    <button
+                      key={filter}
+                      onClick={() => {
+                        const newFilters = new Set(selectedFilters);
+                        if (newFilters.has(filter)) {
+                          newFilters.delete(filter);
+                        } else {
+                          newFilters.add(filter);
+                        }
+                        setSelectedFilters(newFilters);
+                      }}
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                        selectedFilters.has(filter)
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
                     >
-                      <ProviderCard {...coach} isBestMatch={index === 0} />
-                    </div>
+                      {filter === 'virtual' && <Video className="w-4 h-4 inline mr-2" />}
+                      {filter === 'verified' && <Award className="w-4 h-4 inline mr-2" />}
+                      {filter === 'accepts-insurance' && <DollarSign className="w-4 h-4 inline mr-2" />}
+                      {filter.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                    </button>
                   ))}
                 </div>
+              </div>
 
-                {totalPages > 1 && (
-                  <div className="flex justify-center mt-8">
-                    <div className="flex items-center space-x-2">
-                      <Button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage === 1}
-                        variant="outline"
-                        className="px-3 py-2"
-                      >
-                        ← Previous
-                      </Button>
+              {/* Price Range Slider */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-3">
+                  Price Range: ${priceRange[0]} - ${priceRange[1]}
+                </label>
+                <div className="flex items-center space-x-4">
+                  <Input
+                    type="number"
+                    placeholder="Min"
+                    value={priceRange[0]}
+                    onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                    className="w-24"
+                  />
+                  <span className="text-gray-500">to</span>
+                  <Input
+                    type="number"
+                    placeholder="Max"
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
+                    className="w-24"
+                  />
+                </div>
+              </div>
 
-                      {/* Page numbers */}
-                      <div className="flex items-center space-x-1">
-                        {Array.from(
-                          { length: Math.min(5, totalPages) },
-                          (_, i) => {
-                            let pageNum;
-                            if (totalPages <= 5) {
-                              pageNum = i + 1;
-                            } else if (currentPage <= 3) {
-                              pageNum = i + 1;
-                            } else if (currentPage >= totalPages - 2) {
-                              pageNum = totalPages - 4 + i;
-                            } else {
-                              pageNum = currentPage - 2 + i;
-                            }
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+                  {/* Basic Filters */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <FormField
+                      control={form.control}
+                      name="areaOfConcern"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2">
+                            <Users className="w-4 h-4 text-blue-600" />
+                            <span>Areas of Concern</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                              {concernOptions.map((concern) => (
+                                <div key={concern.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={concern.id}
+                                    checked={field.value?.includes(concern.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      if (checked) {
+                                        field.onChange([...current, concern.id]);
+                                      } else {
+                                        field.onChange(current.filter((item) => item !== concern.id));
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={concern.id}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {concern.label}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                            return (
-                              <Button
-                                key={pageNum}
-                                onClick={() => handlePageChange(pageNum)}
-                                variant={
-                                  currentPage === pageNum
-                                    ? "default"
-                                    : "outline"
-                                }
-                                className="px-3 py-2 min-w-[40px]"
-                              >
-                                {pageNum}
-                              </Button>
-                            );
-                          }
+                    <FormField
+                      control={form.control}
+                      name="location"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2">
+                            <MapPin className="w-4 h-4 text-blue-600" />
+                            <span>Location</span>
+                          </FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger className="bg-white">
+                                <SelectValue placeholder="Select your state" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              {Object.entries(STATE_NAMES).map(([code, name]) => (
+                                <SelectItem key={code} value={code}>
+                                  {name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="availability"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-blue-600" />
+                            <span>Availability</span>
+                          </FormLabel>
+                          <FormControl>
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
+                              {availabilityOptions.map((option) => (
+                                <div key={option.id} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={option.id}
+                                    checked={field.value?.includes(option.id)}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value || [];
+                                      if (checked) {
+                                        field.onChange([...current, option.id]);
+                                      } else {
+                                        field.onChange(current.filter((item) => item !== option.id));
+                                      }
+                                    }}
+                                  />
+                                  <label
+                                    htmlFor={option.id}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {option.label}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  {/* Advanced Filters */}
+                  {showAdvancedFilters && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-gray-200">
+                      <FormField
+                        control={form.control}
+                        name="therapistGender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Users className="w-4 h-4 text-blue-600" />
+                              <span>Preferred Coach Gender</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue placeholder="Any gender" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any gender</SelectItem>
+                                {genderIdentityOptions.map((option) => (
+                                  <SelectItem key={option.value} value={option.value}>
+                                    {option.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
                         )}
-                      </div>
+                      />
 
+                      <FormField
+                        control={form.control}
+                        name="language"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Languages className="w-4 h-4 text-blue-600" />
+                              <span>Preferred Language</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue placeholder="Any language" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any language</SelectItem>
+                                {LANGUAGES.map((language) => (
+                                  <SelectItem key={language} value={language}>
+                                    {language}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="modalities"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Award className="w-4 h-4 text-blue-600" />
+                              <span>Therapy Modalities</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-32 overflow-y-auto">
+                                {modalityOptions.map((modality) => (
+                                  <div key={modality.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={modality.id}
+                                      checked={field.value?.includes(modality.id)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, modality.id]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== modality.id));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={modality.id}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    >
+                                      {modality.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                    <div className="flex items-center space-x-4">
                       <Button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage === totalPages}
+                        type="button"
                         variant="outline"
-                        className="px-3 py-2"
+                        onClick={handleQuickSearch}
+                        className="flex items-center space-x-2"
                       >
-                        Next →
+                        <Search className="w-4 h-4" />
+                        <span>Quick Search</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          form.reset();
+                          setSearchQuery('');
+                          setPriceRange([0, 500]);
+                          setSelectedFilters(new Set());
+                          setFilteredCoaches(allCoaches);
+                        }}
+                        className="flex items-center space-x-2"
+                      >
+                        <RefreshCw className="w-4 h-4" />
+                        <span>Reset All</span>
                       </Button>
                     </div>
+                    <Button
+                      type="submit"
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+                    >
+                      <Search className="w-4 h-4 mr-2" />
+                      Find Matches
+                    </Button>
                   </div>
-                )}
-
-                {/* Remove the "View All Coaches" button since we have pagination now */}
-              </div>
-            )}
-
-            {/* No Coaches Found */}
-            {!isLoading && allCoaches.length === 0 && !error && (
-              <div className="text-center py-12">
-                <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <svg
-                    className="w-8 h-8 text-gray-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                    />
-                  </svg>
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No coaches found in database
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  There are currently no coaches available in the system. Please
-                  check back later or contact support.
-                </p>
-                <Button
-                  onClick={loadAllCoaches}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
-            )}
-          </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
         )}
 
         {/* Results Section */}
-        {hasSearched && !isLoading && !showForm && (
-          <div className="space-y-8">
-            {/* Results Header */}
-            <div className="flex justify-between items-start">
-              <div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  Your Coach Matches
-                </h2>
-                <p className="text-lg text-gray-600 mb-2">
-                  We found {matches.length} coach
-                  {matches.length !== 1 ? "es" : ""} who match your preferences
-                </p>
-                {matches.length > 0 && (
-                  <div className="flex items-center gap-4 mb-4">
-                    <span className="text-sm text-gray-500">
-                      Match Quality:
-                    </span>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {(() => {
-                        const excellent = matches.filter(
-                          (m) => m.matchScore >= 90
-                        );
-                        const good = matches.filter(
-                          (m) => m.matchScore >= 75 && m.matchScore < 90
-                        );
-                        const fair = matches.filter((m) => m.matchScore < 75);
-                        const ranges = [];
-                        if (excellent.length > 0)
-                          ranges.push({
-                            label: "Excellent Match",
-                            count: excellent.length,
-                            color: "bg-green-100 text-green-800",
-                            range: "90%+",
-                          });
-                        if (good.length > 0)
-                          ranges.push({
-                            label: "Good Match",
-                            count: good.length,
-                            color: "bg-blue-100 text-blue-800",
-                            range: "75-89%",
-                          });
-                        if (fair.length > 0)
-                          ranges.push({
-                            label: "Fair Match",
-                            count: fair.length,
-                            color: "bg-orange-100 text-orange-800",
-                            range: "<75%",
-                          });
-                        return ranges.map((range, index) => (
-                          <div
-                            key={index}
-                            className={`${range.color} px-3 py-1 rounded-full text-sm font-medium`}
-                          >
-                            {range.count} {range.label}
-                            {range.count > 1 ? "es" : ""} ({range.range})
-                          </div>
-                        ));
-                      })()}
-                    </div>
-                  </div>
-                )}
-              </div>
-              <Button
-                onClick={() => setShowForm(true)}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Filter className="w-4 h-4" />
-                New Search
-              </Button>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {activeTab === 'saved' ? 'Your Saved Coaches' : 'Available Coaches'}
+              </h2>
+              <p className="text-gray-600">
+                {activeTab === 'saved' 
+                  ? `${savedCoaches.length} saved coach${savedCoaches.length !== 1 ? 'es' : ''}`
+                  : `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''} found`
+                }
+              </p>
             </div>
-
-            {matches.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="bg-gray-100 rounded-full p-3 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
-                  <Search className="w-8 h-8 text-gray-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                  No coaches found
-                </h3>
-                <p className="text-gray-600 mb-6">
-                  We couldn't find any coaches matching your current
-                  preferences. Try adjusting your search criteria for better
-                  results.
-                </p>
-                <Button
-                  onClick={() => setShowForm(true)}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Modify Search Criteria
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-6">
-                {/* Pagination for search results */}
-                {(() => {
-                  const searchResultsPerPage = 9;
-                  const searchIndexOfLastCoach =
-                    currentPage * searchResultsPerPage;
-                  const searchIndexOfFirstCoach =
-                    searchIndexOfLastCoach - searchResultsPerPage;
-                  const currentSearchResults = matches.slice(
-                    searchIndexOfFirstCoach,
-                    searchIndexOfLastCoach
-                  );
-                  const searchTotalPages = Math.ceil(
-                    matches.length / searchResultsPerPage
-                  );
-
-                  return (
-                    <>
-                      <div className="space-y-6">
-                        {currentSearchResults.map((provider, index) => (
-                          <div
-                            key={provider.id || provider.name}
-                            className="transform transition-all duration-300 hover:scale-[1.01]"
-                          >
-                            <ProviderCard
-                              {...provider}
-                              isBestMatch={index === 0}
-                            />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Pagination for search results */}
-                      {searchTotalPages > 1 && (
-                        <div className="flex justify-center mt-8">
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              onClick={() => handlePageChange(currentPage - 1)}
-                              disabled={currentPage === 1}
-                              variant="outline"
-                              className="px-3 py-2"
-                            >
-                              ← Previous
-                            </Button>
-
-                            {/* Page numbers */}
-                            <div className="flex items-center space-x-1">
-                              {Array.from(
-                                { length: Math.min(5, searchTotalPages) },
-                                (_, i) => {
-                                  let pageNum;
-                                  if (searchTotalPages <= 5) {
-                                    pageNum = i + 1;
-                                  } else if (currentPage <= 3) {
-                                    pageNum = i + 1;
-                                  } else if (
-                                    currentPage >=
-                                    searchTotalPages - 2
-                                  ) {
-                                    pageNum = searchTotalPages - 4 + i;
-                                  } else {
-                                    pageNum = currentPage - 2 + i;
-                                  }
-
-                                  return (
-                                    <Button
-                                      key={pageNum}
-                                      onClick={() => handlePageChange(pageNum)}
-                                      variant={
-                                        currentPage === pageNum
-                                          ? "default"
-                                          : "outline"
-                                      }
-                                      className="px-3 py-2 min-w-[40px]"
-                                    >
-                                      {pageNum}
-                                    </Button>
-                                  );
-                                }
-                              )}
-                            </div>
-
-                            <Button
-                              onClick={() => handlePageChange(currentPage + 1)}
-                              disabled={currentPage === searchTotalPages}
-                              variant="outline"
-                              className="px-3 py-2"
-                            >
-                              Next →
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
+            {activeTab === 'search' && (
+              <Button
+                variant="outline"
+                onClick={() => setShowForm(!showForm)}
+                className="flex items-center space-x-2"
+              >
+                {showForm ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                <span>{showForm ? 'Hide' : 'Show'} Filters</span>
+              </Button>
             )}
           </div>
-        )}
+
+          {/* No Results Message */}
+          {filteredCoaches.length === 0 && !isLoading && (
+            <Card className="p-12 text-center">
+              <div className="max-w-md mx-auto">
+                {activeTab === 'saved' ? (
+                  <>
+                    <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Saved Coaches Yet</h3>
+                    <p className="text-gray-600 mb-4">
+                      You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setActiveTab('search');
+                        if (allCoaches.length === 0) {
+                          loadAllCoaches();
+                        }
+                        setFilteredCoaches(allCoaches);
+                      }}
+                      variant="outline"
+                    >
+                      Search Coaches
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Coaches Found</h3>
+                    <p className="text-gray-600 mb-4">
+                      Try adjusting your search criteria or filters to find more matches.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        setSearchQuery('');
+                        setPriceRange([0, 500]);
+                        setSelectedFilters(new Set());
+                        setFilteredCoaches(allCoaches);
+                      }}
+                      variant="outline"
+                    >
+                      Clear Filters
+                    </Button>
+                  </>
+                )}
+              </div>
+            </Card>
+          )}
+
+                    {/* Coaches Grid */}
+          {filteredCoaches.length > 0 && (
+            <div className="grid grid-cols-1 gap-6">
+              {getCurrentCoaches().map((coach) => (
+                <ProviderCard
+                  key={coach.id}
+                  id={coach.id}
+                  name={coach.name}
+                  matchScore={coach.matchScore}
+                  specialties={coach.specialties}
+                  languages={coach.languages}
+                  bio={coach.bio}
+                  sessionRate={coach.sessionRate}
+                  experience={coach.experience}
+                  rating={coach.rating}
+                  virtualAvailable={coach.virtualAvailable}
+                  email={coach.email}
+                  isBestMatch={coach.matchScore >= 90}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex justify-center mt-8">
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  Previous
+                </Button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <Button
+                    key={page}
+                    variant={currentPage === page ? 'default' : 'outline'}
+                    onClick={() => handlePageChange(page)}
+                    className="w-10"
+                  >
+                    {page}
+                  </Button>
+                ))}
+                <Button
+                  variant="outline"
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -1024,7 +953,7 @@ function SearchCoachesContent() {
 
 export default function SearchCoaches() {
   return (
-    <ProtectedRoute allowedRoles={["client"]}>
+    <ProtectedRoute>
       <SearchCoachesContent />
     </ProtectedRoute>
   );

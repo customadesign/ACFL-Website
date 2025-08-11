@@ -53,6 +53,7 @@ const API_URL = getApiUrl();
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [authChecked, setAuthChecked] = useState(false);
   const router = useRouter();
 
   // Set up axios defaults
@@ -65,19 +66,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is logged in on mount
   useEffect(() => {
-    const checkAuth = async () => {
+    const checkAuth = async (retryCount = 0) => {
       const token = localStorage.getItem('token');
       if (token) {
         try {
+          console.log('Checking authentication with token...');
           const response = await axios.get(`${API_URL}/api/auth/profile`);
+          console.log('Auth check successful:', response.data.user);
           setUser(response.data.user);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Auth check failed:', error);
-          localStorage.removeItem('token');
-          delete axios.defaults.headers.common['Authorization'];
+          // Only remove token if it's a 401 or 404 error (not network issues)
+          if (error.response?.status === 401 || error.response?.status === 404) {
+            console.log('Removing invalid token');
+            localStorage.removeItem('token');
+            delete axios.defaults.headers.common['Authorization'];
+            setUser(null);
+          } else if (retryCount < 2) {
+            // Retry on network errors
+            console.log(`Network error, retrying... (${retryCount + 1}/3)`);
+            setTimeout(() => checkAuth(retryCount + 1), 1000);
+            return;
+          } else {
+            console.log('Max retries reached, keeping token for manual retry');
+          }
         }
+      } else {
+        console.log('No token found');
       }
       setLoading(false);
+      setAuthChecked(true);
     };
 
     checkAuth();
@@ -196,7 +214,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     registerClient,
     registerCoach,
     logout,
-    isAuthenticated: !!user
+    isAuthenticated: !!user && authChecked
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

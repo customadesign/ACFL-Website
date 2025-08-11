@@ -37,7 +37,10 @@ export default function CoachProfilePage() {
     experience: '',
     hourlyRate: '',
     qualifications: '',
-    isAvailable: true
+    isAvailable: true,
+    videoAvailable: false,
+    inPersonAvailable: false,
+    phoneAvailable: false
   });
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
@@ -72,10 +75,22 @@ export default function CoachProfilePage() {
           email: data.email || '',
           phone: data.phone || '',
           bio: data.bio || '',
-          experience: data.experience?.toString() || '',
-          hourlyRate: data.hourly_rate?.toString() || '',
-          qualifications: Array.isArray(data.qualifications) ? data.qualifications.join(', ') : '',
-          isAvailable: data.is_available ?? true
+          experience: data.years_experience?.toString() || '',
+          hourlyRate: data.hourly_rate_usd?.toString() || '',
+          qualifications: (() => {
+            try {
+              const quals = typeof data.qualifications === 'string' 
+                ? JSON.parse(data.qualifications) 
+                : data.qualifications;
+              return Array.isArray(quals) ? quals.join(', ') : (data.qualifications || '');
+            } catch {
+              return data.qualifications || '';
+            }
+          })(),
+          isAvailable: data.is_available ?? true,
+          videoAvailable: data.videoAvailable ?? false,
+          inPersonAvailable: data.inPersonAvailable ?? false,
+          phoneAvailable: data.phoneAvailable ?? false
         });
         setSelectedSpecialties(data.specialties || []);
         setSelectedLanguages(data.languages || []);
@@ -128,10 +143,72 @@ export default function CoachProfilePage() {
     }
   };
 
+  // Helper function to check if a field is valid
+  const isFieldValid = (fieldName: string, value: any) => {
+    switch (fieldName) {
+      case 'firstName':
+      case 'lastName':
+      case 'email':
+        return value && value.trim().length > 0;
+      case 'specialties':
+        return selectedSpecialties.length > 0;
+      case 'languages':
+        return selectedLanguages.length > 0;
+      default:
+        return true;
+    }
+  };
+
+  // Helper function to get field border color
+  const getFieldBorderColor = (fieldName: string, value: any) => {
+    if (!editing) return 'border-gray-300';
+    return isFieldValid(fieldName, value) ? 'border-green-300' : 'border-red-300';
+  };
+
   const handleSave = async () => {
     setSaving(true);
     setError('');
     setSuccessMessage('');
+    
+    // Enhanced validation with detailed error messages
+    const validationErrors = [];
+    
+    if (!profileData.firstName?.trim()) {
+      validationErrors.push('❌ First name is required');
+    }
+    
+    if (!profileData.lastName?.trim()) {
+      validationErrors.push('❌ Last name is required');
+    }
+    
+    if (!profileData.email?.trim()) {
+      validationErrors.push('❌ Email is required');
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
+      validationErrors.push('❌ Please enter a valid email address');
+    }
+    
+    if (profileData.experience && (parseInt(profileData.experience) < 0 || parseInt(profileData.experience) > 50)) {
+      validationErrors.push('❌ Years of experience must be between 0 and 50');
+    }
+    
+    if (profileData.hourlyRate && (parseFloat(profileData.hourlyRate) < 0 || parseFloat(profileData.hourlyRate) > 1000)) {
+      validationErrors.push('❌ Hourly rate must be between $0 and $1000');
+    }
+    
+    if (selectedSpecialties.length === 0) {
+      validationErrors.push('❌ Please select at least one specialty');
+    }
+    
+    if (selectedLanguages.length === 0) {
+      validationErrors.push('❌ Please select at least one language');
+    }
+    
+    if (validationErrors.length > 0) {
+      const errorMessage = `Please fix the following errors:\n\n${validationErrors.join('\n')}`;
+      setError(errorMessage);
+      setSaving(false);
+      return;
+    }
     
     try {
       const qualifications = profileData.qualifications
@@ -139,16 +216,20 @@ export default function CoachProfilePage() {
         : [];
 
       const updateData = {
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        phone: profileData.phone || null,
-        bio: profileData.bio || null,
+        firstName: profileData.firstName.trim(),
+        lastName: profileData.lastName.trim(),
+        email: profileData.email.trim(),
+        phone: profileData.phone?.trim() || null,
+        bio: profileData.bio?.trim() || null,
         specialties: selectedSpecialties,
         languages: selectedLanguages,
         qualifications: qualifications.length > 0 ? qualifications : null,
         experience: profileData.experience ? parseInt(profileData.experience) : null,
         hourlyRate: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
-        isAvailable: profileData.isAvailable
+        isAvailable: profileData.isAvailable,
+        videoAvailable: profileData.videoAvailable,
+        inPersonAvailable: profileData.inPersonAvailable,
+        phoneAvailable: profileData.phoneAvailable
       };
 
       const response = await axios.put(`${API_URL}/api/coach/profile`, updateData, {
@@ -163,14 +244,24 @@ export default function CoachProfilePage() {
         setEditing(false);
         // Reload profile to get updated data
         await loadProfile();
+        
+        // Auto-dismiss success message after 5 seconds
+        setTimeout(() => {
+          setSuccessMessage('');
+        }, 5000);
       }
     } catch (error: any) {
       console.error('Error saving profile:', error);
+      
       if (error.response?.data?.errors) {
-        const errorMessages = error.response.data.errors.map((err: any) => err.msg).join(', ');
+        const errorMessages = error.response.data.errors.map((err: any) => err.msg).join('. ');
         setError(errorMessages);
+      } else if (error.response?.data?.message) {
+        setError(error.response.data.message);
+      } else if (error.message) {
+        setError(error.message);
       } else {
-        setError(error.response?.data?.message || 'Failed to save profile');
+        setError('Failed to save profile. Please try again.');
       }
     } finally {
       setSaving(false);
@@ -194,16 +285,45 @@ export default function CoachProfilePage() {
     <CoachPageWrapper title="My Profile" description="Manage your professional profile and availability">
       {/* Success/Error Messages */}
       {successMessage && (
-        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-          {successMessage}
+        <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md flex items-center justify-between">
+          <div className="flex items-center">
+            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            </svg>
+            {successMessage}
+          </div>
+          <button 
+            onClick={() => setSuccessMessage('')}
+            className="text-green-500 hover:text-green-700"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
         </div>
       )}
       
-      {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-          {error}
-        </div>
-      )}
+              {error && (
+          <div className="mb-6 bg-red-50 border-2 border-red-300 text-red-800 px-6 py-4 rounded-lg flex items-start justify-between shadow-lg">
+            <div className="flex items-start">
+              <svg className="w-6 h-6 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <div>
+                <div className="font-bold text-lg mb-2">⚠️ Validation Errors</div>
+                <div className="whitespace-pre-line text-sm">{error}</div>
+              </div>
+            </div>
+            <button
+              onClick={() => setError('')}
+              className="text-red-600 hover:text-red-800 ml-4 flex-shrink-0"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+        )}
 
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
@@ -289,9 +409,24 @@ export default function CoachProfilePage() {
                 <Button
                   onClick={handleSave}
                   disabled={saving}
-                  className="bg-green-600 hover:bg-green-700"
+                  className="bg-green-600 hover:bg-green-700 flex items-center"
                 >
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                      </svg>
+                      Save Changes
+                    </>
+                  )}
                 </Button>
                 <Button
                   onClick={() => {
@@ -309,6 +444,61 @@ export default function CoachProfilePage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+                      {/* Required Fields Note */}
+            {editing && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm">
+                    Fields marked with <span className="text-red-500 font-bold">*</span> are required.
+                    Please ensure all required fields are filled before saving.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Validation Warning */}
+            {editing && (
+              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm font-medium">
+                    ⚠️ Please fill in all required fields before saving. Empty required fields will prevent the form from being saved.
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Form Validation Status */}
+            {editing && (
+              <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Form Validation Status:</span>
+                  <div className="flex items-center space-x-4">
+                    <span className={`text-sm ${profileData.firstName?.trim() ? 'text-green-600' : 'text-red-600'}`}>
+                      {profileData.firstName?.trim() ? '✅' : '❌'} First Name
+                    </span>
+                    <span className={`text-sm ${profileData.lastName?.trim() ? 'text-green-600' : 'text-red-600'}`}>
+                      {profileData.lastName?.trim() ? '✅' : '❌'} Last Name
+                    </span>
+                    <span className={`text-sm ${profileData.email?.trim() ? 'text-green-600' : 'text-red-600'}`}>
+                      {profileData.email?.trim() ? '✅' : '❌'} Email
+                    </span>
+                    <span className={`text-sm ${selectedSpecialties.length > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {selectedSpecialties.length > 0 ? '✅' : '❌'} Specialties
+                    </span>
+                    <span className={`text-sm ${selectedLanguages.length > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                      {selectedLanguages.length > 0 ? '✅' : '❌'} Languages
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          
           {/* Availability Toggle */}
           <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
             <div>
@@ -330,40 +520,81 @@ export default function CoachProfilePage() {
             </label>
           </div>
 
+          {/* Session Availability Options */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Session Types Available</h3>
+            <p className="text-sm text-gray-600 mb-4">Select the types of sessions you offer to clients</p>
+            
+            <div className="grid grid-cols-1 gap-4">
+              {/* Video Sessions Only */}
+              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <h4 className="font-medium text-gray-900">Video Sessions</h4>
+                  </div>
+                  <p className="text-xs text-gray-600 mt-1">Online video calls via secure platform</p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={profileData.videoAvailable}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, videoAvailable: e.target.checked }))}
+                    disabled={!editing}
+                    className="sr-only peer"
+                  />
+                  <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-green-600"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  First Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="firstName"
                   value={profileData.firstName}
                   onChange={handleChange}
                   disabled={!editing}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Last Name <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="text"
                   name="lastName"
                   value={profileData.lastName}
                   onChange={handleChange}
                   disabled={!editing}
+                  required
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email <span className="text-red-500">*</span>
+                </label>
                 <input
                   type="email"
                   name="email"
                   value={profileData.email}
-                  disabled
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100"
+                  onChange={handleChange}
+                  disabled={!editing}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                 />
               </div>
               <div>
@@ -436,7 +667,9 @@ export default function CoachProfilePage() {
 
             {/* Specialties */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Specialties</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Specialties <span className="text-red-500">*</span>
+              </label>
               <div className={`grid grid-cols-2 md:grid-cols-3 gap-2 ${editing ? 'max-h-48' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
                 {editing ? (
                   SPECIALTIES.map((specialty) => (
@@ -465,7 +698,9 @@ export default function CoachProfilePage() {
 
             {/* Languages */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Languages</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Languages <span className="text-red-500">*</span>
+              </label>
               <div className={`grid grid-cols-3 md:grid-cols-4 gap-2 ${editing ? 'max-h-32' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
                 {editing ? (
                   LANGUAGES.map((language) => (

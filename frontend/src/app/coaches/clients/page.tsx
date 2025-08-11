@@ -135,6 +135,7 @@ export default function MyClientsPage() {
 
   return (
     <CoachPageWrapper title="My Clients" description="Manage and view your client relationships">
+
       {error && (
         <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           {error}
@@ -292,7 +293,7 @@ export default function MyClientsPage() {
                   </div>
                 )}
 
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 mb-2">
                   <Button
                     onClick={() => handleViewDetails(client)}
                     className="flex-1 bg-blue-600 hover:bg-blue-700"
@@ -310,6 +311,15 @@ export default function MyClientsPage() {
                     <MessageCircle className="w-4 h-4 mr-1" />
                     Send Message
                   </Button>
+                </div>
+                <div className="text-center">
+                  <a 
+                    href="/coaches/appointments" 
+                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    <Calendar className="w-3 h-3 inline mr-1" />
+                    View Appointments
+                  </a>
                 </div>
               </CardContent>
             </Card>

@@ -17,12 +17,11 @@ interface Appointment {
   id: string
   client_id: string
   coach_id: string
-  scheduled_at: string
-  duration: number
+  starts_at: string
+  ends_at: string
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
-  session_type?: string
   notes?: string
-  meeting_link?: string
+  zoom_link: string  // Required for online-only sessions
   coaches?: {
     id: string
     first_name: string
@@ -199,12 +198,7 @@ function AppointmentsContent() {
             </Link>
             <Link href="/search-coaches">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Search Coaches
-              </button>
-            </Link>
-            <Link href="/saved-coaches">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Saved Coaches
+                Search & Save Coaches
               </button>
             </Link>
             <button className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm whitespace-nowrap">
@@ -294,11 +288,11 @@ function AppointmentsContent() {
                     <div className="space-y-2">
                       <div className="flex items-center text-gray-600">
                         <Calendar className="w-4 h-4 mr-2" />
-                        <span>{formatDate(appointment.scheduled_at)}</span>
+                        <span>{formatDate(appointment.starts_at)}</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Clock className="w-4 h-4 mr-2" />
-                        <span>{new Date(appointment.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span>{new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Video className="w-4 h-4 mr-2" />
@@ -330,10 +324,10 @@ function AppointmentsContent() {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-3">
-                    {appointment.meeting_link && (
+                    {appointment.zoom_link && (
                       <Button 
                         className="bg-green-600 hover:bg-green-700 text-white"
-                        onClick={() => window.open(appointment.meeting_link, '_blank')}
+                        onClick={() => window.open(appointment.zoom_link, '_blank')}
                       >
                         <Video className="w-4 h-4 mr-2" />
                         Join Session

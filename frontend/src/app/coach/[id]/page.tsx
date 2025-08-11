@@ -225,12 +225,7 @@ function CoachProfileContent() {
             </Link>
             <Link href="/search-coaches">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Search Coaches
-              </button>
-            </Link>
-            <Link href="/saved-coaches">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Saved Coaches
+                Search & Save Coaches
               </button>
             </Link>
             <Link href="/appointments">
@@ -450,18 +445,12 @@ function CoachProfileContent() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Session Formats</h4>
+                  <h4 className="font-medium text-gray-900 mb-2">Session Format</h4>
                   <div className="space-y-2">
                     {coach.virtualAvailable && (
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Virtual Sessions Available</span>
-                      </div>
-                    )}
-                    {coach.inPersonAvailable && (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">In-Person Sessions Available</span>
+                        <span className="text-sm text-gray-700">Video Sessions Available</span>
                       </div>
                     )}
                   </div>

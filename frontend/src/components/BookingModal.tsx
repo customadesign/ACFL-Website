@@ -10,7 +10,6 @@ interface Coach {
   name: string
   sessionRate?: string
   virtualAvailable?: boolean
-  inPersonAvailable?: boolean
 }
 
 interface BookingModalProps {
@@ -28,8 +27,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
   // Debug coach availability
   console.log('Coach availability:', {
     name: coach.name,
-    virtualAvailable: coach.virtualAvailable,
-    inPersonAvailable: coach.inPersonAvailable
+    virtualAvailable: coach.virtualAvailable
   })
   const [notes, setNotes] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -226,17 +224,17 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                 </div>
               </div>
 
-              {/* Session Format - Fixed as Virtual */}
+              {/* Session Format - Video Only */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Session Format
                 </label>
-                <div className="p-4 border border-gray-300 rounded-lg bg-blue-50">
+                <div className="p-4 border border-gray-300 rounded-lg bg-green-50">
                   <div className="flex items-center gap-3">
-                    <Video className="w-5 h-5 text-blue-600" />
+                    <Video className="w-5 h-5 text-green-600" />
                     <div>
-                      <div className="font-medium text-blue-900">Virtual Session</div>
-                      <div className="text-sm text-blue-700">Video call via secure platform</div>
+                      <div className="font-medium text-green-900">Video Session</div>
+                      <div className="text-sm text-green-700">Secure video call via our platform</div>
                     </div>
                   </div>
                 </div>

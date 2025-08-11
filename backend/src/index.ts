@@ -6,6 +6,7 @@ import coachRoutes from './routes/coachRoutes';
 import clientRoutes from './routes/clientRoutes';
 import adminRoutes from './routes/adminRoutes';
 import authRoutes from './routes/authRoutes';
+import { supabase } from './lib/supabase';
 
 // Load environment variables
 dotenv.config();
@@ -51,6 +52,33 @@ app.use('/admin', adminRoutes);
 // Add a test endpoint
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Backend is working!' });
+});
+
+// Add a database test endpoint
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from('clients')
+      .select('*')
+      .limit(1);
+    
+    if (error) {
+      return res.status(500).json({ 
+        message: 'Database error', 
+        error: error.message 
+      });
+    }
+    
+    res.json({ 
+      message: 'Database connection working!', 
+      data: data 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      message: 'Database test failed', 
+      error: error.message 
+    });
+  }
 });
 
 app.listen(port, () => {
