@@ -50,6 +50,4 @@ export const STATE_NAMES: Record<string, string> = {
   'WV': 'West Virginia',
   'WI': 'Wisconsin',
   'WY': 'Wyoming',
-  
-  
 }; 

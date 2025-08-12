@@ -22,6 +22,8 @@ interface Appointment {
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
   notes?: string
   zoom_link: string  // Required for online-only sessions
+  session_type?: string
+  duration?: number
   coaches?: {
     id: string
     first_name: string
