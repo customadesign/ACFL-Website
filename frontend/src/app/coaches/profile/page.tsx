@@ -114,7 +114,9 @@ export default function CoachProfilePage() {
           videoAvailable: data.videoAvailable ?? false,
           inPersonAvailable: data.inPersonAvailable ?? false,
           phoneAvailable: data.phoneAvailable ?? false,
-          availability_options: data.demographics?.availability_options || []
+          availability_options: data.demographics?.availability_options || [],
+          location: 'none',
+          customLocation: ''
         });
         setSelectedSpecialties(data.specialties || []);
         setSelectedLanguages(data.languages || []);
