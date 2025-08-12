@@ -16,7 +16,7 @@ export interface Provider {
     ethnicity: string;
     religious_background: string;
   };
-  availability: number;
+  availability_options: number;
   languages: string[];
   bio: string;
   sexualOrientation: string;
@@ -49,7 +49,7 @@ export async function loadProviders(): Promise<Provider[]> {
         ethnicity: record.ethnicity || 'Not specified',
         religious_background: record.religious_background || 'Not specified'
       },
-      availability: record.availability,
+              availability: record.availability_options,
       languages: record.languages,
       bio: record.bio || 'No bio provided',
       sexualOrientation: record.sexualOrientation || 'Not specified',
@@ -77,7 +77,7 @@ function cleanRecord(record: any) {
     gender: (record['Gender Identity'] || '').trim(),
     ethnicity: (record['Ethnic Identity'] || '').trim(),
     religious_background: (record['Religious Background'] || '').trim(),
-    availability: parseInt(record['No Of Clients Able To Take On']) || 0,
+    availability_options: parseInt(record['No Of Clients Able To Take On']) || 0,
     languages: record['Language']
       ? record['Language'].split(',').map((l: string) => l.trim()).filter(Boolean)
       : [],
@@ -99,7 +99,7 @@ function getFullStateName(stateCode: string): string {
 
 function isValidProvider(record: ReturnType<typeof cleanRecord>): boolean {
   return (
-    record.availability > 0 &&
+          record.availability_options > 0 &&
     record.firstName !== '' &&
     record.lastName !== '' &&
     record.specialties.length > 0

@@ -11,7 +11,7 @@ export interface PatientPreferences {
   therapistReligion: string;
   language: string;
   paymentMethod: string;
-  availability: string[];
+  availability_options: string[];
 }
 
 function getLocationScore(preferredState: string, providerLocations: string[]): number {
@@ -45,7 +45,7 @@ function scoreProvider(provider: Provider, preferences: PatientPreferences): num
   }
 
   // 3. Availability Overlap (+5 points each)
-  const matchingTimes = preferences.availability.filter(time =>
+      const matchingTimes = preferences.availability_options.filter(time =>
     provider.availableTimes.some(providerTime =>
       providerTime.toLowerCase() === time.toLowerCase()
     )
@@ -92,7 +92,7 @@ function scoreProvider(provider: Provider, preferences: PatientPreferences): num
 }
 
 export function matchProviders(preferences: PatientPreferences, providers: Provider[]): Provider[] {
-  const availableProviders = providers.filter(p => p.availability > 0);
+  const availableProviders = providers.filter(p => p.availability_options > 0);
   
   return availableProviders
     .map(provider => ({

@@ -1,4 +1,5 @@
 export const STATE_NAMES: Record<string, string> = {
+  // US States
   'AL': 'Alabama',
   'AK': 'Alaska',
   'AZ': 'Arizona',
@@ -48,5 +49,7 @@ export const STATE_NAMES: Record<string, string> = {
   'WA': 'Washington',
   'WV': 'West Virginia',
   'WI': 'Wisconsin',
-  'WY': 'Wyoming',  
+  'WY': 'Wyoming',
+  
+  
 }; 

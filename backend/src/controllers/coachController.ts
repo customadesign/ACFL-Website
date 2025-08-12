@@ -250,7 +250,7 @@ export const getCoachById = async (req: Request, res: Response) => {
       languages: coach.languages || [],
       bio: coach.bio || '',
       sexualOrientation: '', // Not stored in current schema
-      availableTimes: demographics.availability || [],
+              availableTimes: demographics.availability_options || [],
       email: coach.users?.email || '',
       phone: coach.phone || '',
       experience: coach.experience ? `${coach.experience} years` : '',

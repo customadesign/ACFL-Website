@@ -50,7 +50,7 @@ import {
 import { STATE_NAMES } from "@/constants/states";
 import {
   concernOptions,
-  modalityOptions,
+  therapyModalityOptions,
   genderIdentityOptions,
   ethnicIdentityOptions,
   religiousBackgroundOptions,
@@ -71,7 +71,7 @@ const searchFormSchema = z.object({
     .array(z.string())
     .min(1, "Please select at least one area of concern"),
   location: z.string().min(1, "Please select your location"),
-  availability: z
+  availability_options: z
     .array(z.string())
     .min(1, "Please select at least one availability option"),
   therapistGender: z.string().optional().or(z.literal("any")),
@@ -137,7 +137,7 @@ function SearchCoachesContent() {
     defaultValues: {
       areaOfConcern: [],
       location: '',
-      availability: [],
+      availability_options: [],
       therapistGender: 'any',
       language: 'any',
       maxPrice: 500,
@@ -633,7 +633,7 @@ function SearchCoachesContent() {
 
                     <FormField
                       control={form.control}
-                      name="availability"
+                      name="availability_options"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel className="flex items-center space-x-2">
@@ -744,7 +744,7 @@ function SearchCoachesContent() {
                             </FormLabel>
                             <FormControl>
                               <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {modalityOptions.map((modality) => (
+                                {therapyModalityOptions.map((modality) => (
                                   <div key={modality.id} className="flex items-center space-x-2">
                                     <Checkbox
                                       id={modality.id}

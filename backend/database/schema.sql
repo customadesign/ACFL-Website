@@ -4,6 +4,19 @@
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 -- =========================================================
+-- CUSTOM TYPES
+-- =========================================================
+-- Coach availability options
+-- These options allow coaches to specify when they're available for sessions
+CREATE TYPE public.coach_availability_option AS ENUM (
+  'weekday_mornings',    -- Monday-Friday mornings
+  'weekday_afternoons',  -- Monday-Friday afternoons
+  'weekday_evenings',    -- Monday-Friday evenings
+  'weekends',            -- Saturday and Sunday
+  'flexible_anytime'     -- Available at any time
+);
+
+-- =========================================================
 -- SHARED TRIGGER: updated_at
 -- =========================================================
 CREATE OR REPLACE FUNCTION public.trigger_set_timestamp()
@@ -44,7 +57,6 @@ ALTER TABLE public.users DISABLE ROW LEVEL SECURITY;
 -- =========================================================
 -- CLIENTS (no FK to auth.users)
 -- =========================================================
--- If you intentionally decoupled from auth.users, keep it this way:
 CREATE TABLE IF NOT EXISTS public.clients (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   email                TEXT NOT NULL UNIQUE,
@@ -93,17 +105,16 @@ CREATE TABLE IF NOT EXISTS public.coaches (
   qualifications     TEXT,
   specialties        TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
   languages          TEXT[] NOT NULL DEFAULT '{}'::TEXT[],
-  rating             NUMERIC(3,2) DEFAULT NULL,
-  availability       TEXT[] DEFAULT '{}'::TEXT[],
+  rating             NUMERIC(3,2),
   created_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at         TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  availability public.coach_availability_option[] NOT NULL DEFAULT '{}'::public.coach_availability_option[]
 );
 
-CREATE INDEX IF NOT EXISTS idx_coaches_last_first     ON public.coaches (last_name, first_name);
-CREATE INDEX IF NOT EXISTS idx_coaches_specialties_gin ON public.coaches USING GIN (specialties);
-CREATE INDEX IF NOT EXISTS idx_coaches_languages_gin   ON public.coaches USING GIN (languages);
-CREATE INDEX IF NOT EXISTS idx_coaches_available       ON public.coaches (is_available);
-CREATE INDEX IF NOT EXISTS idx_coaches_availability_gin ON public.coaches USING GIN (availability);
+CREATE INDEX IF NOT EXISTS idx_coaches_last_first       ON public.coaches (last_name, first_name);
+CREATE INDEX IF NOT EXISTS idx_coaches_specialties_gin  ON public.coaches USING GIN (specialties);
+CREATE INDEX IF NOT EXISTS idx_coaches_languages_gin    ON public.coaches USING GIN (languages);
+CREATE INDEX IF NOT EXISTS idx_coaches_available        ON public.coaches (is_available);
 
 DROP TRIGGER IF EXISTS set_timestamp_coaches ON public.coaches;
 CREATE TRIGGER set_timestamp_coaches
@@ -111,6 +122,35 @@ CREATE TRIGGER set_timestamp_coaches
   FOR EACH ROW EXECUTE FUNCTION public.trigger_set_timestamp();
 
 ALTER TABLE public.coaches DISABLE ROW LEVEL SECURITY;
+
+-- Back-compat: expose coaches.hourly_rate (legacy) as generated alias of hourly_rate_usd
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='coaches' AND column_name='hourly_rate'
+  ) THEN
+    ALTER TABLE public.coaches
+      ADD COLUMN hourly_rate NUMERIC(10,2) GENERATED ALWAYS AS (hourly_rate_usd) STORED;
+  END IF;
+END
+$do$;
+
+-- Back-compat: expose coaches.experience (legacy) as generated alias of years_experience
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='coaches' AND column_name='experience'
+  ) THEN
+    ALTER TABLE public.coaches
+      ADD COLUMN experience INT GENERATED ALWAYS AS (years_experience) STORED;
+  END IF;
+END
+$do$;
+
+CREATE INDEX IF NOT EXISTS idx_coaches_hourly_rate ON public.coaches (hourly_rate);
+CREATE INDEX IF NOT EXISTS idx_coaches_experience ON public.coaches (years_experience);
 
 -- =========================================================
 -- COACH_DEMOGRAPHICS
@@ -121,6 +161,7 @@ CREATE TABLE IF NOT EXISTS public.coach_demographics (
   ethnic_identity TEXT,
   religious_background TEXT,
   languages TEXT[] DEFAULT '{}'::TEXT[],
+  availability public.coach_availability_option[] NOT NULL DEFAULT '{}'::public.coach_availability_option[],
   accepts_insurance BOOLEAN,
   accepts_sliding_scale BOOLEAN,
   timezone TEXT,
@@ -136,6 +177,32 @@ CREATE TRIGGER set_timestamp_coach_demographics
 
 ALTER TABLE public.coach_demographics DISABLE ROW LEVEL SECURITY;
 
+-- Back-compat: expose coach_demographics.gender (legacy) as generated alias of gender_identity
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='coach_demographics' AND column_name='gender'
+  ) THEN
+    ALTER TABLE public.coach_demographics
+      ADD COLUMN gender TEXT GENERATED ALWAYS AS (gender_identity) STORED;
+  END IF;
+END
+$do$;
+
+-- Back-compat: expose coach_demographics.ethnicity (legacy) as generated alias of ethnic_identity
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='coach_demographics' AND column_name='ethnicity'
+  ) THEN
+    ALTER TABLE public.coach_demographics
+      ADD COLUMN ethnicity TEXT GENERATED ALWAYS AS (ethnic_identity) STORED;
+  END IF;
+END
+$do$;
+
 -- Normalize meta for video-only behavior
 UPDATE public.coach_demographics 
 SET meta = jsonb_set(COALESCE(meta, '{}'::jsonb), '{video_available}', 'true'::jsonb)
@@ -145,37 +212,34 @@ UPDATE public.coach_demographics
 SET meta = meta - 'in_person_available' - 'phone_available'
 WHERE meta ? 'in_person_available' OR meta ? 'phone_available';
 
+CREATE INDEX IF NOT EXISTS idx_coach_demographics_availability_gin
+ON public.coach_demographics USING GIN (availability);
+
 -- =========================================================
 -- SESSIONS — ONLINE ONLY (Zoom)
 -- =========================================================
 CREATE TABLE IF NOT EXISTS public.sessions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL,
-  coach_id  UUID NOT NULL,
+  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  coach_id  UUID NOT NULL REFERENCES public.coaches(id) ON DELETE CASCADE,
   starts_at TIMESTAMPTZ NOT NULL,
   ends_at   TIMESTAMPTZ NOT NULL,
-  scheduled_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- FIX: Add missing column
-  status TEXT NOT NULL DEFAULT 'scheduled', -- scheduled|cancelled|completed|no_show
+  scheduled_at TIMESTAMPTZ,
+  status TEXT NOT NULL DEFAULT 'scheduled',
   notes TEXT,
   zoom_link TEXT NOT NULL,
-  session_type TEXT DEFAULT 'video', -- enforced below to be 'video'
+  session_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_session_time CHECK (ends_at > starts_at)
 );
 
--- Ensure updated_at trigger
-DROP TRIGGER IF EXISTS set_timestamp_sessions ON public.sessions;
-CREATE TRIGGER set_timestamp_sessions
-  BEFORE UPDATE ON public.sessions
-  FOR EACH ROW EXECUTE FUNCTION public.trigger_set_timestamp();
-
 CREATE INDEX IF NOT EXISTS idx_sessions_by_parties ON public.sessions (client_id, coach_id, starts_at);
+CREATE INDEX IF NOT EXISTS idx_sessions_scheduled_at ON public.sessions (scheduled_at);
 
--- Enforce video-only session_type
 UPDATE public.sessions SET session_type = 'video' WHERE session_type IS DISTINCT FROM 'video';
 
-DO $$
+DO $do$
 BEGIN
   IF EXISTS (
     SELECT 1 FROM pg_constraint
@@ -184,78 +248,90 @@ BEGIN
   ) THEN
     ALTER TABLE public.sessions DROP CONSTRAINT sessions_session_type_check;
   END IF;
-END$$;
+END
+$do$;
 
 ALTER TABLE public.sessions
   ADD CONSTRAINT sessions_session_type_check CHECK (session_type = 'video');
 
-COMMENT ON TABLE public.sessions IS 'Sessions table - only video sessions supported';
-COMMENT ON COLUMN public.sessions.session_type IS 'Session type - only video sessions allowed';
-
--- >>> FIX #2: Ensure FKs exist so PostgREST sees relationships <<<
--- client_id -> clients.id
-DO $$
+CREATE OR REPLACE FUNCTION public.trg_sessions_sync_scheduled_at()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_constraint
-    WHERE conname = 'sessions_client_id_fkey'
-      AND conrelid = 'public.sessions'::regclass
-  ) THEN
-    ALTER TABLE public.sessions
-      ADD CONSTRAINT sessions_client_id_fkey
-      FOREIGN KEY (client_id) REFERENCES public.clients(id) ON DELETE CASCADE;
+  IF NEW.scheduled_at IS NULL OR NEW.scheduled_at <> NEW.starts_at THEN
+    NEW.scheduled_at := NEW.starts_at;
   END IF;
-END$$;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
--- coach_id -> coaches.id
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1
-    FROM pg_constraint
-    WHERE conname = 'sessions_coach_id_fkey'
-      AND conrelid = 'public.sessions'::regclass
-  ) THEN
-    ALTER TABLE public.sessions
-      ADD CONSTRAINT sessions_coach_id_fkey
-      FOREIGN KEY (coach_id) REFERENCES public.coaches(id) ON DELETE CASCADE;
-  END IF;
-END$$;
+DROP TRIGGER IF EXISTS trg_sessions_sync_scheduled_at ON public.sessions;
+CREATE TRIGGER trg_sessions_sync_scheduled_at
+  BEFORE INSERT OR UPDATE ON public.sessions
+  FOR EACH ROW EXECUTE FUNCTION public.trg_sessions_sync_scheduled_at();
+
+DROP TRIGGER IF EXISTS set_timestamp_sessions ON public.sessions;
+CREATE TRIGGER set_timestamp_sessions
+  BEFORE UPDATE ON public.sessions
+  FOR EACH ROW EXECUTE FUNCTION public.trigger_set_timestamp();
 
 ALTER TABLE public.sessions DISABLE ROW LEVEL SECURITY;
+
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='sessions' AND column_name='duration'
+  ) THEN
+    ALTER TABLE public.sessions
+      ADD COLUMN duration INTERVAL GENERATED ALWAYS AS (ends_at - starts_at) STORED;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='sessions' AND column_name='duration_minutes'
+  ) THEN
+    ALTER TABLE public.sessions
+      ADD COLUMN duration_minutes INT GENERATED ALWAYS AS (
+        GREATEST(0, (EXTRACT(EPOCH FROM (ends_at - starts_at)) / 60)::int)
+      ) STORED;
+  END IF;
+END
+$do$;
 
 -- =========================================================
 -- SAVED_COACHES
 -- =========================================================
 CREATE TABLE IF NOT EXISTS public.saved_coaches (
-  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE,
+  user_id   UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  client_id UUID     REFERENCES public.clients(id) ON DELETE SET NULL,
   coach_id  UUID NOT NULL REFERENCES public.coaches(id) ON DELETE CASCADE,
-  saved_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), -- FIX: Add missing column
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  PRIMARY KEY (client_id, coach_id)
+  saved_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  PRIMARY KEY (user_id, coach_id)
 );
+
+CREATE INDEX IF NOT EXISTS idx_saved_coaches_user   ON public.saved_coaches(user_id);
+CREATE INDEX IF NOT EXISTS idx_saved_coaches_client ON public.saved_coaches(client_id);
+
 ALTER TABLE public.saved_coaches DISABLE ROW LEVEL SECURITY;
 
 -- =========================================================
--- SEARCH_HISTORY  (adds search_criteria to match app)
+-- SEARCH_HISTORY
 -- =========================================================
 CREATE TABLE IF NOT EXISTS public.search_history (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  client_id UUID NOT NULL REFERENCES public.clients(id) ON DELETE CASCADE, -- FIX: Add missing column and FK
-  user_id UUID NOT NULL,               -- no FK to auth.users by design
+  user_id UUID NOT NULL,
+  client_id UUID,
   query TEXT NOT NULL,
-  filters JSONB DEFAULT '{}'::jsonb,   -- legacy/previous name
-  search_criteria JSONB DEFAULT '{}'::jsonb, -- >>> FIX #1: field your app expects
-  results_count INT NOT NULL DEFAULT 0, -- FIX: Add missing column
+  filters JSONB DEFAULT '{}'::jsonb,
+  search_criteria JSONB DEFAULT '{}'::jsonb,
+  results_count INT NOT NULL DEFAULT 0,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
--- Keep filters <-> search_criteria in sync
 CREATE OR REPLACE FUNCTION public.search_history_sync_fields()
 RETURNS TRIGGER AS $$
 BEGIN
-  -- If one is NULL/empty, copy from the other
   IF NEW.filters IS NULL OR NEW.filters = '{}'::jsonb THEN
     NEW.filters := COALESCE(NEW.search_criteria, '{}'::jsonb);
   END IF;
@@ -271,13 +347,24 @@ CREATE TRIGGER trg_search_history_sync
   BEFORE INSERT OR UPDATE ON public.search_history
   FOR EACH ROW EXECUTE FUNCTION public.search_history_sync_fields();
 
--- Backfill existing rows once
-UPDATE public.search_history
-SET search_criteria = COALESCE(NULLIF(search_criteria, '{}'::jsonb), filters, '{}'::jsonb),
-    filters         = COALESCE(NULLIF(filters, '{}'::jsonb), search_criteria, '{}'::jsonb)
-WHERE TRUE;
+CREATE OR REPLACE FUNCTION public.search_history_sync_ids()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.user_id IS NULL AND NEW.client_id IS NOT NULL THEN
+    NEW.user_id := NEW.client_id;
+  ELSIF NEW.client_id IS NULL AND NEW.user_id IS NOT NULL THEN
+    NEW.client_id := NEW.user_id;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-CREATE INDEX IF NOT EXISTS idx_search_history_user_time ON public.search_history (user_id, created_at DESC);
+DROP TRIGGER IF EXISTS trg_search_history_sync_ids ON public.search_history;
+CREATE TRIGGER trg_search_history_sync_ids
+  BEFORE INSERT OR UPDATE ON public.search_history
+  FOR EACH ROW EXECUTE FUNCTION public.search_history_sync_ids();
+
+CREATE INDEX IF NOT EXISTS idx_search_history_user_time   ON public.search_history (user_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_search_history_client_time ON public.search_history (client_id, created_at DESC);
 
 ALTER TABLE public.search_history DISABLE ROW LEVEL SECURITY;
@@ -288,17 +375,45 @@ ALTER TABLE public.search_history DISABLE ROW LEVEL SECURITY;
 CREATE TABLE IF NOT EXISTS public.messages (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   thread_id UUID,
-  sender_id UUID NOT NULL,    -- no FK to auth.users (by design)
-  recipient_id UUID NOT NULL, -- no FK to auth.users
+  sender_id UUID NOT NULL,
+  recipient_id UUID NOT NULL,
   session_id UUID REFERENCES public.sessions(id) ON DELETE SET NULL,
-  content TEXT NOT NULL, -- FIX: Add missing column
   body TEXT NOT NULL,
+  content TEXT,
   read_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE OR REPLACE FUNCTION public.trg_messages_sync_content()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.content IS NULL OR NEW.content <> NEW.body THEN
+    NEW.content := NEW.body;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_messages_sync_content ON public.messages;
+CREATE TRIGGER trg_messages_sync_content
+  BEFORE INSERT OR UPDATE ON public.messages
+  FOR EACH ROW EXECUTE FUNCTION public.trg_messages_sync_content();
+
 CREATE INDEX IF NOT EXISTS idx_messages_parties ON public.messages (sender_id, recipient_id, created_at);
+
 ALTER TABLE public.messages DISABLE ROW LEVEL SECURITY;
+
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='messages' AND column_name='receiver_id'
+  ) THEN
+    ALTER TABLE public.messages
+      ADD COLUMN receiver_id UUID GENERATED ALWAYS AS (recipient_id) STORED;
+  END IF;
+END
+$do$;
 
 -- =========================================================
 -- REVIEWS
@@ -314,6 +429,53 @@ CREATE TABLE IF NOT EXISTS public.reviews (
 );
 
 CREATE INDEX IF NOT EXISTS idx_reviews_coach ON public.reviews (coach_id, created_at DESC);
+
+CREATE OR REPLACE FUNCTION public.recompute_coach_rating(p_coach_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.coaches c
+  SET rating = sub.avg_rating
+  FROM (
+    SELECT coach_id, ROUND(AVG(rating)::numeric, 2) AS avg_rating
+    FROM public.reviews
+    WHERE coach_id = p_coach_id
+    GROUP BY coach_id
+  ) AS sub
+  WHERE c.id = sub.coach_id;
+
+  UPDATE public.coaches c
+  SET rating = NULL
+  WHERE c.id = p_coach_id
+    AND NOT EXISTS (SELECT 1 FROM public.reviews r WHERE r.coach_id = p_coach_id);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION public.trg_reviews_update_coach_rating()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_coach_id UUID;
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    v_coach_id := NEW.coach_id;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    IF NEW.coach_id IS DISTINCT FROM OLD.coach_id THEN
+      PERFORM public.recompute_coach_rating(OLD.coach_id);
+    END IF;
+    v_coach_id := NEW.coach_id;
+  ELSIF (TG_OP = 'DELETE') THEN
+    v_coach_id := OLD.coach_id;
+  END IF;
+
+  PERFORM public.recompute_coach_rating(v_coach_id);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_reviews_update_coach_rating ON public.reviews;
+CREATE TRIGGER trg_reviews_update_coach_rating
+AFTER INSERT OR UPDATE OR DELETE ON public.reviews
+FOR EACH ROW EXECUTE FUNCTION public.trg_reviews_update_coach_rating();
+
 ALTER TABLE public.reviews DISABLE ROW LEVEL SECURITY;
 
 -- =========================================================
@@ -340,87 +502,4 @@ CREATE TRIGGER set_timestamp_client_assessments
 
 ALTER TABLE public.client_assessments DISABLE ROW LEVEL SECURITY;
 
--- =========================================================
--- ADMIN_ACTIONS
--- =========================================================
-CREATE TABLE IF NOT EXISTS public.admin_actions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  admin_id UUID NOT NULL, -- no FK to auth.users
-  action TEXT NOT NULL,
-  target_table TEXT,
-  target_id UUID,
-  details JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-ALTER TABLE public.admin_actions DISABLE ROW LEVEL SECURITY;
-
--- =========================================================
--- SYSTEM_SETTINGS
--- =========================================================
-CREATE TABLE IF NOT EXISTS public.system_settings (
-  key TEXT PRIMARY KEY,
-  value JSONB NOT NULL,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-ALTER TABLE public.system_settings DISABLE ROW LEVEL SECURITY;
-
--- =========================================================
--- GLOBAL: ensure RLS disabled (idempotent)
--- =========================================================
-ALTER TABLE public.clients             DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.coaches             DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.sessions            DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.messages            DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews             DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.saved_coaches       DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.search_history      DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.coach_demographics  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.client_assessments  DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.admin_actions       DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.system_settings     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.users               DISABLE ROW LEVEL SECURITY;
-
--- ================================================
--- PATCH: columns your app expects + coach availability
--- ================================================
-
--- 1) saved_coaches.saved_at (already added above)
--- 2) search_history.results_count (already added above)
--- 3) coaches.rating (already added above)
--- 4) Coach availability with your exact options
-
--- Create enum type if missing
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_type t
-    JOIN pg_namespace n ON n.oid = t.typnamespace
-    WHERE n.nspname = 'public' AND t.typname = 'coach_availability_option'
-  ) THEN
-    CREATE TYPE public.coach_availability_option AS ENUM (
-      'Weekday Mornings',
-      'Weekday Afternoons',
-      'Weekday Evenings',
-      'Weekends',
-      'Flexible (Anytime)'
-    );
-  END IF;
-END$$;
-
--- Add availability column to coaches as an ARRAY of the enum (already added above)
--- Fast lookup index for availability filters (already added above)
-
--- 5) Keep RLS disabled (no-ops if already disabled)
-ALTER TABLE public.saved_coaches      DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.search_history     DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.coaches            DISABLE ROW LEVEL SECURITY;
-ALTER TABLE public.reviews            DISABLE ROW LEVEL SECURITY;
-
--- 6) Ask PostgREST to reload its schema cache so 'rating' is visible right away
-DO $$
-BEGIN
-  PERFORM pg_notify('pgrst', 'reload schema');
-EXCEPTION WHEN undefined_object THEN
-  -- If the pgrst channel isn't present, ignore quietly.
-  NULL;
-END$$;
+--

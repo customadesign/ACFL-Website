@@ -8,7 +8,7 @@ export const concernOptions = [
   { id: "insomnia", label: "Insomnia" },
 ];
 
-export const modalityOptions = [
+export const therapyModalityOptions = [
   { id: "cbt", label: "Cognitive Behavioral Therapy (CBT)" },
   { id: "dbt", label: "Dialectical Behavior Therapy (DBT)" },
   { id: "act", label: "Acceptance and Commitment Therapy (ACT)" },
@@ -32,11 +32,11 @@ export const paymentOptions = [
 ];
 
 export const availabilityOptions = [
-  { id: "weekday-mornings", label: "Weekday Mornings" },
-  { id: "weekday-afternoons", label: "Weekday Afternoons" },
-  { id: "weekday-evenings", label: "Weekday Evenings" },
+  { id: "weekday_mornings", label: "Weekday Mornings" },
+  { id: "weekday_afternoons", label: "Weekday Afternoons" },
+  { id: "weekday_evenings", label: "Weekday Evenings" },
   { id: "weekends", label: "Weekends" },
-  { id: "flexible", label: "Flexible (Anytime)" },
+  { id: "flexible_anytime", label: "Flexible (Anytime)" },
 ];
 
 export const genderIdentityOptions = [

@@ -8,6 +8,15 @@ import { Checkbox } from '@/components/ui/checkbox';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
+import { availabilityOptions, therapyModalityOptions } from '@/constants/formOptions';
+import { STATE_NAMES } from '@/constants/states';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const SPECIALTIES = [
   'Anxiety', 'Depression', 'PTSD', 'Addiction', 'Relationships', 'Stress Management',
@@ -37,13 +46,17 @@ export default function CoachProfilePage() {
     experience: '',
     hourlyRate: '',
     qualifications: '',
+    location: '',
+    customLocation: '',
     isAvailable: true,
     videoAvailable: false,
     inPersonAvailable: false,
-    phoneAvailable: false
+    phoneAvailable: false,
+    availability_options: [] as string[]
   });
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
+  const [selectedTherapyModalities, setSelectedTherapyModalities] = useState<string[]>([]);
   const [stats, setStats] = useState({
     totalClients: 0,
     totalSessions: 0,
@@ -58,6 +71,11 @@ export default function CoachProfilePage() {
     loadStats();
   }, []);
 
+  // Debug: Monitor availability state changes
+  useEffect(() => {
+    console.log('Availability options state changed:', profileData.availability_options);
+  }, [profileData.availability_options]);
+
   const loadProfile = async () => {
     try {
       setLoadingProfile(true);
@@ -69,6 +87,11 @@ export default function CoachProfilePage() {
 
       if (response.data.success) {
         const data = response.data.data;
+        console.log('Profile data received:', data);
+        console.log('Demographics data:', data.demographics);
+        console.log('Availability data:', data.demographics?.availability);
+        console.log('Therapy modalities:', data.therapy_modalities);
+        console.log('Location:', data.demographics?.location);
         setProfileData({
           firstName: data.first_name || '',
           lastName: data.last_name || '',
@@ -90,10 +113,32 @@ export default function CoachProfilePage() {
           isAvailable: data.is_available ?? true,
           videoAvailable: data.videoAvailable ?? false,
           inPersonAvailable: data.inPersonAvailable ?? false,
-          phoneAvailable: data.phoneAvailable ?? false
+          phoneAvailable: data.phoneAvailable ?? false,
+          availability_options: data.demographics?.availability_options || []
         });
         setSelectedSpecialties(data.specialties || []);
         setSelectedLanguages(data.languages || []);
+        setSelectedTherapyModalities(data.therapy_modalities || []);
+        
+        // Load location from demographics if available
+        if (data.demographics && data.demographics.location) {
+          const location = data.demographics.location;
+          // Check if it's a predefined location code
+          const validLocationCodes = [
+            'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+            'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
+          ];
+          
+          if (validLocationCodes.includes(location)) {
+            // It's a predefined code
+            setProfileData(prev => ({ ...prev, location: location, customLocation: '' }));
+          } else {
+            // It's custom text
+            setProfileData(prev => ({ ...prev, location: 'custom', customLocation: location }));
+          }
+        } else {
+          setProfileData(prev => ({ ...prev, location: 'none', customLocation: '' }));
+        }
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -166,6 +211,7 @@ export default function CoachProfilePage() {
   };
 
   const handleSave = async () => {
+    console.log('Current availability options state before save:', profileData.availability_options);
     setSaving(true);
     setError('');
     setSuccessMessage('');
@@ -223,14 +269,21 @@ export default function CoachProfilePage() {
         bio: profileData.bio?.trim() || null,
         specialties: selectedSpecialties,
         languages: selectedLanguages,
+        therapy_modalities: selectedTherapyModalities,
         qualifications: qualifications.length > 0 ? qualifications : null,
         experience: profileData.experience ? parseInt(profileData.experience) : null,
         hourlyRate: profileData.hourlyRate ? parseFloat(profileData.hourlyRate) : null,
         isAvailable: profileData.isAvailable,
         videoAvailable: profileData.videoAvailable,
         inPersonAvailable: profileData.inPersonAvailable,
-        phoneAvailable: profileData.phoneAvailable
+        phoneAvailable: profileData.phoneAvailable,
+        availability_options: profileData.availability_options,
+        location: profileData.location === 'custom' ? profileData.customLocation?.trim() || null : 
+                 profileData.location === 'none' ? null : profileData.location
       };
+
+      console.log('Frontend sending updateData:', updateData);
+      console.log('Availability options being sent:', updateData.availability_options);
 
       const response = await axios.put(`${API_URL}/api/coach/profile`, updateData, {
         headers: {
@@ -551,6 +604,107 @@ export default function CoachProfilePage() {
             </div>
           </div>
 
+          {/* Time Availability Display/Edit */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Time Availability</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              {editing 
+                ? "Select the times when you're available for sessions" 
+                : "Your current availability for sessions"
+              }
+            </p>
+            
+            {/* Debug: Test button to manually set availability */}
+            {editing && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <p className="text-sm text-yellow-800 mb-2">Debug: Test availability setting</p>
+                <div className="flex space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log('Setting availability_options to weekday_mornings');
+                      setProfileData(prev => ({ ...prev, availability_options: ['weekday_mornings'] }));
+                    }}
+                    className="px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
+                  >
+                    Set to Weekday Mornings
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      console.log('Setting availability_options to empty array');
+                      setProfileData(prev => ({ ...prev, availability_options: [] }));
+                    }}
+                    className="px-3 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700"
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <p className="text-xs text-yellow-600 mt-2">
+                  Current availability_options: {JSON.stringify(profileData.availability_options)}
+                </p>
+              </div>
+            )}
+            
+            {editing ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {availabilityOptions.map((option) => {
+                  const isChecked = profileData.availability_options.includes(option.id);
+                  console.log(`Option ${option.id}: isChecked = ${isChecked}, availability_options array =`, profileData.availability_options);
+                  return (
+                    <div key={option.id} className="flex items-center space-x-3">
+                      <Checkbox
+                        id={option.id}
+                        checked={isChecked}
+                        onCheckedChange={(checked) => {
+                          console.log('Checkbox changed:', option.id, 'checked:', checked);
+                          if (checked) {
+                            setProfileData(prev => {
+                              const newAvailabilityOptions = [...prev.availability_options, option.id];
+                              console.log('New availability_options array:', newAvailabilityOptions);
+                              return { ...prev, availability_options: newAvailabilityOptions };
+                            });
+                          } else {
+                            setProfileData(prev => {
+                              const newAvailabilityOptions = prev.availability_options.filter(id => id !== option.id);
+                              console.log('New availability_options array:', newAvailabilityOptions);
+                              return { ...prev, availability_options: newAvailabilityOptions };
+                            });
+                          }
+                        }}
+                        disabled={!editing}
+                      />
+                      <label
+                        htmlFor={option.id}
+                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                      >
+                        {option.label} (Debug: {isChecked ? 'checked' : 'unchecked'})
+                      </label>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {profileData.availability_options.length > 0 ? (
+                  profileData.availability_options.map((availabilityId) => {
+                    const option = availabilityOptions.find(opt => opt.id === availabilityId);
+                    return option ? (
+                      <div key={availabilityId} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                      </div>
+                    ) : null;
+                  })
+                ) : (
+                  <div className="text-sm text-gray-500 italic">No availability times set</div>
+                )}
+              </div>
+            )}
+          </div>
+
           {/* Personal Information */}
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
@@ -607,6 +761,48 @@ export default function CoachProfilePage() {
                   disabled={!editing}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                {editing ? (
+                  <Select
+                    value={profileData.location || ''}
+                    onValueChange={(value) => setProfileData(prev => ({ ...prev, location: value }))}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select your location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No location specified</SelectItem>
+                      {Object.entries(STATE_NAMES).map(([code, name]) => (
+                        <SelectItem key={code} value={code}>
+                          {name}
+                        </SelectItem>
+                      ))}
+                      <SelectItem value="custom">Custom Location</SelectItem>
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
+                    {profileData.location === 'none' ? 'Not specified' : 
+                     profileData.location === 'custom' ? profileData.customLocation || 'Custom location' :
+                     profileData.location ? STATE_NAMES[profileData.location] || profileData.location : 'Not specified'}
+                  </div>
+                )}
+                
+                {/* Custom location input */}
+                {editing && profileData.location === 'custom' && (
+                  <div className="mt-2">
+                    <input
+                      type="text"
+                      name="customLocation"
+                      value={profileData.customLocation || ''}
+                      onChange={(e) => setProfileData(prev => ({ ...prev, customLocation: e.target.value }))}
+                      placeholder="Enter your custom location"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -722,6 +918,46 @@ export default function CoachProfilePage() {
                         {language}
                       </span>
                     ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Therapy Modalities */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Therapy Modalities
+              </label>
+              <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 ${editing ? 'max-h-32' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
+                {editing ? (
+                  therapyModalityOptions.map((modality) => (
+                    <div key={modality.id} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={modality.id}
+                        checked={selectedTherapyModalities.includes(modality.id)}
+                        onCheckedChange={(checked) => {
+                          if (checked) {
+                            setSelectedTherapyModalities(prev => [...prev, modality.id]);
+                          } else {
+                            setSelectedTherapyModalities(prev => prev.filter(id => id !== modality.id));
+                          }
+                        }}
+                      />
+                      <label htmlFor={modality.id} className="text-sm text-gray-700">
+                        {modality.label}
+                      </label>
+                    </div>
+                  ))
+                ) : (
+                  <div className="col-span-full flex flex-wrap gap-2">
+                    {selectedTherapyModalities.map((modalityId) => {
+                      const modality = therapyModalityOptions.find(m => m.id === modalityId);
+                      return modality ? (
+                        <span key={modalityId} className="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full">
+                          {modality.label}
+                        </span>
+                      ) : null;
+                    })}
                   </div>
                 )}
               </div>

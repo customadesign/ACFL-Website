@@ -50,7 +50,7 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
         religiousBackground: clientProfile.religious_background,
         language: clientProfile.preferred_language,
         areaOfConcern: clientProfile.areas_of_concern || [],
-        availability: clientProfile.availability || [],
+        availability: clientProfile.availability_options || [],
         therapistGender: clientProfile.preferred_coach_gender,
         bio: clientProfile.bio,
         // Keep legacy format for compatibility
@@ -61,7 +61,7 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
           religiousBackground: clientProfile.religious_background,
           language: clientProfile.preferred_language,
           areaOfConcern: clientProfile.areas_of_concern || [],
-          availability: clientProfile.availability || [],
+          availability: clientProfile.availability_options || [],
           therapistGender: clientProfile.preferred_coach_gender,
         }
       }
@@ -88,7 +88,7 @@ router.put('/client/profile', [
   body('religiousBackground').optional().isString(),
   body('language').optional().isString(),
   body('areaOfConcern').optional().isArray(),
-  body('availability').optional().isArray(),
+  body('availability_options').optional().isArray(),
   body('therapistGender').optional().isString(),
   body('bio').optional().isString(),
 ], async (req: Request & { user?: any }, res: Response) => {
@@ -140,7 +140,7 @@ router.put('/client/profile', [
     
     // Preferences
     if (req.body.areaOfConcern !== undefined) updateData.areas_of_concern = req.body.areaOfConcern
-    if (req.body.availability !== undefined) updateData.availability = req.body.availability
+          if (req.body.availability_options !== undefined) updateData.availability_options = req.body.availability_options
     if (req.body.therapistGender !== undefined) updateData.preferred_coach_gender = req.body.therapistGender
     if (req.body.bio !== undefined) updateData.bio = req.body.bio
 
@@ -551,6 +551,12 @@ router.post('/client/search-coaches', [
   body('preferences').isObject().withMessage('Preferences object is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
+    console.log('Search coaches request received:', { 
+      user: req.user, 
+      body: req.body,
+      preferences: req.body.preferences 
+    });
+
     if (!req.user || req.user.role !== 'client') {
       return res.status(403).json({ 
         success: false, 
@@ -569,6 +575,7 @@ router.post('/client/search-coaches', [
     const { preferences } = req.body;
 
     // Build query based on preferences
+    console.log('Building database query...');
     let query = supabase
       .from('coaches')
       .select(`
@@ -588,7 +595,7 @@ router.post('/client/search-coaches', [
           gender_identity,
           ethnic_identity,
           religious_background,
-          availability,
+          availability_options,
           accepts_insurance,
           accepts_sliding_scale,
           timezone,
@@ -596,6 +603,8 @@ router.post('/client/search-coaches', [
         )
       `)
       .eq('is_available', true);
+    
+    console.log('Base query built, applying filters...');
 
     // Apply filters based on preferences
     
@@ -642,10 +651,15 @@ router.post('/client/search-coaches', [
         : preferences.therapistReligion;
       query = query.eq('coach_demographics.religious_background', religionFilter);
     }
+    
+    console.log('All filters applied, query ready for execution');
 
+    console.log('About to execute database query...');
     const { data: coaches, error: coachesError } = await query;
+    console.log('Database query result:', { coaches: coaches?.length, error: coachesError });
 
     if (coachesError) {
+      console.error('Database query error:', coachesError);
       throw coachesError;
     }
 

@@ -47,7 +47,10 @@ router.get('/coach/profile', authenticate, async (req: Request & { user?: any },
       // Extract availability fields for easier access (stored in meta jsonb field)
       videoAvailable: demographics?.meta?.video_available || false,
       inPersonAvailable: demographics?.meta?.in_person_available || false,
-      phoneAvailable: demographics?.meta?.phone_available || false
+      phoneAvailable: demographics?.meta?.phone_available || false,
+      availability_options: demographics?.availability_options || [],
+      location: demographics?.location || null,
+      therapy_modalities: demographics?.therapy_modalities || []
     };
 
     res.json({
@@ -89,13 +92,43 @@ router.put('/coach/profile', [
   body('bio').optional().isLength({ max: 1000 }),
   body('specialties').optional().isArray({ min: 1 }),
   body('languages').optional().isArray({ min: 1 }),
+  body('therapy_modalities').optional().isArray(),
   body('qualifications').optional().isArray(),
   body('experience').optional().isInt({ min: 0 }),
   body('hourlyRate').optional().isFloat({ min: 0 }),
   body('isAvailable').optional().isBoolean(),
   body('videoAvailable').optional().isBoolean(),
   body('inPersonAvailable').optional().isBoolean(),
-  body('phoneAvailable').optional().isBoolean()
+  body('phoneAvailable').optional().isBoolean(),
+  body('availability_options').optional().isArray(),
+  body('location').optional().isString().custom((value) => {
+    if (!value) return true; // Allow empty/optional
+    
+    // Special value for no location
+    if (value === 'none') {
+      return null; // Convert to null for database
+    }
+    
+    // Check if it's a valid location code (US states + international)
+    const validLocationCodes = [
+      // US States
+      'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+      // International
+      'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
+    ];
+    
+    // If it's a predefined code, validate it
+    if (validLocationCodes.includes(value)) {
+      return value;
+    }
+    
+    // If it's custom text, allow it (but limit length)
+    if (value.length > 100) {
+      throw new Error('Custom location must be less than 100 characters');
+    }
+    
+    return value;
+  })
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
@@ -120,12 +153,20 @@ router.put('/coach/profile', [
       bio,
       specialties,
       languages,
+      therapy_modalities,
       qualifications,
       experience,
       hourlyRate,
       isAvailable,
-      videoAvailable
+      videoAvailable,
+      availability_options,
+      location
     } = req.body;
+
+    console.log('Request body received:', req.body);
+    console.log('Extracted availability_options:', availability_options);
+    console.log('Availability_options type:', typeof availability_options);
+    console.log('Availability_options is array:', Array.isArray(availability_options));
 
     // Update coaches table
     const coachUpdates: any = { updated_at: new Date().toISOString() };
@@ -167,27 +208,49 @@ router.put('/coach/profile', [
       throw coachError;
     }
 
-    // Update or insert coach demographics if video availability is provided
-    if (videoAvailable !== undefined) {
+    // Update or insert coach demographics if video availability, time availability, or location is provided
+    console.log('Checking demographics update:', { videoAvailable, availability_options, location });
+    if (videoAvailable !== undefined || availability_options !== undefined || location !== undefined) {
       const demographicsUpdates: any = {
         updated_at: new Date().toISOString()
       };
 
-      // Since the schema doesn't have these fields yet, we'll add them to the meta jsonb field
+      // Get existing demographics
       const { data: existingDemo } = await supabase
         .from('coach_demographics')
         .select('meta')
         .eq('coach_id', coachId)
         .single();
 
+      console.log('Existing demographics:', existingDemo);
       const existingMeta = existingDemo?.meta || {};
       
       const newMeta = {
         ...existingMeta,
-        video_available: videoAvailable
+        video_available: videoAvailable !== undefined ? videoAvailable : existingMeta.video_available
       };
 
       demographicsUpdates.meta = newMeta;
+
+      // Add time availability if provided
+      if (availability_options !== undefined) {
+        console.log('Setting availability_options to:', availability_options);
+        demographicsUpdates.availability_options = availability_options;
+      }
+
+      // Add location if provided
+      if (location !== undefined) {
+        console.log('Setting location to:', location);
+        demographicsUpdates.location = location;
+      }
+
+      // Add therapy modalities if provided
+      if (therapy_modalities !== undefined) {
+        console.log('Setting therapy_modalities to:', therapy_modalities);
+        demographicsUpdates.therapy_modalities = therapy_modalities;
+      }
+
+      console.log('Demographics updates to apply:', demographicsUpdates);
 
       // Use upsert to create or update demographics
       const { error: demoError } = await supabase
@@ -200,7 +263,11 @@ router.put('/coach/profile', [
       if (demoError) {
         console.error('Demographics update error:', demoError);
         // Don't fail the whole request if demographics update fails
+      } else {
+        console.log('Demographics updated successfully');
       }
+    } else {
+      console.log('No demographics updates needed');
     }
 
     // Get updated profile with demographics
@@ -213,7 +280,10 @@ router.put('/coach/profile', [
     const combinedData = {
       ...updatedCoach,
       demographics: demographics || {},
-      videoAvailable: demographics?.meta?.video_available || false
+      videoAvailable: demographics?.meta?.video_available || false,
+      availability_options: demographics?.availability_options || [],
+      location: demographics?.location || null,
+      therapy_modalities: demographics?.therapy_modalities || []
     };
 
     res.json({

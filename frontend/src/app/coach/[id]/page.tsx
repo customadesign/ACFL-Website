@@ -76,7 +76,7 @@ function CoachProfileContent() {
               languages: ["English"],
               bio: "I'm a certified ACT coach specializing in anxiety and stress management. Using acceptance and commitment therapy principles, I've spent over 10 years helping clients develop psychological flexibility, align with their values, and build resilience in their daily lives.",
               sexualOrientation: "Gay / lesbian",
-              availableTimes: ["Weekday Mornings", "Weekday Afternoons"],
+              availableTimes: ["weekday_mornings", "weekday_afternoons"],
               email: "richard.peng@actcoaching.com",
               phone: "(555) 123-4567",
               experience: "10+ years",

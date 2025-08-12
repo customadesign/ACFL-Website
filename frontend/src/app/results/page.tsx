@@ -475,7 +475,7 @@ export default function Results() {
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">Availability Preferences</label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                {['weekday-mornings', 'weekday-afternoons', 'weekday-evenings', 'weekends'].map((time) => (
+                {['weekday_mornings', 'weekday_afternoons', 'weekday_evenings', 'weekends'].map((time) => (
                   <div key={time} className="flex items-center space-x-2">
                     <Checkbox
                       id={time}
