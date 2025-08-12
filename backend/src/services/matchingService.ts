@@ -71,7 +71,7 @@ function scoreProvider(provider: Provider, preferences: PatientPreferences): num
   }
 
   if (preferences.therapistReligion === 'No preference' || 
-      provider.demographics.religion.toLowerCase() === preferences.therapistReligion.toLowerCase()) {
+      provider.demographics.religious_background.toLowerCase() === preferences.therapistReligion.toLowerCase()) {
     score += 1;
   }
 

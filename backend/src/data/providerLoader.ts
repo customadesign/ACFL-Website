@@ -14,7 +14,7 @@ export interface Provider {
   demographics: {
     gender: string;
     ethnicity: string;
-    religion: string;
+    religious_background: string;
   };
   availability: number;
   languages: string[];
@@ -47,7 +47,7 @@ export async function loadProviders(): Promise<Provider[]> {
       demographics: {
         gender: record.gender || 'Not specified',
         ethnicity: record.ethnicity || 'Not specified',
-        religion: record.religion || 'Not specified'
+        religious_background: record.religious_background || 'Not specified'
       },
       availability: record.availability,
       languages: record.languages,
@@ -76,7 +76,7 @@ function cleanRecord(record: any) {
       : [],
     gender: (record['Gender Identity'] || '').trim(),
     ethnicity: (record['Ethnic Identity'] || '').trim(),
-    religion: (record['Religious Background'] || '').trim(),
+    religious_background: (record['Religious Background'] || '').trim(),
     availability: parseInt(record['No Of Clients Able To Take On']) || 0,
     languages: record['Language']
       ? record['Language'].split(',').map((l: string) => l.trim()).filter(Boolean)

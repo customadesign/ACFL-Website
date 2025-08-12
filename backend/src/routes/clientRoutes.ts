@@ -585,15 +585,14 @@ router.post('/client/search-coaches', [
         created_at,
         users (email),
         coach_demographics (
-          gender,
-          ethnicity,
-          religion,
-          location_states,
-          available_times,
-          video_available,
-          insurance_accepted,
-          min_age,
-          max_age
+          gender_identity,
+          ethnic_identity,
+          religious_background,
+          availability,
+          accepts_insurance,
+          accepts_sliding_scale,
+          timezone,
+          meta
         )
       `)
       .eq('is_available', true);
@@ -615,7 +614,9 @@ router.post('/client/search-coaches', [
 
     // Filter by location if specified
     if (preferences.location) {
-      query = query.contains('coach_demographics.location_states', [preferences.location]);
+      // Note: location filtering would need to be implemented differently
+      // since location_states column doesn't exist in current schema
+      // For now, we'll skip location filtering
     }
 
     // Filter by coach gender preference
@@ -623,7 +624,7 @@ router.post('/client/search-coaches', [
       const genderFilter = preferences.therapistGender === 'other' && preferences.therapistGenderOther
         ? preferences.therapistGenderOther
         : preferences.therapistGender;
-      query = query.eq('coach_demographics.gender', genderFilter);
+      query = query.eq('coach_demographics.gender_identity', genderFilter);
     }
 
     // Filter by coach ethnicity preference  
@@ -631,7 +632,7 @@ router.post('/client/search-coaches', [
       const ethnicityFilter = preferences.therapistEthnicity === 'other' && preferences.therapistEthnicityOther
         ? preferences.therapistEthnicityOther
         : preferences.therapistEthnicity;
-      query = query.eq('coach_demographics.ethnicity', ethnicityFilter);
+      query = query.eq('coach_demographics.ethnic_identity', ethnicityFilter);
     }
 
     // Filter by coach religion preference
@@ -639,7 +640,7 @@ router.post('/client/search-coaches', [
       const religionFilter = preferences.therapistReligion === 'other' && preferences.therapistReligionOther
         ? preferences.therapistReligionOther
         : preferences.therapistReligion;
-      query = query.eq('coach_demographics.religion', religionFilter);
+      query = query.eq('coach_demographics.religious_background', religionFilter);
     }
 
     const { data: coaches, error: coachesError } = await query;
@@ -672,8 +673,10 @@ router.post('/client/search-coaches', [
       }
 
       // Location matching (10 points)
-      if (preferences.location && coach.coach_demographics?.location_states?.includes(preferences.location)) {
-        matchScore += 10;
+      if (preferences.location) {
+        // Note: location matching would need to be implemented differently
+        // since location_states column doesn't exist in current schema
+        // For now, we'll skip location matching
       }
 
       // Demographics matching (15 points total)
@@ -682,7 +685,7 @@ router.post('/client/search-coaches', [
         const genderFilter = preferences.therapistGender === 'other' && preferences.therapistGenderOther
           ? preferences.therapistGenderOther
           : preferences.therapistGender;
-        if (coach.coach_demographics?.gender === genderFilter) {
+        if (coach.coach_demographics?.gender_identity === genderFilter) {
           demographicsMatches += 5;
         }
       }
@@ -691,7 +694,7 @@ router.post('/client/search-coaches', [
         const ethnicityFilter = preferences.therapistEthnicity === 'other' && preferences.therapistEthnicityOther
           ? preferences.therapistEthnicityOther
           : preferences.therapistEthnicity;
-        if (coach.coach_demographics?.ethnicity === ethnicityFilter) {
+        if (coach.coach_demographics?.ethnic_identity === ethnicityFilter) {
           demographicsMatches += 5;
         }
       }
@@ -700,7 +703,7 @@ router.post('/client/search-coaches', [
         const religionFilter = preferences.therapistReligion === 'other' && preferences.therapistReligionOther
           ? preferences.therapistReligionOther
           : preferences.therapistReligion;
-        if (coach.coach_demographics?.religion === religionFilter) {
+        if (coach.coach_demographics?.religious_background === religionFilter) {
           demographicsMatches += 5;
         }
       }

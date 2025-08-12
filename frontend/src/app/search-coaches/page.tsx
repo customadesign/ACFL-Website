@@ -105,7 +105,7 @@ interface Coach {
   demographics?: {
     gender: string;
     ethnicity: string;
-    religion: string;
+    religious_background: string;
   };
 }
 

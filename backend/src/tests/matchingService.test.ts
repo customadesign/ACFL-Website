@@ -15,7 +15,7 @@ describe('Matching Service', () => {
       demographics: {
         gender: "Female",
         ethnicity: "Asian",
-        religion: "Buddhist"
+        religious_background: "Buddhist"
       },
       availability: 5,
       languages: ["English", "Mandarin"],
@@ -32,7 +32,7 @@ describe('Matching Service', () => {
       demographics: {
         gender: "Male",
         ethnicity: "White",
-        religion: "Christian"
+        religious_background: "Christian"
       },
       availability: 3,
       languages: ["English", "Spanish"],

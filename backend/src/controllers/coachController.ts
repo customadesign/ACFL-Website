@@ -209,17 +209,14 @@ export const getCoachById = async (req: Request, res: Response) => {
         *,
         users (email),
         coach_demographics (
-          gender,
-          ethnicity,
-          religion,
-          location_states,
-          available_times,
-          video_available,
-          in_person_available,
-          phone_available,
-          insurance_accepted,
-          min_age,
-          max_age
+          gender_identity,
+          ethnic_identity,
+          religious_background,
+          availability,
+          accepts_insurance,
+          accepts_sliding_scale,
+          timezone,
+          meta
         )
       `)
       .eq('id', id)
@@ -242,27 +239,27 @@ export const getCoachById = async (req: Request, res: Response) => {
       name: `${coach.first_name} ${coach.last_name}`,
       specialties: coach.specialties || [],
       modalities: ["ACT"], // Default to ACT since all coaches use ACT
-      location: demographics.location_states || [],
+      location: [], // Note: location_states column doesn't exist in current schema
       demographics: {
-        gender: demographics.gender || '',
-        ethnicity: demographics.ethnicity || '',
-        religion: demographics.religion || ''
+        gender: demographics.gender_identity || '',
+        ethnicity: demographics.ethnic_identity || '',
+        religious_background: demographics.religious_background || ''
       },
       availability: coach.is_available ? 1 : 0,
       matchScore: 0,
       languages: coach.languages || [],
       bio: coach.bio || '',
       sexualOrientation: '', // Not stored in current schema
-      availableTimes: demographics.available_times || [],
+      availableTimes: demographics.availability || [],
       email: coach.users?.email || '',
       phone: coach.phone || '',
       experience: coach.experience ? `${coach.experience} years` : '',
       education: '', // Not stored in current schema
       certifications: coach.qualifications || [],
-      insuranceAccepted: demographics.insurance_accepted || [],
+      insuranceAccepted: demographics.accepts_insurance ? ['Insurance accepted'] : [],
       sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : '',
-      virtualAvailable: demographics.video_available || true,
-      inPersonAvailable: demographics.in_person_available || false
+      virtualAvailable: demographics.meta?.video_available || true,
+      inPersonAvailable: demographics.meta?.in_person_available || false
     };
     
     res.json(formattedCoach);

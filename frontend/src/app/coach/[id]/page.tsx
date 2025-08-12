@@ -19,7 +19,7 @@ interface Coach {
   demographics: {
     gender: string
     ethnicity: string
-    religion: string
+    religious_background: string
   }
   availability: number
   matchScore: number
@@ -69,7 +69,7 @@ function CoachProfileContent() {
               demographics: {
                 gender: "Male",
                 ethnicity: "Asian American, Taiwanese",
-                religion: "None"
+                religious_background: "None"
               },
               availability: 2,
               matchScore: 95,
@@ -97,7 +97,7 @@ function CoachProfileContent() {
               demographics: {
                 gender: "Female",
                 ethnicity: "Chinese Canadian",
-                religion: "Buddhist"
+                religious_background: "Buddhist"
               },
               availability: 10,
               matchScore: 88,
@@ -125,7 +125,7 @@ function CoachProfileContent() {
               demographics: {
                 gender: "Female",
                 ethnicity: "Indian",
-                religion: "Hindu"
+                religious_background: "Hindu"
               },
               availability: 3,
               matchScore: 82,
@@ -402,7 +402,7 @@ function CoachProfileContent() {
                   <div className="space-y-1 text-sm text-gray-700">
                     <div>Gender: {coach.demographics.gender}</div>
                     <div>Ethnicity: {coach.demographics.ethnicity}</div>
-                    <div>Religion: {coach.demographics.religion}</div>
+                    <div>Religious Background: {coach.demographics.religious_background}</div>
                     <div>Sexual Orientation: {coach.sexualOrientation}</div>
                   </div>
                 </div>
