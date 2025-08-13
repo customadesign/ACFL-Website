@@ -11,7 +11,6 @@ import axios from 'axios';
 
 interface Client {
   id: string;
-  user_id: string; // Add user_id for messaging
   name: string;
   email: string;
   phone?: string;
@@ -92,9 +91,8 @@ export default function MyClientsPage() {
     try {
       setSendingMessage(true);
       
-      // Use the client's user_id for messaging
       const response = await axios.post(`${API_URL}/api/coach/send-message`, {
-        recipient_id: selectedClient.user_id, // Use user_id instead of client.id
+        recipient_id: selectedClient.id, // Use client.id directly
         body: messageContent.trim()
       }, {
         headers: {

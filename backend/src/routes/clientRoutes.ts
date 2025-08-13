@@ -286,7 +286,7 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
           first_name,
           last_name,
           specialties,
-          users (email)
+          email
         )
       `)
       .eq('client_id', clientProfile.id)
@@ -355,6 +355,7 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
           id,
           first_name,
           last_name,
+          email,
           bio,
           specialties,
           languages,
@@ -362,8 +363,7 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
           experience,
           rating,
           is_available,
-          created_at,
-          users (email)
+          created_at
         )
       `)
       .eq('client_id', clientProfile.id);
@@ -386,7 +386,7 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
         rating: 0, // Will be calculated dynamically from reviews
         savedDate: coach.created_at, // Use coach's creation date as fallback
         virtualAvailable: coach.is_available,
-        email: coach.users?.email
+        email: coach.email || null
       };
     }) || [];
 
