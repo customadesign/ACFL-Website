@@ -35,6 +35,8 @@ function DashboardContent() {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
+  const [page, setPage] = useState(1)
+  const pageSize = 3
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -115,7 +117,7 @@ function DashboardContent() {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -187,7 +189,7 @@ function DashboardContent() {
 
         {/* Recent Activity */}
         <div className="grid lg:grid-cols-2 gap-8">
-          <Card>
+          <Card className="h-[50vh] flex flex-col">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
@@ -205,7 +207,7 @@ function DashboardContent() {
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
@@ -227,7 +229,7 @@ function DashboardContent() {
                   </Button>
                 </div>
               ) : (
-                                  <div className="space-y-4">
+                  <div className="space-y-4">
                     {recentActivity.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
                         <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
@@ -235,7 +237,9 @@ function DashboardContent() {
                         <p className="text-sm">Start by searching for coaches or scheduling sessions</p>
                       </div>
                     ) : (
-                      recentActivity.map((activity) => (
+                      recentActivity
+                        .slice((page - 1) * pageSize, page * pageSize)
+                        .map((activity) => (
                         <div key={activity.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer" onClick={() => handleActivityClick(activity)}>
                           {getActivityIcon(activity.type)}
                           <div className="flex-1">
@@ -245,7 +249,17 @@ function DashboardContent() {
                           </div>
                           <ArrowRight className="w-4 h-4 text-gray-400" />
                         </div>
-                      ))
+                        ))
+                    )}
+                    {/* Pagination Controls */}
+                    {recentActivity.length > pageSize && (
+                      <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                        <span className="text-xs text-gray-500">Page {page} of {Math.ceil(recentActivity.length / pageSize)}</span>
+                        <div className="space-x-2">
+                          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</Button>
+                          <Button variant="outline" size="sm" disabled={page * pageSize >= recentActivity.length} onClick={() => setPage(p => p + 1)}>Next</Button>
+                        </div>
+                      </div>
                     )}
                   </div>
               )}

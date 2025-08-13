@@ -109,13 +109,19 @@ useEffect(() => {
 			const partnerId = activePartnerId
 			const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
 			if (involvesActive) {
-				await loadMessages(partnerId)
+				// Optimistic append for instant UI
+				setMessages(prev => [...prev, msg])
+				// Auto-mark as read if incoming to me
 				if (msg.recipient_id === user.id && !msg.read_at) {
-					await fetch(`${API_URL}/api/client/messages/${msg.id}/read`, {
+					fetch(`${API_URL}/api/client/messages/${msg.id}/read`, {
 						method: 'PUT',
 						headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
 					})
 				}
+				// Refresh conversations in the background to update unread counts
+				loadConversations()
+				// Ensure scroll to bottom after paint
+				setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
 			} else {
 				loadConversations()
 			}
@@ -182,9 +188,9 @@ useEffect(() => {
 	}
 
 	return (
-		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+		<div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 ">
 			{/* Main Content */}
-			<div className="max-w-7xl mx-auto">
+			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 					<div className="border rounded-lg bg-white overflow-hidden h-[70vh] flex flex-col">
 						<div className="p-3 border-b font-semibold">Conversations</div>

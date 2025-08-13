@@ -63,7 +63,8 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
           areaOfConcern: clientProfile.areas_of_concern || [],
           availability: clientProfile.availability_options || [],
           therapistGender: clientProfile.preferred_coach_gender,
-        }
+        },
+        created_at: clientProfile.created_at
       }
     });
   } catch (error) {
@@ -296,7 +297,8 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
     if (filter === 'upcoming') {
       query = query.gte('starts_at', now).in('status', ['scheduled', 'confirmed']);
     } else if (filter === 'past') {
-      query = query.or(`starts_at.lt.${now},status.eq.completed`);
+      // Consider sessions in the past by time or completed/cancelled by status
+      query = query.or(`starts_at.lt.${now},ends_at.lt.${now},status.eq.completed,status.eq.cancelled`);
     } else if (filter === 'pending') {
       query = query.eq('status', 'scheduled');
     }

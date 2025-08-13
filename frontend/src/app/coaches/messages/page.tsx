@@ -109,13 +109,16 @@ export default function CoachMessagesPage() {
       const partnerId = activePartnerId
       const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
       if (involvesActive) {
-        await loadMessages(partnerId)
+        // Optimistic append for instant UI
+        setMessages(prev => [...prev, msg])
         if (msg.recipient_id === user.id && !msg.read_at) {
-          await fetch(`${API_URL}/api/coach/messages/${msg.id}/read`, {
+          fetch(`${API_URL}/api/coach/messages/${msg.id}/read`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
           })
         }
+        loadConversations()
+        setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
       } else {
         loadConversations()
       }

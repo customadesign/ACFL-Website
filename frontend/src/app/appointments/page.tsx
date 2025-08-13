@@ -65,6 +65,8 @@ function AppointmentsContent() {
   const { user, logout, isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [upcomingCount, setUpcomingCount] = useState(0)
+  const [pastCount, setPastCount] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
@@ -72,8 +74,61 @@ function AppointmentsContent() {
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
+  const [nowTimestampMs, setNowTimestampMs] = useState<number>(Date.now())
 
   const API_URL = getApiUrl()
+
+  // Tick every second to update countdowns and enable Join button at the exact time
+  useEffect(() => {
+    const intervalId = setInterval(() => {
+      setNowTimestampMs(Date.now())
+    }, 1000)
+    return () => clearInterval(intervalId)
+  }, [])
+
+  const isJoinAvailableForAppointment = (appointment: Appointment): boolean => {
+    const startMs = new Date(appointment.starts_at).getTime()
+    const estimatedMs = appointment.duration && appointment.duration > 0
+      ? appointment.duration * 60 * 1000
+      : 60 * 60 * 1000
+    const endMs = appointment.ends_at ? new Date(appointment.ends_at).getTime() : (startMs + estimatedMs)
+    return nowTimestampMs >= startMs && nowTimestampMs <= endMs
+  }
+
+  const getCountdownLabelForAppointment = (appointment: Appointment): string => {
+    const startMs = new Date(appointment.starts_at).getTime()
+    const estimatedMs = appointment.duration && appointment.duration > 0
+      ? appointment.duration * 60 * 1000
+      : 60 * 60 * 1000
+    const endMs = appointment.ends_at ? new Date(appointment.ends_at).getTime() : (startMs + estimatedMs)
+    const deltaToStart = startMs - nowTimestampMs
+    const deltaToEnd = endMs - nowTimestampMs
+
+    if (deltaToStart > 0) {
+      const hours = Math.floor(deltaToStart / (1000 * 60 * 60))
+      const minutes = Math.floor((deltaToStart % (1000 * 60 * 60)) / (1000 * 60))
+      const seconds = Math.floor((deltaToStart % (1000 * 60)) / 1000)
+      const hh = hours.toString().padStart(2, '0')
+      const mm = minutes.toString().padStart(2, '0')
+      const ss = seconds.toString().padStart(2, '0')
+      return `Starts in ${hh}:${mm}:${ss}`
+    }
+
+    if (deltaToEnd > 0) {
+      return 'Live now'
+    }
+
+    return 'Session ended'
+  }
+
+  const fetchAppointmentsByFilter = async (filter: 'upcoming' | 'past') => {
+    const response = await axios.get(`${API_URL}/api/client/appointments`, {
+      params: { filter },
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    })
+    if (!response.data.success) throw new Error('Failed to fetch appointments')
+    return response.data.data as Appointment[]
+  }
 
   const loadAppointments = async (forceRefresh = false, tab = 'upcoming') => {
     // Don't load if already loaded and not forcing refresh
@@ -88,18 +143,24 @@ function AppointmentsContent() {
 
     try {
       setLoading(true)
-      const filter = tab === 'upcoming' ? 'upcoming' : 'past'
-      const response = await axios.get(`${API_URL}/api/client/appointments`, {
-        params: { filter },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      })
+      const activeFilter: 'upcoming' | 'past' = tab === 'upcoming' ? 'upcoming' : 'past'
+      const otherFilter: 'upcoming' | 'past' = activeFilter === 'upcoming' ? 'past' : 'upcoming'
 
-      if (response.data.success) {
-        setAppointments(response.data.data)
-        setHasLoaded(true)
-      }
+      // Fetch active tab data
+      const activeData = await fetchAppointmentsByFilter(activeFilter)
+      setAppointments(activeData)
+      if (activeFilter === 'upcoming') setUpcomingCount(activeData.length)
+      else setPastCount(activeData.length)
+
+      // Fetch other tab count in background
+      fetchAppointmentsByFilter(otherFilter)
+        .then(otherData => {
+          if (otherFilter === 'upcoming') setUpcomingCount(otherData.length)
+          else setPastCount(otherData.length)
+        })
+        .catch(() => { /* ignore count fetch errors */ })
+
+      setHasLoaded(true)
     } catch (error) {
       console.error('Error loading appointments:', error)
       setError('Failed to load appointments')
@@ -109,27 +170,18 @@ function AppointmentsContent() {
   }
 
   useEffect(() => {
-    if (!hasLoaded) {
-      loadAppointments()
-    }
-  }, [hasLoaded])
+    loadAppointments(!hasLoaded, activeTab)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // Separate effect for activeTab changes
   useEffect(() => {
-    if (hasLoaded && activeTab) {
+    if (activeTab) {
       loadAppointments(true, activeTab)
     }
-  }, [activeTab, hasLoaded])
+  }, [activeTab])
 
-  // Memoized computed values
-  const upcomingAppointments = useMemo(() => 
-    appointments.filter(apt => apt.status !== 'completed'), 
-    [appointments]
-  )
-  const pastAppointments = useMemo(() => 
-    appointments.filter(apt => apt.status === 'completed'), 
-    [appointments]
-  )
+  // Appointments returned are already filtered by activeTab on the server
 
   const handleReschedule = (appointment: Appointment) => {
     setSelectedAppointment(appointment)
@@ -164,7 +216,7 @@ function AppointmentsContent() {
 
   return (
     <div>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Error Message */}
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
@@ -201,7 +253,7 @@ function AppointmentsContent() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Upcoming ({upcomingAppointments.length})
+            Upcoming ({upcomingCount})
           </button>
           <button
             onClick={() => setActiveTab('past')}
@@ -211,13 +263,13 @@ function AppointmentsContent() {
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
-            Past ({pastAppointments.length})
+            Past ({pastCount})
           </button>
         </div>
 
         {/* Appointments List */}
         <div className="space-y-4">
-          {activeTab === 'upcoming' && upcomingAppointments.map((appointment) => (
+          {activeTab === 'upcoming' && appointments.map((appointment) => (
             <Card key={appointment.id} className="p-6 hover:shadow-lg transition-shadow">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -269,16 +321,21 @@ function AppointmentsContent() {
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-3 items-center">
                     {appointment.zoom_link && (
                       <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
                         onClick={() => window.open(appointment.zoom_link, '_blank')}
+                        disabled={!isJoinAvailableForAppointment(appointment)}
+                        title={!isJoinAvailableForAppointment(appointment) ? 'Join available at session start time' : 'Join session'}
                       >
                         <Video className="w-4 h-4 mr-2" />
                         Join Session
                       </Button>
                     )}
+                    <span className="text-sm text-gray-600">
+                      {getCountdownLabelForAppointment(appointment)}
+                    </span>
                     <Button 
                       variant="outline" 
                       className="text-blue-600 border-blue-600 hover:bg-blue-50"
@@ -310,7 +367,75 @@ function AppointmentsContent() {
             </Card>
           ))}
 
-          {activeTab === 'past' && pastAppointments.length === 0 && (
+          {activeTab === 'past' && appointments.map((appointment) => (
+            <Card key={appointment.id} className="p-6 hover:shadow-lg transition-shadow">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="flex items-center space-x-3 mb-3">
+                    <h3 className="text-xl font-semibold text-gray-900">
+                      {appointment.session_type || 'Coaching Session'}
+                    </h3>
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
+                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
+                    </span>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4 mb-4">
+                    <div className="space-y-2">
+                      <div className="flex items-center text-gray-600">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{formatDate(appointment.starts_at)}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                      <div className="flex items-center text-gray-600">
+                        <Video className="w-4 h-4 mr-2" />
+                        <span>Virtual Session</span>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <div className="flex items-center text-gray-600">
+                        <span className="font-medium">Coach:</span>
+                        <Link href={`/coach/${appointment.coach_id}`}>
+                          <span className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer">
+                            {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach'}
+                          </span>
+                        </Link>
+                      </div>
+                      {appointment.notes && (
+                        <div className="text-gray-600">
+                          <span className="font-medium">Focus:</span>
+                          <span className="ml-2">{appointment.notes}</span>
+                        </div>
+                      )}
+                      <div className="text-gray-600">
+                        <span className="font-medium">Duration:</span>
+                        <span className="ml-2">{appointment.duration || 60} minutes</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Past Actions */}
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      variant="outline" 
+                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
+                      onClick={() => handleMessage(appointment)}
+                    >
+                      <MessageCircle className="w-4 h-4 mr-2" />
+                      Message Coach
+                    </Button>
+                    {/* Additional past-specific actions can go here */}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          ))}
+
+          {activeTab === 'past' && appointments.length === 0 && (
             <Card className="p-8 text-center">
               <div className="text-gray-500">
                 <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -320,8 +445,8 @@ function AppointmentsContent() {
             </Card>
           )}
 
-          {((activeTab === 'upcoming' && upcomingAppointments.length === 0) || 
-            (activeTab === 'past' && pastAppointments.length === 0)) && 
+          {((activeTab === 'upcoming' && appointments.length === 0) || 
+            (activeTab === 'past' && appointments.length === 0)) && 
            activeTab === 'upcoming' && (
             <Card className="p-8 text-center">
               <div className="text-gray-500">
@@ -339,7 +464,7 @@ function AppointmentsContent() {
         </div>
 
         {/* VideoSDK Features */}
-        {upcomingAppointments.length > 0 && (
+        {activeTab === 'upcoming' && appointments.length > 0 && (
           <Card className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">
               <Video className="w-5 h-5 inline mr-2" />
@@ -372,7 +497,7 @@ function AppointmentsContent() {
         )}
 
         {/* Quick Actions */}
-        {upcomingAppointments.length > 0 && (
+        {activeTab === 'upcoming' && appointments.length > 0 && (
           <Card className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
             <div className="grid md:grid-cols-3 gap-4">

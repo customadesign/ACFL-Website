@@ -31,12 +31,43 @@ export default function AppointmentsPage() {
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [nowMs, setNowMs] = useState<number>(Date.now());
 
   const API_URL = getApiUrl();
 
   useEffect(() => {
     loadAppointments();
   }, []); // Remove filter dependency since we always get all appointments
+
+  // Tick every second to enable/disable Join and update countdown labels
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isJoinAvailable = (apt: Appointment) => {
+    const start = new Date(apt.starts_at).getTime();
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
+    return nowMs >= start && nowMs <= end;
+  };
+
+  const getCountdownLabel = (apt: Appointment) => {
+    const start = new Date(apt.starts_at).getTime();
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
+    const toStart = start - nowMs;
+    const toEnd = end - nowMs;
+    if (toStart > 0) {
+      const h = Math.floor(toStart / 3600000);
+      const m = Math.floor((toStart % 3600000) / 60000);
+      const s = Math.floor((toStart % 60000) / 1000);
+      const hh = h.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+      const ss = s.toString().padStart(2, '0');
+      return `Starts in ${hh}:${mm}:${ss}`;
+    }
+    if (toEnd > 0) return 'Live now';
+    return 'Session ended';
+  };
 
   const loadAppointments = async () => {
     try {
@@ -255,17 +286,19 @@ export default function AppointmentsPage() {
                       </div>
                     )}
 
-                    {appointment.status === 'confirmed' && new Date(appointment.starts_at) >= new Date() && (
+                    {appointment.status === 'confirmed' && (
                       <div className="mt-4 flex space-x-2">
                         {appointment.zoom_link && (
                           <Button
                             onClick={() => window.open(appointment.zoom_link, '_blank')}
-                            className="bg-green-600 hover:bg-green-700"
+                            className="bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                            disabled={!isJoinAvailable(appointment)}
                             size="sm"
                           >
                             📹 Join Session
                           </Button>
                         )}
+                        <span className="text-xs text-gray-600 self-center">{getCountdownLabel(appointment)}</span>
                         <Button
                           onClick={() => handleStatusChange(appointment.id, 'completed')}
                           className="bg-blue-600 hover:bg-blue-700"
