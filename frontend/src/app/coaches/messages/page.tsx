@@ -54,7 +54,19 @@ export default function CoachMessagesPage() {
       headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
     })
     const data = await res.json()
-    if (data.success) setMessages(data.data)
+    if (data.success) {
+      setMessages(data.data)
+      // Mark any unread incoming messages as read
+      const unread = (data.data as Message[]).filter(m => m.recipient_id === (user?.id || '') && !m.read_at)
+      if (unread.length > 0) {
+        await Promise.all(
+          unread.map(m => fetch(`${API_URL}/api/coach/messages/${m.id}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          }))
+        )
+      }
+    }
   }
 
   useEffect(() => {
@@ -189,7 +201,12 @@ export default function CoachMessagesPage() {
               return (
                 <div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''}`}>
                   <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${isMine ? 'bg-blue-600 text-white' : 'bg-white text-gray-900'}`}>{m.body}</div>
-                  <div className="text-[10px] text-gray-500 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+                  <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-2">
+                    <span>{new Date(m.created_at).toLocaleString()}</span>
+                    {isMine && m.read_at && (
+                      <span className="text-blue-600">Seen</span>
+                    )}
+                  </div>
                 </div>
               )
             })}

@@ -175,7 +175,7 @@ useEffect(() => {
 
 	if (loading && conversations.length === 0) {
 		return (
-			<div className="px-4 sm:px-6 lg:px-8 py-6">
+			<div className="px-4 sm:px-6 lg:px-8 py-6 max-w-7xl mx-auto">
 				<div className="border rounded-lg bg-white p-4">Loading messages...</div>
 			</div>
 		)
