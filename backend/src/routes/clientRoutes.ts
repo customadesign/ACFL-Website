@@ -668,12 +668,12 @@ router.post('/client/search-coaches', [
         bio,
         specialties,
         languages,
-        hourly_rate,
-        experience,
+        hourly_rate_usd,
+        years_experience,
         rating,
         is_available,
         created_at,
-        users (email),
+        email,
         coach_demographics (
           gender_identity,
           ethnic_identity,
@@ -813,12 +813,12 @@ router.post('/client/search-coaches', [
         specialties: coach.specialties || [],
         languages: coach.languages || [],
         bio: coach.bio || '',
-        sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
-        experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
+        sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : 'Rate not specified',
+        experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
         rating: 0, // Will be calculated dynamically from reviews
         matchScore: Math.min(Math.round(matchScore), 100),
         virtualAvailable: coach.is_available,
-        email: coach.users?.email
+        email: coach.email
       };
     }) || [];
 
