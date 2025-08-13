@@ -1314,7 +1314,7 @@ router.put('/client/messages/:messageId/read', authenticate, async (req: Request
 
     const { error } = await supabase
       .from('messages')
-      .update({ is_read: true })
+      .update({ is_read: true, read_at: new Date().toISOString() })
       .eq('id', messageId)
       .eq('recipient_id', clientProfile.id); // Only mark as read if current user is recipient
 

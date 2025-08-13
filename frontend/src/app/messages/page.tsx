@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from 'lucide-react'
+import supabase, { isSupabaseConfigured } from '@/lib/supabase'
 
 type Conversation = {
 	partnerId: string
@@ -36,7 +37,7 @@ const { user, logout } = useAuth()
 	const [loading, setLoading] = useState(true)
 	const [sending, setSending] = useState(false)
 	const [text, setText] = useState('')
-	const scrollerRef = useRef<HTMLDivElement>(null)
+const scrollerRef = useRef<HTMLDivElement>(null)
 
 	const loadConversations = async () => {
 		const res = await fetch(`${API_URL}/api/client/conversations`, {
@@ -55,7 +56,21 @@ const { user, logout } = useAuth()
 			headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
 		})
 		const data = await res.json()
-		if (data.success) setMessages(data.data)
+		if (data.success) {
+			setMessages(data.data)
+			// Mark any unread incoming messages as read
+			const unread = (data.data as Message[]).filter(m => m.recipient_id === (user?.id || '') && !m.read_at)
+			if (unread.length > 0) {
+				await Promise.all(
+					unread.map(m => fetch(`${API_URL}/api/client/messages/${m.id}/read`, {
+						method: 'PUT',
+						headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+					}))
+				)
+				// Refresh conversations to drop unread badges
+				loadConversations()
+			}
+		}
 	}
 
 	useEffect(() => {
@@ -67,10 +82,64 @@ const { user, logout } = useAuth()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
+
+useEffect(() => {
+	if (activePartnerId) {
+		loadMessages(activePartnerId)
+	}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+}, [activePartnerId])
+
+	// Refresh when window regains focus
 	useEffect(() => {
-		if (activePartnerId) loadMessages(activePartnerId)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
+		const onFocus = () => {
+			loadConversations()
+			if (activePartnerId) loadMessages(activePartnerId)
+		}
+		window.addEventListener('focus', onFocus)
+		return () => window.removeEventListener('focus', onFocus)
 	}, [activePartnerId])
+
+	// Supabase Realtime: subscribe to message inserts for this user (sender or recipient)
+	useEffect(() => {
+		if (!user?.id) return
+
+		const handleIncoming = async (payload: any) => {
+			const msg = JSON.parse(JSON.stringify(payload.new)) as Message
+			const partnerId = activePartnerId
+			const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
+			if (involvesActive) {
+				await loadMessages(partnerId)
+				if (msg.recipient_id === user.id && !msg.read_at) {
+					await fetch(`${API_URL}/api/client/messages/${msg.id}/read`, {
+						method: 'PUT',
+						headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+					})
+				}
+			} else {
+				loadConversations()
+			}
+		}
+
+    if (!isSupabaseConfigured || !supabase) return
+
+		const channel = supabase
+			.channel(`client-messages-${user.id}`)
+			.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}` }, handleIncoming)
+			.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, handleIncoming)
+			// Seen updates (read_at set)
+			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, (payload: any) => {
+				const updated = JSON.parse(JSON.stringify(payload.new)) as Message
+				// Update message in current thread if present
+				setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, read_at: updated.read_at } : m))
+			})
+			.subscribe()
+
+    return () => {
+        supabase?.removeChannel(channel)
+    }
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [user?.id, activePartnerId])
 
 	useEffect(() => {
 		scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
@@ -117,9 +186,9 @@ const { user, logout } = useAuth()
 			{/* Main Content */}
 			<div className="max-w-7xl mx-auto">
 			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div className="border rounded-lg bg-white overflow-hidden">
+					<div className="border rounded-lg bg-white overflow-hidden h-[70vh] flex flex-col">
 						<div className="p-3 border-b font-semibold">Conversations</div>
-						<div className="max-h-[70vh] overflow-y-auto">
+						<div className="flex-1 overflow-y-auto">
 							{conversations.map(c => (
 								<button
 									key={c.partnerId}
@@ -138,17 +207,22 @@ const { user, logout } = useAuth()
 						</div>
 					</div>
 
-					<div className="md:col-span-2 border rounded-lg bg-white flex flex-col overflow-hidden">
+					<div className="md:col-span-2 border rounded-lg bg-white flex flex-col overflow-hidden h-[70vh]">
 						<div className="p-3 border-b">
 							<div className="font-semibold">{activePartner?.partnerName || 'Select a conversation'}</div>
 						</div>
 						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
-							{messages.map(m => {
+						{messages.map(m => {
 								const isMine = m.sender_id === (user?.id || '')
 								return (
 									<div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''}`}>
 										<div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${isMine ? 'bg-blue-600 text-white' : 'bg-white text-gray-900'}`}>{m.body}</div>
-										<div className="text-[10px] text-gray-500 mt-1">{new Date(m.created_at).toLocaleString()}</div>
+									<div className="text-[10px] text-gray-500 mt-1 flex items-center gap-2">
+										<span>{new Date(m.created_at).toLocaleString()}</span>
+										{isMine && m.read_at && (
+											<span className="text-blue-600">Seen</span>
+										)}
+									</div>
 									</div>
 								)
 							})}

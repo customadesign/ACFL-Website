@@ -6,6 +6,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
+import supabase, { isSupabaseConfigured } from '@/lib/supabase'
 
 type Conversation = {
   partnerId: string
@@ -66,13 +67,65 @@ export default function CoachMessagesPage() {
   }, [])
 
   useEffect(() => {
-    if (activePartnerId) loadMessages(activePartnerId)
+    if (activePartnerId) {
+      loadMessages(activePartnerId)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePartnerId])
 
   useEffect(() => {
     scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages])
+
+
+  // Refresh when tab gains focus
+  useEffect(() => {
+    const onFocus = () => {
+      loadConversations()
+      if (activePartnerId) loadMessages(activePartnerId)
+    }
+    window.addEventListener('focus', onFocus)
+    return () => window.removeEventListener('focus', onFocus)
+  }, [activePartnerId])
+
+  // Supabase Realtime: subscribe to messages for this coach
+  useEffect(() => {
+    if (!user?.id) return
+
+    const handleIncoming = async (payload: any) => {
+      const msg = JSON.parse(JSON.stringify(payload.new)) as Message
+      const partnerId = activePartnerId
+      const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
+      if (involvesActive) {
+        await loadMessages(partnerId)
+        if (msg.recipient_id === user.id && !msg.read_at) {
+          await fetch(`${API_URL}/api/coach/messages/${msg.id}/read`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+          })
+        }
+      } else {
+        loadConversations()
+      }
+    }
+
+    if (!isSupabaseConfigured || !supabase) return
+    const channel = supabase
+      .channel(`coach-messages-${user.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}` }, handleIncoming)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, handleIncoming)
+      // Seen updates (read_at set)
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, (payload: any) => {
+        const updated = JSON.parse(JSON.stringify(payload.new)) as Message
+        setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, read_at: updated.read_at } : m))
+      })
+      .subscribe()
+
+    return () => {
+      supabase?.removeChannel(channel)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, activePartnerId])
 
   const activePartner = useMemo(
     () => conversations.find(c => c.partnerId === activePartnerId),
@@ -105,9 +158,9 @@ export default function CoachMessagesPage() {
   return (
     <CoachPageWrapper title="Messages" description="Chat with your clients">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border rounded-lg bg-white overflow-hidden">
+        <div className="border rounded-lg bg-white overflow-hidden h-[70vh] flex flex-col">
           <div className="p-3 border-b font-semibold">Conversations</div>
-          <div className="max-h-[70vh] overflow-y-auto">
+          <div className="flex-1 overflow-y-auto">
             {conversations.map(c => (
               <button
                 key={c.partnerId}
@@ -126,7 +179,7 @@ export default function CoachMessagesPage() {
           </div>
         </div>
 
-        <div className="md:col-span-2 border rounded-lg bg-white flex flex-col overflow-hidden">
+        <div className="md:col-span-2 border rounded-lg bg-white flex flex-col overflow-hidden h-[70vh]">
           <div className="p-3 border-b">
             <div className="font-semibold">{activePartner?.partnerName || 'Select a conversation'}</div>
           </div>

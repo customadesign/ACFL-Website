@@ -15,9 +15,11 @@ const nextConfig = {
   },
   async headers() {
     const isDevelopment = process.env.NODE_ENV === "development";
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseWs = supabaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     const connectSrc = isDevelopment
-      ? "'self' https: http://localhost:*"
-      : "'self' https:";
+      ? `'self' https: http://localhost:* ${supabaseUrl} ${supabaseWs}`
+      : `'self' https: ${supabaseUrl} ${supabaseWs}`;
 
     return [
       {
