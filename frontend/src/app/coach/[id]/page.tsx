@@ -9,6 +9,7 @@ import { Heart, Calendar, MessageCircle, User } from 'lucide-react'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import BookingModal from '@/components/BookingModal'
 import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
 
 interface Coach {
   id: string
@@ -53,7 +54,8 @@ function CoachProfileContent() {
     // Fetch coach data based on ID
     const fetchCoach = async () => {
       try {
-        const response = await fetch(`/api/coach/${params.id}`)
+        const API_URL = getApiUrl()
+        const response = await fetch(`${API_URL}/api/coach/${params.id}`)
         if (response.ok) {
           const data = await response.json()
           setCoach(data)

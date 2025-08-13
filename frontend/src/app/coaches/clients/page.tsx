@@ -22,6 +22,7 @@ interface Client {
   startDate: string;
   concerns: string[];
   notes?: string;
+  nextSessionFocus?: string | null;
 }
 
 export default function MyClientsPage() {
@@ -34,7 +35,6 @@ export default function MyClientsPage() {
   const [error, setError] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [showMessageModal, setShowMessageModal] = useState(false);
-  const [messageSubject, setMessageSubject] = useState('');
   const [messageContent, setMessageContent] = useState('');
   const [sendingMessage, setSendingMessage] = useState(false);
 
@@ -82,23 +82,20 @@ export default function MyClientsPage() {
 
   const handleSendMessage = (client: Client) => {
     setSelectedClient(client);
-    setMessageSubject('');
     setMessageContent('');
     setShowMessageModal(true);
   };
 
   const handleSendMessageSubmit = async () => {
-    if (!selectedClient || !messageSubject.trim() || !messageContent.trim()) return;
+    if (!selectedClient || !messageContent.trim()) return;
 
     try {
       setSendingMessage(true);
       
       // Use the client's user_id for messaging
       const response = await axios.post(`${API_URL}/api/coach/send-message`, {
-        receiverId: selectedClient.user_id, // Use user_id instead of client.id
-        subject: messageSubject.trim(),
-        content: messageContent.trim(),
-        messageType: 'general'
+        recipient_id: selectedClient.user_id, // Use user_id instead of client.id
+        body: messageContent.trim()
       }, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -107,7 +104,6 @@ export default function MyClientsPage() {
 
       if (response.data.success) {
         setShowMessageModal(false);
-        setMessageSubject('');
         setMessageContent('');
         setSelectedClient(null);
         // Show success message or redirect to messages
@@ -271,6 +267,7 @@ export default function MyClientsPage() {
                       <p className="text-sm text-gray-900">
                         {new Date(client.nextSession).toLocaleDateString()}
                       </p>
+                     
                     </div>
                   )}
                 </div>
@@ -278,11 +275,9 @@ export default function MyClientsPage() {
                 <div className="mb-4">
                   <p className="text-sm font-medium text-gray-500 mb-1">Areas of Focus</p>
                   <div className="flex flex-wrap gap-1">
-                    {client.concerns.map((concern, index) => (
-                      <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">
-                        {concern}
-                      </span>
-                    ))}
+                    {client.nextSessionFocus && (
+                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{client.nextSessionFocus}</span>
+                    )}
                   </div>
                 </div>
 
@@ -470,19 +465,6 @@ export default function MyClientsPage() {
             <CardContent className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Subject *
-                </label>
-                <input
-                  type="text"
-                  value={messageSubject}
-                  onChange={(e) => setMessageSubject(e.target.value)}
-                  placeholder="Message subject..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  maxLength={200}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Message *
                 </label>
                 <textarea
@@ -508,7 +490,7 @@ export default function MyClientsPage() {
                 </Button>
                 <Button
                   onClick={handleSendMessageSubmit}
-                  disabled={sendingMessage || !messageSubject.trim() || !messageContent.trim()}
+                  disabled={sendingMessage || !messageContent.trim()}
                   className="flex-1 bg-blue-600 hover:bg-blue-700"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />

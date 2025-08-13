@@ -8,7 +8,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
-import { availabilityOptions, therapyModalityOptions } from '@/constants/formOptions';
+import { availabilityOptions, therapyModalityOptions, genderIdentityOptions } from '@/constants/formOptions';
 import { STATE_NAMES } from '@/constants/states';
 import {
   Select,
@@ -48,6 +48,7 @@ export default function CoachProfilePage() {
     qualifications: '',
     location: '',
     customLocation: '',
+    genderIdentity: '',
     isAvailable: true,
     videoAvailable: false,
     inPersonAvailable: false,
@@ -116,7 +117,8 @@ export default function CoachProfilePage() {
           phoneAvailable: data.phoneAvailable ?? false,
           availability_options: data.demographics?.availability_options || [],
           location: 'none',
-          customLocation: ''
+          customLocation: '',
+          genderIdentity: data.demographics?.gender_identity || ''
         });
         setSelectedSpecialties(data.specialties || []);
         setSelectedLanguages(data.languages || []);
@@ -281,7 +283,8 @@ export default function CoachProfilePage() {
         phoneAvailable: profileData.phoneAvailable,
         availability_options: profileData.availability_options,
         location: profileData.location === 'custom' ? profileData.customLocation?.trim() || null : 
-                 profileData.location === 'none' ? null : profileData.location
+                 profileData.location === 'none' ? null : profileData.location,
+        ...(profileData.genderIdentity ? { genderIdentity: profileData.genderIdentity } : {})
       };
 
       console.log('Frontend sending updateData:', updateData);
@@ -763,6 +766,33 @@ export default function CoachProfilePage() {
                   disabled={!editing}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Gender Identity</label>
+                {editing ? (
+                  <Select
+                    value={profileData.genderIdentity ? profileData.genderIdentity : 'not_specified'}
+                    onValueChange={(value) => setProfileData(prev => ({ ...prev, genderIdentity: value === 'not_specified' ? '' : value }))}
+                  >
+                    <SelectTrigger className="w-full bg-white">
+                      <SelectValue placeholder="Select gender identity" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="not_specified">Not specified</SelectItem>
+                      {genderIdentityOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
+                    {profileData.genderIdentity
+                      ? (genderIdentityOptions.find(o => o.value === profileData.genderIdentity)?.label || profileData.genderIdentity)
+                      : 'Not specified'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>

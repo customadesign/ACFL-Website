@@ -94,6 +94,7 @@ router.put('/coach/profile', [
   body('languages').optional().isArray({ min: 1 }),
   body('therapy_modalities').optional().isArray(),
   body('qualifications').optional().isArray(),
+  body('genderIdentity').optional().isString(),
   body('experience').optional().isInt({ min: 0 }),
   body('hourlyRate').optional().isFloat({ min: 0 }),
   body('isAvailable').optional().isBoolean(),
@@ -155,6 +156,7 @@ router.put('/coach/profile', [
       languages,
       therapy_modalities,
       qualifications,
+      genderIdentity,
       experience,
       hourlyRate,
       isAvailable,
@@ -208,9 +210,9 @@ router.put('/coach/profile', [
       throw coachError;
     }
 
-    // Update or insert coach demographics if video availability, time availability, or location is provided
-    console.log('Checking demographics update:', { videoAvailable, availability_options, location });
-    if (videoAvailable !== undefined || availability_options !== undefined || location !== undefined) {
+    // Update or insert coach demographics if video availability, time availability, location, or gender is provided
+    console.log('Checking demographics update:', { videoAvailable, availability_options, location, genderIdentity });
+    if (videoAvailable !== undefined || availability_options !== undefined || location !== undefined || genderIdentity !== undefined) {
       const demographicsUpdates: any = {
         updated_at: new Date().toISOString()
       };
@@ -242,6 +244,12 @@ router.put('/coach/profile', [
       if (location !== undefined) {
         console.log('Setting location to:', location);
         demographicsUpdates.location = location;
+      }
+
+      // Add gender identity if provided
+      if (genderIdentity !== undefined) {
+        console.log('Setting gender_identity to:', genderIdentity);
+        demographicsUpdates.gender_identity = genderIdentity;
       }
 
       // Add therapy modalities if provided
@@ -538,7 +546,7 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
     // Get sessions for this coach first
     const { data: sessions, error: sessionsError } = await supabase
       .from('sessions')
-      .select('client_id, starts_at, status')
+      .select('*')
       .eq('coach_id', coachId)
       .order('starts_at', { ascending: false });
 
@@ -560,7 +568,7 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
     // Get client details separately
     const { data: clients, error: clientsError } = await supabase
       .from('clients')
-      .select('id, first_name, last_name, phone, dob, preferences, created_at, email')
+      .select('id, first_name, last_name, phone, dob, created_at, email, areas_of_concern')
       .in('id', uniqueClientIds);
 
     if (clientsError) {
@@ -583,11 +591,13 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
         nextSession: null,
         status: 'inactive' as 'active' | 'inactive',
         startDate: client.created_at,
-        concerns: client.preferences?.specialties || []
+        concerns: Array.isArray(client.areas_of_concern) ? client.areas_of_concern : [],
+        nextSessionFocus: null as string | null
       });
     });
 
     // Process sessions to add session data to clients
+    const nowIso = new Date().toISOString();
     sessions?.forEach((session: any) => {
       const clientData = clientsMap.get(session.client_id);
       if (!clientData) return;
@@ -599,9 +609,13 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
         }
       }
       
-      if (session.status === 'scheduled' || session.status === 'confirmed') {
+      if ((session.status === 'scheduled' || session.status === 'confirmed') && session.starts_at >= nowIso) {
         if (!clientData.nextSession || new Date(session.starts_at) < new Date(clientData.nextSession)) {
           clientData.nextSession = session.starts_at;
+          // Only set focus if present; do not overwrite to null
+          if (typeof session.area_of_focus === 'string' && session.area_of_focus.trim()) {
+            clientData.nextSessionFocus = session.area_of_focus.trim();
+          }
         }
         clientData.status = 'active';
       }
@@ -777,20 +791,17 @@ router.get('/coach/profile/stats', authenticate, async (req: Request & { user?: 
 
 // Send message from coach
 router.post('/coach/send-message', [
-  authenticate,
-  body('receiverId').notEmpty().withMessage('Receiver ID is required'),
-  body('subject').notEmpty().withMessage('Subject is required'),
-  body('content').notEmpty().withMessage('Message content is required'),
-  body('messageType').optional().isIn(['general', 'booking', 'cancellation', 'emergency']).withMessage('Invalid message type'),
-  body('priority').optional().isIn(['low', 'normal', 'high', 'urgent']).withMessage('Invalid priority')
+  authenticate
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, errors: errors.array() });
-    }
+    // Accept both receiverId and recipient_id; and both body and content
+    const receiverId = req.body.receiverId || req.body.recipient_id;
+    const bodyText: string | undefined = (req.body.body ?? req.body.content)?.toString();
+    const sessionId = req.body.sessionId;
 
-    const { receiverId, subject, content, messageType = 'general', priority = 'normal', sessionId } = req.body;
+    if (!receiverId || !bodyText || bodyText.trim().length === 0) {
+      return res.status(400).json({ success: false, message: 'receiverId/recipient_id and body/content are required' });
+    }
 
     // Get coach profile by email first
     const { data: coachProfile, error: coachError } = await supabase
@@ -834,19 +845,13 @@ router.post('/coach/send-message', [
       .from('messages')
       .insert({
         sender_id: coachProfile.id,
-        receiver_id: receiverId,
+        recipient_id: receiverId,
         session_id: sessionId || null,
-        subject: subject,
-        content: content,
-        message_type: messageType,
-        priority: priority
+        body: bodyText.trim()
       })
       .select(`
         id,
-        subject,
-        content,
-        message_type,
-        priority,
+        body,
         created_at
       `)
       .single();
@@ -870,7 +875,7 @@ router.post('/coach/send-message', [
 // Get coach messages
 router.get('/coach/messages', authenticate, async (req: Request & { user?: any }, res: Response) => {
   try {
-    const { page = 1, limit = 20, conversation_with } = req.query;
+    const { page = 1, limit = 50, conversation_with } = req.query as any;
     const offset = (Number(page) - 1) * Number(limit);
 
     // Get coach profile by email first
@@ -884,19 +889,38 @@ router.get('/coach/messages', authenticate, async (req: Request & { user?: any }
       return res.status(404).json({ success: false, message: 'Coach profile not found' });
     }
 
-    // For now, return empty messages array
-    const messages: any[] = [];
+    const coachId = coachProfile.id;
+    const partnerId = conversation_with as string | undefined;
 
-    // Apply pagination manually
-    const paginatedMessages = messages?.slice(offset, offset + Number(limit)) || [];
+    let query = supabase
+      .from('messages')
+      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .order('created_at', { ascending: true });
+
+    if (partnerId) {
+      // Messages between coach and specific partner
+      query = query.or(
+        `and(sender_id.eq.${coachId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${coachId})`
+      );
+    } else {
+      // All messages involving coach
+      query = query.or(`sender_id.eq.${coachId},recipient_id.eq.${coachId}`);
+    }
+
+    // Pagination via range
+    const { data: messages, error: messagesError, count } = await query.range(offset, offset + Number(limit) - 1) as any;
+
+    if (messagesError) {
+      throw messagesError;
+    }
 
     res.json({
       success: true,
-      data: paginatedMessages,
+      data: messages || [],
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: messages?.length || 0
+        total: count ?? (messages?.length || 0)
       }
     });
   } catch (error) {
@@ -919,39 +943,60 @@ router.get('/coach/conversations', authenticate, async (req: Request & { user?: 
       return res.status(404).json({ success: false, message: 'Coach profile not found' });
     }
 
-    // For now, return empty messages array
-    const messages: any[] = [];
+    const coachId = coachProfile.id;
+    // Fetch recent messages involving coach
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .or(`sender_id.eq.${coachId},recipient_id.eq.${coachId}`)
+      .order('created_at', { ascending: false });
 
-    // Group by conversation partners
-    const conversationsMap = new Map();
-    
-    messages?.forEach(message => {
-      const partnerId = message.sender_id === coachProfile.id ? message.receiver_id : message.sender_id;
-      
-      if (!conversationsMap.has(partnerId)) {
-        conversationsMap.set(partnerId, {
+    if (messagesError) {
+      throw messagesError;
+    }
+
+    type Conv = { partnerId: string; lastMessage: any; unreadCount: number; totalMessages: number };
+    const conversationsMap = new Map<string, Conv>();
+
+    for (const message of messages || []) {
+      const partnerId = message.sender_id === coachId ? message.recipient_id : message.sender_id;
+      const key = partnerId;
+      const existing = conversationsMap.get(key);
+      const isUnread = message.recipient_id === coachId && !message.read_at;
+      if (!existing) {
+        conversationsMap.set(key, {
           partnerId,
           lastMessage: message,
-          unreadCount: 0,
-          totalMessages: 0
+          unreadCount: isUnread ? 1 : 0,
+          totalMessages: 1
         });
+      } else {
+        existing.totalMessages += 1;
+        if (isUnread) existing.unreadCount += 1;
       }
-      
-      const conversation = conversationsMap.get(partnerId);
-      conversation.totalMessages++;
-      
-      // Count unread messages (received by current user and not read)
-      if (message.receiver_id === coachProfile.id && !message.is_read) {
-        conversation.unreadCount++;
-      }
-    });
+    }
 
-    const conversations = Array.from(conversationsMap.values());
+    const partnerIds = Array.from(conversationsMap.keys());
 
-    res.json({
-      success: true,
-      data: conversations
-    });
+    // Resolve partner names from clients and coaches
+    let partners: Record<string, { name: string; email?: string }> = {};
+    if (partnerIds.length > 0) {
+      const { data: clients } = await supabase.from('clients').select('id, first_name, last_name, email').in('id', partnerIds);
+      const { data: coaches } = await supabase.from('coaches').select('id, first_name, last_name, email').in('id', partnerIds);
+      for (const c of clients || []) partners[c.id] = { name: `${c.first_name} ${c.last_name}`, email: c.email };
+      for (const c of coaches || []) partners[c.id] = { name: `${c.first_name} ${c.last_name}`, email: c.email };
+    }
+
+    const conversations = Array.from(conversationsMap.values()).map(c => ({
+      partnerId: c.partnerId,
+      partnerName: partners[c.partnerId]?.name || 'Unknown',
+      lastBody: c.lastMessage?.body || '',
+      lastAt: c.lastMessage?.created_at,
+      unreadCount: c.unreadCount,
+      totalMessages: c.totalMessages
+    }));
+
+    res.json({ success: true, data: conversations });
   } catch (error) {
     console.error('Get conversations error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch conversations' });
@@ -1006,7 +1051,7 @@ router.put('/coach/messages/:messageId/read', authenticate, async (req: Request 
       .from('messages')
       .update({ is_read: true })
       .eq('id', messageId)
-      .eq('receiver_id', coachProfile.id); // Only mark as read if current user is receiver
+      .eq('recipient_id', coachProfile.id); // Only mark as read if current user is recipient
 
     if (error) {
       throw error;

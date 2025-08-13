@@ -212,7 +212,7 @@ export const getCoachById = async (req: Request, res: Response) => {
           gender_identity,
           ethnic_identity,
           religious_background,
-          availability,
+          availability_options,
           accepts_insurance,
           accepts_sliding_scale,
           timezone,
@@ -234,6 +234,23 @@ export const getCoachById = async (req: Request, res: Response) => {
     
     // Format the response to match the expected structure
     const demographics = coach.coach_demographics || {};
+
+    // Normalize certifications/qualifications to array of strings
+    const certifications: string[] = (() => {
+      try {
+        if (Array.isArray(coach.qualifications)) return coach.qualifications;
+        if (typeof coach.qualifications === 'string') {
+          const raw = coach.qualifications.trim();
+          if (!raw) return [];
+          if (raw.startsWith('[')) {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+          }
+          return raw.split(',').map((s: string) => s.trim()).filter(Boolean);
+        }
+      } catch {}
+      return [];
+    })();
     const formattedCoach = {
       id: coach.id,
       name: `${coach.first_name} ${coach.last_name}`,
@@ -250,14 +267,14 @@ export const getCoachById = async (req: Request, res: Response) => {
       languages: coach.languages || [],
       bio: coach.bio || '',
       sexualOrientation: '', // Not stored in current schema
-              availableTimes: demographics.availability_options || [],
+      availableTimes: demographics.availability_options || [],
       email: coach.users?.email || '',
       phone: coach.phone || '',
-      experience: coach.experience ? `${coach.experience} years` : '',
+      experience: coach.years_experience ? `${coach.years_experience} years` : '',
       education: '', // Not stored in current schema
-      certifications: coach.qualifications || [],
+      certifications,
       insuranceAccepted: demographics.accepts_insurance ? ['Insurance accepted'] : [],
-      sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : '',
+      sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : '',
       virtualAvailable: demographics.meta?.video_available || true,
       inPersonAvailable: demographics.meta?.in_person_available || false
     };

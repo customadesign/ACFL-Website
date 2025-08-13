@@ -141,11 +141,13 @@ function SearchCoachesContent() {
       therapistGender: 'any',
       language: 'any',
       maxPrice: 500,
-      experience: '',
+      experience: 'any',
       modalities: [],
       insurance: [],
     },
   });
+
+  const watchedExperience = form.watch('experience');
 
   // Load user preferences from profile
   const loadUserPreferences = () => {
@@ -243,8 +245,17 @@ function SearchCoachesContent() {
       
       // Use the findMatches API for advanced search
       const result = await findMatches(data);
-      setMatches(result.matches);
-      setFilteredCoaches(result.matches);
+      const incoming = (result && (result as any).matches) ? (result as any).matches : (result as any) || [];
+      let processed = incoming;
+      if (data.experience && data.experience !== 'any') {
+        const minYears = parseInt(data.experience, 10) || 0;
+        processed = incoming.filter((coach: any) => {
+          const years = parseInt((coach.experience || '').replace(/[^0-9]/g, '')) || 0;
+          return years >= minYears;
+        });
+      }
+      setMatches(processed);
+      setFilteredCoaches(processed);
       setHasSearched(true);
       setCurrentPage(1);
     } catch (error) {
@@ -298,6 +309,16 @@ function SearchCoachesContent() {
       });
     }
 
+    // Apply experience filter (minimum years)
+    const minExpStr = form.getValues().experience;
+    if (minExpStr && minExpStr !== 'any') {
+      const minYears = parseInt(minExpStr, 10) || 0;
+      filtered = filtered.filter(coach => {
+        const years = parseInt((coach.experience || '').replace(/[^0-9]/g, '')) || 0;
+        return years >= minYears;
+      });
+    }
+
     setFilteredCoaches(filtered);
     setCurrentPage(1);
   };
@@ -311,69 +332,11 @@ function SearchCoachesContent() {
   // Apply filters when dependencies change
   useEffect(() => {
     applyFilters();
-  }, [searchQuery, priceRange, selectedFilters]);
+  }, [searchQuery, priceRange, selectedFilters, watchedExperience]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center space-x-3">
-              <img
-                src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
-                alt="ACT Coaching For Life Logo"
-                className="h-10 w-auto"
-              />
-              <h1 className="text-xl font-semibold text-gray-900">
-                ACT Coaching For Life
-              </h1>
-            </div>
-            <div className="hidden sm:flex items-center space-x-4">
-              <span className="text-sm text-gray-500">
-                Welcome, {user?.firstName || user?.email}!
-              </span>
-              <Button variant="outline" onClick={logout}>
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation Tabs */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex space-x-8">
-            <Link href="/dashboard">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Dashboard
-              </button>
-            </Link>
-            <button className="py-4 px-1 border-b-2 border-blue-500 text-blue-600 font-medium text-sm whitespace-nowrap">
-              Search & Save Coaches
-            </button>
-            <Link href="/appointments">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Appointments
-              </button>
-            </Link>
-            <Link href="/messages">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Messages
-              </button>
-            </Link>
-            <Link href="/profile">
-              <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Profile
-              </button>
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div>
+      <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -726,6 +689,34 @@ function SearchCoachesContent() {
                                     {language}
                                   </SelectItem>
                                 ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="experience"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>Years of Experience (min)</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value || 'any'}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white">
+                                  <SelectValue placeholder="Any" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any</SelectItem>
+                                <SelectItem value="1">1+ years</SelectItem>
+                                <SelectItem value="3">3+ years</SelectItem>
+                                <SelectItem value="5">5+ years</SelectItem>
+                                <SelectItem value="10">10+ years</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />

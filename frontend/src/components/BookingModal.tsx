@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, Calendar, Clock, Video, MapPin } from 'lucide-react'
+import { concernOptions } from '@/constants/formOptions'
+import { getApiUrl } from '@/lib/api'
 
 interface Coach {
   id: string
@@ -30,9 +32,11 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
     virtualAvailable: coach.virtualAvailable
   })
   const [notes, setNotes] = useState('')
+  const [areaOfFocus, setAreaOfFocus] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const API_URL = getApiUrl()
 
   // Generate available time slots
   const generateTimeSlots = () => {
@@ -76,7 +80,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
       // Combine date and time
       const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
       
-      const response = await fetch('/api/client/book-appointment', {
+      const response = await fetch(`${API_URL}/api/client/book-appointment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +90,8 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
           coachId: coach.id,
           scheduledAt: scheduledDateTime.toISOString(),
           sessionType,
-          notes: notes.trim()
+          notes: notes.trim(),
+          areaOfFocus: areaOfFocus || null
         })
       })
 
@@ -104,6 +109,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
         setSelectedDate('')
         setSelectedTime('')
         setNotes('')
+        setAreaOfFocus('')
         setSuccess(false)
       }, 2000)
 
@@ -238,6 +244,24 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Notes */}
+              {/* Areas of Focus */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Area of Focus (Optional)
+                </label>
+                <select
+                  value={areaOfFocus}
+                  onChange={(e) => setAreaOfFocus(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                >
+                  <option value="">Select an area</option>
+                  {concernOptions.map((opt) => (
+                    <option key={opt.id} value={opt.label}>{opt.label}</option>
+                  ))}
+                </select>
               </div>
 
               {/* Notes */}

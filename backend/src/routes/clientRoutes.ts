@@ -169,6 +169,87 @@ router.put('/client/profile', [
   }
 });
 
+// Submit a review for a completed session
+router.post('/client/reviews', [
+  authenticate,
+  body('sessionId').isUUID().withMessage('sessionId is required'),
+  body('coachId').isUUID().withMessage('coachId is required'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('rating must be 1-5'),
+  body('comment').optional().isString(),
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ success: false, message: 'Access denied. Client role required.' });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { sessionId, coachId, rating, comment } = req.body;
+
+    // Verify session belongs to this client, matches coach, and is completed
+    const { data: session, error: sessionError } = await supabase
+      .from('sessions')
+      .select('id, client_id, coach_id, status')
+      .eq('id', sessionId)
+      .single();
+
+    if (sessionError || !session) {
+      return res.status(404).json({ success: false, message: 'Session not found' });
+    }
+
+    if (session.client_id !== req.user.userId) {
+      return res.status(403).json({ success: false, message: 'You can only review your own sessions' });
+    }
+
+    if (session.coach_id !== coachId) {
+      return res.status(400).json({ success: false, message: 'Coach does not match session' });
+    }
+
+    if (session.status !== 'completed') {
+      return res.status(400).json({ success: false, message: 'Only completed sessions can be reviewed' });
+    }
+
+    // Prevent duplicate review for the same session by same client
+    const { data: existing } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('session_id', sessionId)
+      .eq('client_id', req.user.userId)
+      .maybeSingle();
+
+    if (existing) {
+      return res.status(409).json({ success: false, message: 'You have already reviewed this session' });
+    }
+
+    // Insert review
+    const { data: review, error: reviewError } = await supabase
+      .from('reviews')
+      .insert({
+        session_id: sessionId,
+        client_id: req.user.userId,
+        coach_id: coachId,
+        rating,
+        comment: comment || null,
+      })
+      .select('*')
+      .single();
+
+    if (reviewError) {
+      throw reviewError;
+    }
+
+    // The DB trigger recomputes coach average rating automatically
+
+    res.json({ success: true, data: review });
+  } catch (error: any) {
+    console.error('Create review error:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit review' });
+  }
+});
+
 // Get client appointments
 router.get('/client/appointments', authenticate, async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -761,7 +842,8 @@ router.post('/client/book-appointment', [
   body('coachId').notEmpty().withMessage('Coach ID is required'),
   body('scheduledAt').isISO8601().withMessage('Valid scheduled date/time is required'),
   body('sessionType').isIn(['consultation', 'session']).withMessage('Session type must be consultation or session'),
-  body('notes').optional().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters')
+  body('notes').optional().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters'),
+  body('areaOfFocus').optional().isString()
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
@@ -779,7 +861,7 @@ router.post('/client/book-appointment', [
       });
     }
 
-    const { coachId, scheduledAt, sessionType, notes } = req.body;
+    const { coachId, scheduledAt, sessionType, notes, areaOfFocus } = req.body;
 
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
@@ -853,6 +935,7 @@ router.post('/client/book-appointment', [
       ends_at: endTime,
       status: 'scheduled',
       notes: notes || '',
+      area_of_focus: areaOfFocus || null,
       zoom_link: zoomLink, // Required field for online-only sessions
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
@@ -1035,7 +1118,7 @@ router.post('/client/message-coach', [
   body('appointmentId').optional()
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
-    const { coachId, subject, message, appointmentId } = req.body;
+    const { coachId, message, appointmentId } = req.body;
 
     // Get client profile by email first
     const { data: clientProfile, error: clientError } = await supabase
@@ -1064,11 +1147,9 @@ router.post('/client/message-coach', [
       .from('messages')
       .insert({
         sender_id: clientProfile.id,
-        receiver_id: coach.id,
+        recipient_id: coach.id,
         session_id: appointmentId || null,
-        subject: subject,
-        content: message,
-        message_type: appointmentId ? 'booking' : 'general'
+        body: message
       })
       .select()
       .single();
@@ -1085,7 +1166,7 @@ router.post('/client/message-coach', [
         messageId: newMessage.id,
         to: `${coach.first_name} ${coach.last_name}`,
         from: `${clientProfile.first_name} ${clientProfile.last_name}`,
-        subject,
+        subject: null,
         sentAt: newMessage.created_at
       }
     });
@@ -1098,7 +1179,7 @@ router.post('/client/message-coach', [
 // Get client messages/conversations
 router.get('/client/messages', authenticate, async (req: Request & { user?: any }, res: Response) => {
   try {
-    const { page = 1, limit = 20, conversation_with } = req.query;
+    const { page = 1, limit = 50, conversation_with } = req.query as any;
     const offset = (Number(page) - 1) * Number(limit);
 
     // Get client profile by email first
@@ -1112,16 +1193,32 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
       return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
 
-    // For now, return empty messages array
-    const messages: any[] = [];
+    const clientId = clientProfile.id;
+    const partnerId = conversation_with as string | undefined;
+
+    let query = supabase
+      .from('messages')
+      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .order('created_at', { ascending: true });
+
+    if (partnerId) {
+      query = query.or(
+        `and(sender_id.eq.${clientId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${clientId})`
+      );
+    } else {
+      query = query.or(`sender_id.eq.${clientId},recipient_id.eq.${clientId}`);
+    }
+
+    const { data: messages, error: messagesError, count } = await query.range(offset, offset + Number(limit) - 1) as any;
+    if (messagesError) throw messagesError;
 
     res.json({
       success: true,
-      data: messages,
+      data: messages || [],
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: messages?.length || 0
+        total: count ?? (messages?.length || 0)
       }
     });
   } catch (error) {
@@ -1144,39 +1241,55 @@ router.get('/client/conversations', authenticate, async (req: Request & { user?:
       return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
 
-    // For now, return empty messages array
-    const messages: any[] = [];
+    const clientId = clientProfile.id;
+    const { data: messages, error: messagesError } = await supabase
+      .from('messages')
+      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .or(`sender_id.eq.${clientId},recipient_id.eq.${clientId}`)
+      .order('created_at', { ascending: false });
 
-    // Group by conversation partners
-    const conversationsMap = new Map();
-    
-    messages?.forEach(message => {
-      const partnerId = message.sender_id === clientProfile.id ? message.receiver_id : message.sender_id;
-      
-      if (!conversationsMap.has(partnerId)) {
-        conversationsMap.set(partnerId, {
+    if (messagesError) throw messagesError;
+
+    type Conv = { partnerId: string; lastMessage: any; unreadCount: number; totalMessages: number };
+    const conversationsMap = new Map<string, Conv>();
+
+    for (const message of messages || []) {
+      const partnerId = message.sender_id === clientId ? message.recipient_id : message.sender_id;
+      const key = partnerId;
+      const existing = conversationsMap.get(key);
+      const isUnread = message.recipient_id === clientId && !message.read_at;
+      if (!existing) {
+        conversationsMap.set(key, {
           partnerId,
           lastMessage: message,
-          unreadCount: 0,
-          totalMessages: 0
+          unreadCount: isUnread ? 1 : 0,
+          totalMessages: 1
         });
+      } else {
+        existing.totalMessages += 1;
+        if (isUnread) existing.unreadCount += 1;
       }
-      
-      const conversation = conversationsMap.get(partnerId);
-      conversation.totalMessages++;
-      
-      // Count unread messages (received by current user and not read)
-      if (message.receiver_id === clientProfile.id && !message.is_read) {
-        conversation.unreadCount++;
-      }
-    });
+    }
 
-    const conversations = Array.from(conversationsMap.values());
+    const partnerIds = Array.from(conversationsMap.keys());
+    let partners: Record<string, { name: string; email?: string }> = {};
+    if (partnerIds.length > 0) {
+      const { data: clients } = await supabase.from('clients').select('id, first_name, last_name, email').in('id', partnerIds);
+      const { data: coaches } = await supabase.from('coaches').select('id, first_name, last_name, email').in('id', partnerIds);
+      for (const c of clients || []) partners[c.id] = { name: `${c.first_name} ${c.last_name}`, email: c.email };
+      for (const c of coaches || []) partners[c.id] = { name: `${c.first_name} ${c.last_name}`, email: c.email };
+    }
 
-    res.json({
-      success: true,
-      data: conversations
-    });
+    const conversations = Array.from(conversationsMap.values()).map(c => ({
+      partnerId: c.partnerId,
+      partnerName: partners[c.partnerId]?.name || 'Unknown',
+      lastBody: c.lastMessage?.body || '',
+      lastAt: c.lastMessage?.created_at,
+      unreadCount: c.unreadCount,
+      totalMessages: c.totalMessages
+    }));
+
+    res.json({ success: true, data: conversations });
   } catch (error) {
     console.error('Get conversations error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch conversations' });
@@ -1203,7 +1316,7 @@ router.put('/client/messages/:messageId/read', authenticate, async (req: Request
       .from('messages')
       .update({ is_read: true })
       .eq('id', messageId)
-      .eq('receiver_id', clientProfile.id); // Only mark as read if current user is receiver
+      .eq('recipient_id', clientProfile.id); // Only mark as read if current user is recipient
 
     if (error) {
       throw error;
@@ -1223,10 +1336,7 @@ router.put('/client/messages/:messageId/read', authenticate, async (req: Request
 router.post('/client/send-message', [
   authenticate,
   body('receiverId').notEmpty().withMessage('Receiver ID is required'),
-  body('subject').notEmpty().withMessage('Subject is required'),
-  body('content').notEmpty().withMessage('Message content is required'),
-  body('messageType').optional().isIn(['general', 'booking', 'cancellation', 'emergency']).withMessage('Invalid message type'),
-  body('priority').optional().isIn(['low', 'normal', 'high', 'urgent']).withMessage('Invalid priority')
+  body('body').notEmpty().withMessage('Message body is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     const errors = validationResult(req);
@@ -1234,7 +1344,7 @@ router.post('/client/send-message', [
       return res.status(400).json({ success: false, errors: errors.array() });
     }
 
-    const { receiverId, subject, content, messageType = 'general', priority = 'normal', sessionId } = req.body;
+    const { receiverId, body: bodyText, sessionId } = req.body;
 
     // Get client profile by email first
     const { data: clientProfile, error: clientError } = await supabase
@@ -1278,19 +1388,13 @@ router.post('/client/send-message', [
       .from('messages')
       .insert({
         sender_id: clientProfile.id,
-        receiver_id: receiverId,
+        recipient_id: receiverId,
         session_id: sessionId || null,
-        subject: subject,
-        content: content,
-        message_type: messageType,
-        priority: priority
+        body: bodyText
       })
       .select(`
         id,
-        subject,
-        content,
-        message_type,
-        priority,
+        body,
         created_at
       `)
       .single();
