@@ -93,8 +93,9 @@ export const validateRegisterCoach: ValidationChain[] = [
     })
     .withMessage('Valid international phone number is required'),
   body('specialties')
-    .isArray({ min: 1 })
-    .withMessage('At least one specialty is required'),
+    .optional({ nullable: true })
+    .isArray()
+    .withMessage('Specialties must be an array'),
   body('languages')
     .isArray({ min: 1 })
     .withMessage('At least one language is required'),

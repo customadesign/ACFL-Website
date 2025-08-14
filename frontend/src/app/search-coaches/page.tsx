@@ -64,6 +64,7 @@ import * as z from "zod";
 import { findMatches, getAllCoaches, getSavedCoaches } from "@/lib/api";
 import axios from 'axios';
 import { getApiUrl } from '@/lib/api';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 // Enhanced form validation schema
 const searchFormSchema = z.object({
@@ -88,6 +89,7 @@ interface Coach {
   id: string;
   name: string;
   specialties: string[];
+  modalities?: string[];
   languages: string[];
   bio: string;
   sessionRate: string;
@@ -131,6 +133,8 @@ function SearchCoachesContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 500]);
   const [selectedFilters, setSelectedFilters] = useState<Set<string>>(new Set());
+  const [openLocation, setOpenLocation] = useState(false);
+  const [locationQuery, setLocationQuery] = useState("");
 
   const form = useForm<SearchFormData>({
     resolver: zodResolver(searchFormSchema),
@@ -298,16 +302,7 @@ function SearchCoachesContent() {
     });
 
     // Apply selected filters
-    if (selectedFilters.size > 0) {
-      filtered = filtered.filter(coach => {
-        return Array.from(selectedFilters).every(filter => {
-          if (filter === 'virtual') return coach.virtualAvailable;
-          if (filter === 'verified') return true; // Assuming verified coaches
-          if (filter === 'accepts-insurance') return coach.insuranceAccepted && coach.insuranceAccepted.length > 0;
-          return true;
-        });
-      });
-    }
+    // Remove virtual/verified/accepts-insurance quick filters
 
     // Apply experience filter (minimum years)
     const minExpStr = form.getValues().experience;
@@ -468,35 +463,7 @@ function SearchCoachesContent() {
                 </div>
               </div>
 
-              {/* Quick Filter Chips */}
-              <div className="mb-6">
-                <div className="flex flex-wrap gap-2">
-                  {['virtual', 'verified', 'accepts-insurance'].map((filter) => (
-                    <button
-                      key={filter}
-                      onClick={() => {
-                        const newFilters = new Set(selectedFilters);
-                        if (newFilters.has(filter)) {
-                          newFilters.delete(filter);
-                        } else {
-                          newFilters.add(filter);
-                        }
-                        setSelectedFilters(newFilters);
-                      }}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                        selectedFilters.has(filter)
-                          ? 'bg-blue-600 text-white shadow-md'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {filter === 'virtual' && <Video className="w-4 h-4 inline mr-2" />}
-                      {filter === 'verified' && <Award className="w-4 h-4 inline mr-2" />}
-                      {filter === 'accepts-insurance' && <DollarSign className="w-4 h-4 inline mr-2" />}
-                      {filter.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Quick Filter Chips removed per requirements */}
 
               {/* Price Range Slider */}
               <div className="mb-6">
@@ -575,20 +542,80 @@ function SearchCoachesContent() {
                             <MapPin className="w-4 h-4 text-blue-600" />
                             <span>Location</span>
                           </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger className="bg-white">
-                                <SelectValue placeholder="Select your state" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              {Object.entries(STATE_NAMES).map(([code, name]) => (
-                                <SelectItem key={code} value={code}>
-                                  {name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          <FormControl>
+                            <Popover
+                              modal={false}
+                              open={openLocation}
+                              onOpenChange={(open) => {
+                                setOpenLocation(open)
+                                if (open) setLocationQuery("")
+                              }}
+                            >
+                              <PopoverTrigger asChild>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  role="combobox"
+                                  aria-expanded={openLocation}
+                                  className="w-full justify-between bg-white"
+                                >
+                                  {field.value ? (STATE_NAMES as any)[field.value] || "Select your state" : "Select your state"}
+                                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                              </PopoverTrigger>
+                              <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="p-0 w-72 sm:w-96">
+                                <div className="p-2">
+                                  <Input
+                                    placeholder="Search states..."
+                                    value={locationQuery}
+                                    onChange={(e) => setLocationQuery(e.target.value)}
+                                    className="mb-2"
+                                  />
+                                  <div className="max-h-[300px] overflow-y-auto">
+                                    {Object.entries(STATE_NAMES)
+                                      .filter(([code, name]) =>
+                                        name.toLowerCase().includes(locationQuery.toLowerCase()) ||
+                                        code.toLowerCase().includes(locationQuery.toLowerCase())
+                                      )
+                                      .map(([code, name]) => (
+                                        <div
+                                          key={code}
+                                          role="option"
+                                          tabIndex={0}
+                                          aria-selected={field.value === code}
+                                          className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${field.value === code ? 'bg-accent' : ''}`}
+                                          onPointerDown={(e) => {
+                                            e.preventDefault()
+                                            field.onChange(code)
+                                            setOpenLocation(false)
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (e.key === 'Enter' || e.key === ' ') {
+                                              e.preventDefault()
+                                              field.onChange(code)
+                                              setOpenLocation(false)
+                                            }
+                                          }}
+                                          onClick={() => {
+                                            field.onChange(code)
+                                            setOpenLocation(false)
+                                          }}
+                                        >
+                                          {name}
+                                        </div>
+                                      ))}
+                                    {Object.entries(STATE_NAMES)
+                                      .filter(([code, name]) =>
+                                        name.toLowerCase().includes(locationQuery.toLowerCase()) ||
+                                        code.toLowerCase().includes(locationQuery.toLowerCase())
+                                      ).length === 0 && (
+                                        <div className="px-3 py-2 text-sm text-muted-foreground">No states found.</div>
+                                    )}
+                                  </div>
+                                </div>
+                              </PopoverContent>
+                            </Popover>
+                          </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
@@ -892,6 +919,15 @@ function SearchCoachesContent() {
                   name={coach.name}
                   matchScore={coach.matchScore}
                   specialties={coach.specialties}
+                  modalities={(() => {
+                    const raw = (coach as any).modalities || (coach as any).therapy_modalities
+                    if (!Array.isArray(raw)) return []
+                    return raw.map((m: any) => {
+                      if (typeof m !== 'string') return null
+                      const match = therapyModalityOptions.find(o => o.id === m)
+                      return match ? match.label : m
+                    }).filter(Boolean) as string[]
+                  })()}
                   languages={coach.languages}
                   bio={coach.bio}
                   sessionRate={coach.sessionRate}

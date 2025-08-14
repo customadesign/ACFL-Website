@@ -580,7 +580,6 @@ router.get('/client/coaches', [
           gender_identity,
           ethnic_identity,
           religious_background,
-          languages,
           accepts_insurance,
           accepts_sliding_scale,
           timezone,
@@ -679,6 +678,8 @@ router.post('/client/search-coaches', [
           ethnic_identity,
           religious_background,
           availability_options,
+          therapy_modalities,
+          location,
           accepts_insurance,
           accepts_sliding_scale,
           timezone,
@@ -689,51 +690,10 @@ router.post('/client/search-coaches', [
     
     console.log('Base query built, applying filters...');
 
-    // Apply filters based on preferences
-    
-    // Filter by specialties (areas of concern)
-    if (preferences.areaOfConcern && preferences.areaOfConcern.length > 0) {
-      query = query.overlaps('specialties', preferences.areaOfConcern);
-    }
-
-    // Filter by languages
-    if (preferences.language && preferences.language !== 'any') {
-      const languageFilter = preferences.language === 'Other' && preferences.languageOther 
-        ? preferences.languageOther 
-        : preferences.language;
-      query = query.contains('languages', [languageFilter]);
-    }
-
-    // Filter by location if specified
-    if (preferences.location) {
-      // Note: location filtering would need to be implemented differently
-      // since location_states column doesn't exist in current schema
-      // For now, we'll skip location filtering
-    }
-
-    // Filter by coach gender preference
-    if (preferences.therapistGender && preferences.therapistGender !== 'any') {
-      const genderFilter = preferences.therapistGender === 'other' && preferences.therapistGenderOther
-        ? preferences.therapistGenderOther
-        : preferences.therapistGender;
-      query = query.eq('coach_demographics.gender_identity', genderFilter);
-    }
-
-    // Filter by coach ethnicity preference  
-    if (preferences.therapistEthnicity && preferences.therapistEthnicity !== 'any') {
-      const ethnicityFilter = preferences.therapistEthnicity === 'other' && preferences.therapistEthnicityOther
-        ? preferences.therapistEthnicityOther
-        : preferences.therapistEthnicity;
-      query = query.eq('coach_demographics.ethnic_identity', ethnicityFilter);
-    }
-
-    // Filter by coach religion preference
-    if (preferences.therapistReligion && preferences.therapistReligion !== 'any') {
-      const religionFilter = preferences.therapistReligion === 'other' && preferences.therapistReligionOther
-        ? preferences.therapistReligionOther
-        : preferences.therapistReligion;
-      query = query.eq('coach_demographics.religious_background', religionFilter);
-    }
+    // Apply filters based on preferences (soft-match only)
+    // We no longer hard-filter by specialties, language, or demographics
+    // to ensure we can return all available coaches with a match percentage.
+    // Only keep availability as a hard filter in the base query above.
     
     console.log('All filters applied, query ready for execution');
 
@@ -746,66 +706,116 @@ router.post('/client/search-coaches', [
       throw coachesError;
     }
 
-    // Calculate match scores and format response
-    const formattedCoaches = coaches?.map((coach: any) => {
-      let matchScore = 50; // Base score
+    // Calculate normalized match scores and format response
+    const concernToSpecialtyMap: Record<string, string[]> = {
+      'Anxiety': ['Anxiety', 'Stress Management'],
+      'Depression': ['Depression', 'Grief Counseling'],
+      'Racial identity related issues': ['Family Therapy', 'Life Coaching'],
+      'Academic stress': ['Career Coaching', 'Teen Counseling', 'Stress Management'],
+      'Trauma-related stress': ['PTSD', 'Grief Counseling', 'Stress Management'],
+      'Work-related stress': ['Career Coaching', 'Stress Management'],
+      'Insomnia': ['Stress Management', 'Life Coaching']
+    };
 
-      // Calculate match score based on preferences
-      // Areas of concern matching (30 points)
-      if (preferences.areaOfConcern && preferences.areaOfConcern.length > 0) {
-        const matchingSpecialties = coach.specialties?.filter((s: string) => 
-          preferences.areaOfConcern.includes(s)
-        ).length || 0;
-        matchScore += (matchingSpecialties / preferences.areaOfConcern.length) * 30;
+    const normalize = (s: string) => (s || '').toLowerCase().trim();
+
+    function scoreAreasOfConcern(selectedConcerns: string[] | undefined, coachSpecialties: string[] | undefined): { score: number; possible: number } {
+      if (!selectedConcerns || selectedConcerns.length === 0) return { score: 0, possible: 0 };
+      const specialties = (coachSpecialties || []).map(normalize);
+      let earned = 0;
+      let possible = selectedConcerns.length * 3; // max 3 points per concern
+
+      for (const concern of selectedConcerns) {
+        const c = normalize(concern);
+        const synonyms = (concernToSpecialtyMap[concern] || []).map(normalize);
+
+        let bestForConcern = 0;
+        for (const spec of specialties) {
+          if (spec === c) {
+            bestForConcern = Math.max(bestForConcern, 3); // exact
+            if (bestForConcern === 3) break;
+          } else if (synonyms.includes(spec)) {
+            bestForConcern = Math.max(bestForConcern, 2); // synonym
+          } else if (spec.includes(c) || c.includes(spec)) {
+            bestForConcern = Math.max(bestForConcern, 1); // fuzzy contains
+          }
+        }
+        earned += bestForConcern;
       }
 
-      // Language matching (15 points)
+      // Scale 0..(3*n) to 0..30
+      const scaled = possible > 0 ? (earned / possible) * 30 : 0;
+      return { score: scaled, possible: 30 };
+    }
+
+    const formattedCoaches = (coaches || []).map((coach: any) => {
+      let score = 0;
+      let possible = 0;
+
+      // 1) Areas of concern vs specialties (up to 30) using mapping + fuzzy scoring
+      const concernScore = scoreAreasOfConcern(preferences.areaOfConcern, coach.specialties);
+      score += concernScore.score;
+      possible += concernScore.possible;
+
+      // 2) Language (15)
       if (preferences.language && preferences.language !== 'any') {
         const languageFilter = preferences.language === 'Other' && preferences.languageOther 
           ? preferences.languageOther 
           : preferences.language;
-        if (coach.languages?.includes(languageFilter)) {
-          matchScore += 15;
+        possible += 15;
+        if ((coach.languages || []).includes(languageFilter)) {
+          score += 15;
         }
       }
 
-      // Location matching (10 points)
-      if (preferences.location) {
-        // Note: location matching would need to be implemented differently
-        // since location_states column doesn't exist in current schema
-        // For now, we'll skip location matching
-      }
-
-      // Demographics matching (15 points total)
-      let demographicsMatches = 0;
+      // 3) Gender (10)
       if (preferences.therapistGender && preferences.therapistGender !== 'any') {
         const genderFilter = preferences.therapistGender === 'other' && preferences.therapistGenderOther
           ? preferences.therapistGenderOther
           : preferences.therapistGender;
+        possible += 10;
         if (coach.coach_demographics?.gender_identity === genderFilter) {
-          demographicsMatches += 5;
+          score += 10;
         }
       }
 
-      if (preferences.therapistEthnicity && preferences.therapistEthnicity !== 'any') {
-        const ethnicityFilter = preferences.therapistEthnicity === 'other' && preferences.therapistEthnicityOther
-          ? preferences.therapistEthnicityOther
-          : preferences.therapistEthnicity;
-        if (coach.coach_demographics?.ethnic_identity === ethnicityFilter) {
-          demographicsMatches += 5;
+      // 4) Therapy modalities (15)
+      if (preferences.modalities && preferences.modalities.length > 0) {
+        const selected = preferences.modalities as string[];
+        const coachMods = (coach.coach_demographics?.therapy_modalities || []) as string[];
+        const overlap = selected.filter((m: string) => coachMods.includes(m)).length;
+        score += (overlap / selected.length) * 15;
+        possible += 15;
+      }
+
+      // 5) Availability (10)
+      if (preferences.availability_options && preferences.availability_options.length > 0) {
+        const selected = preferences.availability_options as string[];
+        const coachAvail = (coach.coach_demographics?.availability_options || []) as string[];
+        const overlap = selected.filter((a: string) => coachAvail.includes(a)).length;
+        score += (overlap / selected.length) * 10;
+        possible += 10;
+      }
+
+      // 6) Location (10)
+      if (preferences.location) {
+        possible += 10;
+        if (coach.coach_demographics?.location && coach.coach_demographics.location === preferences.location) {
+          score += 10;
         }
       }
 
-      if (preferences.therapistReligion && preferences.therapistReligion !== 'any') {
-        const religionFilter = preferences.therapistReligion === 'other' && preferences.therapistReligionOther
-          ? preferences.therapistReligionOther
-          : preferences.therapistReligion;
-        if (coach.coach_demographics?.religious_background === religionFilter) {
-          demographicsMatches += 5;
+      // 7) Experience min threshold (10)
+      if (preferences.experience && preferences.experience !== 'any') {
+        possible += 10;
+        const minYears = parseInt(preferences.experience, 10) || 0;
+        const years = Number(coach.years_experience) || 0;
+        if (years >= minYears) {
+          score += 10;
         }
       }
 
-      matchScore += demographicsMatches;
+      const normalized = possible > 0 ? Math.round((score / possible) * 100) : 0;
 
       return {
         id: coach.id,
@@ -815,12 +825,12 @@ router.post('/client/search-coaches', [
         bio: coach.bio || '',
         sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : 'Rate not specified',
         experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
-        rating: 0, // Will be calculated dynamically from reviews
-        matchScore: Math.min(Math.round(matchScore), 100),
-        virtualAvailable: coach.is_available,
+        rating: 0,
+        matchScore: normalized,
+        virtualAvailable: coach.coach_demographics?.meta?.video_available || false,
         email: coach.email
       };
-    }) || [];
+    });
 
     // Sort by match score
     formattedCoaches.sort((a, b) => b.matchScore - a.matchScore);

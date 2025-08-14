@@ -9,6 +9,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Textarea } from '@/components/ui/textarea'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
@@ -54,6 +55,8 @@ function ProfileContent() {
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
+  const [openLocation, setOpenLocation] = useState(false)
+  const [locationQuery, setLocationQuery] = useState('')
   const [stats, setStats] = useState({
     totalSessions: 0,
     upcomingSessions: 0,
@@ -309,6 +312,19 @@ function ProfileContent() {
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Required Fields Note */}
+            {isEditing && (
+              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
+                <div className="flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                  </svg>
+                  <span className="text-sm">
+                    Fields marked with <span className="text-red-500 font-bold">*</span> are required.
+                  </span>
+                </div>
+              </div>
+            )}
             <Form {...form}>
               <form className="space-y-6">
                 {/* Personal Information */}
@@ -317,7 +333,7 @@ function ProfileContent() {
                       
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">First Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.watch('firstName')}
@@ -327,7 +343,7 @@ function ProfileContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Last Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         value={form.watch('lastName')}
@@ -337,7 +353,7 @@ function ProfileContent() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Email <span className="text-red-500">*</span></label>
                       <input
                         type="email"
                         value={form.watch('email')}
@@ -358,20 +374,83 @@ function ProfileContent() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
-                    <select
-                      value={form.watch('location')}
-                      onChange={(e) => form.setValue('location', e.target.value)}
-                      disabled={!isEditing}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Location <span className="text-red-500">*</span></label>
+                    <Popover
+                      modal={false}
+                      open={openLocation}
+                      onOpenChange={(open) => {
+                        if (!isEditing) return
+                        setOpenLocation(open)
+                        if (open) setLocationQuery('')
+                      }}
                     >
-                      <option value="">Select your state</option>
-                      {Object.entries(STATE_NAMES).map(([code, name]) => (
-                        <option key={code} value={code}>
-                          {name}
-                        </option>
-                      ))}
-                    </select>
+                      <PopoverTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={openLocation}
+                          disabled={!isEditing}
+                          className="w-full justify-between bg-white"
+                        >
+                          {form.watch('location') ? (STATE_NAMES as any)[form.watch('location')] || 'Select your state' : 'Select your state'}
+                          <svg className="ml-2 h-4 w-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="p-0 w-72 sm:w-96">
+                        <div className="p-2">
+                          <Input
+                            placeholder="Search states..."
+                            value={locationQuery}
+                            onChange={(e) => setLocationQuery(e.target.value)}
+                            className="mb-2"
+                          />
+                          <div className="max-h-[300px] overflow-y-auto">
+                            {Object.entries(STATE_NAMES)
+                              .filter(([code, name]) =>
+                                name.toLowerCase().includes(locationQuery.toLowerCase()) ||
+                                code.toLowerCase().includes(locationQuery.toLowerCase())
+                              )
+                              .map(([code, name]) => (
+                                <div
+                                  key={code}
+                                  role="option"
+                                  tabIndex={0}
+                                  aria-selected={form.watch('location') === code}
+                                  className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${form.watch('location') === code ? 'bg-accent' : ''}`}
+                                  onPointerDown={(e) => {
+                                    e.preventDefault()
+                                    form.setValue('location', code)
+                                    setOpenLocation(false)
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault()
+                                      form.setValue('location', code)
+                                      setOpenLocation(false)
+                                    }
+                                  }}
+                                  onClick={() => {
+                                    form.setValue('location', code)
+                                    setOpenLocation(false)
+                                  }}
+                                >
+                                  {name}
+                                </div>
+                              ))}
+                            {Object.entries(STATE_NAMES)
+                              .filter(([code, name]) =>
+                                name.toLowerCase().includes(locationQuery.toLowerCase()) ||
+                                code.toLowerCase().includes(locationQuery.toLowerCase())
+                              ).length === 0 && (
+                                <div className="px-3 py-2 text-sm text-muted-foreground">No states found.</div>
+                            )}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
                   </div>
                 </div>
 

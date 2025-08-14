@@ -17,6 +17,7 @@ export interface ProviderCardProps {
   name: string;
   matchScore: number;
   specialties: string[];
+  modalities?: string[];
   languages: string[];
   bio: string;
   sessionRate: string;
@@ -34,6 +35,7 @@ export const ProviderCard = ({
   matchScore,
   specialties,
   languages,
+  modalities,
   bio,
   sessionRate,
   experience,
@@ -44,10 +46,14 @@ export const ProviderCard = ({
   onSaveChange
 }: ProviderCardProps) => {
   const [showAllSpecialties, setShowAllSpecialties] = useState(false);
+  const [showAllModalities, setShowAllModalities] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const safeSpecialties = specialties || [];
   const initialSpecialties = safeSpecialties.slice(0, 4);
   const remainingSpecialties = safeSpecialties.slice(4);
+  const safeModalities = modalities || [];
+  const initialModalities = safeModalities.slice(0, 4);
+  const remainingModalities = safeModalities.slice(4);
 
   // Check if coach is saved on component mount
   useEffect(() => {
@@ -102,6 +108,7 @@ export const ProviderCard = ({
           id: coachId,
           name,
           specialties,
+          modalities,
           languages,
           bio,
           sessionRate,
@@ -183,6 +190,42 @@ export const ProviderCard = ({
               </button>
             )}
           </div>
+
+          {safeModalities.length > 0 && (
+            <div>
+              <p className="text-sm font-medium">Therapy Modalities</p>
+              <div className="flex flex-wrap gap-1 mt-1">
+                {(initialModalities || []).map((modality) => (
+                  <span
+                    key={modality}
+                    className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md"
+                  >
+                    {modality}
+                  </span>
+                ))}
+                {showAllModalities && (remainingModalities || []).map((modality) => (
+                  <span
+                    key={modality}
+                    className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md"
+                  >
+                    {modality}
+                  </span>
+                ))}
+              </div>
+              {safeModalities.length > 4 && (
+                <button
+                  onClick={() => setShowAllModalities(!showAllModalities)}
+                  className="flex items-center gap-1 text-sm text-purple-700 mt-1 hover:text-purple-900"
+                >
+                  {showAllModalities ? (
+                    <>Show less <ChevronUp className="h-4 w-4" /></>
+                  ) : (
+                    <>See {remainingModalities.length} more <ChevronDown className="h-4 w-4" /></>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
           
           <div>
             <p className="text-sm font-medium">Languages</p>

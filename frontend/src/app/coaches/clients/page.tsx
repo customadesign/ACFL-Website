@@ -305,15 +305,6 @@ export default function MyClientsPage() {
                     Send Message
                   </Button>
                 </div>
-                <div className="text-center">
-                  <a 
-                    href="/coaches/appointments" 
-                    className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
-                  >
-                    <Calendar className="w-3 h-3 inline mr-1" />
-                    View Appointments
-                  </a>
-                </div>
               </CardContent>
             </Card>
           ))
@@ -400,11 +391,11 @@ export default function MyClientsPage() {
               <div>
                 <h3 className="text-lg font-medium text-gray-900 mb-3">Areas of Focus</h3>
                 <div className="flex flex-wrap gap-2">
-                  {selectedClient.concerns.map((concern, index) => (
-                    <span key={index} className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
-                      {concern}
+                  {selectedClient.nextSessionFocus && (
+                    <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
+                      {selectedClient.nextSessionFocus}
                     </span>
-                  ))}
+                  )}
                 </div>
               </div>
 

@@ -207,7 +207,6 @@ export const getCoachById = async (req: Request, res: Response) => {
       .from('coaches')
       .select(`
         *,
-        users (email),
         coach_demographics (
           gender_identity,
           ethnic_identity,
@@ -268,7 +267,7 @@ export const getCoachById = async (req: Request, res: Response) => {
       bio: coach.bio || '',
       sexualOrientation: '', // Not stored in current schema
       availableTimes: demographics.availability_options || [],
-      email: coach.users?.email || '',
+      email: coach.email || '',
       phone: coach.phone || '',
       experience: coach.years_experience ? `${coach.years_experience} years` : '',
       education: '', // Not stored in current schema

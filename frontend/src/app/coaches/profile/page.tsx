@@ -10,6 +10,8 @@ import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
 import { availabilityOptions, therapyModalityOptions, genderIdentityOptions } from '@/constants/formOptions';
 import { STATE_NAMES } from '@/constants/states';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
@@ -37,6 +39,8 @@ export default function CoachProfilePage() {
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [openLocation, setOpenLocation] = useState(false);
+  const [locationQuery, setLocationQuery] = useState('');
   const [profileData, setProfileData] = useState({
     firstName: '',
     lastName: '',
@@ -797,44 +801,94 @@ export default function CoachProfilePage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
                 {editing ? (
-                  <Select
-                    value={profileData.location || ''}
-                    onValueChange={(value) => setProfileData(prev => ({ ...prev, location: value }))}
+                  <Popover
+                    modal={false}
+                    open={openLocation}
+                    onOpenChange={(open) => {
+                      setOpenLocation(open)
+                      if (open) setLocationQuery('')
+                    }}
                   >
-                    <SelectTrigger className="w-full bg-white">
-                      <SelectValue placeholder="Select your location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">No location specified</SelectItem>
-                      {Object.entries(STATE_NAMES).map(([code, name]) => (
-                        <SelectItem key={code} value={code}>
-                          {name}
-                        </SelectItem>
-                      ))}
-                      <SelectItem value="custom">Custom Location</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-left flex items-center justify-between"
+                      >
+                        <span>
+                          {profileData.location && profileData.location !== 'custom' && profileData.location !== 'none'
+                            ? (STATE_NAMES as any)[profileData.location] || 'Select your location'
+                            : profileData.location === 'custom'
+                              ? profileData.customLocation || 'Custom location'
+                              : 'Select your location'}
+                        </span>
+                        <svg className="ml-2 h-4 w-4 shrink-0 opacity-50" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="p-0 w-72 sm:w-96">
+                      <div className="p-2">
+                        <Input
+                          placeholder="Search states..."
+                          value={locationQuery}
+                          onChange={(e) => setLocationQuery(e.target.value)}
+                          className="mb-2"
+                        />
+                        <div className="max-h-[300px] overflow-y-auto">
+                          <div
+                            className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${profileData.location === 'none' ? 'bg-accent' : ''}`}
+                            onPointerDown={(e) => {
+                              e.preventDefault()
+                              setProfileData(prev => ({ ...prev, location: 'none', customLocation: '' }))
+                              setOpenLocation(false)
+                            }}
+                          >
+                            No location specified
+                          </div>
+                          {Object.entries(STATE_NAMES)
+                            .filter(([code, name]) =>
+                              name.toLowerCase().includes(locationQuery.toLowerCase()) ||
+                              code.toLowerCase().includes(locationQuery.toLowerCase())
+                            )
+                            .map(([code, name]) => (
+                              <div
+                                key={code}
+                                role="option"
+                                tabIndex={0}
+                                aria-selected={profileData.location === code}
+                                className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${profileData.location === code ? 'bg-accent' : ''}`}
+                                onPointerDown={(e) => {
+                                  e.preventDefault()
+                                  setProfileData(prev => ({ ...prev, location: code, customLocation: '' }))
+                                  setOpenLocation(false)
+                                }}
+                              >
+                                {name}
+                              </div>
+                            ))}
+                          <div
+                            className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${profileData.location === 'custom' ? 'bg-accent' : ''}`}
+                            onPointerDown={(e) => {
+                              e.preventDefault()
+                              setProfileData(prev => ({ ...prev, location: 'custom' }))
+                              setOpenLocation(false)
+                            }}
+                          >
+                            Custom Location
+                          </div>
+                        </div>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
                 ) : (
                   <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
                     {profileData.location === 'none' ? 'Not specified' : 
                      profileData.location === 'custom' ? profileData.customLocation || 'Custom location' :
-                     profileData.location ? STATE_NAMES[profileData.location] || profileData.location : 'Not specified'}
+                     profileData.location ? (STATE_NAMES as any)[profileData.location] || profileData.location : 'Not specified'}
                   </div>
                 )}
                 
-                {/* Custom location input */}
-                {editing && profileData.location === 'custom' && (
-                  <div className="mt-2">
-                    <input
-                      type="text"
-                      name="customLocation"
-                      value={profileData.customLocation || ''}
-                      onChange={(e) => setProfileData(prev => ({ ...prev, customLocation: e.target.value }))}
-                      placeholder="Enter your custom location"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                  </div>
-                )}
+              
               </div>
             </div>
           </div>

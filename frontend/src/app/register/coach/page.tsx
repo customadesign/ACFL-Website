@@ -155,7 +155,7 @@ export default function CoachRegister() {
           qualifications: formData.qualifications || 'Certified Life Coach',
           experience: formData.experience || '1',
           hourlyRate: formData.hourlyRate || '75',
-          specialties: formData.specialties.length > 0 ? formData.specialties : ['General Coaching'],
+          specialties: formData.specialties,
           languages: formData.languages.length > 0 ? formData.languages : ['English']
         }),
       });

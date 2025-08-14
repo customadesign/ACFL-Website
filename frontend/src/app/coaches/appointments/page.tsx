@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
+import { Video } from 'lucide-react';
 
 interface Appointment {
   id: string;
@@ -295,7 +296,7 @@ export default function AppointmentsPage() {
                             disabled={!isJoinAvailable(appointment)}
                             size="sm"
                           >
-                            📹 Join Session
+                            <Video className="mr-2 h-4 w-4" /> Join Session
                           </Button>
                         )}
                         <span className="text-xs text-gray-600 self-center">{getCountdownLabel(appointment)}</span>
