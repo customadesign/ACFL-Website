@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
 import { User } from 'lucide-react'
-import supabase, { isSupabaseConfigured } from '@/lib/supabase'
+import { io } from 'socket.io-client'
 
 type Conversation = {
 	partnerId: string
@@ -100,52 +100,46 @@ useEffect(() => {
 		return () => window.removeEventListener('focus', onFocus)
 	}, [activePartnerId])
 
-	// Supabase Realtime: subscribe to message inserts for this user (sender or recipient)
-	useEffect(() => {
-		if (!user?.id) return
+  // Socket.IO Realtime
+  const socketRef = useRef<ReturnType<typeof io> | null>(null)
 
-		const handleIncoming = async (payload: any) => {
-			const msg = JSON.parse(JSON.stringify(payload.new)) as Message
-			const partnerId = activePartnerId
-			const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
-			if (involvesActive) {
-				// Optimistic append for instant UI
-				setMessages(prev => [...prev, msg])
-				// Auto-mark as read if incoming to me
-				if (msg.recipient_id === user.id && !msg.read_at) {
-					fetch(`${API_URL}/api/client/messages/${msg.id}/read`, {
-						method: 'PUT',
-						headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-					})
-				}
-				// Refresh conversations in the background to update unread counts
-				loadConversations()
-				// Ensure scroll to bottom after paint
-				setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
-			} else {
-				loadConversations()
-			}
-		}
+  useEffect(() => {
+    if (!user?.id) return
+    const socket = io(API_URL, {
+      transports: ['websocket'],
+      auth: { token: `Bearer ${localStorage.getItem('token')}` }
+    })
+    socketRef.current = socket
 
-    if (!isSupabaseConfigured || !supabase) return
+    socket.on('connect', () => {
+      // Connected
+    })
 
-		const channel = supabase
-			.channel(`client-messages-${user.id}`)
-			.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}` }, handleIncoming)
-			.on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, handleIncoming)
-			// Seen updates (read_at set)
-			.on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, (payload: any) => {
-				const updated = JSON.parse(JSON.stringify(payload.new)) as Message
-				// Update message in current thread if present
-				setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, read_at: updated.read_at } : m))
-			})
-			.subscribe()
+    socket.on('message:new', async (msg: Message) => {
+      const partnerId = activePartnerId
+      const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
+      if (involvesActive) {
+        setMessages(prev => [...prev, msg])
+        if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
+          socket.emit('message:read', { messageIds: [msg.id] })
+        }
+        loadConversations()
+        setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
+      } else {
+        loadConversations()
+      }
+    })
+
+    socket.on('message:read', ({ id, read_at }: { id: string; read_at: string }) => {
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at } as Message : m))
+    })
 
     return () => {
-        supabase?.removeChannel(channel)
+      socketRef.current?.close()
+      socketRef.current = null
     }
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [user?.id, activePartnerId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, activePartnerId])
 
 	useEffect(() => {
 		scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
@@ -156,24 +150,12 @@ useEffect(() => {
 		[conversations, activePartnerId]
 	)
 
-	const handleSend = async () => {
+  const handleSend = async () => {
 		if (!activePartnerId || !text.trim()) return
 		try {
-			setSending(true)
-			const res = await fetch(`${API_URL}/api/client/send-message`, {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json',
-					'Authorization': `Bearer ${localStorage.getItem('token')}`
-				},
-				body: JSON.stringify({ receiverId: activePartnerId, body: text.trim() })
-			})
-			const data = await res.json()
-			if (res.ok && data.success) {
-				setText('')
-				await loadMessages(activePartnerId)
-				await loadConversations()
-			}
+      setSending(true)
+      socketRef.current?.emit('message:send', { recipientId: activePartnerId, body: text.trim() })
+      setText('')
 		} finally {
 			setSending(false)
 		}

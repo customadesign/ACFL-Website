@@ -14,6 +14,11 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
 
+// Socket.io setup
+import http = require('http');
+import jwt = require('jsonwebtoken');
+import { Server } from 'socket.io';
+
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
@@ -81,7 +86,102 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+// Create HTTP server and Socket.IO instance
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: (origin: string | undefined, callback: any) => {
+      const allowedOrigins = process.env.NODE_ENV === 'production'
+        ? ['https://therapist-matcher-frontend.onrender.com', process.env.CORS_ORIGIN].filter(Boolean)
+        : ['http://localhost:3002', 'http://localhost:4000', 'http://localhost:4002', 'http://localhost:4003', 'http://localhost:3000', 'http://frontend:3000'];
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  }
+});
+
+type SocketUser = { userId: string; role: string } | null;
+
+io.use((socket, next) => {
+  try {
+    const authHeader = socket.handshake.auth?.token || socket.handshake.headers['authorization'];
+    const token = typeof authHeader === 'string' && authHeader.startsWith('Bearer ')
+      ? authHeader.replace('Bearer ', '')
+      : (typeof socket.handshake.auth?.token === 'string' ? socket.handshake.auth.token : undefined);
+    if (!token) return next(new Error('Unauthorized'));
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'your-secret-key') as any;
+    (socket as any).user = { userId: decoded.userId, role: decoded.role } as SocketUser;
+    return next();
+  } catch (e) {
+    return next(new Error('Unauthorized'));
+  }
+});
+
+io.on('connection', (socket) => {
+  const user = (socket as any).user as SocketUser;
+  if (!user) {
+    socket.disconnect(true);
+    return;
+  }
+  const room = `user:${user.userId}`;
+  socket.join(room);
+
+  socket.on('message:send', async (payload: { recipientId: string; body: string }) => {
+    try {
+      const senderId = user.userId;
+      const { recipientId, body } = payload;
+      if (!recipientId || !body?.trim()) return;
+      const now = new Date().toISOString();
+      const insert = {
+        sender_id: senderId,
+        recipient_id: recipientId,
+        body: body.trim(),
+        created_at: now,
+        read_at: null as string | null,
+      } as any;
+
+      const { data: saved, error } = await supabase
+        .from('messages')
+        .insert(insert)
+        .select('*')
+        .single();
+
+      if (error) throw error;
+
+      // Emit to both participants
+      io.to(`user:${recipientId}`).emit('message:new', saved);
+      io.to(`user:${senderId}`).emit('message:new', saved);
+    } catch (err) {
+      socket.emit('message:error', { message: 'Failed to send message' });
+    }
+  });
+
+  socket.on('message:read', async (payload: { messageIds: string[] }) => {
+    try {
+      const { messageIds } = payload || { messageIds: [] };
+      if (!Array.isArray(messageIds) || messageIds.length === 0) return;
+      const now = new Date().toISOString();
+      const { data: updated, error } = await supabase
+        .from('messages')
+        .update({ read_at: now })
+        .in('id', messageIds)
+        .select('*');
+      if (error) throw error;
+      // Notify senders of read receipts
+      (updated || []).forEach((m: any) => {
+        io.to(`user:${m.sender_id}`).emit('message:read', { id: m.id, read_at: m.read_at });
+      });
+    } catch (err) {
+      socket.emit('message:error', { message: 'Failed to mark read' });
+    }
+  });
+});
+
+server.listen(port, () => {
   console.log(`Server running on port ${port}`);
-}); 
+});
 

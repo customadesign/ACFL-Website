@@ -17,9 +17,11 @@ const nextConfig = {
     const isDevelopment = process.env.NODE_ENV === "development";
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
     const supabaseWs = supabaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
+    const apiWs = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     const connectSrc = isDevelopment
-      ? `'self' https: http://localhost:* ${supabaseUrl} ${supabaseWs}`
-      : `'self' https: ${supabaseUrl} ${supabaseWs}`;
+      ? `'self' https: ws: http://localhost:* ws://localhost:* ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs}`
+      : `'self' https: wss: ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs}`;
 
     return [
       {

@@ -12,6 +12,7 @@ import MessageCoachModal from '@/components/MessageCoachModal'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
+import { Star } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -75,6 +76,8 @@ function AppointmentsContent() {
   const [showMessageModal, setShowMessageModal] = useState(false)
   const [hasLoaded, setHasLoaded] = useState(false)
   const [nowTimestampMs, setNowTimestampMs] = useState<number>(Date.now())
+  const [ratingSubmittingFor, setRatingSubmittingFor] = useState<string | null>(null)
+  const [pendingRatings, setPendingRatings] = useState<Record<string, number>>({})
 
   const API_URL = getApiUrl()
 
@@ -201,6 +204,29 @@ function AppointmentsContent() {
   const handleModalSuccess = () => {
     // Force refresh appointments after successful action
     loadAppointments(true)
+  }
+
+  const submitRating = async (appointment: Appointment) => {
+    const value = pendingRatings[appointment.id]
+    if (!value || value < 1 || value > 5) return
+    try {
+      setRatingSubmittingFor(appointment.id)
+      await axios.post(`${API_URL}/api/client/reviews`, {
+        sessionId: appointment.id,
+        coachId: appointment.coach_id,
+        rating: value,
+        comment: ''
+      }, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      })
+      // Clear selection and refresh past list
+      setPendingRatings(prev => ({ ...prev, [appointment.id]: 0 }))
+      await loadAppointments(true, 'past')
+    } catch (e) {
+      console.error('Failed to submit rating', e)
+    } finally {
+      setRatingSubmittingFor(null)
+    }
   }
 
   if (loading && appointments.length === 0) {
@@ -419,7 +445,7 @@ function AppointmentsContent() {
                   </div>
 
                   {/* Past Actions */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-3 items-center">
                     <Button 
                       variant="outline" 
                       className="text-blue-600 border-blue-600 hover:bg-blue-50"
@@ -428,7 +454,26 @@ function AppointmentsContent() {
                       <MessageCircle className="w-4 h-4 mr-2" />
                       Message Coach
                     </Button>
-                    {/* Additional past-specific actions can go here */}
+                    {/* Rating control */}
+                    <div className="flex items-center gap-1">
+                      {[1,2,3,4,5].map(v => (
+                        <button
+                          key={v}
+                          className={`p-1 ${pendingRatings[appointment.id] >= v ? 'text-yellow-500' : 'text-gray-300'}`}
+                          onClick={() => setPendingRatings(prev => ({ ...prev, [appointment.id]: v }))}
+                          aria-label={`Rate ${v} star${v>1?'s':''}`}
+                        >
+                          <Star className="w-5 h-5" />
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                      disabled={!pendingRatings[appointment.id] || ratingSubmittingFor === appointment.id}
+                      onClick={() => submitRating(appointment)}
+                    >
+                      {ratingSubmittingFor === appointment.id ? 'Submitting...' : 'Submit Rating'}
+                    </Button>
                   </div>
                 </div>
               </div>

@@ -6,7 +6,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import supabase, { isSupabaseConfigured } from '@/lib/supabase'
+import { io } from 'socket.io-client'
 
 type Conversation = {
   partnerId: string
@@ -100,44 +100,39 @@ export default function CoachMessagesPage() {
     return () => window.removeEventListener('focus', onFocus)
   }, [activePartnerId])
 
-  // Supabase Realtime: subscribe to messages for this coach
+  // Socket.IO Realtime
+  const socketRef = useRef<ReturnType<typeof io> | null>(null)
+
   useEffect(() => {
     if (!user?.id) return
+    const socket = io(API_URL, {
+      transports: ['websocket'],
+      auth: { token: `Bearer ${localStorage.getItem('token')}` }
+    })
+    socketRef.current = socket
 
-    const handleIncoming = async (payload: any) => {
-      const msg = JSON.parse(JSON.stringify(payload.new)) as Message
+    socket.on('message:new', async (msg: Message) => {
       const partnerId = activePartnerId
       const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
       if (involvesActive) {
-        // Optimistic append for instant UI
         setMessages(prev => [...prev, msg])
-        if (msg.recipient_id === user.id && !msg.read_at) {
-          fetch(`${API_URL}/api/coach/messages/${msg.id}/read`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-          })
+        if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
+          socket.emit('message:read', { messageIds: [msg.id] })
         }
         loadConversations()
         setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
       } else {
         loadConversations()
       }
-    }
+    })
 
-    if (!isSupabaseConfigured || !supabase) return
-    const channel = supabase
-      .channel(`coach-messages-${user.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `recipient_id=eq.${user.id}` }, handleIncoming)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, handleIncoming)
-      // Seen updates (read_at set)
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'messages', filter: `sender_id=eq.${user.id}` }, (payload: any) => {
-        const updated = JSON.parse(JSON.stringify(payload.new)) as Message
-        setMessages(prev => prev.map(m => m.id === updated.id ? { ...m, read_at: updated.read_at } : m))
-      })
-      .subscribe()
+    socket.on('message:read', ({ id, read_at }: { id: string; read_at: string }) => {
+      setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at } as Message : m))
+    })
 
     return () => {
-      supabase?.removeChannel(channel)
+      socketRef.current?.close()
+      socketRef.current = null
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, activePartnerId])
@@ -151,20 +146,8 @@ export default function CoachMessagesPage() {
     if (!activePartnerId || !text.trim()) return
     try {
       setSending(true)
-      const res = await fetch(`${API_URL}/api/coach/send-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: JSON.stringify({ recipient_id: activePartnerId, body: text.trim() })
-      })
-      const data = await res.json()
-      if (res.ok && data.success) {
-        setText('')
-        await loadMessages(activePartnerId)
-        await loadConversations()
-      }
+      socketRef.current?.emit('message:send', { recipientId: activePartnerId, body: text.trim() })
+      setText('')
     } finally {
       setSending(false)
     }

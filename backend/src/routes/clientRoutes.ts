@@ -222,7 +222,33 @@ router.post('/client/reviews', [
       .maybeSingle();
 
     if (existing) {
-      return res.status(409).json({ success: false, message: 'You have already reviewed this session' });
+      // Update existing review instead of failing
+      const { data: updatedReview, error: updateReviewError } = await supabase
+        .from('reviews')
+        .update({ rating, comment: comment || null })
+        .eq('id', (existing as any).id)
+        .select('*')
+        .single();
+
+      if (updateReviewError) {
+        throw updateReviewError;
+      }
+
+      // Recompute coach average rating
+      const { data: agg2, error: avgError2 } = await supabase
+        .from('reviews')
+        .select('rating')
+        .eq('coach_id', coachId);
+      if (!avgError2 && agg2) {
+        const ratings2 = (agg2 as any[]).map(r => Number(r.rating) || 0).filter(n => n > 0);
+        const avg2 = ratings2.length > 0 ? Number((ratings2.reduce((a, b) => a + b, 0) / ratings2.length).toFixed(2)) : rating;
+        await supabase
+          .from('coaches')
+          .update({ rating: avg2 })
+          .eq('id', coachId);
+      }
+
+      return res.json({ success: true, data: updatedReview });
     }
 
     // Insert review
@@ -242,7 +268,20 @@ router.post('/client/reviews', [
       throw reviewError;
     }
 
-    // The DB trigger recomputes coach average rating automatically
+    // Update coach aggregate rating (average) on coaches table
+    const { data: agg, error: avgError } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('coach_id', coachId);
+
+    if (!avgError && agg) {
+      const ratings = (agg as any[]).map(r => Number(r.rating) || 0).filter(n => n > 0);
+      const avg = ratings.length > 0 ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : rating;
+      await supabase
+        .from('coaches')
+        .update({ rating: avg })
+        .eq('id', coachId);
+    }
 
     res.json({ success: true, data: review });
   } catch (error: any) {
@@ -1455,14 +1494,15 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
       .from('sessions')
       .select(`
         id,
-        scheduled_at,
+        starts_at,
+        ends_at,
         status,
         session_type,
         duration,
         coach_id
       `)
       .eq('client_id', clientId)
-      .order('scheduled_at', { ascending: false })
+      .order('starts_at', { ascending: false })
       .limit(5);
 
     if (sessionsError) {
@@ -1474,12 +1514,12 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
       .from('messages')
       .select(`
         id,
-        content,
+        body,
         created_at,
         sender_id,
-        receiver_id
+        recipient_id
       `)
-      .or(`sender_id.eq.${clientId},receiver_id.eq.${clientId}`)
+      .or(`sender_id.eq.${clientId},recipient_id.eq.${clientId}`)
       .order('created_at', { ascending: false })
       .limit(5);
 
@@ -1544,13 +1584,13 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
           id: session.id,
           type: 'appointment',
           title: `Session with ${coachName}`,
-          subtitle: `${session.session_type} session - ${session.status}`,
-          date: session.scheduled_at,
-          time: new Date(session.scheduled_at).toLocaleTimeString([], { 
+          subtitle: `${session.session_type || 'Coaching'} session - ${session.status}`,
+          date: session.starts_at,
+          time: new Date(session.starts_at).toLocaleTimeString([], { 
             hour: '2-digit', 
             minute: '2-digit' 
           }),
-          timestamp: new Date(session.scheduled_at).getTime(),
+          timestamp: new Date(session.starts_at).getTime(),
           data: session
         });
       }
@@ -1560,7 +1600,7 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
     if (recentMessages) {
       for (const message of recentMessages) {
         let partnerName = 'Unknown User';
-        const partnerId = message.sender_id === clientId ? message.receiver_id : message.sender_id;
+        const partnerId = message.sender_id === clientId ? message.recipient_id : message.sender_id;
         
         // Try to find the partner in coaches table first
         const { data: coachPartner } = await supabase
@@ -1589,7 +1629,7 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
           id: message.id,
           type: 'message',
           title: `${isSender ? 'Message to' : 'Message from'} ${partnerName}`,
-          subtitle: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
+          subtitle: (message.body || '').substring(0, 50) + ((message.body || '').length > 50 ? '...' : ''),
           date: message.created_at,
           time: new Date(message.created_at).toLocaleTimeString([], { 
             hour: '2-digit', 
