@@ -4,6 +4,8 @@ import { supabase } from '../lib/supabase';
 import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
+import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
+import path from 'path';
 
 const router = Router();
 
@@ -692,6 +694,32 @@ router.put('/coach/appointments/:id', [
       throw updateError;
     }
 
+    // Emit WebSocket event for status update
+    const io = req.app.get('io');
+    if (io) {
+      const statusData = {
+        sessionId: updatedAppointment.id,
+        scheduledAt: updatedAppointment.starts_at,
+        clientId: updatedAppointment.client_id,
+        coachId: coachId,
+        oldStatus: status, // Note: we don't have the old status here
+        newStatus: status,
+        type: 'status_updated'
+      };
+
+      // Notify client about status change
+      io.to(`user:${updatedAppointment.client_id}`).emit('appointment:status_updated', {
+        ...statusData,
+        message: `Coach has ${status === 'confirmed' ? 'confirmed' : status === 'completed' ? 'completed' : status === 'cancelled' ? 'cancelled' : 'updated'} your appointment`
+      });
+
+      // Notify coach about successful update
+      io.to(`user:${coachId}`).emit('appointment:status_updated', {
+        ...statusData,
+        message: `Appointment status updated to ${status}`
+      });
+    }
+
     res.json({
       success: true,
       message: 'Appointment status updated successfully',
@@ -894,7 +922,7 @@ router.get('/coach/messages', authenticate, async (req: Request & { user?: any }
 
     let query = supabase
       .from('messages')
-      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .select('id, sender_id, recipient_id, body, created_at, read_at, attachment_url, attachment_name, attachment_size, attachment_type, deleted_for_everyone, deleted_at, hidden_for_users')
       .order('created_at', { ascending: true });
 
     if (partnerId) {
@@ -914,13 +942,18 @@ router.get('/coach/messages', authenticate, async (req: Request & { user?: any }
       throw messagesError;
     }
 
+    // Filter out messages hidden for this user
+    const filteredMessages = messages?.filter((message: any) => {
+      return !message.hidden_for_users?.includes(coachId);
+    }) || [];
+
     res.json({
       success: true,
-      data: messages || [],
+      data: filteredMessages,
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: count ?? (messages?.length || 0)
+        total: count ?? (filteredMessages?.length || 0)
       }
     });
   } catch (error) {
@@ -947,7 +980,7 @@ router.get('/coach/conversations', authenticate, async (req: Request & { user?: 
     // Fetch recent messages involving coach
     const { data: messages, error: messagesError } = await supabase
       .from('messages')
-      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .select('id, sender_id, recipient_id, body, created_at, read_at, attachment_url, attachment_name, attachment_size, attachment_type, deleted_for_everyone, deleted_at, hidden_for_users')
       .or(`sender_id.eq.${coachId},recipient_id.eq.${coachId}`)
       .order('created_at', { ascending: false });
 
@@ -959,6 +992,11 @@ router.get('/coach/conversations', authenticate, async (req: Request & { user?: 
     const conversationsMap = new Map<string, Conv>();
 
     for (const message of messages || []) {
+      // Skip messages hidden for this user
+      if (message.hidden_for_users?.includes(coachId)) {
+        continue;
+      }
+
       const partnerId = message.sender_id === coachId ? message.recipient_id : message.sender_id;
       const key = partnerId;
       const existing = conversationsMap.get(key);
@@ -1064,6 +1102,238 @@ router.put('/coach/messages/:messageId/read', authenticate, async (req: Request 
   } catch (error) {
     console.error('Mark message read error:', error);
     res.status(500).json({ success: false, message: 'Failed to mark message as read' });
+  }
+});
+
+// Upload attachment endpoint for coaches
+router.post('/coach/upload-attachment', authenticate, uploadAttachment.single('attachment'), async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Get coach profile to get user ID
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({ success: false, message: 'Coach profile not found' });
+    }
+
+    // Upload file to Supabase Storage
+    const uploadResult = await uploadToSupabase(req.file, coachProfile.id);
+
+    res.json({
+      success: true,
+      data: {
+        url: uploadResult.url,
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype,
+        path: uploadResult.path
+      }
+    });
+  } catch (error) {
+    console.error('Upload attachment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Failed to upload attachment' 
+    });
+  }
+});
+
+// Delete message for everyone (only sender can do this)
+router.delete('/coach/messages/:messageId/everyone', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { messageId } = req.params;
+
+    // Get coach profile
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({ success: false, message: 'Coach profile not found' });
+    }
+
+    // Check if user is the sender of the message
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .select('sender_id, recipient_id')
+      .eq('id', messageId)
+      .single();
+
+    if (messageError || !message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    if (message.sender_id !== coachProfile.id) {
+      return res.status(403).json({ success: false, message: 'Only the sender can delete a message for everyone' });
+    }
+
+    // Delete message for everyone
+    const { error: deleteError } = await supabase
+      .from('messages')
+      .update({ 
+        deleted_for_everyone: true, 
+        deleted_at: new Date().toISOString(),
+        body: 'This message was deleted'
+      })
+      .eq('id', messageId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    // Emit WebSocket event
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${message.recipient_id}`).emit('message:deleted_everyone', { 
+        messageId,
+        deletedBy: coachProfile.id 
+      });
+      io.to(`user:${coachProfile.id}`).emit('message:deleted_everyone', { 
+        messageId,
+        deletedBy: coachProfile.id 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Message deleted for everyone'
+    });
+  } catch (error) {
+    console.error('Delete message for everyone error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete message' 
+    });
+  }
+});
+
+// Hide message for current user only
+router.put('/coach/messages/:messageId/hide', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { messageId } = req.params;
+
+    // Get coach profile
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({ success: false, message: 'Coach profile not found' });
+    }
+
+    // Add user to hidden_for_users array using PostgreSQL array append
+    const { error: hideError } = await supabase
+      .rpc('add_user_to_hidden_array', {
+        message_id: messageId,
+        user_id: coachProfile.id
+      });
+
+    if (hideError) {
+      throw hideError;
+    }
+
+    res.json({
+      success: true,
+      message: 'Message hidden for you'
+    });
+  } catch (error) {
+    console.error('Hide message error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to hide message' 
+    });
+  }
+});
+
+// Delete conversation endpoint for coaches
+router.delete('/coach/conversations/:partnerId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { partnerId } = req.params;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({ success: false, message: 'Coach profile not found' });
+    }
+
+    const coachId = coachProfile.id;
+
+    // Delete all messages between coach and partner
+    const { error: deleteError } = await supabase
+      .from('messages')
+      .delete()
+      .or(`and(sender_id.eq.${coachId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${coachId})`);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    // Emit WebSocket event to notify partner about conversation deletion
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${partnerId}`).emit('conversation:deleted', { 
+        deletedBy: coachId,
+        partnerId: coachId 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Conversation deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete conversation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete conversation' 
+    });
   }
 });
 

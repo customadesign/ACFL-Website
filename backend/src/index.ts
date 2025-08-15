@@ -48,6 +48,9 @@ app.use(cors(corsOptions));
 // Handle preflight requests explicitly
 // app.options('*', cors(corsOptions));
 app.use(express.json());
+
+// Note: File uploads now handled by Supabase Storage
+
 app.use('/api/auth', authRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
@@ -104,6 +107,9 @@ const io = new Server(server, {
   }
 });
 
+// Make io instance available to routes
+app.set('io', io);
+
 type SocketUser = { userId: string; role: string } | null;
 
 io.use((socket, next) => {
@@ -130,16 +136,20 @@ io.on('connection', (socket) => {
   const room = `user:${user.userId}`;
   socket.join(room);
 
-  socket.on('message:send', async (payload: { recipientId: string; body: string }) => {
+  socket.on('message:send', async (payload: { recipientId: string; body: string; attachment?: { url: string; name: string; size: number; type: string } }) => {
     try {
       const senderId = user.userId;
-      const { recipientId, body } = payload;
-      if (!recipientId || !body?.trim()) return;
+      const { recipientId, body, attachment } = payload;
+      if (!recipientId || (!body?.trim() && !attachment)) return;
       const now = new Date().toISOString();
       const insert = {
         sender_id: senderId,
         recipient_id: recipientId,
-        body: body.trim(),
+        body: body?.trim() || (attachment ? `[Attachment: ${attachment.name}]` : ''),
+        attachment_url: attachment?.url || null,
+        attachment_name: attachment?.name || null,
+        attachment_size: attachment?.size || null,
+        attachment_type: attachment?.type || null,
         created_at: now,
         read_at: null as string | null,
       } as any;

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import Link from 'next/link'
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -13,6 +13,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
 import axios from 'axios'
 import { Star } from 'lucide-react'
+import { io, Socket } from 'socket.io-client'
 
 interface Appointment {
   id: string
@@ -78,6 +79,7 @@ function AppointmentsContent() {
   const [nowTimestampMs, setNowTimestampMs] = useState<number>(Date.now())
   const [ratingSubmittingFor, setRatingSubmittingFor] = useState<string | null>(null)
   const [pendingRatings, setPendingRatings] = useState<Record<string, number>>({})
+  const socketRef = useRef<Socket | null>(null)
 
   const API_URL = getApiUrl()
 
@@ -88,6 +90,69 @@ function AppointmentsContent() {
     }, 1000)
     return () => clearInterval(intervalId)
   }, [])
+
+  // WebSocket connection for real-time appointment updates
+  useEffect(() => {
+    if (!user?.id || !localStorage.getItem('token')) {
+      return
+    }
+
+    const token = localStorage.getItem('token')
+    const socket = io(API_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    })
+
+    socketRef.current = socket
+
+    // Listen for appointment events
+    socket.on('appointment:new', (data) => {
+      console.log('New appointment:', data)
+      // Refresh appointments list
+      loadAppointments(true, activeTab)
+    })
+
+    socket.on('appointment:booked', (data) => {
+      console.log('Appointment booked:', data)
+      // Show success message or notification
+      loadAppointments(true, activeTab)
+    })
+
+    socket.on('appointment:status_updated', (data) => {
+      console.log('Appointment status updated:', data)
+      // Update specific appointment in the list
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, status: data.newStatus }
+          : apt
+      ))
+    })
+
+    socket.on('appointment:rescheduled', (data) => {
+      console.log('Appointment rescheduled:', data)
+      // Update appointment time
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, starts_at: data.newScheduledAt, status: data.status }
+          : apt
+      ))
+    })
+
+    socket.on('appointment:cancelled', (data) => {
+      console.log('Appointment cancelled:', data)
+      // Update appointment status or remove from list
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, status: 'cancelled' }
+          : apt
+      ))
+    })
+
+    return () => {
+      socketRef.current?.close()
+      socketRef.current = null
+    }
+  }, [user?.id, API_URL, activeTab])
 
   const isJoinAvailableForAppointment = (appointment: Appointment): boolean => {
     const startMs = new Date(appointment.starts_at).getTime()

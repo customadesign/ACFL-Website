@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import { getApiUrl } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
-import { Video } from 'lucide-react';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
 
 interface Appointment {
   id: string;
@@ -16,6 +18,7 @@ interface Appointment {
   status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
   notes?: string;
   zoom_link: string;  // Required for online-only sessions
+  created_at: string;
   clients?: {
     first_name: string;
     last_name: string;
@@ -28,11 +31,15 @@ interface Appointment {
 }
 
 export default function AppointmentsPage() {
+  const { user } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
+  const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  const socketRef = useRef<Socket | null>(null);
 
   const API_URL = getApiUrl();
 
@@ -45,6 +52,69 @@ export default function AppointmentsPage() {
     const id = setInterval(() => setNowMs(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
+
+  // WebSocket connection for real-time appointment updates
+  useEffect(() => {
+    if (!user?.id || !localStorage.getItem('token')) {
+      return;
+    }
+
+    const token = localStorage.getItem('token');
+    const socket = io(API_URL, {
+      auth: { token },
+      transports: ['websocket', 'polling']
+    });
+
+    socketRef.current = socket;
+
+    // Listen for appointment events
+    socket.on('appointment:new', (data) => {
+      console.log('New appointment:', data);
+      // Refresh appointments list
+      loadAppointments();
+    });
+
+    socket.on('appointment:booked', (data) => {
+      console.log('Appointment booked:', data);
+      // Refresh appointments list
+      loadAppointments();
+    });
+
+    socket.on('appointment:status_updated', (data) => {
+      console.log('Appointment status updated:', data);
+      // Update specific appointment in the list
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, status: data.newStatus }
+          : apt
+      ));
+    });
+
+    socket.on('appointment:rescheduled', (data) => {
+      console.log('Appointment rescheduled:', data);
+      // Update appointment time
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, starts_at: data.newScheduledAt, status: data.status }
+          : apt
+      ));
+    });
+
+    socket.on('appointment:cancelled', (data) => {
+      console.log('Appointment cancelled:', data);
+      // Update appointment status
+      setAppointments(prev => prev.map(apt => 
+        apt.id === data.sessionId 
+          ? { ...apt, status: 'cancelled' }
+          : apt
+      ));
+    });
+
+    return () => {
+      socketRef.current?.close();
+      socketRef.current = null;
+    };
+  }, [user?.id, API_URL]);
 
   const isJoinAvailable = (apt: Appointment) => {
     const start = new Date(apt.starts_at).getTime();
@@ -124,6 +194,33 @@ export default function AppointmentsPage() {
     }
   };
 
+  const sortAppointments = (appointments: Appointment[]) => {
+    return appointments.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === 'dateAdded') {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        comparison = dateA - dateB;
+      } else if (sortBy === 'name') {
+        const nameA = a.clients ? `${a.clients.first_name} ${a.clients.last_name}`.toLowerCase() : '';
+        const nameB = b.clients ? `${b.clients.first_name} ${b.clients.last_name}`.toLowerCase() : '';
+        comparison = nameA.localeCompare(nameB);
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  const toggleSort = (newSortBy: 'dateAdded' | 'name') => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+  };
+
   if (loading) {
     return (
       <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
@@ -191,6 +288,39 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
+      {/* Sort Controls - Show for all tabs */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">Sort by:</span>
+          <div className="flex gap-2">
+            <Button
+              variant={sortBy === 'dateAdded' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleSort('dateAdded')}
+              className="flex items-center gap-1"
+            >
+              Date Added
+              {sortBy === 'dateAdded' && (
+                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+              )}
+              {sortBy !== 'dateAdded' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              variant={sortBy === 'name' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleSort('name')}
+              className="flex items-center gap-1"
+            >
+              Client Name
+              {sortBy === 'name' && (
+                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+              )}
+              {sortBy !== 'name' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+
       {/* Appointments List */}
       <div className="space-y-4">
         {(() => {
@@ -213,14 +343,17 @@ export default function AppointmentsPage() {
             }
           });
 
-          return filteredAppointments.length === 0 ? (
+          // Apply sorting to all appointments
+          const sortedAppointments = sortAppointments([...filteredAppointments]);
+
+          return sortedAppointments.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
                 <p className="text-gray-500">No {filter} appointments found</p>
               </CardContent>
             </Card>
           ) : (
-            filteredAppointments.map((appointment) => (
+            sortedAppointments.map((appointment) => (
             <Card key={appointment.id}>
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">

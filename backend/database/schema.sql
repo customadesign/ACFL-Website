@@ -380,7 +380,14 @@ CREATE TABLE IF NOT EXISTS public.messages (
   session_id UUID REFERENCES public.sessions(id) ON DELETE SET NULL,
   body TEXT NOT NULL,
   content TEXT,
+  attachment_url TEXT,
+  attachment_name TEXT,
+  attachment_size BIGINT,
+  attachment_type TEXT,
   read_at TIMESTAMPTZ,
+  deleted_for_everyone BOOLEAN DEFAULT FALSE,
+  deleted_at TIMESTAMPTZ,
+  hidden_for_users UUID[] DEFAULT '{}',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
@@ -414,6 +421,48 @@ BEGIN
   END IF;
 END
 $do$;
+
+-- Add attachment columns if they don't exist
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='messages' AND column_name='attachment_url'
+  ) THEN
+    ALTER TABLE public.messages
+      ADD COLUMN attachment_url TEXT,
+      ADD COLUMN attachment_name TEXT,
+      ADD COLUMN attachment_size BIGINT,
+      ADD COLUMN attachment_type TEXT;
+  END IF;
+END
+$do$;
+
+-- Add message deletion columns if they don't exist
+DO $do$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='messages' AND column_name='deleted_for_everyone'
+  ) THEN
+    ALTER TABLE public.messages
+      ADD COLUMN deleted_for_everyone BOOLEAN DEFAULT FALSE,
+      ADD COLUMN deleted_at TIMESTAMPTZ,
+      ADD COLUMN hidden_for_users UUID[] DEFAULT '{}';
+  END IF;
+END
+$do$;
+
+-- Function to add user to hidden_for_users array
+CREATE OR REPLACE FUNCTION public.add_user_to_hidden_array(message_id UUID, user_id UUID)
+RETURNS VOID AS $$
+BEGIN
+  UPDATE public.messages 
+  SET hidden_for_users = array_append(hidden_for_users, user_id)
+  WHERE id = message_id 
+  AND NOT (user_id = ANY(hidden_for_users));
+END;
+$$ LANGUAGE plpgsql;
 
 -- =========================================================
 -- REVIEWS

@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
+import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
+import path from 'path';
 
 const router = Router();
 
@@ -917,7 +919,7 @@ router.post('/client/book-appointment', [
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
-      .select('id')
+      .select('id, first_name, last_name')
       .eq('id', req.user.userId)
       .single();
 
@@ -1006,6 +1008,38 @@ router.post('/client/book-appointment', [
       throw sessionError;
     }
 
+    // Emit WebSocket event for new appointment
+    const io = req.app.get('io');
+    if (io) {
+      const appointmentData = {
+        sessionId: session.id,
+        scheduledAt: session.starts_at,
+        coachName: `${coach.first_name} ${coach.last_name}`,
+        clientName: `${clientProfile.first_name} ${clientProfile.last_name}`,
+        format: 'virtual',
+        zoomLink: session.zoom_link,
+        duration: duration,
+        status: 'scheduled',
+        sessionType: sessionType,
+        areaOfFocus: areaOfFocus,
+        notes: notes
+      };
+
+      // Notify coach about new appointment
+      io.to(`user:${coachId}`).emit('appointment:new', {
+        ...appointmentData,
+        clientId: clientProfile.id,
+        type: 'new_booking'
+      });
+
+      // Notify client about successful booking
+      io.to(`user:${clientProfile.id}`).emit('appointment:booked', {
+        ...appointmentData,
+        coachId: coachId,
+        type: 'booking_confirmed'
+      });
+    }
+
     res.json({
       success: true,
       message: 'Session scheduled successfully',
@@ -1081,6 +1115,32 @@ router.put('/client/appointments/:id/reschedule', [
       throw updateError;
     }
 
+    // Emit WebSocket event for rescheduled appointment
+    const io = req.app.get('io');
+    if (io) {
+      const rescheduleData = {
+        sessionId: updatedAppointment.id,
+        oldScheduledAt: appointment.starts_at,
+        newScheduledAt: updatedAppointment.starts_at,
+        clientId: clientProfile.id,
+        coachId: appointment.coach_id,
+        status: 'scheduled',
+        type: 'rescheduled'
+      };
+
+      // Notify coach about rescheduled appointment
+      io.to(`user:${appointment.coach_id}`).emit('appointment:rescheduled', {
+        ...rescheduleData,
+        message: 'Client has rescheduled the appointment'
+      });
+
+      // Notify client about successful reschedule
+      io.to(`user:${clientProfile.id}`).emit('appointment:rescheduled', {
+        ...rescheduleData,
+        message: 'Appointment rescheduled successfully'
+      });
+    }
+
     res.json({
       success: true,
       message: 'Appointment rescheduled successfully',
@@ -1147,6 +1207,32 @@ router.put('/client/appointments/:id/cancel', [
 
     if (updateError) {
       throw updateError;
+    }
+
+    // Emit WebSocket event for cancelled appointment
+    const io = req.app.get('io');
+    if (io) {
+      const cancelData = {
+        sessionId: updatedAppointment.id,
+        scheduledAt: appointment.starts_at,
+        clientId: clientProfile.id,
+        coachId: appointment.coach_id,
+        status: 'cancelled',
+        reason: reason || 'No reason provided',
+        type: 'cancelled'
+      };
+
+      // Notify coach about cancelled appointment
+      io.to(`user:${appointment.coach_id}`).emit('appointment:cancelled', {
+        ...cancelData,
+        message: `Client has cancelled the appointment. Reason: ${reason || 'No reason provided'}`
+      });
+
+      // Notify client about successful cancellation
+      io.to(`user:${clientProfile.id}`).emit('appointment:cancelled', {
+        ...cancelData,
+        message: 'Appointment cancelled successfully'
+      });
     }
 
     res.json({
@@ -1249,7 +1335,7 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
 
     let query = supabase
       .from('messages')
-      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .select('id, sender_id, recipient_id, body, created_at, read_at, attachment_url, attachment_name, attachment_size, attachment_type, deleted_for_everyone, deleted_at, hidden_for_users')
       .order('created_at', { ascending: true });
 
     if (partnerId) {
@@ -1263,13 +1349,18 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
     const { data: messages, error: messagesError, count } = await query.range(offset, offset + Number(limit) - 1) as any;
     if (messagesError) throw messagesError;
 
+    // Filter out messages hidden for this user
+    const filteredMessages = messages?.filter((message: any) => {
+      return !message.hidden_for_users?.includes(clientId);
+    }) || [];
+
     res.json({
       success: true,
-      data: messages || [],
+      data: filteredMessages,
       pagination: {
         page: Number(page),
         limit: Number(limit),
-        total: count ?? (messages?.length || 0)
+        total: count ?? (filteredMessages?.length || 0)
       }
     });
   } catch (error) {
@@ -1295,7 +1386,7 @@ router.get('/client/conversations', authenticate, async (req: Request & { user?:
     const clientId = clientProfile.id;
     const { data: messages, error: messagesError } = await supabase
       .from('messages')
-      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .select('id, sender_id, recipient_id, body, created_at, read_at, attachment_url, attachment_name, attachment_size, attachment_type, deleted_for_everyone, deleted_at, hidden_for_users')
       .or(`sender_id.eq.${clientId},recipient_id.eq.${clientId}`)
       .order('created_at', { ascending: false });
 
@@ -1305,6 +1396,11 @@ router.get('/client/conversations', authenticate, async (req: Request & { user?:
     const conversationsMap = new Map<string, Conv>();
 
     for (const message of messages || []) {
+      // Skip messages hidden for this user
+      if (message.hidden_for_users?.includes(clientId)) {
+        continue;
+      }
+
       const partnerId = message.sender_id === clientId ? message.recipient_id : message.sender_id;
       const key = partnerId;
       const existing = conversationsMap.get(key);
@@ -1710,6 +1806,238 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
     res.status(500).json({ 
       success: false, 
       message: 'Failed to get client activity' 
+    });
+  }
+});
+
+// Upload attachment endpoint
+router.post('/client/upload-attachment', authenticate, uploadAttachment.single('attachment'), async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Client role required.' 
+      });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
+      });
+    }
+
+    // Get client profile to get user ID
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    // Upload file to Supabase Storage
+    const uploadResult = await uploadToSupabase(req.file, clientProfile.id);
+
+    res.json({
+      success: true,
+      data: {
+        url: uploadResult.url,
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype,
+        path: uploadResult.path
+      }
+    });
+  } catch (error) {
+    console.error('Upload attachment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Failed to upload attachment' 
+    });
+  }
+});
+
+// Delete message for everyone (only sender can do this)
+router.delete('/client/messages/:messageId/everyone', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Client role required.' 
+      });
+    }
+
+    const { messageId } = req.params;
+
+    // Get client profile
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    // Check if user is the sender of the message
+    const { data: message, error: messageError } = await supabase
+      .from('messages')
+      .select('sender_id, recipient_id')
+      .eq('id', messageId)
+      .single();
+
+    if (messageError || !message) {
+      return res.status(404).json({ success: false, message: 'Message not found' });
+    }
+
+    if (message.sender_id !== clientProfile.id) {
+      return res.status(403).json({ success: false, message: 'Only the sender can delete a message for everyone' });
+    }
+
+    // Delete message for everyone
+    const { error: deleteError } = await supabase
+      .from('messages')
+      .update({ 
+        deleted_for_everyone: true, 
+        deleted_at: new Date().toISOString(),
+        body: 'This message was deleted'
+      })
+      .eq('id', messageId);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    // Emit WebSocket event
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${message.recipient_id}`).emit('message:deleted_everyone', { 
+        messageId,
+        deletedBy: clientProfile.id 
+      });
+      io.to(`user:${clientProfile.id}`).emit('message:deleted_everyone', { 
+        messageId,
+        deletedBy: clientProfile.id 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Message deleted for everyone'
+    });
+  } catch (error) {
+    console.error('Delete message for everyone error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete message' 
+    });
+  }
+});
+
+// Hide message for current user only
+router.put('/client/messages/:messageId/hide', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Client role required.' 
+      });
+    }
+
+    const { messageId } = req.params;
+
+    // Get client profile
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    // Add user to hidden_for_users array using PostgreSQL array append
+    const { error: hideError } = await supabase
+      .rpc('add_user_to_hidden_array', {
+        message_id: messageId,
+        user_id: clientProfile.id
+      });
+
+    if (hideError) {
+      throw hideError;
+    }
+
+    res.json({
+      success: true,
+      message: 'Message hidden for you'
+    });
+  } catch (error) {
+    console.error('Hide message error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to hide message' 
+    });
+  }
+});
+
+// Delete conversation endpoint
+router.delete('/client/conversations/:partnerId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Client role required.' 
+      });
+    }
+
+    const { partnerId } = req.params;
+
+    // Get client profile by email first
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({ success: false, message: 'Client profile not found' });
+    }
+
+    const clientId = clientProfile.id;
+
+    // Delete all messages between client and partner
+    const { error: deleteError } = await supabase
+      .from('messages')
+      .delete()
+      .or(`and(sender_id.eq.${clientId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${clientId})`);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    // Emit WebSocket event to notify partner about conversation deletion
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${partnerId}`).emit('conversation:deleted', { 
+        deletedBy: clientId,
+        partnerId: clientId 
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Conversation deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete conversation error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to delete conversation' 
     });
   }
 });

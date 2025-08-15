@@ -3,12 +3,29 @@
 import { useState, useEffect } from 'react'
 import CoachPageWrapper from '@/components/CoachPageWrapper'
 import { getApiUrl } from '@/lib/api'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { 
+  Calendar, 
+  Users, 
+  ChartBar,
+  Star,
+  Clock,
+  ArrowRight,
+  RefreshCw,
+  User,
+  ChevronLeft,
+  ChevronRight
+} from 'lucide-react'
 import axios from 'axios'
 
 export default function CoachDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [appointmentsPage, setAppointmentsPage] = useState(1)
+  const [clientsPage, setClientsPage] = useState(1)
+  const pageSize = 3
 
   const API_URL = getApiUrl()
 
@@ -66,7 +83,7 @@ export default function CoachDashboardPage() {
   return (
     <CoachPageWrapper title="Dashboard" description="Overview of your coaching practice">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -124,81 +141,201 @@ export default function CoachDashboardPage() {
           </div>
         </div>
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Today's Appointments */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Today's Appointments</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {todayAppointments.length > 0 ? (
-                  todayAppointments.map((appointment: any) => (
-                    <div key={appointment.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {new Date(appointment.scheduled_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </p>
+        {/* Two Column Layout with Fixed Height Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Today's Appointments Card */}
+          <Card className="h-[500px] flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Calendar className="w-5 h-5" />
+                  <span>Today's Appointments</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadDashboardData}
+                  disabled={isLoading}
+                  className="h-8 px-3"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-3 animate-pulse">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                       </div>
-                      <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                        appointment.status === 'confirmed' 
-                          ? 'bg-green-100 text-green-800' 
-                          : appointment.status === 'scheduled'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-blue-100 text-blue-800'
-                      }`}>
-                        {appointment.status}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {todayAppointments.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No appointments scheduled for today</p>
+                      <p className="text-sm">Check your upcoming appointments</p>
+                    </div>
+                  ) : (
+                    todayAppointments
+                      .slice((appointmentsPage - 1) * pageSize, appointmentsPage * pageSize)
+                      .map((appointment: any) => (
+                        <div key={appointment.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                          <div className="p-2 bg-blue-100 rounded-full">
+                            <User className="w-5 h-5 text-blue-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              {new Date(appointment.scheduled_at || appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                            <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
+                              appointment.status === 'confirmed' 
+                                ? 'bg-green-100 text-green-800' 
+                                : appointment.status === 'scheduled'
+                                ? 'bg-yellow-100 text-yellow-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}>
+                              {appointment.status}
+                            </span>
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ))
+                  )}
+                  {/* Pagination Controls */}
+                  {todayAppointments.length > pageSize && (
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">
+                        Page {appointmentsPage} of {Math.ceil(todayAppointments.length / pageSize)}
                       </span>
+                      <div className="space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={appointmentsPage === 1} 
+                          onClick={() => setAppointmentsPage(p => Math.max(1, p - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={appointmentsPage * pageSize >= todayAppointments.length} 
+                          onClick={() => setAppointmentsPage(p => p + 1)}
+                        >
+                          Next
+                        </Button>
+                      </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No appointments scheduled for today</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-          {/* Recent Clients */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-medium text-gray-900">Recent Clients</h3>
-            </div>
-            <div className="p-6">
-              <div className="space-y-4">
-                {recentClients.length > 0 ? (
-                  recentClients.map((session: any) => (
-                    <div key={session.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <p className="font-medium text-gray-900">
-                          {session.clients ? `${session.clients.first_name} ${session.clients.last_name}` : 'Client'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Last session: {new Date(session.scheduled_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">
-                          {session.clients?.users?.email && (
-                            <span className="text-xs text-gray-500">{session.clients.users.email}</span>
-                          )}
-                        </p>
+          {/* Recent Clients Card */}
+          <Card className="h-[500px] flex flex-col">
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Users className="w-5 h-5" />
+                  <span>Recent Clients</span>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadDashboardData}
+                  disabled={isLoading}
+                  className="h-8 px-3"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-1 overflow-y-auto">
+              {isLoading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-center space-x-3 animate-pulse">
+                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
+                      <div className="flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-500">No recent clients</p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentClients.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p>No recent clients</p>
+                      <p className="text-sm">Start accepting new appointments</p>
+                    </div>
+                  ) : (
+                    recentClients
+                      .slice((clientsPage - 1) * pageSize, clientsPage * pageSize)
+                      .map((session: any) => (
+                        <div key={session.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                          <div className="p-2 bg-green-100 rounded-full">
+                            <User className="w-5 h-5 text-green-600" />
+                          </div>
+                          <div className="flex-1">
+                            <p className="font-medium text-gray-900">
+                              {session.clients ? `${session.clients.first_name} ${session.clients.last_name}` : 'Client'}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Last session: {new Date(session.scheduled_at || session.starts_at).toLocaleDateString()}
+                            </p>
+                            {session.clients?.users?.email && (
+                              <p className="text-xs text-gray-400">{session.clients.users.email}</p>
+                            )}
+                          </div>
+                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                        </div>
+                      ))
+                  )}
+                  {/* Pagination Controls */}
+                  {recentClients.length > pageSize && (
+                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
+                      <span className="text-xs text-gray-500">
+                        Page {clientsPage} of {Math.ceil(recentClients.length / pageSize)}
+                      </span>
+                      <div className="space-x-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={clientsPage === 1} 
+                          onClick={() => setClientsPage(p => Math.max(1, p - 1))}
+                        >
+                          Previous
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          disabled={clientsPage * pageSize >= recentClients.length} 
+                          onClick={() => setClientsPage(p => p + 1)}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
     </CoachPageWrapper>
   )
