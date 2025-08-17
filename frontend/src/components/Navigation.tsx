@@ -76,7 +76,7 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
             ))}
             
             {/* Action Buttons */}
-            <Link href="/login">
+            <Link href="/(public)/login">
               <Button variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
                 Login
               </Button>

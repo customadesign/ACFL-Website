@@ -143,7 +143,7 @@ export const ProviderCard = ({
         
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4">
           <div className="flex-1">
-            <Link href={`/coach/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+            <Link href={`/coaches/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
               <h3 className="text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors">{name}</h3>
             </Link>
             <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-xl inline-block">
@@ -275,7 +275,7 @@ export const ProviderCard = ({
           
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row md:flex-col gap-2">
-          <Link href={`/coach/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="flex-1">
+          <Link href={`/coaches/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="flex-1">
             <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
               View Full Profile
             </button>

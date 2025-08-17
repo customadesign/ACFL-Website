@@ -145,7 +145,7 @@ export default function Results() {
             >
               Search & Save Coaches
             </button>
-            <Link href="/appointments">
+            <Link href="/clients/appointments">
               <button
                 className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap"
               >

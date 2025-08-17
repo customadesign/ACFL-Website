@@ -360,11 +360,11 @@ export default function CoachRegister() {
                   <div className="ml-3 text-sm">
                     <label htmlFor="terms" className="text-gray-700">
                       I agree to the{' '}
-                      <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/(public)/terms" className="font-medium text-blue-600 hover:text-blue-500">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/(public)/privacy" className="font-medium text-blue-600 hover:text-blue-500">
                         Privacy Policy
                       </Link>
                     </label>
@@ -397,13 +397,13 @@ export default function CoachRegister() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
+                <Link href="/(public)/login" className="text-blue-600 hover:text-blue-500 font-medium">
                   Sign in
                 </Link>
               </p>
               <p className="text-sm text-gray-600 mt-2">
                 Looking for coaching?{' '}
-                <Link href="/register/client" className="text-green-600 hover:text-green-500 font-medium">
+                <Link href="/(public)/register/client" className="text-green-600 hover:text-green-500 font-medium">
                   Register as Client
                 </Link>
               </p>

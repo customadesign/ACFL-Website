@@ -220,27 +220,27 @@ function CoachProfileContent() {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex space-x-8">
-            <Link href="/dashboard">
+            <Link href="/clients">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
                 Dashboard
               </button>
             </Link>
-            <Link href="/search-coaches">
+            <Link href="/clients/search-coaches">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
-                Search & Save Coaches
+                Find Coaches
               </button>
             </Link>
-            <Link href="/appointments">
+            <Link href="/clients/appointments">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
                 Appointments
               </button>
             </Link>
-            <Link href="/messages">
+            <Link href="/clients/messages">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
                 Messages
               </button>
             </Link>
-            <Link href="/profile">
+            <Link href="/clients/profile">
               <button className="py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 font-medium text-sm whitespace-nowrap">
                 Profile
               </button>

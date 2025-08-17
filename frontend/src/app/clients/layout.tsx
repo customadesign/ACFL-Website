@@ -7,7 +7,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import Footer from '@/components/Footer';
 
-export default function CoachLayout({
+export default function ClientLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -16,15 +16,15 @@ export default function CoachLayout({
   const { user, logout } = useAuth();
 
   const navItems = [
-    { name: 'Dashboard', href: '/coaches' },
-    { name: 'Appointments', href: '/coaches/appointments' },
-    { name: 'Messages', href: '/coaches/messages' },
-    { name: 'My Clients', href: '/coaches/clients' },
-    { name: 'Profile', href: '/coaches/profile' },
+    { name: 'Dashboard', href: '/clients' },
+    { name: 'Find Coaches', href: '/clients/search-coaches' },
+    { name: 'Appointments', href: '/clients/appointments' },
+    { name: 'Messages', href: '/clients/messages' },
+    { name: 'Profile', href: '/clients/profile' },
   ];
 
   return (
-    <ProtectedRoute allowedRoles={['coach']}>
+    <ProtectedRoute allowedRoles={['client']}>
       <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
         {/* Header */}
         <div className="bg-white shadow-sm border-b">
@@ -36,11 +36,11 @@ export default function CoachLayout({
                   alt="ACT Coaching For Life Logo" 
                   className="h-10 w-auto"
                 />
-                <h1 className="text-xl font-semibold text-gray-900">ACT Coaching For Life - Coach Dashboard</h1>
+                <h1 className="text-xl font-semibold text-gray-900">ACT Coaching For Life</h1>
               </div>
               <div className="hidden sm:flex items-center space-x-4">
                 <span className="text-sm text-gray-500">
-                  Welcome back, {user?.firstName || 'Coach'}!
+                  Welcome back, {user?.firstName || 'Client'}!
                 </span>
                 <button
                   onClick={logout}
@@ -56,7 +56,7 @@ export default function CoachLayout({
         {/* Navigation */}
         <div className="bg-white border-b">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex space-x-8">
+            <div className="flex space-x-8 overflow-x-auto">
               {navItems.map((item) => (
                 <Link
                   key={item.name}

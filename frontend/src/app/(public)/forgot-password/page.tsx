@@ -46,7 +46,7 @@ export default function ForgotPasswordPage() {
                 <p className="text-sm text-gray-500 mb-6">
                   Didn't receive the email? Check your spam folder or try again.
                 </p>
-                <Link href="/login">
+                <Link href="/(public)/login">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Login
@@ -111,7 +111,7 @@ export default function ForgotPasswordPage() {
               </Button>
 
               <div className="text-center">
-                <Link href="/login" className="text-sm text-blue-600 hover:text-blue-500">
+                <Link href="/(public)/login" className="text-sm text-blue-600 hover:text-blue-500">
                   <ArrowLeft className="inline mr-1 h-4 w-4" />
                   Back to Login
                 </Link>

@@ -392,7 +392,7 @@ function AppointmentsContent() {
                     <div className="space-y-2">
                       <div className="flex items-center text-gray-600">
                         <span className="font-medium">Coach:</span>
-                        <Link href={`/coach/${appointment.coach_id}`}>
+                        <Link href={`/coaches/${appointment.coach_id}`}>
                           <span className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer">
                             {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach'}
                           </span>
@@ -490,7 +490,7 @@ function AppointmentsContent() {
                     <div className="space-y-2">
                       <div className="flex items-center text-gray-600">
                         <span className="font-medium">Coach:</span>
-                        <Link href={`/coach/${appointment.coach_id}`}>
+                        <Link href={`/coaches/${appointment.coach_id}`}>
                           <span className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer">
                             {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach'}
                           </span>

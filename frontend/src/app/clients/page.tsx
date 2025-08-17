@@ -99,16 +99,16 @@ function DashboardContent() {
   const handleActivityClick = (activity: ActivityItem) => {
     switch (activity.type) {
       case 'appointment':
-        router.push('/appointments')
+        router.push('/clients/appointments')
         break
       case 'message':
-        router.push('/messages')
+        router.push('/clients/messages')
         break
       case 'saved':
-        router.push('/search-coaches')
+        router.push('/clients/search-coaches')
         break
       case 'search':
-        router.push('/search-coaches')
+        router.push('/clients/search-coaches')
         break
       default:
         break
@@ -130,7 +130,7 @@ function DashboardContent() {
 
         {/* Quick Actions */}
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/search-coaches')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/search-coaches')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-blue-100 rounded-lg">
@@ -144,7 +144,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/saved-coaches')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/saved-coaches')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-red-100 rounded-lg">
@@ -158,7 +158,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/appointments')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/appointments')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -172,7 +172,7 @@ function DashboardContent() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/messages')}>
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/messages')}>
             <CardContent className="p-6">
               <div className="flex items-center space-x-3">
                 <div className="p-2 bg-purple-100 rounded-lg">
@@ -294,10 +294,10 @@ function DashboardContent() {
   )
 }
 
-export default function Dashboard() {
+export default function ClientDashboard() {
   return (
     <ProtectedRoute allowedRoles={['client']}>
       <DashboardContent />
     </ProtectedRoute>
   )
-} 
+}

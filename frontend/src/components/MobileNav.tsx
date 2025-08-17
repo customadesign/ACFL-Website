@@ -22,8 +22,8 @@ export default function MobileNav() {
 
   const menuItems = [
     { href: '/', label: 'Home' },
-    { href: '/pricing', label: 'Pricing' },
-    { href: '/about', label: 'About' },
+    { href: '/(public)/pricing', label: 'Pricing' },
+    { href: '/(public)/about', label: 'About' },
   ]
 
   // Home page specific menu items
@@ -128,7 +128,7 @@ export default function MobileNav() {
 
                 {/* Action Buttons */}
                 <div className="mt-8 space-y-4">
-                  <Link href="/login" onClick={closeMenu}>
+                  <Link href="/(public)/login" onClick={closeMenu}>
                     <Button 
                       variant="outline" 
                       className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
@@ -154,21 +154,21 @@ export default function MobileNav() {
                 <div className="mt-8 pt-6 border-t border-gray-200">
                   <div className="space-y-3">
                     <Link
-                      href="/help"
+                      href="/(public)/help"
                       onClick={closeMenu}
                       className="block text-sm text-gray-600 hover:text-brand-teal transition-colors"
                     >
                       Help Center
                     </Link>
                     <Link
-                      href="/privacy"
+                      href="/(public)/privacy"
                       onClick={closeMenu}
                       className="block text-sm text-gray-600 hover:text-brand-teal transition-colors"
                     >
                       Privacy Policy
                     </Link>
                     <Link
-                      href="/terms"
+                      href="/(public)/terms"
                       onClick={closeMenu}
                       className="block text-sm text-gray-600 hover:text-brand-teal transition-colors"
                     >

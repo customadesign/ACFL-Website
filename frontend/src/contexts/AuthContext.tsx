@@ -122,9 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Redirect based on role
       console.log('User role:', user.role);
       if (user.role === 'client') {
-        console.log('Redirecting client to /dashboard');
+        console.log('Redirecting client to /clients');
         setTimeout(() => {
-          router.replace('/dashboard');
+          router.replace('/clients');
         }, 100);
       } else if (user.role === 'coach') {
         console.log('Redirecting coach to /coaches');
@@ -156,8 +156,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set user
       setUser(user);
       
-      // Redirect to dashboard
-      router.push('/dashboard');
+      // Redirect to client dashboard
+      router.push('/clients');
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
     }

@@ -143,12 +143,12 @@ export default function Login() {
               </div>
 
               <div className="mt-6 grid grid-cols-2 gap-3">
-                <Link href="/register/client">
+                <Link href="/(public)/register/client">
                   <Button variant="outline" className="w-full">
                     Register as Client
                   </Button>
                 </Link>
-                <Link href="/register/coach">
+                <Link href="/(public)/register/coach">
                   <Button variant="outline" className="w-full">
                     Register as Coach
                   </Button>

@@ -906,7 +906,7 @@ export default function HomePage() {
             <div>
               <h3 className="font-semibold mb-4">Services</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="/search-coaches" className="hover:text-white transition-colors">Find a Coach</a></li>
+                <li><a href="/clients/search-coaches" className="hover:text-white transition-colors">Find a Coach</a></li>
                 <li><a href="/group-coaching" className="hover:text-white transition-colors">Group Coaching</a></li>
                 <li><a href="/corporate" className="hover:text-white transition-colors">Corporate Programs</a></li>
                 <li><a href="/resources" className="hover:text-white transition-colors">Resources</a></li>
@@ -924,7 +924,7 @@ export default function HomePage() {
             <div>
               <h3 className="font-semibold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><a href="/about" className="hover:text-white transition-colors">About Us</a></li>
+                <li><a href="/(public)/about" className="hover:text-white transition-colors">About Us</a></li>
                 <li><a href="/careers" className="hover:text-white transition-colors">Careers</a></li>
                 <li><a href="/press" className="hover:text-white transition-colors">Press</a></li>
                 <li><a href="/blog" className="hover:text-white transition-colors">Blog</a></li>
