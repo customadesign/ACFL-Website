@@ -290,7 +290,7 @@ export const registerCoach = async (req: Request, res: Response) => {
       // Continue with registration
     }
 
-    // Step 5: Create coach profile
+    // Step 5: Create coach profile with upsert to prevent duplicates
     console.log('\n💾 Step 5: Creating coach profile...');
     const profileData = {
       email: email,
@@ -308,9 +308,13 @@ export const registerCoach = async (req: Request, res: Response) => {
     };
     console.log('Profile data:', profileData);
     
+    // Use upsert to handle potential race conditions
     const { error: profileError } = await supabase
       .from('coaches')
-      .insert(profileData);
+      .upsert(profileData, { 
+        onConflict: 'email',
+        ignoreDuplicates: false 
+      });
 
     if (profileError) {
       console.error('❌ Coach profile creation failed:', profileError.message);

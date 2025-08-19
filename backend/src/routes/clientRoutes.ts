@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
+import { createVideoSDKMeeting } from '../services/videoSDKService';
 import path from 'path';
 
 const router = Router();
@@ -338,16 +339,47 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
     if (filter === 'upcoming') {
       query = query.gte('starts_at', now).in('status', ['scheduled', 'confirmed']);
     } else if (filter === 'past') {
-      // Consider sessions in the past by time or completed/cancelled by status
-      query = query.or(`starts_at.lt.${now},ends_at.lt.${now},status.eq.completed,status.eq.cancelled`);
+      // Only show completed sessions
+      query = query.eq('status', 'completed');
     } else if (filter === 'pending') {
       query = query.eq('status', 'scheduled');
+    } else if (filter === 'all') {
+      // No additional filtering - show all appointments
     }
 
     const { data: appointments, error: appointmentsError } = await query;
 
     if (appointmentsError) {
       throw appointmentsError;
+    }
+
+    // Ensure upcoming confirmed appointments have meeting IDs
+    if (appointments) {
+      const currentTime = new Date().toISOString()
+      const upcomingConfirmed = appointments.filter(apt => 
+        ['scheduled', 'confirmed'].includes(apt.status) && 
+        apt.starts_at >= currentTime && 
+        !apt.meeting_id
+      )
+
+      // Create meeting IDs for appointments that need them
+      for (const appointment of upcomingConfirmed) {
+        try {
+          const { createVideoSDKMeeting } = require('../services/videoSDKService')
+          const meetingData = await createVideoSDKMeeting()
+          
+          // Update appointment with meeting ID
+          await supabase
+            .from('sessions')
+            .update({ meeting_id: meetingData.meetingId })
+            .eq('id', appointment.id)
+          
+          appointment.meeting_id = meetingData.meetingId
+          console.log(`Created meeting ID ${meetingData.meetingId} for appointment ${appointment.id}`)
+        } catch (error) {
+          console.error(`Failed to create meeting ID for appointment ${appointment.id}:`, error)
+        }
+      }
     }
 
     res.json({
@@ -977,8 +1009,17 @@ router.post('/client/book-appointment', [
       });
     }
 
-    // Generate Zoom link for the session (placeholder - integrate with Zoom API later)
-    const zoomLink = `https://zoom.us/j/${Math.random().toString().substr(2, 10)}`;
+    // Create VideoSDK meeting for the session
+    let meetingId = null;
+    
+    try {
+      const videoSDKMeeting = await createVideoSDKMeeting();
+      meetingId = videoSDKMeeting.meetingId;
+      console.log('Created VideoSDK meeting:', meetingId);
+    } catch (error) {
+      console.error('Failed to create VideoSDK meeting:', error);
+      throw new Error('Unable to create video meeting room. Please try again.');
+    }
     
     // Create the session with all fields matching the database schema
     const sessionData: any = {
@@ -989,7 +1030,7 @@ router.post('/client/book-appointment', [
       status: 'scheduled',
       notes: notes || '',
       area_of_focus: areaOfFocus || null,
-      zoom_link: zoomLink, // Required field for online-only sessions
+      meeting_id: meetingId, // VideoSDK meeting ID (required)
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString()
     };
@@ -1017,7 +1058,7 @@ router.post('/client/book-appointment', [
         coachName: `${coach.first_name} ${coach.last_name}`,
         clientName: `${clientProfile.first_name} ${clientProfile.last_name}`,
         format: 'virtual',
-        zoomLink: session.zoom_link,
+        meetingId: session.meeting_id,
         duration: duration,
         status: 'scheduled',
         sessionType: sessionType,
@@ -1048,7 +1089,7 @@ router.post('/client/book-appointment', [
         scheduledAt: session.starts_at,
         coachName: `${coach.first_name} ${coach.last_name}`,
         format: 'virtual', // All sessions are virtual/online
-        zoomLink: session.zoom_link,
+        meetingId: session.meeting_id,
         duration: duration
       }
     });

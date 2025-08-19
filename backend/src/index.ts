@@ -6,6 +6,7 @@ import coachRoutes from './routes/coachRoutes';
 import clientRoutes from './routes/clientRoutes';
 import adminRoutes from './routes/adminRoutes';
 import authRoutes from './routes/authRoutes';
+import meetingRoutes from './routes/meetingRoutes';
 import { supabase } from './lib/supabase';
 
 // Load environment variables
@@ -52,6 +53,7 @@ app.use(express.json());
 // Note: File uploads now handled by Supabase Storage
 
 app.use('/api/auth', authRoutes);
+app.use('/api/meetings', meetingRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);
@@ -194,4 +196,5 @@ io.on('connection', (socket) => {
 server.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
 

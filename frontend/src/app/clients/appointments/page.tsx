@@ -1,658 +1,454 @@
-'use client'
+'use client';
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
-import Link from 'next/link'
-import { Card } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Calendar, Clock, Video, MapPin, Phone, MessageCircle, User, RefreshCw } from "lucide-react"
-import ProtectedRoute from '@/components/ProtectedRoute'
-import RescheduleModal from '@/components/RescheduleModal'
-import CancelModal from '@/components/CancelModal'
-import MessageCoachModal from '@/components/MessageCoachModal'
-import { useAuth } from '@/contexts/AuthContext'
-import { getApiUrl } from '@/lib/api'
-import axios from 'axios'
-import { Star } from 'lucide-react'
-import { io, Socket } from 'socket.io-client'
+import { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import MeetingContainer from '@/components/MeetingContainer';
+import { getApiUrl } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
+import axios from 'axios';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
 
 interface Appointment {
-  id: string
-  client_id: string
-  coach_id: string
-  starts_at: string
-  ends_at: string
-  status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled'
-  notes?: string
-  zoom_link: string  // Required for online-only sessions
-  session_type?: string
-  duration?: number
+  id: string;
+  coach_id: string;
+  starts_at: string;
+  ends_at: string;
+  status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
+  notes?: string;
+  meeting_id?: string;  // VideoSDK meeting ID
+  created_at: string;
   coaches?: {
-    id: string
-    first_name: string
-    last_name: string
-    specialties: string[]
-    users: {
-      email: string
-    }
-  }
-}
-
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'confirmed':
-      return 'bg-green-100 text-green-800'
-    case 'scheduled':
-      return 'bg-yellow-100 text-yellow-800'
-    case 'completed':
-      return 'bg-gray-100 text-gray-800'
-    case 'cancelled':
-      return 'bg-red-100 text-red-800'
-    default:
-      return 'bg-gray-100 text-gray-800'
-  }
-}
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
+    first_name: string;
+    last_name: string;
+    phone?: string;
+    email?: string;
+    users?: {
+      email: string;
+    };
+  };
 }
 
 function AppointmentsContent() {
-  const { user, logout, isAuthenticated } = useAuth()
-  const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming')
-  const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [upcomingCount, setUpcomingCount] = useState(0)
-  const [pastCount, setPastCount] = useState(0)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
-  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
-  const [showCancelModal, setShowCancelModal] = useState(false)
-  const [showMessageModal, setShowMessageModal] = useState(false)
-  const [hasLoaded, setHasLoaded] = useState(false)
-  const [nowTimestampMs, setNowTimestampMs] = useState<number>(Date.now())
-  const [ratingSubmittingFor, setRatingSubmittingFor] = useState<string | null>(null)
-  const [pendingRatings, setPendingRatings] = useState<Record<string, number>>({})
-  const socketRef = useRef<Socket | null>(null)
+  const { user } = useAuth();
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
+  const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [nowMs, setNowMs] = useState<number>(Date.now());
+  const [showMeeting, setShowMeeting] = useState(false);
+  const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
+  const socketRef = useRef<Socket | null>(null);
 
-  const API_URL = getApiUrl()
+  const API_URL = getApiUrl();
 
-  // Tick every second to update countdowns and enable Join button at the exact time
   useEffect(() => {
-    const intervalId = setInterval(() => {
-      setNowTimestampMs(Date.now())
-    }, 1000)
-    return () => clearInterval(intervalId)
-  }, [])
+    loadAppointments();
+  }, []); // Remove filter dependency since we always get all appointments
+
+  // Tick every second to enable/disable Join and update countdown labels
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
 
   // WebSocket connection for real-time appointment updates
   useEffect(() => {
     if (!user?.id || !localStorage.getItem('token')) {
-      return
+      return;
     }
 
-    const token = localStorage.getItem('token')
+    const token = localStorage.getItem('token');
     const socket = io(API_URL, {
       auth: { token },
       transports: ['websocket', 'polling']
-    })
+    });
 
-    socketRef.current = socket
+    socketRef.current = socket;
 
     // Listen for appointment events
     socket.on('appointment:new', (data) => {
-      console.log('New appointment:', data)
+      console.log('New appointment:', data);
       // Refresh appointments list
-      loadAppointments(true, activeTab)
-    })
+      loadAppointments();
+    });
 
     socket.on('appointment:booked', (data) => {
-      console.log('Appointment booked:', data)
-      // Show success message or notification
-      loadAppointments(true, activeTab)
-    })
+      console.log('Appointment booked:', data);
+      // Refresh appointments list
+      loadAppointments();
+    });
 
     socket.on('appointment:status_updated', (data) => {
-      console.log('Appointment status updated:', data)
+      console.log('Appointment status updated:', data);
       // Update specific appointment in the list
       setAppointments(prev => prev.map(apt => 
         apt.id === data.sessionId 
           ? { ...apt, status: data.newStatus }
           : apt
-      ))
-    })
+      ));
+    });
 
     socket.on('appointment:rescheduled', (data) => {
-      console.log('Appointment rescheduled:', data)
+      console.log('Appointment rescheduled:', data);
       // Update appointment time
       setAppointments(prev => prev.map(apt => 
         apt.id === data.sessionId 
           ? { ...apt, starts_at: data.newScheduledAt, status: data.status }
           : apt
-      ))
-    })
+      ));
+    });
 
     socket.on('appointment:cancelled', (data) => {
-      console.log('Appointment cancelled:', data)
-      // Update appointment status or remove from list
+      console.log('Appointment cancelled:', data);
+      // Update appointment status
       setAppointments(prev => prev.map(apt => 
         apt.id === data.sessionId 
           ? { ...apt, status: 'cancelled' }
           : apt
-      ))
-    })
+      ));
+    });
 
     return () => {
-      socketRef.current?.close()
-      socketRef.current = null
+      socketRef.current?.close();
+      socketRef.current = null;
+    };
+  }, [user?.id, API_URL]);
+
+  const isJoinAvailable = (apt: Appointment) => {
+    const start = new Date(apt.starts_at).getTime();
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
+    return nowMs >= start && nowMs <= end;
+  };
+
+  const getCountdownLabel = (apt: Appointment) => {
+    const start = new Date(apt.starts_at).getTime();
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
+    const toStart = start - nowMs;
+    const toEnd = end - nowMs;
+    if (toStart > 0) {
+      const h = Math.floor(toStart / 3600000);
+      const m = Math.floor((toStart % 3600000) / 60000);
+      const s = Math.floor((toStart % 60000) / 1000);
+      const hh = h.toString().padStart(2, '0');
+      const mm = m.toString().padStart(2, '0');
+      const ss = s.toString().padStart(2, '0');
+      return `Starts in ${hh}:${mm}:${ss}`;
     }
-  }, [user?.id, API_URL, activeTab])
+    if (toEnd > 0) return 'Live now';
+    return 'Session ended';
+  };
 
-  const isJoinAvailableForAppointment = (appointment: Appointment): boolean => {
-    const startMs = new Date(appointment.starts_at).getTime()
-    const estimatedMs = appointment.duration && appointment.duration > 0
-      ? appointment.duration * 60 * 1000
-      : 60 * 60 * 1000
-    const endMs = appointment.ends_at ? new Date(appointment.ends_at).getTime() : (startMs + estimatedMs)
-    return nowTimestampMs >= startMs && nowTimestampMs <= endMs
-  }
-
-  const getCountdownLabelForAppointment = (appointment: Appointment): string => {
-    const startMs = new Date(appointment.starts_at).getTime()
-    const estimatedMs = appointment.duration && appointment.duration > 0
-      ? appointment.duration * 60 * 1000
-      : 60 * 60 * 1000
-    const endMs = appointment.ends_at ? new Date(appointment.ends_at).getTime() : (startMs + estimatedMs)
-    const deltaToStart = startMs - nowTimestampMs
-    const deltaToEnd = endMs - nowTimestampMs
-
-    if (deltaToStart > 0) {
-      const hours = Math.floor(deltaToStart / (1000 * 60 * 60))
-      const minutes = Math.floor((deltaToStart % (1000 * 60 * 60)) / (1000 * 60))
-      const seconds = Math.floor((deltaToStart % (1000 * 60)) / 1000)
-      const hh = hours.toString().padStart(2, '0')
-      const mm = minutes.toString().padStart(2, '0')
-      const ss = seconds.toString().padStart(2, '0')
-      return `Starts in ${hh}:${mm}:${ss}`
-    }
-
-    if (deltaToEnd > 0) {
-      return 'Live now'
-    }
-
-    return 'Session ended'
-  }
-
-  const fetchAppointmentsByFilter = async (filter: 'upcoming' | 'past') => {
-    const response = await axios.get(`${API_URL}/api/client/appointments`, {
-      params: { filter },
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-    })
-    if (!response.data.success) throw new Error('Failed to fetch appointments')
-    return response.data.data as Appointment[]
-  }
-
-  const loadAppointments = async (forceRefresh = false, tab = 'upcoming') => {
-    // Don't load if already loaded and not forcing refresh
-    if (!forceRefresh && hasLoaded) {
-      return
-    }
-
-    // Don't start loading if already loading
-    if (loading && !forceRefresh) {
-      return
-    }
-
+  const loadAppointments = async () => {
     try {
-      setLoading(true)
-      const activeFilter: 'upcoming' | 'past' = tab === 'upcoming' ? 'upcoming' : 'past'
-      const otherFilter: 'upcoming' | 'past' = activeFilter === 'upcoming' ? 'past' : 'upcoming'
+      setLoading(true);
+      // Always get all appointments for proper tab counting
+      const response = await axios.get(`${API_URL}/api/client/appointments`, {
+        params: { filter: 'all' },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
 
-      // Fetch active tab data
-      const activeData = await fetchAppointmentsByFilter(activeFilter)
-      setAppointments(activeData)
-      if (activeFilter === 'upcoming') setUpcomingCount(activeData.length)
-      else setPastCount(activeData.length)
-
-      // Fetch other tab count in background
-      fetchAppointmentsByFilter(otherFilter)
-        .then(otherData => {
-          if (otherFilter === 'upcoming') setUpcomingCount(otherData.length)
-          else setPastCount(otherData.length)
-        })
-        .catch(() => { /* ignore count fetch errors */ })
-
-      setHasLoaded(true)
+      if (response.data.success) {
+        setAppointments(response.data.data);
+      }
     } catch (error) {
-      console.error('Error loading appointments:', error)
-      setError('Failed to load appointments')
+      console.error('Error loading appointments:', error);
+      setError('Failed to load appointments');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  useEffect(() => {
-    loadAppointments(!hasLoaded, activeTab)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
-  // Separate effect for activeTab changes
-  useEffect(() => {
-    if (activeTab) {
-      loadAppointments(true, activeTab)
-    }
-  }, [activeTab])
-
-  // Appointments returned are already filtered by activeTab on the server
-
-  const handleReschedule = (appointment: Appointment) => {
-    setSelectedAppointment(appointment)
-    setShowRescheduleModal(true)
-  }
-
-  const handleCancel = (appointment: Appointment) => {
-    setSelectedAppointment(appointment)
-    setShowCancelModal(true)
-  }
-
-  const handleMessage = (appointment: Appointment) => {
-    setSelectedAppointment(appointment)
-    setShowMessageModal(true)
-  }
-
-  const handleModalSuccess = () => {
-    // Force refresh appointments after successful action
-    loadAppointments(true)
-  }
-
-  const submitRating = async (appointment: Appointment) => {
-    const value = pendingRatings[appointment.id]
-    if (!value || value < 1 || value > 5) return
+  const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
-      setRatingSubmittingFor(appointment.id)
-      await axios.post(`${API_URL}/api/client/reviews`, {
-        sessionId: appointment.id,
-        coachId: appointment.coach_id,
-        rating: value,
-        comment: ''
-      }, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      })
-      // Clear selection and refresh past list
-      setPendingRatings(prev => ({ ...prev, [appointment.id]: 0 }))
-      await loadAppointments(true, 'past')
-    } catch (e) {
-      console.error('Failed to submit rating', e)
-    } finally {
-      setRatingSubmittingFor(null)
-    }
-  }
+      const response = await axios.put(`${API_URL}/api/client/appointments/${appointmentId}`, 
+        { status: newStatus },
+        {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
 
-  if (loading && appointments.length === 0) {
+      if (response.data.success) {
+        // Reload appointments to get updated data
+        await loadAppointments();
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      setError('Failed to update appointment status');
+    }
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'confirmed': return 'bg-green-100 text-green-800';
+      case 'scheduled': return 'bg-yellow-100 text-yellow-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      case 'completed': return 'bg-gray-100 text-gray-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const sortAppointments = (appointments: Appointment[]) => {
+    return appointments.sort((a, b) => {
+      let comparison = 0;
+      
+      if (sortBy === 'dateAdded') {
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
+        comparison = dateA - dateB;
+      } else if (sortBy === 'name') {
+        const nameA = a.coaches ? `${a.coaches.first_name} ${a.coaches.last_name}`.toLowerCase() : '';
+        const nameB = b.coaches ? `${b.coaches.first_name} ${b.coaches.last_name}`.toLowerCase() : '';
+        comparison = nameA.localeCompare(nameB);
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+  };
+
+  const toggleSort = (newSortBy: 'dateAdded' | 'name') => {
+    if (sortBy === newSortBy) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(newSortBy);
+      setSortOrder('asc');
+    }
+  };
+
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading appointments...</p>
+      <div className="container mx-auto px-4 py-8">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading appointments...</p>
+          </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
-          </div>
-        )}
-
-        {/* Page Header */}
-        <div className="flex justify-between items-start mb-8">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">Your Appointments</h2>
-            <p className="text-lg text-gray-600">
-              Manage your coaching sessions and upcoming appointments
-            </p>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={() => loadAppointments(true)}
-            disabled={loading}
-            className="flex items-center space-x-2"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            <span>Refresh</span>
-          </Button>
-        </div>
-
-        {/* Tab Navigation */}
-        <div className="flex space-x-1 mb-6 bg-gray-100 p-1 rounded-lg max-w-md">
-          <button
-            onClick={() => setActiveTab('upcoming')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'upcoming'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Upcoming ({upcomingCount})
-          </button>
-          <button
-            onClick={() => setActiveTab('past')}
-            className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
-              activeTab === 'past'
-                ? 'bg-white text-blue-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            Past ({pastCount})
-          </button>
-        </div>
-
-        {/* Appointments List */}
-        <div className="space-y-4">
-          {activeTab === 'upcoming' && appointments.map((appointment) => (
-            <Card key={appointment.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {appointment.session_type || 'Coaching Session'}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                    </span>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>{formatDate(appointment.starts_at)}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span>{new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Video className="w-4 h-4 mr-2" />
-                        <span>Virtual Session</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600">
-                        <span className="font-medium">Coach:</span>
-                        <Link href={`/coaches/${appointment.coach_id}`}>
-                          <span className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer">
-                            {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach'}
-                          </span>
-                        </Link>
-                      </div>
-                      {appointment.notes && (
-                        <div className="text-gray-600">
-                          <span className="font-medium">Focus:</span>
-                          <span className="ml-2">{appointment.notes}</span>
-                        </div>
-                      )}
-                      <div className="text-gray-600">
-                        <span className="font-medium">Duration:</span>
-                        <span className="ml-2">{appointment.duration || 60} minutes</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex flex-wrap gap-3 items-center">
-                    {appointment.zoom_link && (
-                      <Button 
-                        className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-60 disabled:cursor-not-allowed"
-                        onClick={() => window.open(appointment.zoom_link, '_blank')}
-                        disabled={!isJoinAvailableForAppointment(appointment)}
-                        title={!isJoinAvailableForAppointment(appointment) ? 'Join available at session start time' : 'Join session'}
-                      >
-                        <Video className="w-4 h-4 mr-2" />
-                        Join Session
-                      </Button>
-                    )}
-                    <span className="text-sm text-gray-600">
-                      {getCountdownLabelForAppointment(appointment)}
-                    </span>
-                    <Button 
-                      variant="outline" 
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                      onClick={() => handleMessage(appointment)}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Message Coach
-                    </Button>
-                    <Button 
-                      variant="outline" 
-                      className="text-gray-600 border-gray-300 hover:bg-gray-50"
-                      onClick={() => handleReschedule(appointment)}
-                    >
-                      <Calendar className="w-4 h-4 mr-2" />
-                      Reschedule
-                    </Button>
-                    {appointment.status === 'scheduled' && (
-                      <Button 
-                        variant="outline" 
-                        className="text-red-600 border-red-600 hover:bg-red-50"
-                        onClick={() => handleCancel(appointment)}
-                      >
-                        Cancel
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-
-          {activeTab === 'past' && appointments.map((appointment) => (
-            <Card key={appointment.id} className="p-6 hover:shadow-lg transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center space-x-3 mb-3">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {appointment.session_type || 'Coaching Session'}
-                    </h3>
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(appointment.status)}`}>
-                      {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                    </span>
-                  </div>
-
-                  <div className="grid md:grid-cols-2 gap-4 mb-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        <span>{formatDate(appointment.starts_at)}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="w-4 h-4 mr-2" />
-                        <span>{new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      </div>
-                      <div className="flex items-center text-gray-600">
-                        <Video className="w-4 h-4 mr-2" />
-                        <span>Virtual Session</span>
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center text-gray-600">
-                        <span className="font-medium">Coach:</span>
-                        <Link href={`/coaches/${appointment.coach_id}`}>
-                          <span className="ml-2 text-blue-600 hover:text-blue-800 cursor-pointer">
-                            {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach'}
-                          </span>
-                        </Link>
-                      </div>
-                      {appointment.notes && (
-                        <div className="text-gray-600">
-                          <span className="font-medium">Focus:</span>
-                          <span className="ml-2">{appointment.notes}</span>
-                        </div>
-                      )}
-                      <div className="text-gray-600">
-                        <span className="font-medium">Duration:</span>
-                        <span className="ml-2">{appointment.duration || 60} minutes</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Past Actions */}
-                  <div className="flex flex-wrap gap-3 items-center">
-                    <Button 
-                      variant="outline" 
-                      className="text-blue-600 border-blue-600 hover:bg-blue-50"
-                      onClick={() => handleMessage(appointment)}
-                    >
-                      <MessageCircle className="w-4 h-4 mr-2" />
-                      Message Coach
-                    </Button>
-                    {/* Rating control */}
-                    <div className="flex items-center gap-1">
-                      {[1,2,3,4,5].map(v => (
-                        <button
-                          key={v}
-                          className={`p-1 ${pendingRatings[appointment.id] >= v ? 'text-yellow-500' : 'text-gray-300'}`}
-                          onClick={() => setPendingRatings(prev => ({ ...prev, [appointment.id]: v }))}
-                          aria-label={`Rate ${v} star${v>1?'s':''}`}
-                        >
-                          <Star className="w-5 h-5" />
-                        </button>
-                      ))}
-                    </div>
-                    <Button
-                      className="bg-blue-600 hover:bg-blue-700 text-white"
-                      disabled={!pendingRatings[appointment.id] || ratingSubmittingFor === appointment.id}
-                      onClick={() => submitRating(appointment)}
-                    >
-                      {ratingSubmittingFor === appointment.id ? 'Submitting...' : 'Submit Rating'}
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-
-          {activeTab === 'past' && appointments.length === 0 && (
-            <Card className="p-8 text-center">
-              <div className="text-gray-500">
-                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Past Appointments</h3>
-                <p>Your completed appointments will appear here.</p>
-              </div>
-            </Card>
-          )}
-
-          {((activeTab === 'upcoming' && appointments.length === 0) || 
-            (activeTab === 'past' && appointments.length === 0)) && 
-           activeTab === 'upcoming' && (
-            <Card className="p-8 text-center">
-              <div className="text-gray-500">
-                <Calendar className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No Upcoming Appointments</h3>
-                <p className="mb-4">You don't have any scheduled appointments yet.</p>
-                <Link href="/">
-                  <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-                    Find a Coach
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          )}
-        </div>
-
-        {/* VideoSDK Features */}
-        {activeTab === 'upcoming' && appointments.length > 0 && (
-          <Card className="mt-8 p-6 bg-gradient-to-r from-green-50 to-blue-50 border-green-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              <Video className="w-5 h-5 inline mr-2" />
-              Powered by VideoSDK
-            </h3>
-            <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-800">Session Features:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Ultra-low latency (150ms worldwide)</li>
-                  <li>• HD video & crystal clear audio</li>
-                  <li>• Screen sharing for worksheets</li>
-                  <li>• Session recording available</li>
-                </ul>
-              </div>
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-800">Privacy & Security:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• End-to-end encryption</li>
-                  <li>• HIPAA compliant infrastructure</li>
-                  <li>• No downloads required</li>
-                  <li>• 99.99% uptime guarantee</li>
-                </ul>
-              </div>
-            </div>
-            <div className="text-xs text-gray-500 text-center">
-              Secure, professional video coaching sessions with enterprise-grade reliability
-            </div>
-          </Card>
-        )}
-
-        {/* Quick Actions */}
-        {activeTab === 'upcoming' && appointments.length > 0 && (
-          <Card className="mt-8 p-6 bg-gradient-to-r from-blue-50 to-green-50 border-blue-200">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-            <div className="grid md:grid-cols-3 gap-4">
-              <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                <Calendar className="w-4 h-4 mr-2" />
-                Schedule New Session
-              </Button>
-              <Button variant="outline" className="text-green-600 border-green-600 hover:bg-green-50">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Contact Support
-              </Button>
-              <Button variant="outline" className="text-purple-600 border-purple-600 hover:bg-purple-50">
-                <Phone className="w-4 h-4 mr-2" />
-                Emergency Contact
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Modals */}
-        {selectedAppointment && (
-          <>
-            <RescheduleModal
-              isOpen={showRescheduleModal}
-              onClose={() => setShowRescheduleModal(false)}
-              appointment={selectedAppointment}
-              onSuccess={handleModalSuccess}
-            />
-            <CancelModal
-              isOpen={showCancelModal}
-              onClose={() => setShowCancelModal(false)}
-              appointment={selectedAppointment}
-              onSuccess={handleModalSuccess}
-            />
-            <MessageCoachModal
-              isOpen={showMessageModal}
-              onClose={() => setShowMessageModal(false)}
-              appointment={selectedAppointment}
-              onSuccess={handleModalSuccess}
-            />
-          </>
-        )}
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Appointments</h1>
+        <p className="text-gray-600">Manage your coaching sessions and appointments</p>
       </div>
+
+      {error && (
+        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {/* Filter Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            {[
+              { key: 'upcoming', label: 'Upcoming' },
+              { key: 'past', label: 'Past' },
+              { key: 'pending', label: 'Pending' },
+              { key: 'all', label: 'All' }
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key as any)}
+                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                  filter === tab.key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                }`}
+              >
+                {tab.label}
+                <span className="ml-2 text-xs bg-gray-100 text-gray-600 py-1 px-2 rounded-full">
+                  {appointments.filter(apt => {
+                    const appointmentDate = new Date(apt.starts_at);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+
+                    switch (tab.key) {
+                      case 'upcoming':
+                        return appointmentDate >= today && apt.status !== 'cancelled';
+                      case 'past':
+                        return appointmentDate < today || apt.status === 'completed';
+                      case 'pending':
+                        return apt.status === 'scheduled';
+                      case 'all':
+                      default:
+                        return true;
+                    }
+                  }).length}
+                </span>
+              </button>
+            ))}
+          </nav>
+        </div>
+      </div>
+
+      {/* Sort Controls - Show for all tabs */}
+      <div className="mb-6">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-gray-700">Sort by:</span>
+          <div className="flex gap-2">
+            <Button
+              variant={sortBy === 'dateAdded' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleSort('dateAdded')}
+              className="flex items-center gap-1"
+            >
+              Date Added
+              {sortBy === 'dateAdded' && (
+                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+              )}
+              {sortBy !== 'dateAdded' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+            <Button
+              variant={sortBy === 'name' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => toggleSort('name')}
+              className="flex items-center gap-1"
+            >
+              Coach Name
+              {sortBy === 'name' && (
+                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+              )}
+              {sortBy !== 'name' && <ArrowUpDown className="w-3 h-3" />}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Appointments List */}
+      <div className="space-y-4">
+        {(() => {
+          // Filter appointments based on selected tab
+          const filteredAppointments = appointments.filter(apt => {
+            const appointmentDate = new Date(apt.starts_at);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            switch (filter) {
+              case 'upcoming':
+                return appointmentDate >= today && apt.status !== 'cancelled';
+              case 'past':
+                return appointmentDate < today || apt.status === 'completed';
+              case 'pending':
+                return apt.status === 'scheduled';
+              case 'all':
+              default:
+                return true;
+            }
+          });
+
+          // Apply sorting to all appointments
+          const sortedAppointments = sortAppointments([...filteredAppointments]);
+
+          return sortedAppointments.length === 0 ? (
+            <Card>
+              <CardContent className="text-center py-12">
+                <p className="text-gray-500">No {filter} appointments found</p>
+              </CardContent>
+            </Card>
+          ) : (
+            sortedAppointments.map((appointment) => (
+            <Card key={appointment.id}>
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900">
+                          Coach {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'TBD'}
+                        </h3>
+                        <p className="text-sm text-gray-500">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
+                      </div>
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
+                        {appointment.status}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Date & Time</p>
+                        <p className="text-sm text-gray-900">
+                          {new Date(appointment.starts_at).toLocaleDateString()} at {' '}
+                          {new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Duration</p>
+                        <p className="text-sm text-gray-900">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-500">Session Type</p>
+                        <p className="text-sm text-gray-900">Virtual Session</p>
+                      </div>
+                    </div>
+
+                    {appointment.notes && (
+                      <div className="mt-4">
+                        <p className="text-sm font-medium text-gray-500">Notes</p>
+                        <p className="text-sm text-gray-900 mt-1">{appointment.notes}</p>
+                      </div>
+                    )}
+
+                    {appointment.status === 'confirmed' && (
+                      <div className="mt-4 flex space-x-2">
+                        {appointment.meeting_id && (
+                          <Button
+                            onClick={() => {
+                              setMeetingAppointment(appointment);
+                              setShowMeeting(true);
+                            }}
+                            className="bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
+                            disabled={!isJoinAvailable(appointment)}
+                            size="sm"
+                          >
+                            <Video className="mr-2 h-4 w-4" /> Join Session
+                          </Button>
+                        )}
+                        <span className="text-xs text-gray-600 self-center">{getCountdownLabel(appointment)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            ))
+          );
+        })()}
+      </div>
+      
+      {/* Meeting Container with PreCall and VideoMeeting */}
+      {showMeeting && meetingAppointment && (
+        <MeetingContainer
+          appointmentId={meetingAppointment.id}
+          appointmentData={{
+            coach_name: `${meetingAppointment.coaches?.first_name} ${meetingAppointment.coaches?.last_name}`,
+            starts_at: meetingAppointment.starts_at,
+            ends_at: meetingAppointment.ends_at
+          }}
+          isHost={false}
+          onClose={() => {
+            setShowMeeting(false);
+            setMeetingAppointment(null);
+            // Refresh appointments to update status
+            loadAppointments();
+          }}
+        />
+      )}
     </div>
-  )
+  );
 }
 
 export default function AppointmentsPage() {
@@ -660,5 +456,5 @@ export default function AppointmentsPage() {
     <ProtectedRoute allowedRoles={['client']}>
       <AppointmentsContent />
     </ProtectedRoute>
-  )
-} 
+  );
+}

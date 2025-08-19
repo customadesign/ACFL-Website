@@ -227,7 +227,6 @@ CREATE TABLE IF NOT EXISTS public.sessions (
   scheduled_at TIMESTAMPTZ,
   status TEXT NOT NULL DEFAULT 'scheduled',
   notes TEXT,
-  zoom_link TEXT NOT NULL,
   session_type TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

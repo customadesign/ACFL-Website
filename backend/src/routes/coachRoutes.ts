@@ -462,9 +462,11 @@ router.get('/coach/appointments', authenticate, async (req: Request & { user?: a
     if (filter === 'upcoming') {
       query = query.gte('starts_at', now).in('status', ['scheduled', 'confirmed']);
     } else if (filter === 'past') {
-      query = query.or(`starts_at.lt.${now},status.eq.completed`);
+      query = query.eq('status', 'completed');
     } else if (filter === 'pending') {
       query = query.eq('status', 'scheduled');
+    } else if (filter === 'all') {
+      // No additional filtering - show all appointments
     }
 
     const { data: sessions, error: sessionsError } = await query;
@@ -505,6 +507,33 @@ router.get('/coach/appointments', authenticate, async (req: Request & { user?: a
       ...session,
       clients: clientsMap.get(session.client_id) || null
     }));
+
+    // Ensure upcoming confirmed appointments have meeting IDs
+    const currentTime = new Date().toISOString()
+    const upcomingConfirmed = appointments.filter(apt => 
+      ['scheduled', 'confirmed'].includes(apt.status) && 
+      apt.starts_at >= currentTime && 
+      !apt.meeting_id
+    )
+
+    // Create meeting IDs for appointments that need them
+    for (const appointment of upcomingConfirmed) {
+      try {
+        const { createVideoSDKMeeting } = require('../services/videoSDKService')
+        const meetingData = await createVideoSDKMeeting()
+        
+        // Update appointment with meeting ID
+        await supabase
+          .from('sessions')
+          .update({ meeting_id: meetingData.meetingId })
+          .eq('id', appointment.id)
+        
+        appointment.meeting_id = meetingData.meetingId
+        console.log(`Created meeting ID ${meetingData.meetingId} for coach appointment ${appointment.id}`)
+      } catch (error) {
+        console.error(`Failed to create meeting ID for coach appointment ${appointment.id}:`, error)
+      }
+    }
 
     res.json({
       success: true,
@@ -1333,6 +1362,105 @@ router.delete('/coach/conversations/:partnerId', authenticate, async (req: Reque
     res.status(500).json({ 
       success: false, 
       message: 'Failed to delete conversation' 
+    });
+  }
+});
+
+// Legacy route (handles plural 'coaches' calls) - duplicates /coach/appointments logic
+router.get('/coaches/appointments', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { filter = 'upcoming' } = req.query;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    const coachId = coachProfile.id; // Use the actual coach ID from database
+
+    // Get sessions for this coach first
+    let query = supabase
+      .from('sessions')
+      .select('*')
+      .eq('coach_id', coachId)
+      .order('starts_at', { ascending: true });
+
+    // Apply filters
+    const now = new Date().toISOString();
+    if (filter === 'upcoming') {
+      query = query.gte('starts_at', now).in('status', ['scheduled', 'confirmed']);
+    } else if (filter === 'past') {
+      query = query.eq('status', 'completed');
+    } else if (filter === 'pending') {
+      query = query.eq('status', 'scheduled');
+    } else if (filter === 'all') {
+      // No additional filtering - show all appointments
+    }
+
+    const { data: sessions, error: sessionsError } = await query;
+
+    if (sessionsError) {
+      throw sessionsError;
+    }
+
+    // If no sessions, return empty array
+    if (!sessions || sessions.length === 0) {
+      return res.json({
+        success: true,
+        data: []
+      });
+    }
+
+    // Get unique client IDs from sessions
+    const clientIds = [...new Set(sessions.map(s => s.client_id))];
+    
+    // Get client details separately
+    const { data: clients, error: clientsError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name, phone, email')
+      .in('id', clientIds);
+
+    if (clientsError) {
+      throw clientsError;
+    }
+
+    // Create a map of clients for quick lookup
+    const clientsMap = new Map();
+    clients?.forEach(client => {
+      clientsMap.set(client.id, client);
+    });
+
+    // Combine sessions with client data
+    const appointments = sessions.map(session => ({
+      ...session,
+      clients: clientsMap.get(session.client_id) || null
+    }));
+
+    res.json({
+      success: true,
+      data: appointments
+    });
+  } catch (error) {
+    console.error('Get coach appointments error (plural route):', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get appointments' 
     });
   }
 });

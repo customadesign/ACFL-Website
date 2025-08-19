@@ -400,8 +400,8 @@ useEffect(() => {
 														<Paperclip size={16} />
 														<span className="truncate">{m.attachment_name}</span>
 														<a
-															href={m.attachment_url}
-															download={m.attachment_name}
+															href={m.attachment_url || '#'}
+															download={m.attachment_name || undefined}
 															className={`p-1 hover:opacity-80 ${isMine ? 'text-blue-100' : 'text-gray-600'}`}
 															title="Download"
 															target="_blank"

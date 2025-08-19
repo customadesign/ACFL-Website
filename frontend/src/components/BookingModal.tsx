@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { X, Calendar, Clock, Video, MapPin } from 'lucide-react'
@@ -22,6 +23,7 @@ interface BookingModalProps {
 }
 
 export default function BookingModal({ isOpen, onClose, coach, sessionType }: BookingModalProps) {
+  const router = useRouter()
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
   // All sessions are virtual - no format selection needed
@@ -67,6 +69,50 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
     return dates
   }
 
+  const handleQuickTest = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const now = new Date()
+      const endTime = new Date(now.getTime() + 60 * 60 * 1000) // 1 hour later
+      
+      const response = await fetch(`${API_URL}/api/client/book-appointment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          coachId: coach.id,
+          scheduledAt: now.toISOString(),
+          endsAt: endTime.toISOString(),
+          sessionType: 'session',
+          notes: 'Quick test session for video meeting system',
+          areaOfFocus: 'Video Meeting Test',
+          createVideoMeeting: true // Flag to create VideoSDK meeting
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(true)
+        setTimeout(() => {
+          onClose()
+          // Navigate to appointments page
+          router.push('/clients/appointments')
+        }, 2000)
+      } else {
+        throw new Error(data.message || 'Failed to book test session')
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to book test session')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -79,6 +125,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
 
       // Combine date and time
       const scheduledDateTime = new Date(`${selectedDate}T${selectedTime}:00`)
+      const endDateTime = new Date(scheduledDateTime.getTime() + (sessionType === 'consultation' ? 15 : 60) * 60 * 1000)
       
       const response = await fetch(`${API_URL}/api/client/book-appointment`, {
         method: 'POST',
@@ -89,9 +136,11 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
         body: JSON.stringify({
           coachId: coach.id,
           scheduledAt: scheduledDateTime.toISOString(),
+          endsAt: endDateTime.toISOString(),
           sessionType,
           notes: notes.trim(),
-          areaOfFocus: areaOfFocus || null
+          areaOfFocus: areaOfFocus || null,
+          createVideoMeeting: true // Flag to create VideoSDK meeting
         })
       })
 
@@ -111,6 +160,8 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
         setNotes('')
         setAreaOfFocus('')
         setSuccess(false)
+        // Navigate to appointments page
+        router.push('/clients/appointments')
       }, 2000)
 
     } catch (err: any) {
@@ -172,12 +223,36 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                 </div>
               </div>
 
-              {/* Date Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Date *
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {/* Quick Test Option for Sessions */}
+              {sessionType === 'session' && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h3 className="font-medium text-green-800 mb-2">🚀 Quick Test Session</h3>
+                  <p className="text-sm text-green-700 mb-3">
+                    Want to test the video meeting system? Book a session starting now!
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleQuickTest}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white"
+                    disabled={isLoading}
+                  >
+                    📹 Book Test Session (Starts Now)
+                  </Button>
+                </div>
+              )}
+
+              {/* Regular Scheduling */}
+              <div className={sessionType === 'session' ? 'pt-4 border-t' : ''}>
+                {sessionType === 'session' && (
+                  <h3 className="font-medium text-gray-900 mb-4">Or schedule for later:</h3>
+                )}
+              
+                {/* Date Selection */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Select Date *
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {availableDates.map((date) => {
                     const dateString = date.toISOString().split('T')[0]
                     const isSelected = selectedDate === dateString
@@ -288,6 +363,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                   {error}
                 </div>
               )}
+              </div>
 
               {/* Submit Button */}
               <div className="flex gap-3 pt-4">

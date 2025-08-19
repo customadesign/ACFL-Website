@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
+import MeetingContainer from '@/components/MeetingContainer';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
@@ -17,7 +18,7 @@ interface Appointment {
   ends_at: string;
   status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
   notes?: string;
-  zoom_link: string;  // Required for online-only sessions
+  meeting_id?: string;  // VideoSDK meeting ID
   created_at: string;
   clients?: {
     first_name: string;
@@ -39,6 +40,8 @@ export default function AppointmentsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
+  const [showMeeting, setShowMeeting] = useState(false);
+  const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const API_URL = getApiUrl();
@@ -422,9 +425,12 @@ export default function AppointmentsPage() {
 
                     {appointment.status === 'confirmed' && (
                       <div className="mt-4 flex space-x-2">
-                        {appointment.zoom_link && (
+                        {appointment.meeting_id && (
                           <Button
-                            onClick={() => window.open(appointment.zoom_link, '_blank')}
+                            onClick={() => {
+                              setMeetingAppointment(appointment);
+                              setShowMeeting(true);
+                            }}
                             className="bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
                             disabled={!isJoinAvailable(appointment)}
                             size="sm"
@@ -458,6 +464,25 @@ export default function AppointmentsPage() {
           );
         })()}
       </div>
+      
+      {/* Meeting Container with PreCall and VideoMeeting */}
+      {showMeeting && meetingAppointment && (
+        <MeetingContainer
+          appointmentId={meetingAppointment.id}
+          appointmentData={{
+            client_name: `${meetingAppointment.clients?.first_name} ${meetingAppointment.clients?.last_name}`,
+            starts_at: meetingAppointment.starts_at,
+            ends_at: meetingAppointment.ends_at
+          }}
+          isHost={true}
+          onClose={() => {
+            setShowMeeting(false);
+            setMeetingAppointment(null);
+            // Refresh appointments to update status
+            loadAppointments();
+          }}
+        />
+      )}
     </CoachPageWrapper>
   );
 }
