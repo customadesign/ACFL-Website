@@ -9,7 +9,8 @@ import GradientText from "@/components/GradientText"
 import CountUp from "@/components/CountUp"
 import SpotlightCard from "@/components/SpotlightCard"
 import ShinyText from "@/components/ShinyText"
-import Navigation from "@/components/Navigation"
+import NavbarLandingPage from "@/components/NavbarLandingPage"
+import Footer from "@/components/Footer"
 import { 
   CheckCircle, 
   Star,
@@ -24,9 +25,11 @@ import {
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
-      <Navigation />
+      <nav>
+        <NavbarLandingPage />
+      </nav>
 
       {/* Hero Section */}
       <section className="py-20">
@@ -37,10 +40,7 @@ export default function PricingPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <Link href="/" className="inline-flex items-center text-brand-teal hover:text-brand-teal/80 mb-6 transition-colors">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
+           
             
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6 leading-tight">
               Choose Your <GradientText className="inline-block leading-normal">Coaching Plan</GradientText>
@@ -278,6 +278,7 @@ export default function PricingPage() {
           </motion.div>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

@@ -7,6 +7,8 @@ import Logo from "@/components/Logo"
 import { ArrowLeft, Download, BookOpen, Video, FileText, Headphones, Users, Calendar, ChevronRight } from "lucide-react"
 import GradientText from "@/components/GradientText"
 import SpotlightCard from "@/components/SpotlightCard"
+import Footer from "@/components/Footer"
+import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 const resources = {
   guides: [
@@ -102,28 +104,12 @@ const resources = {
 
 export default function ResourcesPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
-      <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <Link href="/" className="flex items-center space-x-2">
-              <Logo size={32} />
-              <span className="text-xl font-bold text-ink-dark">ACT Coaching For Life</span>
-            </Link>
-            <div className="hidden md:flex items-center space-x-8">
-              <Link href="/" className="text-gray-700 hover:text-brand-teal transition-colors">Home</Link>
-              <Link href="/blog" className="text-gray-700 hover:text-brand-teal transition-colors">Blog</Link>
-              <Link href="/resources" className="text-brand-teal font-semibold">Resources</Link>
-              <Link href="/#quick-assessment">
-                <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                  Find a Coach
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </div>
+      <nav>
+        <NavbarLandingPage />
       </nav>
+     
 
       {/* Hero Section */}
       <section className="py-20">
@@ -134,13 +120,7 @@ export default function ResourcesPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <Link 
-              href="/" 
-              className="inline-flex items-center text-brand-teal hover:text-brand-teal/80 mb-6 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
+            
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
               ACT <GradientText className="inline-block">Resources</GradientText>
             </h1>
@@ -365,6 +345,7 @@ export default function ResourcesPage() {
           </motion.div>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

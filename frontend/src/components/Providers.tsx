@@ -2,7 +2,10 @@
 
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import 'react-toastify/dist/ReactToastify.css';
 
 const theme = createTheme({
   components: {
@@ -55,10 +58,26 @@ const theme = createTheme({
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <AuthProvider>
-      <ThemeProvider theme={theme}>
-        <CssBaseline />
-        {children}
-      </ThemeProvider>
+      <NotificationProvider>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          {children}
+          <ToastContainer
+            position="top-right"
+            autoClose={5000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+            theme="light"
+            toastClassName="custom-toast"
+            bodyClassName="custom-toast-body"
+          />
+        </ThemeProvider>
+      </NotificationProvider>
     </AuthProvider>
   );
 } 

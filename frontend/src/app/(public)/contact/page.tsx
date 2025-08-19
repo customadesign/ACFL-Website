@@ -7,7 +7,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Mail, Phone, MapPin } from 'lucide-react'
-
+import NavbarLandingPage from '@/components/NavbarLandingPage'
+import Footer from '@/components/Footer'
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -36,8 +37,11 @@ export default function ContactPage() {
   }
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-7xl mx-auto">
+    <div className="flex flex-col min-h-screen bg-white ">
+      <nav>
+        <NavbarLandingPage />
+      </nav>
+      <div className="max-w-7xl mx-auto my-28">
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">Contact Us</h1>
           <p className="text-xl text-gray-600">We'd love to hear from you</p>
@@ -173,6 +177,7 @@ export default function ContactPage() {
           </div>
         </div>
       </div>
+      <Footer />
     </div>
   )
 }

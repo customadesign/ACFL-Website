@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNotifications } from '@/contexts/NotificationContext';
+import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
+import { Bell } from 'lucide-react';
 
 export default function ClientLayout({
   children,
@@ -14,12 +17,21 @@ export default function ClientLayout({
 }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { unreadMessageCount, appointmentNotificationCount, markMessagesAsRead, markAppointmentsAsRead } = useNotifications();
 
   const navItems = [
     { name: 'Dashboard', href: '/clients' },
     { name: 'Find Coaches', href: '/clients/search-coaches' },
-    { name: 'Appointments', href: '/clients/appointments' },
-    { name: 'Messages', href: '/clients/messages' },
+    { 
+      name: 'Appointments', 
+      href: '/clients/appointments',
+      notificationCount: appointmentNotificationCount 
+    },
+    { 
+      name: 'Messages', 
+      href: '/clients/messages',
+      notificationCount: unreadMessageCount 
+    },
     { name: 'Profile', href: '/clients/profile' },
   ];
 
@@ -61,13 +73,31 @@ export default function ClientLayout({
                 <Link
                   key={item.name}
                   href={item.href}
-                  className={`py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
+                  onClick={() => {
+                    // Mark notifications as read when navigating to respective pages
+                    if (item.href === '/clients/messages') {
+                      markMessagesAsRead();
+                    } else if (item.href === '/clients/appointments') {
+                      markAppointmentsAsRead();
+                    }
+                  }}
+                  className={`relative py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap ${
                     pathname === item.href
                       ? 'border-blue-500 text-blue-600'
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {item.name}
+                  <span className="relative inline-block">
+                    {item.name}
+                    {item.notificationCount !== undefined && (
+                      <NotificationBadge 
+                        count={item.notificationCount}
+                        maxCount={99}
+                        size="md"
+                        variant={item.href.includes('messages') ? 'blue' : 'red'}
+                      />
+                    )}
+                  </span>
                 </Link>
               ))}
             </div>

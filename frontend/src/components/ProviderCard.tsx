@@ -27,6 +27,7 @@ export interface ProviderCardProps {
   email?: string;
   isBestMatch?: boolean;
   onSaveChange?: () => void;
+  initialIsSaved?: boolean; // Pass saved state from parent
 }
 
 export const ProviderCard = ({
@@ -43,7 +44,8 @@ export const ProviderCard = ({
   virtualAvailable,
   email,
   isBestMatch,
-  onSaveChange
+  onSaveChange,
+  initialIsSaved = false
 }: ProviderCardProps) => {
   const [showAllSpecialties, setShowAllSpecialties] = useState(false);
   const [showAllModalities, setShowAllModalities] = useState(false);
@@ -55,23 +57,47 @@ export const ProviderCard = ({
   const initialModalities = safeModalities.slice(0, 4);
   const remainingModalities = safeModalities.slice(4);
 
-  // Check if coach is saved on component mount
+  // Use initialIsSaved prop from parent (which comes from database) and sync with localStorage
   useEffect(() => {
-    const checkIfSaved = () => {
-      try {
-        const savedCoaches = localStorage.getItem('savedCoaches')
-        if (savedCoaches) {
-          const coaches = JSON.parse(savedCoaches)
-          const coachId = id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
-          setIsSaved(coaches.some((coach: any) => coach.id === coachId))
-        }
-      } catch (error) {
-        console.error('Error checking saved coaches:', error)
-      }
-    }
+    setIsSaved(initialIsSaved)
     
-    checkIfSaved()
-  }, [id, name])
+    // Also update localStorage to sync with database state
+    try {
+      const coachId = id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
+      const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+      
+      if (initialIsSaved) {
+        // Ensure it's in localStorage
+        const exists = savedCoaches.some((coach: any) => coach.id === coachId)
+        if (!exists) {
+          const coachData = {
+            id: coachId,
+            name,
+            specialties,
+            modalities,
+            languages,
+            bio,
+            sessionRate,
+            experience,
+            rating,
+            matchScore,
+            virtualAvailable,
+            email
+          }
+          savedCoaches.push(coachData)
+          localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+        }
+      } else {
+        // Ensure it's not in localStorage
+        const updatedCoaches = savedCoaches.filter((coach: any) => coach.id !== coachId)
+        if (updatedCoaches.length !== savedCoaches.length) {
+          localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
+        }
+      }
+    } catch (error) {
+      console.error('Error syncing saved coaches:', error)
+    }
+  }, [initialIsSaved, id, name, specialties, modalities, languages, bio, sessionRate, experience, rating, matchScore, virtualAvailable, email])
 
   const handleSaveToggle = async () => {
     try {
@@ -80,20 +106,24 @@ export const ProviderCard = ({
       
       if (isSaved) {
         // Remove from saved
-        await fetch(`${API_URL}/api/client/saved-coaches/${coachId}`, {
+        const response = await fetch(`${API_URL}/api/client/saved-coaches/${coachId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           }
         })
-        setIsSaved(false)
-        // Update localStorage
-        const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
-        const updatedCoaches = savedCoaches.filter((coach: any) => coach.id !== coachId)
-        localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
+        
+        if (response.ok) {
+          setIsSaved(false)
+          // Update localStorage
+          const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+          const updatedCoaches = savedCoaches.filter((coach: any) => coach.id !== coachId)
+          localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
+          onSaveChange?.()
+        }
       } else {
         // Add to saved
-        await fetch(`${API_URL}/api/client/saved-coaches`, {
+        const response = await fetch(`${API_URL}/api/client/saved-coaches`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -101,25 +131,57 @@ export const ProviderCard = ({
           },
           body: JSON.stringify({ coachId })
         })
-        setIsSaved(true)
-        // Update localStorage
-        const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
-        const coachData = {
-          id: coachId,
-          name,
-          specialties,
-          modalities,
-          languages,
-          bio,
-          sessionRate,
-          experience,
-          rating,
-          matchScore,
-          virtualAvailable,
-          email
+        
+        if (response.ok) {
+          setIsSaved(true)
+          // Update localStorage
+          const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+          const coachData = {
+            id: coachId,
+            name,
+            specialties,
+            modalities,
+            languages,
+            bio,
+            sessionRate,
+            experience,
+            rating,
+            matchScore,
+            virtualAvailable,
+            email
+          }
+          savedCoaches.push(coachData)
+          localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+          onSaveChange?.()
+        } else if (response.status === 409) {
+          // Duplicate key error - coach is already saved
+          console.log('Coach already saved, updating UI state')
+          setIsSaved(true)
+          // Make sure localStorage is synced
+          const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+          const exists = savedCoaches.some((coach: any) => coach.id === coachId)
+          if (!exists) {
+            const coachData = {
+              id: coachId,
+              name,
+              specialties,
+              modalities,
+              languages,
+              bio,
+              sessionRate,
+              experience,
+              rating,
+              matchScore,
+              virtualAvailable,
+              email
+            }
+            savedCoaches.push(coachData)
+            localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+          }
+          onSaveChange?.()
+        } else {
+          throw new Error(`Failed to save coach: ${response.status}`)
         }
-        savedCoaches.push(coachData)
-        localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
       }
     } catch (error) {
       console.error('Error saving coach:', error)

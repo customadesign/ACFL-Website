@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Mail, CheckCircle } from 'lucide-react'
 import { getApiUrl } from '@/lib/api'
+import Footer from "@/components/Footer"
+import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -61,7 +63,10 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="flex flex-col min-h-screen bg-white ">
+      <nav>
+        <NavbarLandingPage />
+      </nav>
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
@@ -120,6 +125,7 @@ export default function ForgotPasswordPage() {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   )
 }

@@ -36,7 +36,7 @@ function AppointmentsContent() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
@@ -187,6 +187,54 @@ function AppointmentsContent() {
     }
   };
 
+  // Status display directly reflects the database status
+  // Status Mapping:
+  // - 'scheduled' → "Scheduled" (blue)
+  // - 'confirmed' → "Confirmed" (yellow)
+  // - 'cancelled' → "Cancelled" (red)
+  // - 'completed' → "Completed" (green)
+  // 
+  // Tab Filtering (based on your requirements):
+  // - Upcoming: Shows appointments as "Scheduled" 
+  // - Past: Shows "Cancelled" or "Completed"
+  // - Pending: Shows "Confirmed" 
+  // - All: Shows actual database status for all appointments
+  const getStatusDisplay = (appointment: Appointment) => {
+    // Show the actual database status with proper formatting and colors
+    switch (appointment.status) {
+      case 'scheduled':
+        return {
+          label: 'Scheduled',
+          color: 'bg-blue-100 text-blue-800'
+        };
+      
+      case 'confirmed':
+        return {
+          label: 'Confirmed', 
+          color: 'bg-yellow-100 text-yellow-800'
+        };
+      
+      case 'cancelled':
+        return {
+          label: 'Cancelled',
+          color: 'bg-red-100 text-red-800'
+        };
+      
+      case 'completed':
+        return {
+          label: 'Completed',
+          color: 'bg-green-100 text-green-800'
+        };
+      
+      default:
+        return {
+          label: appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1),
+          color: 'bg-gray-100 text-gray-800'
+        };
+    }
+  };
+
+  // Legacy function for backward compatibility
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'confirmed': return 'bg-green-100 text-green-800';
@@ -238,7 +286,7 @@ function AppointmentsContent() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">My Appointments</h1>
         <p className="text-gray-600">Manage your coaching sessions and appointments</p>
@@ -255,9 +303,9 @@ function AppointmentsContent() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-8">
             {[
-              { key: 'upcoming', label: 'Upcoming' },
-              { key: 'past', label: 'Past' },
-              { key: 'pending', label: 'Pending' },
+              { key: 'upcoming', label: 'Upcoming (Scheduled)' },
+              { key: 'past', label: 'Past (Canceled/Completed)' },
+              { key: 'pending', label: 'Pending (Confirmed)' },
               { key: 'all', label: 'All' }
             ].map((tab) => (
               <button
@@ -278,11 +326,11 @@ function AppointmentsContent() {
 
                     switch (tab.key) {
                       case 'upcoming':
-                        return appointmentDate >= today && apt.status !== 'cancelled';
-                      case 'past':
-                        return appointmentDate < today || apt.status === 'completed';
-                      case 'pending':
                         return apt.status === 'scheduled';
+                      case 'past':
+                        return apt.status === 'cancelled' || apt.status === 'completed';
+                      case 'pending':
+                        return apt.status === 'confirmed';
                       case 'all':
                       default:
                         return true;
@@ -331,19 +379,15 @@ function AppointmentsContent() {
       {/* Appointments List */}
       <div className="space-y-4">
         {(() => {
-          // Filter appointments based on selected tab
+          // Filter appointments based on selected tab - status-only approach
           const filteredAppointments = appointments.filter(apt => {
-            const appointmentDate = new Date(apt.starts_at);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
             switch (filter) {
               case 'upcoming':
-                return appointmentDate >= today && apt.status !== 'cancelled';
-              case 'past':
-                return appointmentDate < today || apt.status === 'completed';
-              case 'pending':
                 return apt.status === 'scheduled';
+              case 'past':
+                return apt.status === 'cancelled' || apt.status === 'completed';
+              case 'pending':
+                return apt.status === 'confirmed';
               case 'all':
               default:
                 return true;
@@ -372,8 +416,8 @@ function AppointmentsContent() {
                         </h3>
                         <p className="text-sm text-gray-500">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
                       </div>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(appointment.status)}`}>
-                        {appointment.status}
+                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
+                        {getStatusDisplay(appointment).label}
                       </span>
                     </div>
                     

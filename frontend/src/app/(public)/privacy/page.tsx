@@ -5,11 +5,16 @@ import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import Logo from "@/components/Logo"
 import { ArrowLeft, Shield } from "lucide-react"
+import Footer from "@/components/Footer"
+import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
+      <nav>
+        <NavbarLandingPage />
+      </nav>
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -178,6 +183,7 @@ export default function PrivacyPage() {
           </motion.div>
         </div>
       </section>
+      <Footer />
     </div>
   )
 }

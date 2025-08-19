@@ -7,6 +7,7 @@ import clientRoutes from './routes/clientRoutes';
 import adminRoutes from './routes/adminRoutes';
 import authRoutes from './routes/authRoutes';
 import meetingRoutes from './routes/meetingRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import { supabase } from './lib/supabase';
 
 // Load environment variables
@@ -54,6 +55,7 @@ app.use(express.json());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/meetings', meetingRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);

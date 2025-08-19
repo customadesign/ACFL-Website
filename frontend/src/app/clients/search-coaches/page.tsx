@@ -322,6 +322,57 @@ function SearchCoachesContent() {
   useEffect(() => {
     loadUserPreferences();
     loadSavedCoaches(); // Only load saved coaches initially
+    
+    // Check if coming from assessment
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromAssessment = urlParams.get('from') === 'assessment';
+    
+    if (fromAssessment) {
+      // Load assessment data from localStorage
+      const assessmentDataStr = localStorage.getItem('assessmentData');
+      if (assessmentDataStr) {
+        try {
+          const assessmentData = JSON.parse(assessmentDataStr);
+          console.log('Loading assessment data:', assessmentData);
+          
+          // Set form values from assessment data
+          form.setValue('areaOfConcern', assessmentData.areaOfConcern || []);
+          form.setValue('location', assessmentData.location || '');
+          form.setValue('availability_options', assessmentData.availability || []);
+          
+          // Switch to search tab and show form
+          setActiveTab('search');
+          setShowForm(true);
+          
+          // Load all coaches if not already loaded
+          if (allCoaches.length === 0) {
+            loadAllCoaches().then(() => {
+              // Auto-submit the form with assessment data after coaches are loaded
+              setTimeout(() => {
+                const formData = {
+                  areaOfConcern: assessmentData.areaOfConcern || [],
+                  location: assessmentData.location || '',
+                  availability_options: assessmentData.availability || [],
+                  therapistGender: 'any',
+                  language: 'any'
+                };
+                handleSubmit(formData as SearchFormData);
+              }, 500);
+            });
+          }
+          
+          // Clear the assessment data from localStorage after using it
+          localStorage.removeItem('assessmentData');
+          sessionStorage.removeItem('pendingAssessment');
+          
+          // Remove the 'from' parameter from URL
+          const newUrl = window.location.pathname;
+          window.history.replaceState({}, document.title, newUrl);
+        } catch (error) {
+          console.error('Error parsing assessment data:', error);
+        }
+      }
+    }
   }, []);
 
   // Apply filters when dependencies change
@@ -331,7 +382,7 @@ function SearchCoachesContent() {
 
   return (
     <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {/* Page Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-4">
@@ -936,6 +987,8 @@ function SearchCoachesContent() {
                   virtualAvailable={coach.virtualAvailable}
                   email={coach.email}
                   isBestMatch={coach.matchScore >= 90}
+                  initialIsSaved={savedCoaches.some(sc => sc.id === coach.id)}
+                  onSaveChange={refreshSavedCoaches}
                 />
               ))}
             </div>

@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string, skipRedirect?: boolean) => {
     try {
       console.log('Attempting login with:', email);
       const response = await axios.post(`${API_URL}/api/auth/login`, {
@@ -119,23 +119,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Set user
       setUser(user);
       
-      // Redirect based on role
-      console.log('User role:', user.role);
-      if (user.role === 'client') {
-        console.log('Redirecting client to /clients');
-        setTimeout(() => {
-          router.replace('/clients');
-        }, 100);
-      } else if (user.role === 'coach') {
-        console.log('Redirecting coach to /coaches');
-        setTimeout(() => {
-          router.replace('/coaches');
-        }, 100);
-      } else if (user.role === 'admin') {
-        console.log('Redirecting admin to /admin');
-        setTimeout(() => {
-          router.replace('/admin');
-        }, 100);
+      // Only redirect if not handled by the login page itself
+      if (!skipRedirect) {
+        // Check if there's a pending redirect in the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const redirect = urlParams.get('redirect');
+        const fromAssessment = urlParams.get('from') === 'assessment';
+        
+        if (redirect || fromAssessment) {
+          // Let the login page handle the redirect
+          console.log('Login page will handle redirect:', { redirect, fromAssessment });
+          return;
+        }
+        
+        // Otherwise redirect based on role
+        console.log('User role:', user.role);
+        if (user.role === 'client') {
+          console.log('Redirecting client to /clients');
+          setTimeout(() => {
+            router.replace('/clients');
+          }, 100);
+        } else if (user.role === 'coach') {
+          console.log('Redirecting coach to /coaches');
+          setTimeout(() => {
+            router.replace('/coaches');
+          }, 100);
+        } else if (user.role === 'admin') {
+          console.log('Redirecting admin to /admin');
+          setTimeout(() => {
+            router.replace('/admin');
+          }, 100);
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);

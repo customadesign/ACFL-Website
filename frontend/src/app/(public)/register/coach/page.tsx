@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
+import Footer from "@/components/Footer"
+import NavbarLandingPage  from '@/components/NavbarLandingPage';
 
 export default function CoachRegister() {
   const [formData, setFormData] = useState({
@@ -181,15 +183,12 @@ export default function CoachRegister() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        {/* Back to Home Button */}
-        <Link href="/" className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-4">
-          <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-          </svg>
-          Back to Home
-        </Link>
+      <div className="flex flex-col min-h-screen bg-white ">
+      <nav>
+        <NavbarLandingPage />
+      </nav>
+      <div className="w-full max-w-md mx-auto my-28">
+       
         
         <Card>
           <CardHeader className="text-center">
@@ -360,11 +359,11 @@ export default function CoachRegister() {
                   <div className="ml-3 text-sm">
                     <label htmlFor="terms" className="text-gray-700">
                       I agree to the{' '}
-                      <Link href="/(public)/terms" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link href="/(public)/privacy" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
                         Privacy Policy
                       </Link>
                     </label>
@@ -397,13 +396,13 @@ export default function CoachRegister() {
             <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <Link href="/(public)/login" className="text-blue-600 hover:text-blue-500 font-medium">
+                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
                   Sign in
                 </Link>
               </p>
               <p className="text-sm text-gray-600 mt-2">
                 Looking for coaching?{' '}
-                <Link href="/(public)/register/client" className="text-green-600 hover:text-green-500 font-medium">
+                <Link href="/register/client" className="text-green-600 hover:text-green-500 font-medium">
                   Register as Client
                 </Link>
               </p>
@@ -411,6 +410,7 @@ export default function CoachRegister() {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 }
