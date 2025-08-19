@@ -228,7 +228,7 @@ export default function AppointmentsPage() {
       
       default:
         return {
-          label: appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1),
+          label: (appointment.status as string).charAt(0).toUpperCase() + (appointment.status as string).slice(1),
           color: 'bg-gray-100 text-gray-800'
         };
     }

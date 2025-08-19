@@ -74,7 +74,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
             pauseOnHover
             theme="light"
             toastClassName="custom-toast"
-            bodyClassName="custom-toast-body"
           />
         </ThemeProvider>
       </NotificationProvider>
