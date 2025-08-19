@@ -60,7 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.warn('Could not set axios default headers:', error);
+      }
     }
   }, []);
 
@@ -80,7 +84,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (error.response?.status === 401 || error.response?.status === 404) {
             console.log('Removing invalid token');
             localStorage.removeItem('token');
-            delete axios.defaults.headers.common['Authorization'];
+            try {
+              try {
+      delete axios.defaults.headers.common['Authorization'];
+    } catch (error) {
+      console.warn('Could not delete axios default headers:', error);
+    }
+            } catch (error) {
+              console.warn('Could not delete axios default headers:', error);
+            }
             setUser(null);
           } else if (retryCount < 2) {
             // Retry on network errors
@@ -114,7 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Save token
       localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.warn('Could not set axios default headers:', error);
+      }
       
       // Set user
       setUser(user);
@@ -165,7 +181,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Save token
       localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.warn('Could not set axios default headers:', error);
+      }
       
       // Set user
       setUser(user);
@@ -186,7 +206,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Save token
       localStorage.setItem('token', token);
-      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (error) {
+        console.warn('Could not set axios default headers:', error);
+      }
       
       // Set user
       setUser(user);
@@ -212,7 +236,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     // Remove token
     localStorage.removeItem('token');
-    delete axios.defaults.headers.common['Authorization'];
+    try {
+      delete axios.defaults.headers.common['Authorization'];
+    } catch (error) {
+      console.warn('Could not delete axios default headers:', error);
+    }
     
     // Clear user
     setUser(null);

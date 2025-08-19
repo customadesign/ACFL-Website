@@ -268,6 +268,35 @@ export interface Database {
           updated_at?: string
         }
       }
+      meeting_chat: {
+        Row: {
+          id: string
+          meeting_id: string
+          sender_id: string
+          sender_name: string
+          message: string
+          created_at: string
+          expires_at: string
+        }
+        Insert: {
+          id?: string
+          meeting_id: string
+          sender_id: string
+          sender_name: string
+          message: string
+          created_at?: string
+          expires_at?: string
+        }
+        Update: {
+          id?: string
+          meeting_id?: string
+          sender_id?: string
+          sender_name?: string
+          message?: string
+          created_at?: string
+          expires_at?: string
+        }
+      }
     }
     Views: {
       coach_search_results: {
@@ -540,6 +569,57 @@ export const dbHelpers = {
     
     if (error) throw error
     return data
+  },
+
+  // Meeting chat functions
+  async sendMeetingChatMessage(meetingId: string, senderId: string, senderName: string, message: string) {
+    // Calculate expiry date (24 hours from now)
+    const expiresAt = new Date()
+    expiresAt.setHours(expiresAt.getHours() + 24)
+    
+    const { data, error } = await supabase
+      .from('meeting_chat')
+      .insert({
+        meeting_id: meetingId,
+        sender_id: senderId,
+        sender_name: senderName,
+        message: message,
+        expires_at: expiresAt.toISOString()
+      })
+      .select()
+      .single()
+    
+    if (error) throw error
+    return data
+  },
+
+  async getMeetingChatMessages(meetingId: string) {
+    const { data, error } = await supabase
+      .from('meeting_chat')
+      .select('*')
+      .eq('meeting_id', meetingId)
+      .gt('expires_at', new Date().toISOString()) // Only get non-expired messages
+      .order('created_at', { ascending: true })
+    
+    if (error) throw error
+    return data
+  },
+
+  // Subscribe to meeting chat messages
+  subscribeMeetingChat(meetingId: string, callback: (message: any) => void) {
+    return supabase
+      .channel(`meeting-chat-${meetingId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'meeting_chat',
+          filter: `meeting_id=eq.${meetingId}`
+        },
+        callback
+      )
+      .subscribe()
   }
 }
 

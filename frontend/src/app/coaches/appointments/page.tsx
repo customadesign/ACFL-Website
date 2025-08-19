@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
@@ -8,7 +9,8 @@ import MeetingContainer from '@/components/MeetingContainer';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 
 interface Appointment {
@@ -147,12 +149,7 @@ export default function AppointmentsPage() {
     try {
       setLoading(true);
       // Always get all appointments for proper tab counting
-      const response = await axios.get(`${API_URL}/api/coach/appointments`, {
-        params: { filter: 'all' },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiGet(`${API_URL}/api/coach/appointments?filter=all`);
 
       if (response.data.success) {
         setAppointments(response.data.data);
@@ -167,11 +164,10 @@ export default function AppointmentsPage() {
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
-      const response = await axios.put(`${API_URL}/api/coach/appointments/${appointmentId}`, 
+      const response = await apiPut(`${API_URL}/api/coach/appointments/${appointmentId}`, 
         { status: newStatus },
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }
@@ -460,6 +456,15 @@ export default function AppointmentsPage() {
                         >
                           Cancel
                         </Button>
+                        <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`}>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600 hover:bg-blue-50"
+                            size="sm"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" /> Message
+                          </Button>
+                        </Link>
                       </div>
                     )}
 
@@ -494,6 +499,30 @@ export default function AppointmentsPage() {
                         >
                           Cancel
                         </Button>
+                        <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`}>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600 hover:bg-blue-50"
+                            size="sm"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" /> Message
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Message button for appointments without status-specific buttons */}
+                    {appointment.status !== 'scheduled' && appointment.status !== 'confirmed' && (
+                      <div className="mt-4">
+                        <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`}>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600 hover:bg-blue-50"
+                            size="sm"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" /> Message Client
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -8,7 +9,8 @@ import MeetingContainer from '@/components/MeetingContainer';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 
 interface Appointment {
@@ -147,12 +149,7 @@ function AppointmentsContent() {
     try {
       setLoading(true);
       // Always get all appointments for proper tab counting
-      const response = await axios.get(`${API_URL}/api/client/appointments`, {
-        params: { filter: 'all' },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
+      const response = await apiGet(`${API_URL}/api/client/appointments?filter=all`);
 
       if (response.data.success) {
         setAppointments(response.data.data);
@@ -167,11 +164,10 @@ function AppointmentsContent() {
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
-      const response = await axios.put(`${API_URL}/api/client/appointments/${appointmentId}`, 
+      const response = await apiPut(`${API_URL}/api/client/appointments/${appointmentId}`, 
         { status: newStatus },
         {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           }
         }
@@ -462,6 +458,30 @@ function AppointmentsContent() {
                           </Button>
                         )}
                         <span className="text-xs text-gray-600 self-center">{getCountdownLabel(appointment)}</span>
+                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`}>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600 hover:bg-blue-50"
+                            size="sm"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" /> Message Coach
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Message button for appointments without confirmed status */}
+                    {appointment.status !== 'confirmed' && (
+                      <div className="mt-4">
+                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`}>
+                          <Button
+                            variant="outline"
+                            className="text-blue-600 hover:bg-blue-50"
+                            size="sm"
+                          >
+                            <MessageCircle className="mr-2 h-4 w-4" /> Message Coach
+                          </Button>
+                        </Link>
                       </div>
                     )}
                   </div>

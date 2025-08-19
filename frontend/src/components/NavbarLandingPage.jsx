@@ -134,7 +134,7 @@ const NavbarLandingPage = () => {
                 </Button>
               </Link>
               
-              <a href="#quick-assessment">
+              <a href="/">
                 <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
                   Get Started
                 </Button>
@@ -215,7 +215,7 @@ const NavbarLandingPage = () => {
                     Login
                   </Button>
                 </Link>
-                <a href="#quick-assessment">
+                <a href="/">
                   <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white">
                     Get Started
                   </Button>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import Link from 'next/link'
 import { getApiUrl } from '@/lib/api'
@@ -38,6 +39,7 @@ type Message = {
 function MessagesContent() {
 	const API_URL = getApiUrl()
 const { user, logout } = useAuth()
+	const searchParams = useSearchParams()
 	const [conversations, setConversations] = useState<Conversation[]>([])
 	const [activePartnerId, setActivePartnerId] = useState<string | null>(null)
 	const [messages, setMessages] = useState<Message[]>([])
@@ -83,6 +85,51 @@ const scrollerRef = useRef<HTMLDivElement>(null)
 		}
 	}
 
+	// Function to initiate conversation with a specific coach
+	const initiateConversationWith = async (coachId: string, coachName?: string) => {
+		try {
+			// First, check if conversation already exists
+			const existingConversation = conversations.find(c => c.partnerId === coachId)
+			if (existingConversation) {
+				setActivePartnerId(coachId)
+				return
+			}
+
+			// Create placeholder conversation with provided name immediately
+			if (coachName) {
+				const placeholderConversation: Conversation = {
+					partnerId: coachId,
+					partnerName: coachName,
+					lastBody: '',
+					lastAt: new Date().toISOString(),
+					unreadCount: 0,
+					totalMessages: 0
+				}
+				
+				// Add to conversations list if not already there
+				setConversations(prev => {
+					const exists = prev.find(c => c.partnerId === coachId)
+					if (!exists) {
+						return [placeholderConversation, ...prev]
+					}
+					return prev
+				})
+			}
+			
+			setActivePartnerId(coachId)
+			setMessages([])
+
+			// The conversation will be created in the backend when the first message is sent
+			// For now, the placeholder conversation allows immediate messaging
+			
+			// Also reload conversations to get any existing ones
+			await loadConversations()
+			
+		} catch (error) {
+			console.error('Error initiating conversation:', error)
+		}
+	}
+
 	useEffect(() => {
 		;(async () => {
 			setLoading(true)
@@ -99,6 +146,15 @@ useEffect(() => {
 	}
 	// eslint-disable-next-line react-hooks/exhaustive-deps
 }, [activePartnerId])
+
+	// Handle conversation_with URL parameter
+	useEffect(() => {
+		const conversationWith = searchParams.get('conversation_with')
+		const partnerName = searchParams.get('partner_name')
+		if (conversationWith && !loading) {
+			initiateConversationWith(conversationWith, partnerName ? decodeURIComponent(partnerName) : undefined)
+		}
+	}, [searchParams, loading])
 
 	// Refresh when window regains focus
 	useEffect(() => {
@@ -175,10 +231,21 @@ useEffect(() => {
 		scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
 	}, [messages])
 
-	const activePartner = useMemo(
-		() => conversations.find(c => c.partnerId === activePartnerId),
-		[conversations, activePartnerId]
-	)
+	const activePartner = useMemo(() => {
+		if (!activePartnerId) return null
+		const found = conversations.find(c => c.partnerId === activePartnerId)
+		if (found) return found
+		
+		// If no conversation found but we have activePartnerId, create a temporary display name
+		return {
+			partnerId: activePartnerId,
+			partnerName: 'Loading...',
+			lastBody: '',
+			lastAt: new Date().toISOString(),
+			unreadCount: 0,
+			totalMessages: 0
+		}
+	}, [conversations, activePartnerId])
 
 	const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0]
@@ -319,6 +386,11 @@ useEffect(() => {
 			if (fileInputRef.current) {
 				fileInputRef.current.value = ''
 			}
+
+			// Refresh conversations after sending to ensure conversation appears
+			setTimeout(() => {
+				loadConversations()
+			}, 1000)
 		} finally {
 			setSending(false)
 		}

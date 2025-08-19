@@ -62,7 +62,7 @@ export default function PreCall({
       // Set default devices
       if (mics.length > 0 && !selectedMic) setSelectedMic(mics[0].deviceId)
       if (cameras.length > 0 && !selectedCamera) setSelectedCamera(cameras[0].deviceId)
-      if (speakers.length > 0 && !selectedSpeaker) setSpeakerDevices(speakers)
+      if (speakers.length > 0 && !selectedSpeaker) setSelectedSpeaker(speakers[0].deviceId)
     } catch (error) {
       console.error('Error getting devices:', error)
     }
@@ -74,7 +74,15 @@ export default function PreCall({
       setLoading(true)
       setPermissionError(null)
       
-      // First get permissions
+      // Check if at least one media type is enabled
+      if (!cameraEnabled && !micEnabled) {
+        // No media requested, just get devices and finish
+        await getDevices()
+        setLoading(false)
+        return
+      }
+      
+      // Get permissions for requested media
       const stream = await navigator.mediaDevices.getUserMedia({
         video: cameraEnabled ? {
           deviceId: selectedCamera ? { exact: selectedCamera } : undefined
@@ -149,22 +157,97 @@ export default function PreCall({
   }
 
   // Toggle microphone
-  const toggleMic = () => {
-    setMicEnabled(!micEnabled)
-    if (micStreamRef.current) {
+  const toggleMic = async () => {
+    const newMicState = !micEnabled
+    setMicEnabled(newMicState)
+    
+    if (newMicState && !micStreamRef.current && cameraEnabled) {
+      // Need to get new stream with audio
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: cameraEnabled ? {
+            deviceId: selectedCamera ? { exact: selectedCamera } : undefined
+          } : false,
+          audio: {
+            deviceId: selectedMic ? { exact: selectedMic } : undefined,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          }
+        })
+        
+        // Update video element if camera is enabled
+        if (videoRef.current && cameraEnabled) {
+          videoRef.current.srcObject = stream
+        }
+        
+        micStreamRef.current = stream
+        setupAudioVisualization(stream)
+      } catch (error) {
+        console.error('Error enabling microphone:', error)
+        setMicEnabled(false)
+      }
+    } else if (micStreamRef.current) {
       micStreamRef.current.getAudioTracks().forEach(track => {
-        track.enabled = !micEnabled
+        track.enabled = newMicState
       })
     }
   }
 
   // Toggle camera
-  const toggleCamera = () => {
-    setCameraEnabled(!cameraEnabled)
-    if (micStreamRef.current) {
-      micStreamRef.current.getVideoTracks().forEach(track => {
-        track.enabled = !cameraEnabled
-      })
+  const toggleCamera = async () => {
+    const newCameraState = !cameraEnabled
+    setCameraEnabled(newCameraState)
+    
+    if (newCameraState || micStreamRef.current) {
+      if (newCameraState) {
+        // Re-enable camera - need to get new stream
+        try {
+          const constraints: MediaStreamConstraints = {
+            video: {
+              deviceId: selectedCamera ? { exact: selectedCamera } : undefined
+            }
+          }
+          
+          // Only add audio if mic is enabled
+          if (micEnabled) {
+            constraints.audio = {
+              deviceId: selectedMic ? { exact: selectedMic } : undefined,
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          }
+          
+          const stream = await navigator.mediaDevices.getUserMedia(constraints)
+          
+          // Update video element
+          if (videoRef.current) {
+            videoRef.current.srcObject = stream
+          }
+          
+          // Replace old stream if it exists
+          if (micStreamRef.current) {
+            micStreamRef.current.getTracks().forEach(track => track.stop())
+          }
+          micStreamRef.current = stream
+          
+          // Setup audio visualization if mic is enabled
+          if (micEnabled) {
+            setupAudioVisualization(stream)
+          }
+        } catch (error) {
+          console.error('Error re-enabling camera:', error)
+          setCameraEnabled(false)
+        }
+      } else {
+        // Disable camera tracks
+        if (micStreamRef.current) {
+          micStreamRef.current.getVideoTracks().forEach(track => {
+            track.enabled = false
+          })
+        }
+      }
     }
   }
 
@@ -192,7 +275,7 @@ export default function PreCall({
 
   // Re-initialize when device selection changes
   useEffect(() => {
-    if (selectedMic || selectedCamera) {
+    if ((selectedMic || selectedCamera) && !loading) {
       // Stop current stream
       if (micStreamRef.current) {
         micStreamRef.current.getTracks().forEach(track => track.stop())
@@ -200,7 +283,7 @@ export default function PreCall({
       // Re-initialize with new devices
       initializeMedia()
     }
-  }, [selectedMic, selectedCamera])
+  }, [selectedMic, selectedCamera, cameraEnabled, micEnabled])
 
   const handleJoinMeeting = () => {
     // Prevent multiple joins

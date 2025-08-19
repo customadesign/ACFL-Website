@@ -26,6 +26,7 @@ import {
   UserX,
   Clock
 } from 'lucide-react'
+import MeetingChat from '@/components/MeetingChat'
 import { updateParticipantStatus } from '@/services/videoMeeting'
 
 interface VideoMeetingProps {
@@ -158,10 +159,49 @@ function WaitingLobby({
   )
 }
 
-// Participant Video Component
+// Participant Video Component with Speaking Indicators
 function ParticipantView({ participantId }: { participantId: string }) {
   const micRef = useRef<HTMLAudioElement>(null)
-  const { webcamStream, micStream, webcamOn, micOn, isLocal, displayName } = useParticipant(participantId)
+  const { 
+    webcamStream, 
+    micStream, 
+    webcamOn, 
+    micOn, 
+    isLocal, 
+    displayName
+  } = useParticipant(participantId)
+  
+  // Simple speaking detection based on audio stream activity
+  const [isSpeaking, setIsSpeaking] = useState(false)
+  
+  useEffect(() => {
+    if (micStream && micOn && !isLocal) {
+      const audioContext = new AudioContext()
+      const source = audioContext.createMediaStreamSource(micStream as unknown as MediaStream)
+      const analyser = audioContext.createAnalyser()
+      analyser.fftSize = 256
+      source.connect(analyser)
+      
+      const bufferLength = analyser.frequencyBinCount
+      const dataArray = new Uint8Array(bufferLength)
+      
+      const checkAudioLevel = () => {
+        analyser.getByteFrequencyData(dataArray)
+        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
+        setIsSpeaking(average > 25) // Threshold for speaking detection
+        
+        requestAnimationFrame(checkAudioLevel)
+      }
+      
+      checkAudioLevel()
+      
+      return () => {
+        audioContext.close()
+      }
+    } else {
+      setIsSpeaking(false)
+    }
+  }, [micStream, micOn, isLocal])
 
   const videoRef = useRef<HTMLVideoElement>(null)
 
@@ -184,7 +224,9 @@ function ParticipantView({ participantId }: { participantId: string }) {
   }, [micStream, micOn])
 
   return (
-    <div className="relative bg-gray-900 rounded-lg overflow-hidden aspect-video">
+    <div className={`relative bg-gray-900 rounded-lg overflow-hidden aspect-video transition-all duration-200 ${
+      isSpeaking ? 'ring-4 ring-green-500 ring-opacity-75' : ''
+    }`}>
       <audio ref={micRef} autoPlay muted={isLocal} />
       {webcamOn ? (
         <video
@@ -198,7 +240,9 @@ function ParticipantView({ participantId }: { participantId: string }) {
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-800">
           <div className="text-center">
-            <div className="w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className={`w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-200 ${
+              isSpeaking ? 'ring-2 ring-green-400 ring-opacity-75' : ''
+            }`}>
               <VideoOff className="text-gray-400" size={32} />
             </div>
             <p className="text-white font-medium">{displayName}</p>
@@ -206,11 +250,24 @@ function ParticipantView({ participantId }: { participantId: string }) {
         </div>
       )}
       
+      {/* Speaking indicator overlay */}
+      {isSpeaking && (
+        <div className="absolute top-2 right-2">
+          <div className="bg-green-500 rounded-full px-2 py-1 flex items-center gap-1">
+            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
+            <span className="text-white text-xs font-medium">Speaking</span>
+          </div>
+        </div>
+      )}
+      
       {/* Name and status overlay */}
       <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-        <div className="bg-black/60 rounded px-2 py-1 flex items-center gap-2">
+        <div className={`bg-black/60 rounded px-2 py-1 flex items-center gap-2 transition-all duration-200 ${
+          isSpeaking ? 'bg-green-900/60' : ''
+        }`}>
           <span className="text-white text-sm">{displayName}</span>
           {isLocal && <span className="text-xs text-blue-400">(You)</span>}
+          {isSpeaking && <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
         </div>
         <div className="flex gap-1">
           {!micOn && (
@@ -225,7 +282,7 @@ function ParticipantView({ participantId }: { participantId: string }) {
 }
 
 // Meeting Controls Component
-function MeetingControls({ isHost }: { isHost: boolean }) {
+function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatToggle?: () => void }) {
   const {
     leave,
     end,
@@ -234,10 +291,15 @@ function MeetingControls({ isHost }: { isHost: boolean }) {
     toggleScreenShare,
     localMicOn,
     localWebcamOn,
-    presenterId
+    presenterId,
+    localParticipant
   } = useMeeting()
 
   const [showEndConfirm, setShowEndConfirm] = useState(false)
+  const [isScreenSharing, setIsScreenSharing] = useState(false)
+
+  // Check if current user is presenting
+  const isPresenting = presenterId === localParticipant?.id
 
   const handleLeaveMeeting = () => {
     leave()
@@ -256,45 +318,110 @@ function MeetingControls({ isHost }: { isHost: boolean }) {
     setShowEndConfirm(false)
   }
 
+  const handleScreenShare = async () => {
+    try {
+      setIsScreenSharing(true)
+      await toggleScreenShare()
+      setIsScreenSharing(false)
+    } catch (error) {
+      console.error('Screen share toggle failed:', error)
+      setIsScreenSharing(false)
+    }
+  }
+
   return (
     <>
       <div className="flex items-center justify-center gap-3 p-4 bg-gray-100 border-t">
+        {/* Microphone Control */}
         <Button
           variant={localMicOn ? "outline" : "destructive"}
           size="lg"
           onClick={() => toggleMic()}
           className="rounded-full"
+          title={localMicOn ? "Mute microphone" : "Unmute microphone"}
         >
           {localMicOn ? <Mic size={20} /> : <MicOff size={20} />}
         </Button>
 
+        {/* Camera Control */}
         <Button
           variant={localWebcamOn ? "outline" : "destructive"}
           size="lg"
           onClick={() => toggleWebcam()}
           className="rounded-full"
+          title={localWebcamOn ? "Turn off camera" : "Turn on camera"}
         >
           {localWebcamOn ? <Video size={20} /> : <VideoOff size={20} />}
         </Button>
 
+        {/* Screen Share Control */}
         <Button
-          variant={presenterId ? "default" : "outline"}
+          variant={isPresenting ? "default" : "outline"}
           size="lg"
-          onClick={() => toggleScreenShare()}
-          className="rounded-full"
+          onClick={handleScreenShare}
+          disabled={isScreenSharing}
+          className={`rounded-full ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
+          title={isPresenting ? "Stop sharing screen" : "Share screen"}
         >
-          <Share2 size={20} />
+          {isScreenSharing ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : (
+            <Share2 size={20} />
+          )}
         </Button>
 
+        {/* Chat Control */}
+        {onChatToggle && (
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={onChatToggle}
+            className="rounded-full"
+            title="Toggle chat"
+          >
+            <MessageSquare size={20} />
+          </Button>
+        )}
+
+        {/* End/Leave Meeting */}
         <Button
           variant="destructive"
           size="lg"
           onClick={handleEndMeeting}
           className="rounded-full px-6"
+          title={isHost ? "End meeting for all" : "Leave meeting"}
         >
           <PhoneOff size={20} className="mr-2" />
           {isHost ? 'End' : 'Leave'}
         </Button>
+      </div>
+
+      {/* Status Indicators */}
+      <div className="bg-gray-50 px-4 py-2 border-t flex items-center justify-center gap-4 text-xs text-gray-600">
+        {localMicOn && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <span>Mic on</span>
+          </div>
+        )}
+        {localWebcamOn && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-green-500 rounded-full" />
+            <span>Camera on</span>
+          </div>
+        )}
+        {isPresenting && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span>You're sharing your screen</span>
+          </div>
+        )}
+        {presenterId && !isPresenting && (
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
+            <span>Someone is sharing screen</span>
+          </div>
+        )}
       </div>
 
       {/* End Meeting Confirmation */}
@@ -335,23 +462,59 @@ function MeetingControls({ isHost }: { isHost: boolean }) {
   )
 }
 
+// Screen Share View Component
+function ScreenShareView({ participantId }: { participantId: string }) {
+  const { screenShareStream, displayName } = useParticipant(participantId)
+  const screenRef = useRef<HTMLVideoElement>(null)
+
+  useEffect(() => {
+    if (screenShareStream && screenRef.current) {
+      const mediaStream = new MediaStream()
+      mediaStream.addTrack(screenShareStream.track)
+      screenRef.current.srcObject = mediaStream
+      screenRef.current.play().catch(error => console.error("screen share play error", error))
+    }
+  }, [screenShareStream])
+
+  return (
+    <div className="relative bg-black rounded-lg overflow-hidden w-full h-full">
+      <video
+        ref={screenRef}
+        autoPlay
+        playsInline
+        className="w-full h-full object-contain"
+      />
+      <div className="absolute top-4 left-4">
+        <div className="bg-blue-600 rounded px-3 py-1 flex items-center gap-2">
+          <Share2 size={14} className="text-white" />
+          <span className="text-white text-sm font-medium">{displayName} is sharing</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // Main Meeting View Component
 function MeetingView({ 
   isHost, 
   onMeetingEnd,
-  meetingId
+  meetingId,
+  participantName
 }: { 
   isHost: boolean
   onMeetingEnd: () => void
   meetingId: string
+  participantName: string
 }) {
   const [hasJoined, setHasJoined] = useState(false)
   const [hasLeft, setHasLeft] = useState(false)
   const [connectionState, setConnectionState] = useState('CONNECTING')
+  const [showChat, setShowChat] = useState(false)
 
   const {
     participants,
-    localParticipant
+    localParticipant,
+    presenterId
   } = useMeeting({
     onMeetingJoined: () => {
       if (!hasJoined) {
@@ -369,10 +532,14 @@ function MeetingView({
         setConnectionState('CLOSED')
         onMeetingEnd()
       }
+    },
+    onPresenterChanged: (presenterId) => {
+      console.log("Presenter changed:", presenterId)
     }
   })
 
   const participantIds = [...participants.keys()]
+  const presenterParticipant = presenterId ? participants.get(presenterId) : null
 
   return (
     <div className="fixed inset-0 bg-gray-900 flex flex-col">
@@ -387,30 +554,68 @@ function MeetingView({
             <Users size={16} />
             <span>{participantIds.length} participants</span>
           </div>
+          {presenterId && (
+            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded flex items-center gap-1">
+              <Share2 size={12} />
+              Screen Sharing
+            </span>
+          )}
           {isHost && (
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded">
+            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
               HOST
             </span>
           )}
         </div>
       </div>
 
-      {/* Video Grid */}
-      <div className="flex-1 p-4 overflow-auto">
-        <div className={`grid gap-4 h-full ${
-          participantIds.length === 1 ? 'grid-cols-1' : 
-          participantIds.length === 2 ? 'grid-cols-2' : 
-          participantIds.length <= 4 ? 'grid-cols-2' : 
-          'grid-cols-3'
-        }`}>
-          {participantIds.map((participantId) => (
-            <ParticipantView key={participantId} participantId={participantId} />
-          ))}
+      {/* Main Content Area */}
+      <div className="flex-1 flex">
+        {/* Screen Share or Main Video Area */}
+        <div className="flex-1 p-4">
+          {presenterId ? (
+            <ScreenShareView participantId={presenterId} />
+          ) : (
+            <div className={`grid gap-4 h-full ${
+              participantIds.length === 1 ? 'grid-cols-1' : 
+              participantIds.length === 2 ? 'grid-cols-2' : 
+              participantIds.length <= 4 ? 'grid-cols-2' : 
+              'grid-cols-3'
+            }`}>
+              {participantIds.map((participantId) => (
+                <ParticipantView key={participantId} participantId={participantId} />
+              ))}
+            </div>
+          )}
         </div>
+
+        {/* Sidebar with participant videos when screen sharing */}
+        {presenterId && (
+          <div className="w-72 bg-gray-800 p-4 border-l border-gray-700">
+            <h3 className="text-white text-sm font-medium mb-3 flex items-center gap-2">
+              <Users size={14} />
+              Participants ({participantIds.length})
+            </h3>
+            <div className="space-y-3">
+              {participantIds.map((participantId) => (
+                <div key={participantId} className="h-32">
+                  <ParticipantView participantId={participantId} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Controls */}
-      <MeetingControls isHost={isHost} />
+      <MeetingControls isHost={isHost} onChatToggle={() => setShowChat(!showChat)} />
+      
+      {/* Meeting Chat */}
+      <MeetingChat
+        meetingId={meetingId}
+        participantName={participantName}
+        isVisible={showChat}
+        onToggle={() => setShowChat(!showChat)}
+      />
     </div>
   )
 }
@@ -446,6 +651,7 @@ export default function VideoMeeting({
             isHost={isHost}
             onMeetingEnd={onMeetingEnd}
             meetingId={meetingId}
+            participantName={participantName}
           />
         )}
       </MeetingConsumer>

@@ -100,6 +100,32 @@ CREATE TABLE session_notes (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Meeting chat table (temporary messages that auto-delete after 1 day)
+CREATE TABLE meeting_chat (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  meeting_id TEXT NOT NULL,
+  sender_id TEXT NOT NULL, -- Changed from UUID with FK to just TEXT
+  sender_name TEXT NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL
+);
+
+-- Index for efficient meeting chat queries
+CREATE INDEX idx_meeting_chat_meeting_id ON meeting_chat(meeting_id);
+CREATE INDEX idx_meeting_chat_expires_at ON meeting_chat(expires_at);
+
+-- Function to automatically delete expired meeting chat messages
+CREATE OR REPLACE FUNCTION delete_expired_meeting_chat()
+RETURNS void AS $$
+BEGIN
+  DELETE FROM meeting_chat WHERE expires_at < NOW();
+END;
+$$ LANGUAGE plpgsql;
+
+-- Schedule automatic cleanup every hour
+SELECT cron.schedule('delete-expired-meeting-chat', '0 * * * *', 'SELECT delete_expired_meeting_chat();');
+
 -- =====================================================
 -- INDEXES FOR PERFORMANCE
 -- =====================================================
