@@ -331,13 +331,13 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
 
   return (
     <>
-      <div className="flex items-center justify-center gap-3 p-4 bg-gray-100 border-t">
+      <div className="flex items-center justify-center gap-3 p-4 bg-white border-t shadow-lg backdrop-blur-sm">
         {/* Microphone Control */}
         <Button
           variant={localMicOn ? "outline" : "destructive"}
           size="lg"
           onClick={() => toggleMic()}
-          className="rounded-full"
+          className="rounded-full shadow-md"
           title={localMicOn ? "Mute microphone" : "Unmute microphone"}
         >
           {localMicOn ? <Mic size={20} /> : <MicOff size={20} />}
@@ -348,7 +348,7 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
           variant={localWebcamOn ? "outline" : "destructive"}
           size="lg"
           onClick={() => toggleWebcam()}
-          className="rounded-full"
+          className="rounded-full shadow-md"
           title={localWebcamOn ? "Turn off camera" : "Turn on camera"}
         >
           {localWebcamOn ? <Video size={20} /> : <VideoOff size={20} />}
@@ -360,7 +360,7 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
           size="lg"
           onClick={handleScreenShare}
           disabled={isScreenSharing}
-          className={`rounded-full ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
+          className={`rounded-full shadow-md ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
           title={isPresenting ? "Stop sharing screen" : "Share screen"}
         >
           {isScreenSharing ? (
@@ -376,7 +376,7 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
             variant="outline"
             size="lg"
             onClick={onChatToggle}
-            className="rounded-full"
+            className="rounded-full shadow-md"
             title="Toggle chat"
           >
             <MessageSquare size={20} />
@@ -388,7 +388,7 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
           variant="destructive"
           size="lg"
           onClick={handleEndMeeting}
-          className="rounded-full px-6"
+          className="rounded-full px-6 shadow-md"
           title={isHost ? "End meeting for all" : "Leave meeting"}
         >
           <PhoneOff size={20} className="mr-2" />
@@ -397,7 +397,7 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
       </div>
 
       {/* Status Indicators */}
-      <div className="bg-gray-50 px-4 py-2 border-t flex items-center justify-center gap-4 text-xs text-gray-600">
+      <div className="bg-gray-50/95 px-4 py-2 border-t backdrop-blur-sm flex items-center justify-center gap-4 text-xs text-gray-600">
         {localMicOn && (
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 bg-green-500 rounded-full" />
@@ -568,8 +568,8 @@ function MeetingView({
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex">
+      {/* Main Content Area - adjusted to account for fixed controls */}
+      <div className="flex-1 flex pb-24">
         {/* Screen Share or Main Video Area */}
         <div className="flex-1 p-4">
           {presenterId ? (
@@ -606,8 +606,10 @@ function MeetingView({
         )}
       </div>
 
-      {/* Controls */}
-      <MeetingControls isHost={isHost} onChatToggle={() => setShowChat(!showChat)} />
+      {/* Fixed Controls at Bottom */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <MeetingControls isHost={isHost} onChatToggle={() => setShowChat(!showChat)} />
+      </div>
       
       {/* Meeting Chat */}
       <MeetingChat
