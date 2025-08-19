@@ -92,10 +92,10 @@ export function generateParticipantToken(
   participantRole: 'host' | 'participant' = 'participant'
 ): string {
   const tokenPermissions = participantRole === 'host' 
-    ? ['allow_join', 'allow_mod', 'ask_host'] 
+    ? ['allow_join', 'allow_mod'] 
     : ['allow_join']
 
-  return generateVideoSDKToken([...permissions, ...tokenPermissions])
+  return generateVideoSDKToken(tokenPermissions)
 }
 
 /**

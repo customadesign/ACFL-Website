@@ -426,8 +426,6 @@ export default function VideoMeeting({
   initialMicOn = true,
   initialWebcamOn = true
 }: VideoMeetingProps) {
-  const [isInWaitingRoom, setIsInWaitingRoom] = useState(!isHost)
-
   return (
     <MeetingProvider
       config={{
@@ -444,20 +442,11 @@ export default function VideoMeeting({
     >
       <MeetingConsumer>
         {() => (
-          <>
-            {isInWaitingRoom && !isHost ? (
-              <WaitingLobby
-                participantName={participantName}
-                onLeave={onMeetingEnd}
-              />
-            ) : (
-              <MeetingView
-                isHost={isHost}
-                onMeetingEnd={onMeetingEnd}
-                meetingId={meetingId}
-              />
-            )}
-          </>
+          <MeetingView
+            isHost={isHost}
+            onMeetingEnd={onMeetingEnd}
+            meetingId={meetingId}
+          />
         )}
       </MeetingConsumer>
     </MeetingProvider>
