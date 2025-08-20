@@ -218,19 +218,67 @@ function ParticipantView({ participantId }: { participantId: string }) {
 
   useEffect(() => {
     if (webcamOn && webcamStream && videoRef.current) {
+      // Stop any existing stream first
+      if (videoRef.current.srcObject) {
+        const existingStream = videoRef.current.srcObject as MediaStream
+        existingStream.getTracks().forEach(track => track.stop())
+      }
+      
       const mediaStream = new MediaStream()
       mediaStream.addTrack(webcamStream.track)
       videoRef.current.srcObject = mediaStream
-      videoRef.current.play().catch(error => console.error("video play error", error))
+      
+      // Only play if the element is not already playing
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(error => {
+          // Ignore interruption errors
+          if (error.name !== 'AbortError') {
+            console.error("video play error", error)
+          }
+        })
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount or when dependencies change
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream
+        stream.getTracks().forEach(track => track.stop())
+        videoRef.current.srcObject = null
+      }
     }
   }, [webcamStream, webcamOn])
 
   useEffect(() => {
     if (micOn && micStream && micRef.current) {
+      // Stop any existing stream first
+      if (micRef.current.srcObject) {
+        const existingStream = micRef.current.srcObject as MediaStream
+        existingStream.getTracks().forEach(track => track.stop())
+      }
+      
       const mediaStream = new MediaStream()
       mediaStream.addTrack(micStream.track)
       micRef.current.srcObject = mediaStream
-      micRef.current.play().catch(error => console.error("audio play error", error))
+      
+      // Only play if the element is not already playing
+      if (micRef.current.paused) {
+        micRef.current.play().catch(error => {
+          // Ignore interruption errors
+          if (error.name !== 'AbortError') {
+            console.error("audio play error", error)
+          }
+        })
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount or when dependencies change
+      if (micRef.current && micRef.current.srcObject) {
+        const stream = micRef.current.srcObject as MediaStream
+        stream.getTracks().forEach(track => track.stop())
+        micRef.current.srcObject = null
+      }
     }
   }, [micStream, micOn])
 
@@ -480,10 +528,34 @@ function ScreenShareView({ participantId }: { participantId: string }) {
 
   useEffect(() => {
     if (screenShareStream && screenRef.current) {
+      // Stop any existing stream first
+      if (screenRef.current.srcObject) {
+        const existingStream = screenRef.current.srcObject as MediaStream
+        existingStream.getTracks().forEach(track => track.stop())
+      }
+      
       const mediaStream = new MediaStream()
       mediaStream.addTrack(screenShareStream.track)
       screenRef.current.srcObject = mediaStream
-      screenRef.current.play().catch(error => console.error("screen share play error", error))
+      
+      // Only play if the element is not already playing
+      if (screenRef.current.paused) {
+        screenRef.current.play().catch(error => {
+          // Ignore interruption errors
+          if (error.name !== 'AbortError') {
+            console.error("screen share play error", error)
+          }
+        })
+      }
+    }
+    
+    return () => {
+      // Cleanup on unmount or when dependencies change
+      if (screenRef.current && screenRef.current.srcObject) {
+        const stream = screenRef.current.srcObject as MediaStream
+        stream.getTracks().forEach(track => track.stop())
+        screenRef.current.srcObject = null
+      }
     }
   }, [screenShareStream])
 

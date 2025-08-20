@@ -57,6 +57,8 @@ export default function MeetingChat({
   // VideoSDK PubSub for real-time chat
   const { publish, messages: pubSubMessages } = usePubSub('CHAT', {
     onMessageReceived: (data: any) => {
+      console.log('Received PubSub message:', data)
+      
       // VideoSDK sends the message with payload structure
       // data.message contains the actual message we sent
       // data.senderId contains who sent it
@@ -109,18 +111,28 @@ export default function MeetingChat({
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }
       
-      // Don't add our own messages here - they're added when sending
-      if (senderId === user?.id || senderId === 'guest') {
-        return
-      }
+      // Add message to state, avoiding duplicates
+      const currentUserId = user?.id || 'guest'
       
       setMessages(prev => {
-        // Avoid duplicates based on content and sender
+        // Skip if we just sent this exact message (it's already added locally)
+        if (senderId === currentUserId && prev.find(m => 
+          m.message === messageContent && 
+          m.sender_id === currentUserId &&
+          Math.abs(new Date(m.created_at).getTime() - Date.now()) < 1000
+        )) {
+          return prev
+        }
+        
+        // Avoid any other duplicates
         if (prev.find(m => 
           m.message === messageContent && 
           m.sender_name === senderName &&
           Math.abs(new Date(m.created_at).getTime() - new Date(chatMessage.created_at).getTime()) < 2000
-        )) return prev
+        )) {
+          return prev
+        }
+        
         return [...prev, chatMessage]
       })
       
@@ -232,6 +244,7 @@ export default function MeetingChat({
       }
       
       // Send via VideoSDK PubSub for instant real-time delivery
+      console.log('Sending message via PubSub:', messagePayload)
       publish(JSON.stringify(messagePayload), { persist: false })
       
       // Also save to Supabase if configured for persistence
