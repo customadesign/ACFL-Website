@@ -220,32 +220,33 @@ function ParticipantView({ participantId }: { participantId: string }) {
 
   useEffect(() => {
     if (webcamOn && webcamStream && videoRef.current) {
-      // Stop any existing stream first
-      if (videoRef.current.srcObject) {
-        const existingStream = videoRef.current.srcObject as MediaStream
-        existingStream.getTracks().forEach(track => track.stop())
-      }
-      
-      const mediaStream = new MediaStream()
-      mediaStream.addTrack(webcamStream.track)
-      videoRef.current.srcObject = mediaStream
-      
-      // Only play if the element is not already playing
-      if (videoRef.current.paused) {
-        videoRef.current.play().catch(error => {
-          // Ignore interruption errors
-          if (error.name !== 'AbortError') {
-            console.error("video play error", error)
-          }
-        })
+      // Check if track is still live before using it
+      if (webcamStream.track && webcamStream.track.readyState === 'live') {
+        // Just detach existing stream without stopping tracks
+        if (videoRef.current.srcObject) {
+          videoRef.current.srcObject = null
+        }
+        
+        const mediaStream = new MediaStream([webcamStream.track])
+        videoRef.current.srcObject = mediaStream
+        
+        // Only play if the element is not already playing
+        if (videoRef.current.paused) {
+          videoRef.current.play().catch(error => {
+            // Ignore interruption errors
+            if (error.name !== 'AbortError') {
+              console.error("video play error", error)
+            }
+          })
+        }
+      } else {
+        console.warn("Webcam track already ended or not available")
       }
     }
     
     return () => {
-      // Cleanup on unmount or when dependencies change
+      // Just detach stream, don't stop tracks - let VideoSDK manage them
       if (videoRef.current && videoRef.current.srcObject) {
-        const stream = videoRef.current.srcObject as MediaStream
-        stream.getTracks().forEach(track => track.stop())
         videoRef.current.srcObject = null
       }
     }
@@ -253,32 +254,33 @@ function ParticipantView({ participantId }: { participantId: string }) {
 
   useEffect(() => {
     if (micOn && micStream && micRef.current) {
-      // Stop any existing stream first
-      if (micRef.current.srcObject) {
-        const existingStream = micRef.current.srcObject as MediaStream
-        existingStream.getTracks().forEach(track => track.stop())
-      }
-      
-      const mediaStream = new MediaStream()
-      mediaStream.addTrack(micStream.track)
-      micRef.current.srcObject = mediaStream
-      
-      // Only play if the element is not already playing
-      if (micRef.current.paused) {
-        micRef.current.play().catch(error => {
-          // Ignore interruption errors
-          if (error.name !== 'AbortError') {
-            console.error("audio play error", error)
-          }
-        })
+      // Check if track is still live before using it
+      if (micStream.track && micStream.track.readyState === 'live') {
+        // Just detach existing stream without stopping tracks
+        if (micRef.current.srcObject) {
+          micRef.current.srcObject = null
+        }
+        
+        const mediaStream = new MediaStream([micStream.track])
+        micRef.current.srcObject = mediaStream
+        
+        // Only play if the element is not already playing
+        if (micRef.current.paused) {
+          micRef.current.play().catch(error => {
+            // Ignore interruption errors
+            if (error.name !== 'AbortError') {
+              console.error("audio play error", error)
+            }
+          })
+        }
+      } else {
+        console.warn("Mic track already ended or not available")
       }
     }
     
     return () => {
-      // Cleanup on unmount or when dependencies change
+      // Just detach stream, don't stop tracks - let VideoSDK manage them
       if (micRef.current && micRef.current.srcObject) {
-        const stream = micRef.current.srcObject as MediaStream
-        stream.getTracks().forEach(track => track.stop())
         micRef.current.srcObject = null
       }
     }
@@ -407,18 +409,54 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
         await unmuteMic()
       }
       
-    } catch (error) {
+    } catch (error: any) {
       console.error('VideoSDK microphone toggle failed:', error)
       
-      // Fallback to toggle method if mute/unmute fails
-      try {
-        await toggleMic()
-      } catch (fallbackError) {
-        console.error('Fallback microphone toggle also failed:', fallbackError)
-        
-        // Handle specific errors
-        if (fallbackError instanceof Error && (fallbackError.message?.includes('track ended') || fallbackError.name === 'InvalidStateError')) {
-          alert('Microphone access was lost. Please refresh the page to continue.')
+      // Handle InvalidStateError (track ended) by reacquiring mic
+      if (error.name === 'InvalidStateError' || error.message?.includes('track ended')) {
+        try {
+          console.log('Attempting to reacquire microphone due to track ended error')
+          
+          // Force re-acquire mic permission
+          const newStream = await navigator.mediaDevices.getUserMedia({ 
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true
+            }
+          })
+          
+          const [newTrack] = newStream.getAudioTracks()
+          if (newTrack && newTrack.readyState === 'live') {
+            console.log('Successfully reacquired microphone, retrying toggle')
+            
+            // Clean up old stream reference
+            if (micStreamRef.current) {
+              micStreamRef.current.getTracks().forEach(track => {
+                if (track.readyState === 'ended') {
+                  track.stop()
+                }
+              })
+            }
+            micStreamRef.current = newStream
+            
+            // Retry the toggle after a brief delay
+            await new Promise(resolve => setTimeout(resolve, 200))
+            await toggleMic()
+            
+            console.log('Successfully recovered microphone functionality')
+          }
+        } catch (getUserMediaError) {
+          console.error('Failed to reacquire microphone:', getUserMediaError)
+          alert('Microphone access was lost and could not be restored. Please refresh the page or check your microphone permissions.')
+        }
+      } else {
+        // For other errors, try fallback toggle
+        try {
+          await toggleMic()
+        } catch (fallbackError) {
+          console.error('Fallback microphone toggle also failed:', fallbackError)
+          alert('Microphone toggle failed. Please refresh the page to continue.')
         }
       }
     } finally {
@@ -573,32 +611,33 @@ function ScreenShareView({ participantId }: { participantId: string }) {
 
   useEffect(() => {
     if (screenShareStream && screenRef.current) {
-      // Stop any existing stream first
-      if (screenRef.current.srcObject) {
-        const existingStream = screenRef.current.srcObject as MediaStream
-        existingStream.getTracks().forEach(track => track.stop())
-      }
-      
-      const mediaStream = new MediaStream()
-      mediaStream.addTrack(screenShareStream.track)
-      screenRef.current.srcObject = mediaStream
-      
-      // Only play if the element is not already playing
-      if (screenRef.current.paused) {
-        screenRef.current.play().catch(error => {
-          // Ignore interruption errors
-          if (error.name !== 'AbortError') {
-            console.error("screen share play error", error)
-          }
-        })
+      // Check if track is still live before using it
+      if (screenShareStream.track && screenShareStream.track.readyState === 'live') {
+        // Just detach existing stream without stopping tracks
+        if (screenRef.current.srcObject) {
+          screenRef.current.srcObject = null
+        }
+        
+        const mediaStream = new MediaStream([screenShareStream.track])
+        screenRef.current.srcObject = mediaStream
+        
+        // Only play if the element is not already playing
+        if (screenRef.current.paused) {
+          screenRef.current.play().catch(error => {
+            // Ignore interruption errors
+            if (error.name !== 'AbortError') {
+              console.error("screen share play error", error)
+            }
+          })
+        }
+      } else {
+        console.warn("Screen share track already ended or not available")
       }
     }
     
     return () => {
-      // Cleanup on unmount or when dependencies change
+      // Just detach stream, don't stop tracks - let VideoSDK manage them
       if (screenRef.current && screenRef.current.srcObject) {
-        const stream = screenRef.current.srcObject as MediaStream
-        stream.getTracks().forEach(track => track.stop())
         screenRef.current.srcObject = null
       }
     }
