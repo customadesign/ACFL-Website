@@ -175,7 +175,7 @@ function ParticipantView({ participantId }: { participantId: string }) {
   const [isSpeaking, setIsSpeaking] = useState(false)
   
   useEffect(() => {
-    if (micStream && micOn && !isLocal) {
+    if (micStream && micOn) {
       // Create a proper MediaStream from the micStream track
       const mediaStream = new MediaStream()
       if (micStream.track) {
@@ -199,7 +199,9 @@ function ParticipantView({ participantId }: { participantId: string }) {
       const checkAudioLevel = () => {
         analyser.getByteFrequencyData(dataArray)
         const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
-        setIsSpeaking(average > 25) // Threshold for speaking detection
+        // Use different thresholds for local vs remote participants
+        const threshold = isLocal ? 15 : 25 // Lower threshold for local user
+        setIsSpeaking(average > threshold)
         
         requestAnimationFrame(checkAudioLevel)
       }
@@ -356,6 +358,8 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
 
   const [showEndConfirm, setShowEndConfirm] = useState(false)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
+  const [micToggling, setMicToggling] = useState(false)
+  const micStreamRef = useRef<MediaStream | null>(null)
 
   // Check if current user is presenting
   const isPresenting = presenterId === localParticipant?.id
@@ -388,6 +392,65 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
     }
   }
 
+  const handleMicToggle = async () => {
+    if (micToggling) return
+    
+    setMicToggling(true)
+    try {
+      // First attempt: Use VideoSDK's built-in toggle
+      await toggleMic()
+      
+    } catch (error) {
+      console.error('VideoSDK microphone toggle failed:', error)
+      
+      // Second attempt: Handle track ended error by recreating stream
+      if (error instanceof Error && (error.message?.includes('track ended') || error.name === 'InvalidStateError')) {
+        try {
+          console.log('Attempting to recover from track ended error')
+          
+          // If we're trying to unmute and the track ended, get new permission
+          if (!localMicOn) {
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+              audio: {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: true
+              } 
+            })
+            
+            // Clean up old stream
+            if (micStreamRef.current) {
+              micStreamRef.current.getTracks().forEach(track => track.stop())
+            }
+            
+            micStreamRef.current = stream
+            
+            // Try toggle again after getting new stream
+            await new Promise(resolve => setTimeout(resolve, 200))
+            await toggleMic()
+            
+            console.log('Successfully recovered microphone')
+          } else {
+            // If we're trying to mute, just force disable the tracks
+            if (micStreamRef.current) {
+              micStreamRef.current.getTracks().forEach(track => {
+                track.enabled = false
+                track.stop()
+              })
+            }
+          }
+          
+        } catch (recoveryError) {
+          console.error('Microphone recovery failed:', recoveryError)
+          // Show user-friendly error message
+          alert('Microphone access lost. Please refresh the page to continue.')
+        }
+      }
+    } finally {
+      setTimeout(() => setMicToggling(false), 500)
+    }
+  }
+
   return (
     <>
       <div className="flex items-center justify-center gap-3 p-4 bg-white border-t shadow-lg backdrop-blur-sm">
@@ -395,11 +458,18 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
         <Button
           variant={localMicOn ? "outline" : "destructive"}
           size="lg"
-          onClick={() => toggleMic()}
+          onClick={handleMicToggle}
+          disabled={micToggling}
           className="rounded-full shadow-md"
           title={localMicOn ? "Mute microphone" : "Unmute microphone"}
         >
-          {localMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+          {micToggling ? (
+            <Loader2 size={20} className="animate-spin" />
+          ) : localMicOn ? (
+            <Mic size={20} />
+          ) : (
+            <MicOff size={20} />
+          )}
         </Button>
 
         {/* Camera Control */}

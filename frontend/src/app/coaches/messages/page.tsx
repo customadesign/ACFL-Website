@@ -406,7 +406,7 @@ export default function CoachMessagesPage() {
                     <div className="text-xs text-gray-500 truncate max-w-[200px]">{c.lastBody || 'No messages yet'}</div>
                   </div>
                   {c.unreadCount > 0 && (
-                    <span className="ml-2 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
+                    <span className="mr-4 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
                   )}
                 </button>
                 <button
