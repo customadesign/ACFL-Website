@@ -350,6 +350,8 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
     toggleMic,
     toggleWebcam,
     toggleScreenShare,
+    muteMic,
+    unmuteMic,
     localMicOn,
     localWebcamOn,
     presenterId,
@@ -397,57 +399,30 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
     
     setMicToggling(true)
     try {
-      // First attempt: Use VideoSDK's built-in toggle
-      await toggleMic()
+      if (localMicOn) {
+        // Mute the microphone using VideoSDK's proper method
+        await muteMic()
+      } else {
+        // Unmute the microphone using VideoSDK's proper method
+        await unmuteMic()
+      }
       
     } catch (error) {
       console.error('VideoSDK microphone toggle failed:', error)
       
-      // Second attempt: Handle track ended error by recreating stream
-      if (error instanceof Error && (error.message?.includes('track ended') || error.name === 'InvalidStateError')) {
-        try {
-          console.log('Attempting to recover from track ended error')
-          
-          // If we're trying to unmute and the track ended, get new permission
-          if (!localMicOn) {
-            const stream = await navigator.mediaDevices.getUserMedia({ 
-              audio: {
-                echoCancellation: true,
-                noiseSuppression: true,
-                autoGainControl: true
-              } 
-            })
-            
-            // Clean up old stream
-            if (micStreamRef.current) {
-              micStreamRef.current.getTracks().forEach(track => track.stop())
-            }
-            
-            micStreamRef.current = stream
-            
-            // Try toggle again after getting new stream
-            await new Promise(resolve => setTimeout(resolve, 200))
-            await toggleMic()
-            
-            console.log('Successfully recovered microphone')
-          } else {
-            // If we're trying to mute, just force disable the tracks
-            if (micStreamRef.current) {
-              micStreamRef.current.getTracks().forEach(track => {
-                track.enabled = false
-                track.stop()
-              })
-            }
-          }
-          
-        } catch (recoveryError) {
-          console.error('Microphone recovery failed:', recoveryError)
-          // Show user-friendly error message
-          alert('Microphone access lost. Please refresh the page to continue.')
+      // Fallback to toggle method if mute/unmute fails
+      try {
+        await toggleMic()
+      } catch (fallbackError) {
+        console.error('Fallback microphone toggle also failed:', fallbackError)
+        
+        // Handle specific errors
+        if (fallbackError instanceof Error && (fallbackError.message?.includes('track ended') || fallbackError.name === 'InvalidStateError')) {
+          alert('Microphone access was lost. Please refresh the page to continue.')
         }
       }
     } finally {
-      setTimeout(() => setMicToggling(false), 500)
+      setTimeout(() => setMicToggling(false), 300)
     }
   }
 
