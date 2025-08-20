@@ -76,8 +76,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }, 3000);
     };
 
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
+    ws.onerror = () => {
+      console.warn('WebSocket connection error occurred');
     };
 
     setSocket(ws);

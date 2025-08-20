@@ -16,6 +16,7 @@ import { dbHelpers, supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
 import { io } from 'socket.io-client'
+import { usePubSub } from '@videosdk.live/react-sdk'
 
 interface MeetingChatProps {
   meetingId: string
@@ -52,6 +53,46 @@ export default function MeetingChat({
   const socketRef = useRef<ReturnType<typeof io> | null>(null)
   
   const API_URL = getApiUrl()
+  
+  // VideoSDK PubSub for real-time chat
+  const { publish, messages: pubSubMessages } = usePubSub('CHAT', {
+    onMessageReceived: (message: any) => {
+      // Parse the message if it's a string
+      let messageData = message
+      if (typeof message === 'string') {
+        try {
+          messageData = JSON.parse(message)
+        } catch (e) {
+          console.error('Failed to parse message:', e)
+          return
+        }
+      }
+      
+      // Handle incoming message from VideoSDK PubSub
+      const chatMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        meeting_id: meetingId,
+        sender_id: messageData.senderId || 'unknown',
+        sender_name: messageData.senderName || 'Unknown',
+        message: messageData.message,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      }
+      
+      setMessages(prev => {
+        // Avoid duplicates
+        if (prev.find(m => m.id === chatMessage.id)) return prev
+        return [...prev, chatMessage]
+      })
+      
+      // If chat is not visible and message is from another user, increment unread count
+      if (!isVisible && chatMessage.sender_id !== user?.id) {
+        setUnreadCount(prev => prev + 1)
+      } 
+      
+      setIsConnected(true)
+    }
+  })
 
   // Load existing messages (if Supabase is configured for persistence)
   useEffect(() => {
@@ -60,40 +101,45 @@ export default function MeetingChat({
     }
   }, [meetingId])
 
-  // Enhanced Supabase subscription for real-time chat
+  // VideoSDK PubSub connection status
+  useEffect(() => {
+    // Set connected status based on VideoSDK PubSub
+    if (meetingId) {
+      // VideoSDK PubSub connects automatically when the meeting is active
+      setTimeout(() => setIsConnected(true), 500)
+    }
+    
+    return () => {
+      setIsConnected(false)
+    }
+  }, [meetingId])
+  
+  // Optional Supabase subscription for message persistence
   useEffect(() => {
     if (!meetingId || !isSupabaseConfigured) return
 
-    setIsConnected(false)
-
     const channel = dbHelpers.subscribeMeetingChat(meetingId, (payload) => {
-      setIsConnected(true) // Connected when we start receiving updates
-      
       if (payload.eventType === 'INSERT') {
         const newMsg = payload.new as ChatMessage
+        
+        // Only add from Supabase if we haven't already received it via PubSub
         setMessages(prev => {
-          // Avoid duplicates
-          if (prev.find(m => m.id === newMsg.id)) return prev
+          if (prev.find(m => 
+            m.message === newMsg.message && 
+            m.sender_name === newMsg.sender_name &&
+            Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000
+          )) return prev
           return [...prev, newMsg]
         })
-        
-        // If chat is not visible and message is from another user, increment unread count
-        if (!isVisible && newMsg.sender_id !== user?.id) {
-          setUnreadCount(prev => prev + 1)
-        }
       }
     })
-
-    // Set connected status
-    setTimeout(() => setIsConnected(true), 1000)
 
     return () => {
       if (channel && supabase) {
         supabase.removeChannel(channel)
       }
-      setIsConnected(false)
     }
-  }, [meetingId, isVisible, user?.id])
+  }, [meetingId])
 
   // Auto-scroll to bottom
   useEffect(() => {
@@ -135,17 +181,44 @@ export default function MeetingChat({
   }
 
   const sendMessage = async () => {
-    if (!newMessage.trim() || sending || !user?.id || !isSupabaseConfigured) return
+    if (!newMessage.trim() || sending) return
 
     setSending(true)
     try {
-      // Send message via Supabase - this will trigger the real-time subscription
-      await dbHelpers.sendMeetingChatMessage(
-        meetingId,
-        user.id,
-        participantName,
-        newMessage.trim()
-      )
+      const messagePayload = {
+        senderId: user?.id || 'guest',
+        senderName: participantName,
+        message: newMessage.trim(),
+        timestamp: new Date().toISOString()
+      }
+      
+      // Send via VideoSDK PubSub for instant real-time delivery
+      publish(JSON.stringify(messagePayload), { persist: false })
+      
+      // Also save to Supabase if configured for persistence
+      if (user?.id && isSupabaseConfigured) {
+        dbHelpers.sendMeetingChatMessage(
+          meetingId,
+          user.id,
+          participantName,
+          newMessage.trim()
+        ).catch(error => {
+          console.error('Failed to persist message:', error)
+        })
+      }
+      
+      // Add message to local state immediately for sender
+      const localMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        meeting_id: meetingId,
+        sender_id: user?.id || 'guest',
+        sender_name: participantName,
+        message: newMessage.trim(),
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      }
+      
+      setMessages(prev => [...prev, localMessage])
       setNewMessage('')
     } catch (error) {
       console.error('Failed to send meeting chat message:', error)
@@ -171,10 +244,13 @@ export default function MeetingChat({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
   }
 
-  const isMyMessage = (senderId: string) => senderId === user?.id
+  const isMyMessage = (senderId: string) => {
+    if (!user?.id) return senderId === 'guest' && senderId === (user?.id || 'guest')
+    return senderId === user?.id
+  }
 
-  // Component works with or without Supabase (WebSocket provides real-time, Supabase provides persistence)
-  // If Supabase is not configured, messages will be temporary (lost on refresh)
+  // Component uses VideoSDK PubSub for instant real-time messaging
+  // Supabase provides optional persistence when configured
 
   return (
     <div className="fixed bottom-4 right-4 z-50">
@@ -289,9 +365,9 @@ export default function MeetingChat({
               </Button>
             </div>
             <div className="text-xs text-gray-500 mt-1">
-              {isSupabaseConfigured 
-                ? "Messages auto-delete after 24 hours" 
-                : "Messages are temporary for this session"
+              {isConnected 
+                ? "Real-time chat powered by VideoSDK" 
+                : "Connecting to chat..."
               }
             </div>
           </div>
