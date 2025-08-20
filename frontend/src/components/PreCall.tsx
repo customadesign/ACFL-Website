@@ -82,10 +82,14 @@ export default function PreCall({
         return
       }
       
-      // Get permissions for requested media
+      // Get permissions for requested media with HD quality
       const stream = await navigator.mediaDevices.getUserMedia({
         video: cameraEnabled ? {
-          deviceId: selectedCamera ? { exact: selectedCamera } : undefined
+          deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+          width: { ideal: 1280, min: 640 },
+          height: { ideal: 720, min: 480 },
+          frameRate: { ideal: 30, min: 15 },
+          facingMode: 'user'
         } : false,
         audio: micEnabled ? {
           deviceId: selectedMic ? { exact: selectedMic } : undefined,
@@ -201,11 +205,15 @@ export default function PreCall({
     
     if (newCameraState || micStreamRef.current) {
       if (newCameraState) {
-        // Re-enable camera - need to get new stream
+        // Re-enable camera - need to get new stream with HD quality
         try {
           const constraints: MediaStreamConstraints = {
             video: {
-              deviceId: selectedCamera ? { exact: selectedCamera } : undefined
+              deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+              width: { ideal: 1280, min: 640 },
+              height: { ideal: 720, min: 480 },
+              frameRate: { ideal: 30, min: 15 },
+              facingMode: 'user'
             }
           }
           

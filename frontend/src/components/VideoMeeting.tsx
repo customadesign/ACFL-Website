@@ -653,7 +653,9 @@ export default function VideoMeeting({
         name: participantName,
         mode: 'CONFERENCE',
         multiStream: true,
-        debugMode: process.env.NODE_ENV === 'development'
+        debugMode: process.env.NODE_ENV === 'development',
+        // Video quality settings
+        maxResolution: 'hd'
       }}
       token={token}
       joinWithoutUserInteraction={true}

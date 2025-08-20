@@ -56,39 +56,78 @@ export default function MeetingChat({
   
   // VideoSDK PubSub for real-time chat
   const { publish, messages: pubSubMessages } = usePubSub('CHAT', {
-    onMessageReceived: (message: any) => {
-      // Parse the message if it's a string
-      let messageData = message
-      if (typeof message === 'string') {
-        try {
-          messageData = JSON.parse(message)
-        } catch (e) {
-          console.error('Failed to parse message:', e)
-          return
+    onMessageReceived: (data: any) => {
+      // VideoSDK sends the message with payload structure
+      // data.message contains the actual message we sent
+      // data.senderId contains who sent it
+      // data.senderName contains the sender's display name
+      
+      let messageContent = ''
+      let senderId = ''
+      let senderName = ''
+      
+      // If data.message exists, it's the actual payload we sent
+      if (data.message) {
+        // Parse our custom payload from data.message
+        if (typeof data.message === 'string') {
+          try {
+            const parsed = JSON.parse(data.message)
+            messageContent = parsed.message || ''
+            senderId = parsed.senderId || data.senderId || 'unknown'
+            senderName = parsed.senderName || data.senderName || 'Unknown'
+          } catch (e) {
+            // If parsing fails, treat it as plain text
+            messageContent = data.message
+            senderId = data.senderId || 'unknown'
+            senderName = data.senderName || 'Unknown'
+          }
+        } else {
+          messageContent = data.message.message || data.message
+          senderId = data.message.senderId || data.senderId || 'unknown'
+          senderName = data.message.senderName || data.senderName || 'Unknown'
         }
+      } else {
+        // Fallback for different message structure
+        messageContent = data.text || data.content || ''
+        senderId = data.senderId || 'unknown'
+        senderName = data.senderName || 'Unknown'
+      }
+      
+      if (!messageContent) {
+        console.warn('Received empty message:', data)
+        return
       }
       
       // Handle incoming message from VideoSDK PubSub
       const chatMessage: ChatMessage = {
         id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         meeting_id: meetingId,
-        sender_id: messageData.senderId || 'unknown',
-        sender_name: messageData.senderName || 'Unknown',
-        message: messageData.message,
+        sender_id: senderId,
+        sender_name: senderName,
+        message: messageContent,
         created_at: new Date().toISOString(),
         expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }
       
+      // Don't add our own messages here - they're added when sending
+      if (senderId === user?.id || senderId === 'guest') {
+        return
+      }
+      
       setMessages(prev => {
-        // Avoid duplicates
-        if (prev.find(m => m.id === chatMessage.id)) return prev
+        // Avoid duplicates based on content and sender
+        if (prev.find(m => 
+          m.message === messageContent && 
+          m.sender_name === senderName &&
+          Math.abs(new Date(m.created_at).getTime() - new Date(chatMessage.created_at).getTime()) < 2000
+        )) return prev
         return [...prev, chatMessage]
       })
       
       // If chat is not visible and message is from another user, increment unread count
-      if (!isVisible && chatMessage.sender_id !== user?.id) {
+      if (!isVisible) {
         setUnreadCount(prev => prev + 1)
-      } 
+      }
       
       setIsConnected(true)
     }
