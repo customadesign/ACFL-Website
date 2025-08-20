@@ -176,8 +176,19 @@ function ParticipantView({ participantId }: { participantId: string }) {
   
   useEffect(() => {
     if (micStream && micOn && !isLocal) {
+      // Create a proper MediaStream from the micStream track
+      const mediaStream = new MediaStream()
+      if (micStream.track) {
+        mediaStream.addTrack(micStream.track)
+      } else {
+        // If micStream doesn't have a track property, it might already be a MediaStream
+        console.warn('micStream format unexpected, skipping audio visualization')
+        setIsSpeaking(false)
+        return
+      }
+      
       const audioContext = new AudioContext()
-      const source = audioContext.createMediaStreamSource(micStream as unknown as MediaStream)
+      const source = audioContext.createMediaStreamSource(mediaStream)
       const analyser = audioContext.createAnalyser()
       analyser.fftSize = 256
       source.connect(analyser)
