@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import Footer from "@/components/Footer"
 import NavbarLandingPage  from '@/components/NavbarLandingPage';
 
-export default function ClientRegister() {
+function ClientRegisterForm() {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -156,11 +156,6 @@ export default function ClientRegister() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white ">
-      <nav>
-        <NavbarLandingPage />
-      </nav>
-      <div className="w-full max-w-md mx-auto my-28">
        <Card>
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
@@ -394,6 +389,25 @@ export default function ClientRegister() {
             </div>
           </CardContent>
         </Card>
+  );
+}
+
+export default function ClientRegister() {
+  return (
+    <div className="flex flex-col min-h-screen bg-white ">
+      <nav>
+        <NavbarLandingPage />
+      </nav>
+      <div className="w-full max-w-md mx-auto my-28">
+        <Suspense fallback={
+          <Card>
+            <CardContent className="p-8">
+              <div className="text-center">Loading...</div>
+            </CardContent>
+          </Card>
+        }>
+          <ClientRegisterForm />
+        </Suspense>
       </div>
       <Footer />
     </div>
