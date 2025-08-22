@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
+import { useAuth } from '@/contexts/AuthContext';
 import Footer from "@/components/Footer"
 import NavbarLandingPage  from '@/components/NavbarLandingPage';
 
@@ -22,7 +23,19 @@ export default function ClientRegister() {
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [loading, setLoading] = useState(false);
+  const [hasAssessmentData, setHasAssessmentData] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const fromAssessment = searchParams.get('from') === 'assessment';
+  const { login } = useAuth();
+
+  useEffect(() => {
+    // Check if there's assessment data in localStorage
+    const assessmentData = localStorage.getItem('assessmentData');
+    if (assessmentData) {
+      setHasAssessmentData(true);
+    }
+  }, []);
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -123,13 +136,18 @@ export default function ClientRegister() {
         throw new Error(data.message || 'Registration failed');
       }
 
-      // Store the token
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
+      // Auto-login the user after successful registration
+      await login(formData.email, formData.password, true);
 
-      // Redirect to client dashboard
-      router.push('/clients');
+      // Check if user came from assessment and has assessment data
+      const assessmentData = localStorage.getItem('assessmentData');
+      if (fromAssessment && assessmentData) {
+        // Redirect to search-coaches with assessment flag
+        router.push('/clients/search-coaches?from=assessment');
+      } else {
+        // Redirect to client dashboard
+        router.push('/clients');
+      }
     } catch (err: any) {
       setErrors({ submit: err.message || 'Registration failed' });
     } finally {
@@ -154,7 +172,10 @@ export default function ClientRegister() {
             </div>
             <CardTitle className="text-2xl font-bold">Create Client Account</CardTitle>
             <CardDescription>
-              Join ACT Coaching For Life as a client and find your perfect coach
+              {fromAssessment && hasAssessmentData
+                ? 'Create your account to see your personalized coach matches'
+                : 'Join ACT Coaching For Life as a client and find your perfect coach'
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>

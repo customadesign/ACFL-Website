@@ -385,17 +385,17 @@ function SearchCoachesContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {/* Page Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Your Saved Coaches
+          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+            Find Your Perfect Coach
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            View and manage your favorite coaches. Use the search tab to find new coaches to save.
+          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+            Discover qualified coaches who match your needs and preferences
           </p>
         </div>
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8">
-          <div className="flex bg-gray-100 rounded-lg p-1">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
             <button
               onClick={() => {
                 setActiveTab('saved');
@@ -405,8 +405,8 @@ function SearchCoachesContent() {
               }}
               className={`px-6 py-2 rounded-md font-medium transition-colors ${
                 activeTab === 'saved'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <Heart className="w-4 h-4 inline mr-2" />
@@ -424,8 +424,8 @@ function SearchCoachesContent() {
               }}
               className={`px-6 py-2 rounded-md font-medium transition-colors ${
                 activeTab === 'search'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <Search className="w-4 h-4 inline mr-2" />
@@ -469,26 +469,26 @@ function SearchCoachesContent() {
 
         {/* Search Form - Only show when on search tab */}
         {activeTab === 'search' && showForm && (
-          <Card className="mb-8 shadow-lg border-0">
+          <Card className="mb-8 shadow-lg border-0 bg-white dark:bg-gray-800">
             <CardContent className="p-6">
               {/* Modern Search Header */}
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 rounded-lg">
-                    <SlidersHorizontal className="w-6 h-6 text-blue-600" />
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                    <SlidersHorizontal className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Smart Search Filters</h2>
-                    <p className="text-sm text-gray-600">Find coaches that match your preferences</p>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Smart Search Filters</h2>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Find coaches that match your preferences</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="flex items-center space-x-2 bg-white hover:bg-gray-50"
+                  className="flex items-center space-x-2 bg-white dark:text-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
                 >
-                  {showAdvancedFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                  <span>{showAdvancedFilters ? "Hide" : "Show"} Advanced</span>
+                  {showAdvancedFilters ? <ChevronUp className="w-4 h-4 dark:text-white" /> : <ChevronDown className="w-4 h-4 dark:text-white" />}
+                  <span className="text-gray-900 dark:text-white">{showAdvancedFilters ? "Hide" : "Show"} Advanced</span>
                 </Button>
               </div>
 
@@ -501,7 +501,7 @@ function SearchCoachesContent() {
                     placeholder="Search by name, specialty, or description..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-3 text-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-10 pr-4 py-3 text-lg border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
                   />
                   {searchQuery && (
                     <button
@@ -518,7 +518,7 @@ function SearchCoachesContent() {
 
               {/* Price Range Slider */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   Price Range: ${priceRange[0]} - ${priceRange[1]}
                 </label>
                 <div className="flex items-center space-x-4">
@@ -527,15 +527,15 @@ function SearchCoachesContent() {
                     placeholder="Min"
                     value={priceRange[0]}
                     onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                    className="w-24"
+                    className="w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
-                  <span className="text-gray-500">to</span>
+                  <span className="text-gray-500 dark:text-gray-400">to</span>
                   <Input
                     type="number"
                     placeholder="Max"
                     value={priceRange[1]}
                     onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
-                    className="w-24"
+                    className="w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   />
                 </div>
               </div>
@@ -571,7 +571,7 @@ function SearchCoachesContent() {
                                   />
                                   <label
                                     htmlFor={concern.id}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
                                   >
                                     {concern.label}
                                   </label>
@@ -608,7 +608,7 @@ function SearchCoachesContent() {
                                   variant="outline"
                                   role="combobox"
                                   aria-expanded={openLocation}
-                                  className="w-full justify-between bg-white"
+                                  className="w-full justify-between bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                 >
                                   {field.value ? (STATE_NAMES as any)[field.value] || "Select your state" : "Select your state"}
                                   <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -699,7 +699,7 @@ function SearchCoachesContent() {
                                   />
                                   <label
                                     htmlFor={option.id}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
                                   >
                                     {option.label}
                                   </label>
@@ -727,7 +727,7 @@ function SearchCoachesContent() {
                             </FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-white">
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
                                   <SelectValue placeholder="Any gender" />
                                 </SelectTrigger>
                               </FormControl>
@@ -756,7 +756,7 @@ function SearchCoachesContent() {
                             </FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
-                                <SelectTrigger className="bg-white">
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
                                   <SelectValue placeholder="Any language" />
                                 </SelectTrigger>
                               </FormControl>
@@ -785,7 +785,7 @@ function SearchCoachesContent() {
                             </FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value || 'any'}>
                               <FormControl>
-                                <SelectTrigger className="bg-white">
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
                                   <SelectValue placeholder="Any" />
                                 </SelectTrigger>
                               </FormControl>
@@ -829,7 +829,7 @@ function SearchCoachesContent() {
                                     />
                                     <label
                                       htmlFor={modality.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
                                     >
                                       {modality.label}
                                     </label>
@@ -845,7 +845,7 @@ function SearchCoachesContent() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                  <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
                     <div className="flex items-center space-x-4">
                       <Button
                         type="button"
@@ -874,7 +874,7 @@ function SearchCoachesContent() {
                     </div>
                     <Button
                       type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-3"
                     >
                       <Search className="w-4 h-4 mr-2" />
                       Find Matches
@@ -890,10 +890,10 @@ function SearchCoachesContent() {
         <div className="mb-8">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h2 className="text-2xl font-bold text-gray-900">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                 {activeTab === 'saved' ? 'Your Saved Coaches' : 'Available Coaches'}
               </h2>
-              <p className="text-gray-600">
+              <p className="text-gray-600 dark:text-gray-400">
                 {activeTab === 'saved' 
                   ? `${savedCoaches.length} saved coach${savedCoaches.length !== 1 ? 'es' : ''}`
                   : `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''} found`
@@ -906,21 +906,21 @@ function SearchCoachesContent() {
                 onClick={() => setShowForm(!showForm)}
                 className="flex items-center space-x-2"
               >
-                {showForm ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
-                <span>{showForm ? 'Hide' : 'Show'} Filters</span>
+                {showForm ? <X className="w-4 h-4 dark:text-white" /> : <Filter className="w-4 h-4 dark:text-white" />}
+                <span className="text-gray-900 dark:text-white">{showForm ? 'Hide' : 'Show'} Filters</span>
               </Button>
             )}
           </div>
 
           {/* No Results Message */}
           {filteredCoaches.length === 0 && !isLoading && (
-            <Card className="p-12 text-center">
+            <Card className="p-12 text-center bg-white dark:bg-gray-800">
               <div className="max-w-md mx-auto">
                 {activeTab === 'saved' ? (
                   <>
                     <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Saved Coaches Yet</h3>
-                    <p className="text-gray-600 mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Saved Coaches Yet</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
                       You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
                     </p>
                     <Button
@@ -939,8 +939,8 @@ function SearchCoachesContent() {
                 ) : (
                   <>
                     <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">No Coaches Found</h3>
-                    <p className="text-gray-600 mb-4">
+                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Coaches Found</h3>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
                       Try adjusting your search criteria or filters to find more matches.
                     </p>
                     <Button

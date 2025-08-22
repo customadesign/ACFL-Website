@@ -1,11 +1,13 @@
 "use client"
 
+import { useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Logo from "@/components/Logo"
 import QuickAssessment from "@/components/QuickAssessment"
+import AssessmentCompleteModal from "@/components/AssessmentCompleteModal"
 import GradientText from "@/components/GradientText"
 import CountUp from "@/components/CountUp"
 import SpotlightCard from "@/components/SpotlightCard"
@@ -30,9 +32,10 @@ import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 export default function HomePage() {
   const router = useRouter()
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false)
 
   const handleAssessmentComplete = (data: any) => {
-    // Store the assessment data for later use after login
+    // Store the assessment data for later use after login/registration
     localStorage.setItem('assessmentData', JSON.stringify({
       areaOfConcern: data.areaOfConcern || [],
       location: data.location || '',
@@ -41,8 +44,8 @@ export default function HomePage() {
       completedAt: new Date().toISOString()
     }))
     
-    // Redirect to login page with search-coaches as the redirect destination
-    router.push('/login?from=assessment&redirect=/clients/search-coaches')
+    // Show modal for user to choose login or register
+    setShowAssessmentModal(true)
   }
 
   return (
@@ -859,6 +862,12 @@ export default function HomePage() {
       </section>
 
      <Footer />
+     
+     {/* Assessment Complete Modal */}
+     <AssessmentCompleteModal 
+       isOpen={showAssessmentModal}
+       onClose={() => setShowAssessmentModal(false)}
+     />
   </div>
   )
 }

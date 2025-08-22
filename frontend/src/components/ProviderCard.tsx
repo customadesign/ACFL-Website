@@ -191,9 +191,9 @@ export const ProviderCard = ({
 
   return (
     <div className={cn(
-      "bg-white rounded-2xl shadow-xl hover:shadow-2xl p-6 transition-all duration-300 hover:transform hover:scale-[1.01] border-0",
+      "bg-white dark:bg-gray-800 rounded-2xl shadow-xl hover:shadow-2xl p-6 transition-all duration-300 hover:transform hover:scale-[1.01] border-0",
       "flex flex-col md:flex-row md:items-start md:space-x-6 md:space-y-0 space-y-4",
-      isBestMatch && "ring-2 ring-blue-500 ring-opacity-50 bg-gradient-to-br from-blue-50 to-white"
+      isBestMatch && "ring-2 ring-blue-500 dark:ring-blue-400 ring-opacity-50 bg-gradient-to-br from-blue-50 dark:from-blue-900/20 to-white dark:to-gray-800"
     )}>
       {/* Left side - Main info (takes more space on large screens) */}
       <div className="flex-1 md:flex-[2]">
@@ -206,7 +206,7 @@ export const ProviderCard = ({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4">
           <div className="flex-1">
             <Link href={`/clients/coach-profile/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer transition-colors">{name}</h3>
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">{name}</h3>
             </Link>
             <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-3 py-1 rounded-xl inline-block">
               <span className="text-sm font-semibold">{matchScore}% Match</span>
@@ -214,18 +214,18 @@ export const ProviderCard = ({
           </div>
         </div>
         
-        <div className="bg-gray-50 rounded-xl p-4 mb-4">
-          <p className="text-sm text-gray-700 leading-relaxed">{bio}</p>
+        <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-4">
+          <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{bio}</p>
         </div>
         
         <div className="space-y-3 md:space-y-2">
           <div>
-            <p className="text-sm font-medium">Specialties</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Specialties</p>
             <div className="flex flex-wrap gap-1 mt-1">
               {(initialSpecialties || []).map((specialty) => (
                 <span
                   key={specialty}
-                  className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md"
+                  className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-md"
                 >
                   {specialty}
                 </span>
@@ -233,7 +233,7 @@ export const ProviderCard = ({
               {showAllSpecialties && (remainingSpecialties || []).map((specialty) => (
                 <span
                   key={specialty}
-                  className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded-md"
+                  className="bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs px-2 py-1 rounded-md"
                 >
                   {specialty}
                 </span>
@@ -242,7 +242,7 @@ export const ProviderCard = ({
             {hasMoreSpecialties && (
               <button
                 onClick={() => setShowAllSpecialties(!showAllSpecialties)}
-                className="flex items-center gap-1 text-sm text-blue-600 mt-1 hover:text-blue-800"
+                className="flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 mt-1 hover:text-blue-800 dark:hover:text-blue-300"
               >
                 {showAllSpecialties ? (
                   <>Show less <ChevronUp className="h-4 w-4" /></>
@@ -255,12 +255,12 @@ export const ProviderCard = ({
 
           {safeModalities.length > 0 && (
             <div>
-              <p className="text-sm font-medium">Therapy Modalities</p>
+              <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Therapy Modalities</p>
               <div className="flex flex-wrap gap-1 mt-1">
                 {(initialModalities || []).map((modality) => (
                   <span
                     key={modality}
-                    className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md"
+                    className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs px-2 py-1 rounded-md"
                   >
                     {modality}
                   </span>
@@ -268,7 +268,7 @@ export const ProviderCard = ({
                 {showAllModalities && (remainingModalities || []).map((modality) => (
                   <span
                     key={modality}
-                    className="bg-purple-50 text-purple-700 text-xs px-2 py-1 rounded-md"
+                    className="bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 text-xs px-2 py-1 rounded-md"
                   >
                     {modality}
                   </span>
@@ -277,7 +277,7 @@ export const ProviderCard = ({
               {safeModalities.length > 4 && (
                 <button
                   onClick={() => setShowAllModalities(!showAllModalities)}
-                  className="flex items-center gap-1 text-sm text-purple-700 mt-1 hover:text-purple-900"
+                  className="flex items-center gap-1 text-sm text-purple-700 dark:text-purple-400 mt-1 hover:text-purple-900 dark:hover:text-purple-300"
                 >
                   {showAllModalities ? (
                     <>Show less <ChevronUp className="h-4 w-4" /></>
@@ -290,12 +290,12 @@ export const ProviderCard = ({
           )}
           
           <div>
-            <p className="text-sm font-medium">Languages</p>
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Languages</p>
             <div className="flex flex-wrap gap-1 mt-1">
               {(languages || []).map((language) => (
                 <span
                   key={language}
-                  className="bg-[#F4B183]/20 text-[#96551C] text-xs px-2 py-1 rounded-md border border-[#F4B183]/30"
+                  className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-xs px-2 py-1 rounded-md border border-orange-200 dark:border-orange-800"
                 >
                   {language}
                 </span>
@@ -307,26 +307,26 @@ export const ProviderCard = ({
 
       {/* Right side - Provider details and actions (sidebar on large screens) */}
       <div className="md:flex-1 md:min-w-0 space-y-4">
-        <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4">
-          <p className="text-sm font-medium mb-3">Provider Details</p>
+        <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-750 rounded-xl p-4">
+          <p className="text-sm font-medium mb-3 text-gray-800 dark:text-gray-200">Provider Details</p>
           <div className="grid grid-cols-2 md:grid-cols-1 gap-3">
             <div>
-              <p className="text-xs text-gray-500">Experience</p>
-              <p className="text-sm font-medium">{experience}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Experience</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{experience}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Rating</p>
-              <p className="text-sm font-medium">⭐ {rating}/5</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Rating</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">⭐ {rating}/5</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Session Rate</p>
-              <p className="text-sm font-medium">{sessionRate}</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Session Rate</p>
+              <p className="text-sm font-medium text-gray-900 dark:text-white">{sessionRate}</p>
             </div>
             <div>
-              <p className="text-xs text-gray-500">Session Format</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Session Format</p>
               <div className="flex gap-1 mt-1">
                 {virtualAvailable && (
-                  <span className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded-md">
+                  <span className="bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs px-2 py-1 rounded-md">
                     Video Sessions
                   </span>
                 )}
@@ -338,7 +338,7 @@ export const ProviderCard = ({
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row md:flex-col gap-2">
           <Link href={`/clients/coach-profile/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`} className="flex-1">
-            <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
+            <button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white font-medium py-2.5 px-4 rounded-lg transition-colors">
               View Full Profile
             </button>
           </Link>
@@ -346,8 +346,8 @@ export const ProviderCard = ({
             onClick={handleSaveToggle}
             className={`flex items-center justify-center gap-2 py-2.5 px-4 rounded-lg border transition-colors font-medium ${
               isSaved
-                ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                : 'bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-600'
             }`}
             title={isSaved ? 'Remove from saved' : 'Save coach'}
           >
