@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeetingContainer from '@/components/MeetingContainer';
+import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import axios from 'axios';
@@ -40,6 +41,7 @@ function AppointmentsContent() {
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [showMeeting, setShowMeeting] = useState(false);
@@ -76,13 +78,13 @@ function AppointmentsContent() {
     socket.on('appointment:new', (data) => {
       console.log('New appointment:', data);
       // Refresh appointments list
-      loadAppointments();
+      loadAppointments(true);
     });
 
     socket.on('appointment:booked', (data) => {
       console.log('Appointment booked:', data);
       // Refresh appointments list
-      loadAppointments();
+      loadAppointments(true);
     });
 
     socket.on('appointment:status_updated', (data) => {
@@ -145,14 +147,19 @@ function AppointmentsContent() {
     return 'Session ended';
   };
 
-  const loadAppointments = async () => {
+  const loadAppointments = async (isRefresh: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isRefresh) {
+        setLoading(true);
+      }
       // Always get all appointments for proper tab counting
       const response = await apiGet(`${API_URL}/api/client/appointments?filter=all`);
 
       if (response.data.success) {
         setAppointments(response.data.data);
+        if (initialLoad) {
+          setInitialLoad(false);
+        }
       }
     } catch (error) {
       console.error('Error loading appointments:', error);
@@ -201,31 +208,31 @@ function AppointmentsContent() {
       case 'scheduled':
         return {
           label: 'Scheduled',
-          color: 'bg-blue-100 text-blue-800'
+          color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
         };
       
       case 'confirmed':
         return {
           label: 'Confirmed', 
-          color: 'bg-yellow-100 text-yellow-800'
+          color: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300'
         };
       
       case 'cancelled':
         return {
           label: 'Cancelled',
-          color: 'bg-red-100 text-red-800'
+          color: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300'
         };
       
       case 'completed':
         return {
           label: 'Completed',
-          color: 'bg-green-100 text-green-800'
+          color: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'
         };
       
       default:
         return {
           label: (appointment.status as string).charAt(0).toUpperCase() + (appointment.status as string).slice(1),
-          color: 'bg-gray-100 text-gray-800'
+          color: 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-300'
         };
     }
   };
@@ -268,35 +275,24 @@ function AppointmentsContent() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading appointments...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Remove the loading screen - we'll show skeleton in the main render
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">My Appointments</h1>
-        <p className="text-gray-600">Manage your coaching sessions and appointments</p>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
+        <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
       </div>
 
       {error && (
-        <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-md">
           {error}
         </div>
       )}
 
       {/* Filter Tabs */}
       <div className="mb-6">
-        <div className="border-b border-gray-200">
+        <div className="border-b border-gray-200 dark:border-gray-700">
           <nav className="-mb-px flex space-x-8">
             {[
               { key: 'upcoming', label: 'Upcoming (Scheduled)' },
@@ -309,12 +305,12 @@ function AppointmentsContent() {
                 onClick={() => setFilter(tab.key as any)}
                 className={`py-2 px-1 border-b-2 font-medium text-sm ${
                   filter === tab.key
-                    ? 'border-blue-500 text-blue-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
+                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
                 {tab.label}
-                <span className="ml-2 text-xs bg-gray-100 text-gray-600 py-1 px-2 rounded-full">
+                <span className="ml-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-1 px-2 rounded-full">
                   {appointments.filter(apt => {
                     const appointmentDate = new Date(apt.starts_at);
                     const today = new Date();
@@ -342,13 +338,13 @@ function AppointmentsContent() {
       {/* Sort Controls - Show for all tabs */}
       <div className="mb-6">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700">Sort by:</span>
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort by:</span>
           <div className="flex gap-2">
             <Button
               variant={sortBy === 'dateAdded' ? 'default' : 'outline'}
               size="sm"
               onClick={() => toggleSort('dateAdded')}
-              className="flex items-center gap-1"
+              className={`flex items-center gap-1 ${sortBy === 'dateAdded' ? '' : 'dark:text-white'}`}
             >
               Date Added
               {sortBy === 'dateAdded' && (
@@ -360,7 +356,7 @@ function AppointmentsContent() {
               variant={sortBy === 'name' ? 'default' : 'outline'}
               size="sm"
               onClick={() => toggleSort('name')}
-              className="flex items-center gap-1"
+              className={`flex items-center gap-1 ${sortBy === 'name' ? '' : 'dark:text-white'}`}
             >
               Coach Name
               {sortBy === 'name' && (
@@ -374,7 +370,9 @@ function AppointmentsContent() {
 
       {/* Appointments List */}
       <div className="space-y-4">
-        {(() => {
+        {initialLoad ? (
+          <AppointmentCardSkeleton count={5} />
+        ) : (() => {
           // Filter appointments based on selected tab - status-only approach
           const filteredAppointments = appointments.filter(apt => {
             switch (filter) {
@@ -396,7 +394,7 @@ function AppointmentsContent() {
           return sortedAppointments.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
-                <p className="text-gray-500">No {filter} appointments found</p>
+                <p className="text-gray-500 dark:text-gray-400">No {filter} appointments found</p>
               </CardContent>
             </Card>
           ) : (
@@ -407,10 +405,10 @@ function AppointmentsContent() {
                   <div className="flex-1">
                     <div className="flex items-start justify-between mb-2">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                           Coach {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'TBD'}
                         </h3>
-                        <p className="text-sm text-gray-500">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
                       </div>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
                         {getStatusDisplay(appointment).label}
@@ -419,26 +417,26 @@ function AppointmentsContent() {
                     
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Date & Time</p>
-                        <p className="text-sm text-gray-900">
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Date & Time</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">
                           {new Date(appointment.starts_at).toLocaleDateString()} at {' '}
                           {new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Duration</p>
-                        <p className="text-sm text-gray-900">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500">Session Type</p>
-                        <p className="text-sm text-gray-900">Virtual Session</p>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Session Type</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100">Virtual Session</p>
                       </div>
                     </div>
 
                     {appointment.notes && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-500">Notes</p>
-                        <p className="text-sm text-gray-900 mt-1">{appointment.notes}</p>
+                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Notes</p>
+                        <p className="text-sm text-gray-900 dark:text-gray-100 mt-1">{appointment.notes}</p>
                       </div>
                     )}
 
@@ -457,7 +455,7 @@ function AppointmentsContent() {
                             <Video className="mr-2 h-4 w-4" /> Join Session
                           </Button>
                         )}
-                        <span className="text-xs text-gray-600 self-center">{getCountdownLabel(appointment)}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 self-center">{getCountdownLabel(appointment)}</span>
                         <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`}>
                           <Button
                             variant="outline"

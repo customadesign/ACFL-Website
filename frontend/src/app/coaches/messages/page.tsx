@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import CoachPageWrapper from '@/components/CoachPageWrapper'
+import MessagesSkeleton from '@/components/MessagesSkeleton'
 import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -43,6 +44,7 @@ export default function CoachMessagesPage() {
   const [activePartnerId, setActivePartnerId] = useState<string | null>(null)
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true)
   const [sending, setSending] = useState(false)
   const [text, setText] = useState('')
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
@@ -58,6 +60,9 @@ export default function CoachMessagesPage() {
     if (data.success) {
       setConversations(data.data)
       if (!activePartnerId && data.data.length > 0) setActivePartnerId(data.data[0].partnerId)
+      if (initialLoad) {
+        setInitialLoad(false)
+      }
     }
   }
 
@@ -181,6 +186,7 @@ export default function CoachMessagesPage() {
     socket.on('message:new', async (msg: Message) => {
       const partnerId = activePartnerId
       const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
+      
       if (involvesActive) {
         setMessages(prev => [...prev, msg])
         if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
@@ -391,19 +397,22 @@ export default function CoachMessagesPage() {
 
   return (
     <CoachPageWrapper title="Messages" description="Chat with your clients">
+      {initialLoad ? (
+        <MessagesSkeleton />
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="border rounded-lg bg-white overflow-hidden h-[70vh] flex flex-col">
-          <div className="p-3 border-b font-semibold">Conversations</div>
+        <div className="border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden h-[70vh] flex flex-col">
+          <div className="p-3 border-b dark:border-gray-700 font-semibold text-gray-900 dark:text-white">Conversations</div>
           <div className="flex-1 overflow-y-auto">
             {conversations.map(c => (
               <div key={c.partnerId} className="relative group">
                 <button
                   onClick={() => setActivePartnerId(c.partnerId)}
-                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 flex items-center justify-between ${activePartnerId === c.partnerId ? 'bg-blue-50' : ''}`}
+                  className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
                 >
                   <div>
-                    <div className="font-medium">{c.partnerName}</div>
-                    <div className="text-xs text-gray-500 truncate max-w-[200px]">{c.lastBody || 'No messages yet'}</div>
+                    <div className="font-medium text-gray-900 dark:text-white">{c.partnerName}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{c.lastBody || 'No messages yet'}</div>
                   </div>
                   {c.unreadCount > 0 && (
                     <span className="mr-4 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
@@ -421,13 +430,13 @@ export default function CoachMessagesPage() {
           </div>
         </div>
 
-        <div className="md:col-span-2 border rounded-lg bg-white flex flex-col overflow-hidden h-[70vh]">
-          <div className="p-3 border-b">
-            <div className="font-semibold">{activePartner?.partnerName || 'Select a conversation'}</div>
+        <div className="md:col-span-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden h-[70vh]">
+          <div className="p-3 border-b dark:border-gray-700">
+            <div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
           </div>
-          <div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50">
+          <div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50 dark:bg-gray-900">
             {!activePartnerId && (
-              <div className="flex items-center justify-center h-full text-gray-500">
+              <div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
                 <p>Select a conversation to start messaging</p>
               </div>
             )}
@@ -435,25 +444,33 @@ export default function CoachMessagesPage() {
               const isMine = m.sender_id === (user?.id || '')
               const hasAttachment = m.attachment_url && m.attachment_name && !m.deleted_for_everyone
               const isDeleted = m.deleted_for_everyone
+              const messageLength = m.body ? m.body.length : 0
+              const getMaxWidth = () => {
+                if (hasAttachment) return 'max-w-[75%]'
+                if (messageLength > 100) return 'max-w-[75%]'
+                if (messageLength > 50) return 'max-w-[60%]'
+                if (messageLength > 20) return 'max-w-[45%]'
+                return 'max-w-[30%]'
+              }
               return (
-                <div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''} group relative`}>
+                <div key={m.id} className={`${getMaxWidth()} ${isMine ? 'ml-auto' : ''} group relative w-fit`}>
                   <div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${
                     isDeleted 
-                      ? 'bg-gray-100 text-gray-500 italic' 
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic' 
                       : isMine 
                         ? 'bg-blue-600 text-white' 
-                        : 'bg-white text-gray-900'
+                        : 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
                   }`}>
                     {m.body && <div>{m.body}</div>}
                     {hasAttachment && (
-                      <div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-500' : 'border-gray-300 bg-gray-100'}`}>
+                      <div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-500' : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600'}`}>
                         <div className="flex items-center gap-2">
                           <Paperclip size={16} />
                           <span className="truncate">{m.attachment_name}</span>
                           <a
                             href={m.attachment_url || '#'}
                             download={m.attachment_name || undefined}
-                            className={`p-1 hover:opacity-80 ${isMine ? 'text-blue-100' : 'text-gray-600'}`}
+                            className={`p-1 hover:opacity-80 ${isMine ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}
                             title="Download"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -462,7 +479,7 @@ export default function CoachMessagesPage() {
                           </a>
                         </div>
                         {m.attachment_size && (
-                          <div className={`text-xs mt-1 ${isMine ? 'text-blue-200' : 'text-gray-500'}`}>
+                          <div className={`text-xs mt-1 ${isMine ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
                             {(m.attachment_size / 1024 / 1024).toFixed(2)} MB
                           </div>
                         )}
@@ -480,15 +497,15 @@ export default function CoachMessagesPage() {
                             const dropdown = e.currentTarget.nextElementSibling as HTMLElement
                             dropdown.classList.toggle('hidden')
                           }}
-                          className="p-1 rounded hover:bg-gray-200 text-gray-400 hover:text-gray-600"
+                          className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           <MoreVertical size={14} />
                         </button>
-                        <div className="hidden absolute right-0 top-6 bg-white border rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
+                        <div className="hidden absolute right-0 top-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
                           {isMine && (
                             <button
                               onClick={() => deleteMessageForEveryone(m.id)}
-                              className="w-full text-left px-3 py-1 text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
+                              className="w-full text-left px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
                             >
                               <Trash2 size={12} />
                               Delete for everyone
@@ -496,7 +513,7 @@ export default function CoachMessagesPage() {
                           )}
                           <button
                             onClick={() => hideMessageForMe(m.id)}
-                            className="w-full text-left px-3 py-1 text-sm hover:bg-gray-50 text-gray-700 flex items-center gap-2"
+                            className="w-full text-left px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
                           >
                             <EyeOff size={12} />
                             Delete for me
@@ -506,7 +523,7 @@ export default function CoachMessagesPage() {
                     </div>
                   )}
                   
-                  <div className="text-[10px] text-gray-500 mt-1 flex items-center gap-2">
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
                     <span>{new Date(m.created_at).toLocaleString()}</span>
                     {isMine && m.read_at && (
                       <span className="text-blue-600">Seen</span>
@@ -516,13 +533,13 @@ export default function CoachMessagesPage() {
               )
             })}
           </div>
-          <div className="p-3 border-t">
+          <div className="p-3 border-t dark:border-gray-700">
             {selectedFile && (
-              <div className="mb-2 p-2 bg-gray-100 rounded flex items-center justify-between">
+              <div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Paperclip size={16} />
-                  <span className="text-sm">{selectedFile.name}</span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-sm text-gray-900 dark:text-gray-100">{selectedFile.name}</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">
                     ({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
                   </span>
                 </div>
@@ -549,7 +566,7 @@ export default function CoachMessagesPage() {
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-2 text-gray-500 hover:text-gray-700 border rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                 title={activePartnerId ? "Attach file" : "Select a conversation first"}
                 disabled={!activePartnerId}
               >
@@ -559,7 +576,7 @@ export default function CoachMessagesPage() {
                 value={text}
                 onChange={e => setText(e.target.value)}
                 placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-                className="flex-1"
+                className="flex-1 dark:text-white"
                 disabled={!activePartnerId}
                 onKeyDown={e => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -571,7 +588,7 @@ export default function CoachMessagesPage() {
               <Button 
                 onClick={handleSend} 
                 disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)} 
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white"
               >
                 {uploading ? 'Uploading...' : sending ? 'Sending...' : 'Send'}
               </Button>
@@ -579,6 +596,7 @@ export default function CoachMessagesPage() {
           </div>
         </div>
       </div>
+      )}
     </CoachPageWrapper>
   )
 }

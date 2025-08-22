@@ -36,8 +36,8 @@ export default function MeetingContainer({
   const [error, setError] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
 
-  const participantName = user?.firstName && user?.lastName 
-    ? `${user.firstName} ${user.lastName}`
+  const participantName = user?.first_name && user?.last_name 
+    ? `${user.first_name} ${user.last_name}`
     : user?.email || 'Participant'
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {

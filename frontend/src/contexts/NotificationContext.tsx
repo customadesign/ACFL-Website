@@ -4,6 +4,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-toastify';
 import { MessageCircle, Calendar, Bell } from 'lucide-react';
+import { io, Socket } from 'socket.io-client';
+import { getApiUrl } from '@/lib/api';
 
 interface NotificationContextType {
   unreadMessageCount: number;
@@ -28,7 +30,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [appointmentNotificationCount, setAppointmentNotificationCount] = useState(0);
-  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
   const { user, isAuthenticated } = useAuth();
 
   useEffect(() => {
@@ -36,92 +38,74 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Initialize WebSocket connection
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.hostname}:${process.env.NODE_ENV === 'production' ? 443 : 4000}/ws`;
+    // Initialize Socket.IO connection
+    const API_URL = getApiUrl();
+    const socketConnection = io(API_URL, {
+      transports: ['websocket'],
+      auth: { token: `Bearer ${localStorage.getItem('token')}` }
+    });
+
+    socketConnection.on('connect', () => {
+      console.log('Socket.IO connected for notifications');
+    });
+
+    // Listen for new messages
+    socketConnection.on('message:new', (msg: any) => {
+      // Only show notification if message is not from current user
+      if (msg.sender_id !== user?.id) {
+        const senderName = msg.sender_name || (user.role === 'coach' ? 'Client' : 'Coach');
+        
+        toast(
+          <div className="flex items-start space-x-3 p-2">
+            {/* Icon */}
+            <div className="flex-shrink-0">
+              <MessageCircle className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-1" />
+            </div>
     
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log('WebSocket connected for notifications');
-      // Send authentication
-      ws.send(JSON.stringify({
-        type: 'auth',
-        token: localStorage.getItem('token')
-      }));
-      
-      // Join user-specific room
-      ws.send(JSON.stringify({
-        type: 'join_room',
-        room: `user_${user.id}`
-      }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data) as NotificationData;
-        handleNotification(data);
-      } catch (error) {
-        console.error('Error parsing WebSocket message:', error);
+            {/* Content */}
+            <div className="min-w-0 flex-1">
+              <div className="font-medium text-gray-900 dark:text-white">
+                {senderName}
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
+                {msg.body}
+              </div>
+            </div>
+          </div>,
+          {
+            position: "top-right",
+            autoClose: 6000,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            className: "custom-toast",
+          }
+        );
+        
+        
+        setUnreadMessageCount(prev => prev + 1);
       }
-    };
+    });
 
-    ws.onclose = () => {
-      console.log('WebSocket disconnected');
-      // Attempt to reconnect after 3 seconds
-      setTimeout(() => {
-        if (isAuthenticated && user) {
-          // Recreate connection
-        }
-      }, 3000);
-    };
-
-    ws.onerror = () => {
-      console.warn('WebSocket connection error occurred');
-    };
-
-    setSocket(ws);
-
-    return () => {
-      ws.close();
-    };
-  }, [isAuthenticated, user]);
-
-  const handleNotification = (notification: NotificationData) => {
-    if (notification.type === 'message') {
-      setUnreadMessageCount(prev => prev + 1);
-      
-      // Show toast notification
-      toast.info(
-        <div className="flex items-start space-x-3">
-          <MessageCircle className="w-5 h-5 text-blue-500 mt-1" />
-          <div>
-            <div className="font-medium">{notification.senderName || 'New Message'}</div>
-            <div className="text-sm text-gray-600">{notification.content}</div>
+    // Listen for new appointments
+    socketConnection.on('appointment:new', (data: any) => {
+      toast.success(
+        <div className="flex items-start space-x-3 p-2">
+          <div className="flex-shrink-0">
+            <Calendar className="w-5 h-5 text-green-500 dark:text-green-400 mt-1" />
           </div>
-        </div>,
-        {
-          position: "top-right",
-          autoClose: 5000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        }
-      );
-    } else if (notification.type === 'appointment') {
-      setAppointmentNotificationCount(prev => prev + 1);
-      
-      // Show toast notification
-      toast.info(
-        <div className="flex items-start space-x-3">
-          <Calendar className="w-5 h-5 text-green-500 mt-1" />
-          <div>
-            <div className="font-medium">{notification.title}</div>
-            <div className="text-sm text-gray-600">{notification.content}</div>
-            {notification.appointmentTime && (
-              <div className="text-xs text-gray-500 mt-1">
-                {new Date(notification.appointmentTime).toLocaleString()}
+          <div className="min-w-0 flex-1">
+            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+              {user?.role === 'coach' 
+                ? (data.client_name ? `Appointment with ${data.client_name}` : 'New appointment received')
+                : (data.coach_name ? `Appointment with ${data.coach_name}` : 'New appointment confirmed')
+              }
+            </div>
+            {data.starts_at && (
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
+                <Bell className="w-3 h-3 mr-1" />
+                {new Date(data.starts_at).toLocaleDateString()} at {new Date(data.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
               </div>
             )}
           </div>
@@ -133,10 +117,28 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           closeOnClick: true,
           pauseOnHover: true,
           draggable: true,
+          className: "custom-toast",
         }
       );
-    }
-  };
+      
+      setAppointmentNotificationCount(prev => prev + 1);
+    });
+
+    socketConnection.on('disconnect', () => {
+      console.log('Socket.IO disconnected');
+    });
+
+    socketConnection.on('connect_error', (error) => {
+      console.warn('Socket.IO connection error:', error);
+    });
+
+    setSocket(socketConnection);
+
+    return () => {
+      socketConnection.close();
+    };
+  }, [isAuthenticated, user]);
+
 
   const markMessagesAsRead = () => {
     setUnreadMessageCount(0);
@@ -150,9 +152,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!isAuthenticated || !user) return;
 
     try {
-      const apiUrl = process.env.NODE_ENV === 'production' 
-        ? 'https://therapist-matcher-backend.onrender.com'
-        : 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       
       // Fetch current unread counts from the API
       const response = await fetch(`${apiUrl}/api/notifications/counts`, {

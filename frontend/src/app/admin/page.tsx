@@ -121,7 +121,7 @@ export default function AdminDashboard() {
               <h1 className="text-xl font-semibold text-gray-900">ACT Coaching For Life - Admin Dashboard</h1>
             </div>
             <div className="hidden sm:flex items-center space-x-4">
-              <span className="text-sm text-gray-500">Welcome, {user?.firstName} {user?.lastName}</span>
+              <span className="text-sm text-gray-500">Welcome, {user?.first_name} {user?.last_name}</span>
               <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                 {user?.role}
               </span>

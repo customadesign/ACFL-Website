@@ -2,26 +2,24 @@
 
 import { useState, useEffect } from 'react'
 import CoachPageWrapper from '@/components/CoachPageWrapper'
+import DashboardListSkeleton from '@/components/DashboardListSkeleton'
 import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
   Calendar, 
   Users, 
-  ChartBar,
-  Star,
   Clock,
   ArrowRight,
   RefreshCw,
-  User,
-  ChevronLeft,
-  ChevronRight
+  User
 } from 'lucide-react'
 import axios from 'axios'
 
 export default function CoachDashboardPage() {
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [initialLoad, setInitialLoad] = useState(true)
   const [error, setError] = useState('')
   const [appointmentsPage, setAppointmentsPage] = useState(1)
   const [clientsPage, setClientsPage] = useState(1)
@@ -33,9 +31,11 @@ export default function CoachDashboardPage() {
     loadDashboardData()
   }, [])
 
-  const loadDashboardData = async () => {
+  const loadDashboardData = async (isRefresh: boolean = false) => {
     try {
-      setIsLoading(true)
+      if (!isRefresh) {
+        setIsLoading(true)
+      }
       const response = await axios.get(`${API_URL}/api/coach/dashboard`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -50,26 +50,16 @@ export default function CoachDashboardPage() {
       setError('Failed to load dashboard data')
     } finally {
       setIsLoading(false)
+      setInitialLoad(false)
     }
   }
 
-  if (isLoading) {
-    return (
-      <CoachPageWrapper title="Dashboard" description="Overview of your coaching practice">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading dashboard...</p>
-          </div>
-        </div>
-      </CoachPageWrapper>
-    )
-  }
+  // Remove full screen loading - we now use skeleton loading
 
   if (error) {
     return (
       <CoachPageWrapper title="Dashboard" description="Overview of your coaching practice">
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+        <div className="bg-destructive/10 border border-destructive/20 text-destructive px-4 py-3 rounded-md">
           {error}
         </div>
       </CoachPageWrapper>
@@ -84,7 +74,7 @@ export default function CoachDashboardPage() {
     <CoachPageWrapper title="Dashboard" description="Overview of your coaching practice">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-6">
+          <Card className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-blue-100 rounded-lg">
                 <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -92,13 +82,13 @@ export default function CoachDashboardPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Today's Appointments</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.todayAppointments || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Today's Appointments</p>
+                <p className="text-2xl font-bold text-foreground">{stats.todayAppointments || 0}</p>
               </div>
             </div>
-          </div>
+          </Card>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <Card className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
                 <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -106,13 +96,13 @@ export default function CoachDashboardPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.activeClients || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
+                <p className="text-2xl font-bold text-foreground">{stats.activeClients || 0}</p>
               </div>
             </div>
-          </div>
+          </Card>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <Card className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-purple-100 rounded-lg">
                 <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -120,13 +110,13 @@ export default function CoachDashboardPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">This Week Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.weekSessions || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">This Week Sessions</p>
+                <p className="text-2xl font-bold text-foreground">{stats.weekSessions || 0}</p>
               </div>
             </div>
-          </div>
+          </Card>
           
-          <div className="bg-white rounded-lg shadow p-6">
+          <Card className="p-6">
             <div className="flex items-center">
               <div className="p-2 bg-yellow-100 rounded-lg">
                 <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -134,11 +124,11 @@ export default function CoachDashboardPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Rating</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.rating || 0}</p>
+                <p className="text-sm font-medium text-muted-foreground">Rating</p>
+                <p className="text-2xl font-bold text-foreground">{stats.rating || 0}</p>
               </div>
             </div>
-          </div>
+          </Card>
         </div>
 
         {/* Two Column Layout with Fixed Height Cards */}
@@ -154,7 +144,7 @@ export default function CoachDashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={loadDashboardData}
+                  onClick={() => loadDashboardData(true)}
                   disabled={isLoading}
                   className="h-8 px-3"
                 >
@@ -163,18 +153,8 @@ export default function CoachDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-3 animate-pulse">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {initialLoad ? (
+                <DashboardListSkeleton count={3} type="appointment" />
               ) : (
                 <div className="space-y-4">
                   {todayAppointments.length === 0 ? (
@@ -187,15 +167,15 @@ export default function CoachDashboardPage() {
                     todayAppointments
                       .slice((appointmentsPage - 1) * pageSize, appointmentsPage * pageSize)
                       .map((appointment: any) => (
-                        <div key={appointment.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                        <div key={appointment.id} className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
                           <div className="p-2 bg-blue-100 rounded-full">
                             <User className="w-5 h-5 text-blue-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-gray-900 dark:text-white">
                               {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-300">
                               {new Date(appointment.scheduled_at || appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                             <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
@@ -254,7 +234,7 @@ export default function CoachDashboardPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={loadDashboardData}
+                  onClick={() => loadDashboardData(true)}
                   disabled={isLoading}
                   className="h-8 px-3"
                 >
@@ -263,18 +243,8 @@ export default function CoachDashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto">
-              {isLoading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-3 animate-pulse">
-                      <div className="w-10 h-10 bg-gray-200 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+              {initialLoad ? (
+                <DashboardListSkeleton count={3} type="client" />
               ) : (
                 <div className="space-y-4">
                   {recentClients.length === 0 ? (
@@ -287,15 +257,15 @@ export default function CoachDashboardPage() {
                     recentClients
                       .slice((clientsPage - 1) * pageSize, clientsPage * pageSize)
                       .map((session: any) => (
-                        <div key={session.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded-lg transition-colors cursor-pointer">
+                        <div key={session.id} className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
                           <div className="p-2 bg-green-100 rounded-full">
                             <User className="w-5 h-5 text-green-600" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900">
+                            <p className="font-medium text-gray-900 dark:text-white">
                               {session.clients ? `${session.clients.first_name} ${session.clients.last_name}` : 'Client'}
                             </p>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-500 dark:text-gray-300">
                               Last session: {new Date(session.scheduled_at || session.starts_at).toLocaleDateString()}
                             </p>
                             {session.clients?.users?.email && (

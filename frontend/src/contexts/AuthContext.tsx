@@ -9,8 +9,8 @@ interface User {
   id: string;
   email: string;
   role: 'client' | 'coach' | 'admin';
-  firstName?: string;
-  lastName?: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 interface AuthContextType {
@@ -241,6 +241,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.warn('Could not delete axios default headers:', error);
     }
+    
+    // Reset theme to light
+    localStorage.setItem('theme', 'light');
+    document.documentElement.classList.remove('dark');
     
     // Clear user
     setUser(null);

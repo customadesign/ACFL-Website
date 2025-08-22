@@ -55,12 +55,12 @@ function LoginForm() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white ">
+    <div className="flex flex-col min-h-screen bg-white">
       <nav>
         <NavbarLandingPage />
       </nav>
       <div className="w-full max-w-md mx-auto my-28">
-        <Card>
+        <Card className="bg-white">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
               <img 
@@ -96,7 +96,7 @@ function LoginForm() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                   placeholder="Enter your email"
                 />
               </div>
@@ -112,7 +112,7 @@ function LoginForm() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
                   placeholder="Enter your password"
                 />
               </div>

@@ -12,8 +12,8 @@ export default function CoachPageWrapper({ children, title, description }: Coach
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-          <p className="text-gray-600 mt-2">{description}</p>
+          <h1 className="text-3xl font-bold text-foreground">{title}</h1>
+          <p className="text-muted-foreground mt-2">{description}</p>
         </div>
         
         {/* Page Content */}

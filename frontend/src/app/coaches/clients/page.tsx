@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { X, MessageCircle, User, Calendar, Clock, FileText } from 'lucide-react';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
+import ClientCardSkeleton from '@/components/ClientCardSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
@@ -30,6 +31,7 @@ export default function MyClientsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
   const [loading, setLoading] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [error, setError] = useState('');
   const [showDetailsModal, setShowDetailsModal] = useState(false);
@@ -43,9 +45,11 @@ export default function MyClientsPage() {
     loadClients();
   }, []);
 
-  const loadClients = async () => {
+  const loadClients = async (isRefresh: boolean = false) => {
     try {
-      setLoading(true);
+      if (!isRefresh) {
+        setLoading(true);
+      }
       const response = await axios.get(`${API_URL}/api/coach/clients`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -60,6 +64,7 @@ export default function MyClientsPage() {
       setError('Failed to load clients');
     } finally {
       setLoading(false);
+      setInitialLoad(false);
     }
   };
 
@@ -114,18 +119,7 @@ export default function MyClientsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <CoachPageWrapper title="My Clients" description="Manage and view your client relationships">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading clients...</p>
-          </div>
-        </div>
-      </CoachPageWrapper>
-    );
-  }
+  // Remove full screen loading - we now use skeleton loading
 
   return (
     <CoachPageWrapper title="My Clients" description="Manage and view your client relationships">
@@ -175,8 +169,8 @@ export default function MyClientsPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{clients.length}</p>
+                <p className="text-sm font-medium text-muted-foreground">Total Clients</p>
+                <p className="text-2xl font-bold text-foreground">{clients.length}</p>
               </div>
             </div>
           </CardContent>
@@ -191,8 +185,8 @@ export default function MyClientsPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Active Clients</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
+                <p className="text-2xl font-bold text-foreground">
                   {clients.filter(c => c.status === 'active').length}
                 </p>
               </div>
@@ -209,8 +203,8 @@ export default function MyClientsPage() {
                 </svg>
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">
+                <p className="text-sm font-medium text-muted-foreground">Total Sessions</p>
+                <p className="text-2xl font-bold text-foreground">
                   {clients.reduce((sum, client) => sum + client.totalSessions, 0)}
                 </p>
               </div>
@@ -220,22 +214,25 @@ export default function MyClientsPage() {
       </div>
 
       {/* Clients List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {filteredClients.length === 0 ? (
-          <Card className="col-span-2">
-            <CardContent className="text-center py-12">
-              <p className="text-gray-500">No clients found</p>
-            </CardContent>
-          </Card>
-        ) : (
-          filteredClients.map((client) => (
+      {initialLoad ? (
+        <ClientCardSkeleton count={6} />
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {filteredClients.length === 0 ? (
+            <Card className="col-span-2 bg-card border-border">
+              <CardContent className="text-center py-12">
+                <p className="text-muted-foreground">No clients found</p>
+              </CardContent>
+            </Card>
+          ) : (
+            filteredClients.map((client) => (
             <Card key={client.id} className="hover:shadow-lg transition-shadow cursor-pointer">
               <CardContent className="p-6">
                 <div className="flex justify-between items-start mb-4">
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">{client.name}</h3>
-                    <p className="text-sm text-gray-500">{client.email}</p>
-                    <p className="text-sm text-gray-500">{client.phone}</p>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{client.name}</h3>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">{client.email}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-300">{client.phone}</p>
                   </div>
                   <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusColor(client.status)}`}>
                     {client.status}
@@ -244,25 +241,25 @@ export default function MyClientsPage() {
 
                 <div className="grid grid-cols-2 gap-4 mb-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Total Sessions</p>
-                    <p className="text-sm text-gray-900">{client.totalSessions}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Total Sessions</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{client.totalSessions}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Client Since</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Client Since</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">
                       {new Date(client.startDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Last Session</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Last Session</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">
                       {client.lastSession ? new Date(client.lastSession).toLocaleDateString() : 'No sessions yet'}
                     </p>
                   </div>
                   {client.nextSession && (
                     <div>
-                      <p className="text-sm font-medium text-gray-500">Next Session</p>
-                      <p className="text-sm text-gray-900">
+                      <p className="text-sm font-medium text-gray-500 dark:text-white">Next Session</p>
+                      <p className="text-sm text-gray-900 dark:text-gray-300">
                         {new Date(client.nextSession).toLocaleDateString()}
                       </p>
                      
@@ -271,7 +268,7 @@ export default function MyClientsPage() {
                 </div>
 
                 <div className="mb-4">
-                  <p className="text-sm font-medium text-gray-500 mb-1">Areas of Focus</p>
+                  <p className="text-sm font-medium text-gray-500 mb-1 dark:text-white">Areas of Focus</p>
                   <div className="flex flex-wrap gap-1">
                     {client.nextSessionFocus && (
                       <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">{client.nextSessionFocus}</span>
@@ -281,15 +278,15 @@ export default function MyClientsPage() {
 
                 {client.notes && (
                   <div className="mb-4">
-                    <p className="text-sm font-medium text-gray-500">Notes</p>
-                    <p className="text-sm text-gray-900 mt-1">{client.notes}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Notes</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300 mt-1">{client.notes}</p>
                   </div>
                 )}
 
                 <div className="flex space-x-2 mb-2">
                   <Button
                     onClick={() => handleViewDetails(client)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 dark:text-white"
                     size="sm"
                   >
                     <User className="w-4 h-4 mr-1" />
@@ -309,12 +306,13 @@ export default function MyClientsPage() {
             </Card>
           ))
         )}
-      </div>
+        </div>
+      )}
 
       {/* Client Details Modal */}
       {showDetailsModal && selectedClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
               <CardTitle className="text-xl font-semibold">
                 Client Details - {selectedClient.name}
@@ -331,22 +329,22 @@ export default function MyClientsPage() {
             <CardContent className="space-y-6">
               {/* Contact Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Contact Information</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 dark:text-white">Contact Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Name</p>
-                    <p className="text-sm text-gray-900">{selectedClient.name}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Name</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{selectedClient.name}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Email</p>
-                    <p className="text-sm text-gray-900">{selectedClient.email}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Email</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{selectedClient.email}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Phone</p>
-                    <p className="text-sm text-gray-900">{selectedClient.phone || 'Not provided'}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Phone</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{selectedClient.phone || 'Not provided'}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Status</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Status</p>
                     <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedClient.status)}`}>
                       {selectedClient.status}
                     </span>
@@ -356,28 +354,28 @@ export default function MyClientsPage() {
 
               {/* Session Information */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Session History</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 dark:text-white">Session History</h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Total Sessions</p>
-                    <p className="text-sm text-gray-900">{selectedClient.totalSessions}</p>
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Total Sessions</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{selectedClient.totalSessions}</p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Client Since</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Client Since</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">
                       {new Date(selectedClient.startDate).toLocaleDateString()}
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Last Session</p>
-                    <p className="text-sm text-gray-900">
+                    <p className="text-sm font-medium text-gray-500 dark:text-white">Last Session</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">
                       {selectedClient.lastSession ? new Date(selectedClient.lastSession).toLocaleDateString() : 'No sessions yet'}
                     </p>
                   </div>
                   {selectedClient.nextSession && (
                     <div className="md:col-span-3">
-                      <p className="text-sm font-medium text-gray-500">Next Session</p>
-                      <p className="text-sm text-gray-900 flex items-center">
+                      <p className="text-sm font-medium text-gray-500 dark:text-white">Next Session</p>
+                      <p className="text-sm text-gray-900 dark:text-gray-300 flex items-center">
                         <Calendar className="w-4 h-4 mr-1" />
                         {new Date(selectedClient.nextSession).toLocaleDateString()} at{' '}
                         {new Date(selectedClient.nextSession).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -389,7 +387,7 @@ export default function MyClientsPage() {
 
               {/* Areas of Focus */}
               <div>
-                <h3 className="text-lg font-medium text-gray-900 mb-3">Areas of Focus</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-3 dark:text-white">Areas of Focus</h3>
                 <div className="flex flex-wrap gap-2">
                   {selectedClient.nextSessionFocus && (
                     <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full">
@@ -402,9 +400,9 @@ export default function MyClientsPage() {
               {/* Notes */}
               {selectedClient.notes && (
                 <div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-3">Notes</h3>
+                  <h3 className="text-lg font-medium text-gray-900 mb-3 dark:text-white">Notes</h3>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-900">{selectedClient.notes}</p>
+                    <p className="text-sm text-gray-900 dark:text-gray-300">{selectedClient.notes}</p>
                   </div>
                 </div>
               )}
@@ -416,7 +414,7 @@ export default function MyClientsPage() {
                     setShowDetailsModal(false);
                     handleSendMessage(selectedClient);
                   }}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 dark:text-white"
                 >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Send Message
@@ -453,18 +451,18 @@ export default function MyClientsPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                   Message *
                 </label>
                 <textarea
                   value={messageContent}
                   onChange={(e) => setMessageContent(e.target.value)}
                   placeholder="Type your message here..."
-                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:text-black"
                   rows={4}
                   maxLength={1000}
                 />
-                <div className="text-xs text-gray-500 mt-1">
+                <div className="text-xs text-gray-500 mt-1 dark:text-gray-300">
                   {messageContent.length}/1000 characters
                 </div>
               </div>
@@ -480,9 +478,9 @@ export default function MyClientsPage() {
                 <Button
                   onClick={handleSendMessageSubmit}
                   disabled={sendingMessage || !messageContent.trim()}
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 dark:text-white"
                 >
-                  <MessageCircle className="w-4 h-4 mr-2" />
+                  <MessageCircle className="w-4 h-4 mr-2 dark:text-white" />
                   {sendingMessage ? 'Sending...' : 'Send Message'}
                 </Button>
               </div>

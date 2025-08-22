@@ -6,12 +6,14 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { Checkbox } from '@/components/ui/checkbox';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
+import ProfileCardSkeleton from '@/components/ProfileCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import axios from 'axios';
 import { availabilityOptions, therapyModalityOptions, genderIdentityOptions } from '@/constants/formOptions';
 import { STATE_NAMES } from '@/constants/states';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
+import { RefreshCw } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -37,6 +39,7 @@ export default function CoachProfilePage() {
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [initialLoad, setInitialLoad] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [openLocation, setOpenLocation] = useState(false);
@@ -76,14 +79,22 @@ export default function CoachProfilePage() {
     loadStats();
   }, []);
 
+  const refreshData = async () => {
+    setLoading(true);
+    await Promise.all([loadProfile(true), loadStats(true)]);
+    setLoading(false);
+  };
+
   // Debug: Monitor availability state changes
   useEffect(() => {
     console.log('Availability options state changed:', profileData.availability_options);
   }, [profileData.availability_options]);
 
-  const loadProfile = async () => {
+  const loadProfile = async (isRefresh: boolean = false) => {
     try {
-      setLoadingProfile(true);
+      if (!isRefresh) {
+        setLoadingProfile(true);
+      }
       const response = await axios.get(`${API_URL}/api/coach/profile`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -153,10 +164,11 @@ export default function CoachProfilePage() {
       setError('Failed to load profile data');
     } finally {
       setLoadingProfile(false);
+      setInitialLoad(false);
     }
   };
 
-  const loadStats = async () => {
+  const loadStats = async (isRefresh: boolean = false) => {
     try {
       const response = await axios.get(`${API_URL}/api/coach/profile/stats`, {
         headers: {
@@ -330,18 +342,7 @@ export default function CoachProfilePage() {
     }
   };
 
-  if (loadingProfile) {
-    return (
-      <CoachPageWrapper title="My Profile" description="Manage your professional profile and availability">
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading profile...</p>
-          </div>
-        </div>
-      </CoachPageWrapper>
-    );
-  }
+  // Remove full page loading - we now use skeleton loading
 
   return (
     <CoachPageWrapper title="My Profile" description="Manage your professional profile and availability">
@@ -378,7 +379,7 @@ export default function CoachProfilePage() {
             </div>
             <button
               onClick={() => setError('')}
-              className="text-red-600 hover:text-red-800 ml-4 flex-shrink-0"
+              className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200 ml-4 flex-shrink-0"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -387,83 +388,102 @@ export default function CoachProfilePage() {
           </div>
         )}
 
-      {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Clients</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalClients}</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Overview with Refresh Button */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-lg font-semibold text-foreground">Profile Overview</h2>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={refreshData}
+            disabled={loading}
+            className="h-8 px-3 dark:text-white"
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 dark:text-white ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+        </div>
         
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="bg-card border-border">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Total Clients</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalClients}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Sessions</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.totalSessions}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-card border-border">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Total Sessions</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalSessions}</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-                </svg>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-card border-border">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Average Rating</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.averageRating}</p>
+                </div>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Average Rating</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.averageRating}</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="bg-card border-border">
+            <CardContent className="p-6">
+              <div className="flex items-center">
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Completion Rate</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.completionRate}%</p>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Completion Rate</p>
-                <p className="text-2xl font-bold text-gray-900">{stats.completionRate}%</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Profile Form */}
-      <Card>
+      {initialLoad ? (
+        <ProfileCardSkeleton type="form" />
+      ) : (
+      <Card className="bg-card border-border">
         <CardHeader>
           <div className="flex justify-between items-center">
             <div>
               <CardTitle>Profile Information</CardTitle>
-              <CardDescription>Update your professional details and preferences</CardDescription>
+              <CardDescription className='dark:text-gray-300'>Update your professional details and preferences</CardDescription>
             </div>
             {!editing ? (
-              <Button onClick={() => setEditing(true)} className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={() => setEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
                 Edit Profile
               </Button>
             ) : (
@@ -471,7 +491,7 @@ export default function CoachProfilePage() {
                 <Button
                   onClick={handleSave}
                   disabled={saving}
-                  className="bg-green-600 hover:bg-green-700 flex items-center"
+                  className="bg-green-600 hover:bg-green-700 flex items-center dark:text-white"
                 >
                   {saving ? (
                     <>
@@ -498,6 +518,7 @@ export default function CoachProfilePage() {
                   }}
                   variant="outline"
                   disabled={saving}
+                  className="dark:text-white"
                 >
                   Cancel
                 </Button>
@@ -508,7 +529,7 @@ export default function CoachProfilePage() {
         <CardContent className="space-y-6">
                       {/* Required Fields Note */}
             {editing && (
-              <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
+              <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 px-4 py-3 rounded-md">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -523,7 +544,7 @@ export default function CoachProfilePage() {
 
             {/* Validation Warning */}
             {editing && (
-              <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md">
+              <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-800 text-yellow-800 dark:text-yellow-300 px-4 py-3 rounded-md">
                 <div className="flex items-center">
                   <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
@@ -537,7 +558,7 @@ export default function CoachProfilePage() {
 
             {/* Form Validation Status */}
             {editing && (
-              <div className="bg-gray-50 border border-gray-200 text-gray-700 px-4 py-3 rounded-md">
+              <div className="bg-background border border-border text-foreground px-4 py-3 rounded-md">
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">Form Validation Status:</span>
                   <div className="flex items-center space-x-4">
@@ -562,10 +583,10 @@ export default function CoachProfilePage() {
             )}
           
           {/* Availability Toggle */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-4 bg-background border border-border rounded-lg">
             <div>
-              <h3 className="font-medium text-gray-900">Availability Status</h3>
-              <p className="text-sm text-gray-500">Toggle your availability for new clients</p>
+              <h3 className="font-medium text-foreground">Availability Status</h3>
+              <p className="text-sm text-muted-foreground">Toggle your availability for new clients</p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -576,7 +597,7 @@ export default function CoachProfilePage() {
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-              <span className="ml-3 text-sm font-medium text-gray-900">
+              <span className="ml-3 text-sm font-medium text-foreground">
                 {profileData.isAvailable ? 'Available' : 'Not Available'}
               </span>
             </label>
@@ -584,20 +605,20 @@ export default function CoachProfilePage() {
 
           {/* Session Availability Options */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Session Types Available</h3>
-            <p className="text-sm text-gray-600 mb-4">Select the types of sessions you offer to clients</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Session Types Available</h3>
+            <p className="text-sm text-gray-600 mb-4 dark:text-gray-300">Select the types of sessions you offer to clients</p>
             
             <div className="grid grid-cols-1 gap-4">
               {/* Video Sessions Only */}
-              <div className="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                 <div>
                   <div className="flex items-center space-x-2">
                     <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                     </svg>
-                    <h4 className="font-medium text-gray-900">Video Sessions</h4>
+                    <h4 className="font-medium text-gray-900 dark:text-green-100">Video Sessions</h4>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1">Online video calls via secure platform</p>
+                  <p className="text-xs text-gray-600 dark:text-green-200 mt-1">Online video calls via secure platform</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input
@@ -615,8 +636,8 @@ export default function CoachProfilePage() {
 
           {/* Time Availability Display/Edit */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Time Availability</h3>
-            <p className="text-sm text-gray-600 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Time Availability</h3>
+            <p className="text-sm text-gray-600 mb-4 dark:text-gray-300">
               {editing 
                 ? "Select the times when you're available for sessions" 
                 : "Your current availability for sessions"
@@ -685,7 +706,7 @@ export default function CoachProfilePage() {
                       />
                       <label
                         htmlFor={option.id}
-                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                        className="text-sm font-medium text-gray-700 cursor-pointer dark:text-gray-300"
                       >
                         {option.label} (Debug: {isChecked ? 'checked' : 'unchecked'})
                       </label>
@@ -699,16 +720,16 @@ export default function CoachProfilePage() {
                   profileData.availability_options.map((availabilityId) => {
                     const option = availabilityOptions.find(opt => opt.id === availabilityId);
                     return option ? (
-                      <div key={availabilityId} className="flex items-center space-x-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                      <div key={availabilityId} className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                         <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span className="text-sm font-medium text-gray-700">{option.label}</span>
+                        <span className="text-sm font-medium text-gray-700 dark:text-green-100">{option.label}</span>
                       </div>
                     ) : null;
                   })
                 ) : (
-                  <div className="text-sm text-gray-500 italic">No availability times set</div>
+                  <div className="text-sm text-muted-foreground italic">No availability times set</div>
                 )}
               </div>
             )}
@@ -716,10 +737,10 @@ export default function CoachProfilePage() {
 
           {/* Personal Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Personal Information</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1  dark:text-gray-300 ">
                   First Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -729,11 +750,11 @@ export default function CoachProfilePage() {
                   onChange={handleChange}
                   disabled={!editing}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
                   Last Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -743,11 +764,11 @@ export default function CoachProfilePage() {
                   onChange={handleChange}
                   disabled={!editing}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
                   Email <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -757,28 +778,28 @@ export default function CoachProfilePage() {
                   onChange={handleChange}
                   disabled={!editing}
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Phone</label>
                 <input
                   type="tel"
                   name="phone"
                   value={profileData.phone}
                   onChange={handleChange}
                   disabled={!editing}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Gender Identity</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Gender Identity</label>
                 {editing ? (
                   <Select
                     value={profileData.genderIdentity ? profileData.genderIdentity : 'not_specified'}
                     onValueChange={(value) => setProfileData(prev => ({ ...prev, genderIdentity: value === 'not_specified' ? '' : value }))}
                   >
-                    <SelectTrigger className="w-full bg-white">
+                    <SelectTrigger className="w-full bg-background text-foreground">
                       <SelectValue placeholder="Select gender identity" />
                     </SelectTrigger>
                     <SelectContent>
@@ -791,7 +812,7 @@ export default function CoachProfilePage() {
                     </SelectContent>
                   </Select>
                 ) : (
-                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
+                  <div className="w-full px-3 py-2 bg-background border border-gray-300 rounded-md text-foreground">
                     {profileData.genderIdentity
                       ? (genderIdentityOptions.find(o => o.value === profileData.genderIdentity)?.label || profileData.genderIdentity)
                       : 'Not specified'}
@@ -799,7 +820,7 @@ export default function CoachProfilePage() {
                 )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Location</label>
                 {editing ? (
                   <Popover
                     modal={false}
@@ -812,7 +833,7 @@ export default function CoachProfilePage() {
                     <PopoverTrigger asChild>
                       <button
                         type="button"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-white text-left flex items-center justify-between"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md bg-background text-foreground text-left flex items-center justify-between"
                       >
                         <span>
                           {profileData.location && profileData.location !== 'custom' && profileData.location !== 'none'
@@ -836,7 +857,7 @@ export default function CoachProfilePage() {
                         />
                         <div className="max-h-[300px] overflow-y-auto">
                           <div
-                            className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${profileData.location === 'none' ? 'bg-accent' : ''}`}
+                            className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent  ${profileData.location === 'none' ? 'bg-accent' : ''}`}
                             onPointerDown={(e) => {
                               e.preventDefault()
                               setProfileData(prev => ({ ...prev, location: 'none', customLocation: '' }))
@@ -881,7 +902,7 @@ export default function CoachProfilePage() {
                     </PopoverContent>
                   </Popover>
                 ) : (
-                  <div className="w-full px-3 py-2 bg-gray-100 border border-gray-300 rounded-md text-gray-700">
+                  <div className="w-full px-3 py-2 bg-background border border-gray-300 rounded-md text-foreground">
                     {profileData.location === 'none' ? 'Not specified' : 
                      profileData.location === 'custom' ? profileData.customLocation || 'Custom location' :
                      profileData.location ? (STATE_NAMES as any)[profileData.location] || profileData.location : 'Not specified'}
@@ -895,47 +916,47 @@ export default function CoachProfilePage() {
 
           {/* Professional Information */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Professional Information</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Professional Information</h3>
             
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Bio</label>
               <textarea
                 name="bio"
                 rows={4}
                 value={profileData.bio}
                 onChange={handleChange}
                 disabled={!editing}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
               />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Years of Experience</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Years of Experience</label>
                 <input
                   type="number"
                   name="experience"
                   value={profileData.experience}
                   onChange={handleChange}
                   disabled={!editing}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Hourly Rate ($)</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Hourly Rate ($)</label>
                 <input
                   type="number"
                   name="hourlyRate"
                   value={profileData.hourlyRate}
                   onChange={handleChange}
                   disabled={!editing}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Qualifications & Certifications</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Qualifications & Certifications</label>
               <input
                 type="text"
                 name="qualifications"
@@ -943,13 +964,13 @@ export default function CoachProfilePage() {
                 onChange={handleChange}
                 disabled={!editing}
                 placeholder="Separate with commas"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent  bg-background text-foreground"
               />
             </div>
 
             {/* Specialties */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                 Specialties <span className="text-red-500">*</span>
               </label>
               <div className={`grid grid-cols-2 md:grid-cols-3 gap-2 ${editing ? 'max-h-48' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
@@ -961,7 +982,7 @@ export default function CoachProfilePage() {
                         checked={selectedSpecialties.includes(specialty)}
                         onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
                       />
-                      <label htmlFor={specialty} className="text-sm text-gray-700">
+                      <label htmlFor={specialty} className="text-sm text-gray-700 dark:text-gray-300">
                         {specialty}
                       </label>
                     </div>
@@ -980,7 +1001,7 @@ export default function CoachProfilePage() {
 
             {/* Languages */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                 Languages <span className="text-red-500">*</span>
               </label>
               <div className={`grid grid-cols-3 md:grid-cols-4 gap-2 ${editing ? 'max-h-32' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
@@ -992,7 +1013,7 @@ export default function CoachProfilePage() {
                         checked={selectedLanguages.includes(language)}
                         onCheckedChange={(checked) => handleLanguageChange(language, checked as boolean)}
                       />
-                      <label htmlFor={language} className="text-sm text-gray-700">
+                      <label htmlFor={language} className="text-sm text-gray-700 dark:text-gray-300">
                         {language}
                       </label>
                     </div>
@@ -1011,7 +1032,7 @@ export default function CoachProfilePage() {
 
             {/* Therapy Modalities */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                 Therapy Modalities
               </label>
               <div className={`grid grid-cols-1 md:grid-cols-2 gap-2 ${editing ? 'max-h-32' : ''} overflow-y-auto border border-gray-300 rounded-md p-3`}>
@@ -1029,7 +1050,7 @@ export default function CoachProfilePage() {
                           }
                         }}
                       />
-                      <label htmlFor={modality.id} className="text-sm text-gray-700">
+                      <label htmlFor={modality.id} className="text-sm text-gray-700 dark:text-gray-300">
                         {modality.label}
                       </label>
                     </div>
@@ -1051,6 +1072,7 @@ export default function CoachProfilePage() {
           </div>
         </CardContent>
       </Card>
+      )}
     </CoachPageWrapper>
   );
 }

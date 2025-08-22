@@ -1,10 +1,11 @@
 'use client';
 
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { ThemeProvider as MuiThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { ThemeProvider } from '@/contexts/ThemeContext';
 import 'react-toastify/dist/ReactToastify.css';
 
 const theme = createTheme({
@@ -57,26 +58,28 @@ const theme = createTheme({
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <AuthProvider>
-      <NotificationProvider>
-        <ThemeProvider theme={theme}>
-          <CssBaseline />
-          {children}
-          <ToastContainer
-            position="top-right"
-            autoClose={5000}
-            hideProgressBar={false}
-            newestOnTop={false}
-            closeOnClick
-            rtl={false}
-            pauseOnFocusLoss
-            draggable
-            pauseOnHover
-            theme="light"
-            toastClassName="custom-toast"
-          />
-        </ThemeProvider>
-      </NotificationProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <NotificationProvider>
+          <MuiThemeProvider theme={theme}>
+            <CssBaseline />
+            {children}
+            <ToastContainer
+              position="top-right"
+              autoClose={5000}
+              hideProgressBar={false}
+              newestOnTop={false}
+              closeOnClick
+              rtl={false}
+              pauseOnFocusLoss
+              draggable
+              pauseOnHover
+              theme="colored"
+              toastClassName="custom-toast"
+            />
+          </MuiThemeProvider>
+        </NotificationProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 } 
