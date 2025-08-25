@@ -136,9 +136,42 @@ export default function MeetingChat({
         return [...prev, chatMessage]
       })
       
-      // If chat is not visible and message is from another user, increment unread count
-      if (!isVisible) {
-        setUnreadCount(prev => prev + 1)
+      // If message is from another user, play notification sound and increment unread count
+      if (senderId !== currentUserId) {
+        // Play notification sound for new messages from others
+        try {
+          const audio = new Audio('/sounds/message.mp3');
+          audio.volume = 0.3;
+          audio.play().catch(() => {
+            // Fallback to Web Audio API if file doesn't exist
+            try {
+              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              
+              oscillator.frequency.value = 800;
+              oscillator.type = 'sine';
+              
+              gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+              gainNode.gain.linearRampToValueAtTime(0.08, audioContext.currentTime + 0.05);
+              gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+              
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+              console.log('Could not play chat notification sound');
+            }
+          });
+        } catch (error) {
+          console.log('Could not play chat notification sound');
+        }
+        
+        if (!isVisible) {
+          setUnreadCount(prev => prev + 1)
+        }
       }
       
       setIsConnected(true)

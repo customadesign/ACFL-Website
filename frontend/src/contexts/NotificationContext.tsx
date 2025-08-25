@@ -27,6 +27,37 @@ interface NotificationData {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+// Function to play fallback notification sounds using Web Audio API
+const playFallbackSound = (type: 'message' | 'appointment') => {
+  try {
+    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Create different tones for different notification types
+    const frequency = type === 'message' ? 800 : 600; // Higher pitch for messages
+    const duration = 0.3;
+    
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+    
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+    
+    oscillator.frequency.value = frequency;
+    oscillator.type = 'sine';
+    
+    // Create a pleasant notification sound with fade in/out
+    gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+    gainNode.gain.linearRampToValueAtTime(0.1, audioContext.currentTime + 0.05);
+    gainNode.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + duration - 0.05);
+    gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + duration);
+    
+    oscillator.start(audioContext.currentTime);
+    oscillator.stop(audioContext.currentTime + duration);
+  } catch (error) {
+    console.log('Could not play fallback notification sound');
+  }
+};
+
 export function NotificationProvider({ children }: { children: ReactNode }) {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [appointmentNotificationCount, setAppointmentNotificationCount] = useState(0);
@@ -60,13 +91,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
           const audio = new Audio('/sounds/message.mp3');
           audio.volume = 0.5;
           audio.play().catch(() => {
-            // Fallback to system beep if custom sound fails
-            const fallbackAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
-            fallbackAudio.volume = 0.3;
-            fallbackAudio.play().catch(() => {});
+            // Fallback to a proper beep sound if custom sound fails
+            playFallbackSound('message');
           });
         } catch (error) {
           console.log('Could not play notification sound');
+          playFallbackSound('message');
         }
         
         toast(
@@ -140,13 +170,12 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         const audio = new Audio('/sounds/appointment.mp3');
         audio.volume = 0.5;
         audio.play().catch(() => {
-          // Fallback to system beep if custom sound fails
-          const fallbackAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
-          fallbackAudio.volume = 0.3;
-          fallbackAudio.play().catch(() => {});
+          // Fallback to a proper beep sound if custom sound fails
+          playFallbackSound('appointment');
         });
       } catch (error) {
         console.log('Could not play notification sound');
+        playFallbackSound('appointment');
       }
       
       const appointmentWith = user?.role === 'coach' 
