@@ -195,7 +195,7 @@ function CoachProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
+    <div className="min-h-screen bg-background">
       
 
      
@@ -240,7 +240,7 @@ function CoachProfileContent() {
                 </div>
               </div>
               <Button 
-                className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+                className="w-full mt-4 bg-blue-600 hover:bg-blue-700 dark:text-white"
                 onClick={handleBookConsultation}
               >
                 Schedule Consultation
@@ -312,7 +312,7 @@ function CoachProfileContent() {
             {/* About */}
             <Card className="p-6">
               <h3 className="font-semibold text-lg mb-4">About Me</h3>
-              <p className="text-gray-700 leading-relaxed">{coach.bio}</p>
+              <p className="text-gray-700 leading-relaxed dark:text-gray-300">{coach.bio}</p>
             </Card>
 
             {/* Specialties & Approach */}
@@ -320,18 +320,18 @@ function CoachProfileContent() {
               <h3 className="font-semibold text-lg mb-4">Areas of Focus</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Specialties</h4>
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Specialties</h4>
                   <div className="space-y-1">
                     {coach.specialties.map((specialty, idx) => (
-                      <div key={idx} className="text-sm text-gray-700">• {specialty}</div>
+                      <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">• {specialty}</div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Coaching Approaches</h4>
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Coaching Approaches</h4>
                   <div className="space-y-1">
                     {coach.modalities.map((modality, idx) => (
-                      <div key={idx} className="text-sm text-gray-700">• {modality}</div>
+                      <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">• {modality}</div>
                     ))}
                   </div>
                 </div>
@@ -340,19 +340,19 @@ function CoachProfileContent() {
 
             {/* Languages & Demographics */}
             <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Languages & Demographics</h3>
+              <h3 className="font-semibold text-lg mb-4 dark:text-white">Languages & Demographics</h3>
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Languages Spoken</h4>
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Languages Spoken</h4>
                   <div className="space-y-1">
                     {coach.languages.map((language, idx) => (
-                      <div key={idx} className="text-sm text-gray-700">• {language}</div>
+                      <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">• {language}</div>
                     ))}
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Demographics</h4>
-                  <div className="space-y-1 text-sm text-gray-700">
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Demographics</h4>
+                  <div className="space-y-1 text-sm text-gray-700 dark:text-gray-300">
                     <div>Gender: {coach.demographics.gender}</div>
                     <div>Ethnicity: {coach.demographics.ethnicity}</div>
                     <div>Religious Background: {coach.demographics.religious_background}</div>
@@ -364,18 +364,18 @@ function CoachProfileContent() {
 
             {/* Background */}
             <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Professional Background</h3>
+              <h3 className="font-semibold text-lg mb-4 dark:text-white">Professional Background</h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-1">Education</h4>
-                  <p className="text-gray-700">{coach.education}</p>
+                  <h4 className="font-medium text-gray-900 mb-1 dark:text-white">Education</h4>
+                  <p className="text-gray-700 dark:text-gray-300">{coach.education}</p>
                 </div>
                 {coach.certifications && (
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-2">Certifications</h4>
+                    <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Certifications</h4>
                     <div className="space-y-1">
                       {coach.certifications.map((cert, idx) => (
-                        <div key={idx} className="text-sm text-gray-700">• {cert}</div>
+                        <div key={idx} className="text-sm text-gray-700 dark:text-gray-300">• {cert}</div>
                       ))}
                     </div>
                   </div>
@@ -385,10 +385,10 @@ function CoachProfileContent() {
 
             {/* Availability & Session Types */}
             <Card className="p-6">
-              <h3 className="font-semibold text-lg mb-4">Availability & Session Types</h3>
+              <h3 className="font-semibold text-lg mb-4 dark:text-white">Availability & Session Types</h3>
               <div className="space-y-4">
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Available Times</h4>
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Available Times</h4>
                   <div className="flex flex-wrap gap-2">
                     {coach.availableTimes.map((time, idx) => (
                       <span key={idx} className="inline-block text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full">
@@ -398,12 +398,12 @@ function CoachProfileContent() {
                   </div>
                 </div>
                 <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Session Format</h4>
+                  <h4 className="font-medium text-gray-900 mb-2 dark:text-white">Session Format</h4>
                   <div className="space-y-2">
                     {coach.virtualAvailable && (
                       <div className="flex items-center space-x-2">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <span className="text-sm text-gray-700">Video Sessions Available</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Video Sessions Available</span>
                       </div>
                     )}
                   </div>
@@ -413,14 +413,14 @@ function CoachProfileContent() {
 
             {/* CTA */}
             <Card className="bg-gradient-to-r from-blue-50 to-green-50 border-blue-200 p-6">
-              <h3 className="font-semibold text-lg mb-2">Ready to start your journey?</h3>
+              <h3 className="font-semibold text-lg mb-2 dark:text-black">Ready to start your journey?</h3>
               <p className="text-gray-700 mb-4">
                 Schedule a free 15-minute consultation to see if we're a good fit for your coaching needs.
               </p>
               <div className="space-y-3">
                 <div className="flex space-x-3">
                   <Button 
-                    className="bg-blue-600 hover:bg-blue-700 flex-1"
+                    className="bg-blue-600 hover:bg-blue-700 flex-1 dark:text-white"
                     onClick={handleBookConsultation}
                   >
                     Book Free Consultation

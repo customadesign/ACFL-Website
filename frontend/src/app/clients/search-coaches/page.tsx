@@ -437,7 +437,7 @@ function SearchCoachesContent() {
             <Button
               onClick={refreshSavedCoaches}
               variant="outline"
-              className="ml-4 flex items-center gap-2"
+              className="ml-4 flex items-center gap-2 dark:text-white"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh

@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'react-toastify';
-import { MessageCircle, Calendar, Bell } from 'lucide-react';
+import { MessageCircle, Calendar, Bell, User, Clock, X, Video, PhoneCall } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import { getApiUrl } from '@/lib/api';
 
@@ -55,31 +55,76 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       if (msg.sender_id !== user?.id) {
         const senderName = msg.sender_name || (user.role === 'coach' ? 'Client' : 'Coach');
         
+        // Play notification sound
+        try {
+          const audio = new Audio('/sounds/message.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(() => {
+            // Fallback to system beep if custom sound fails
+            const fallbackAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
+            fallbackAudio.volume = 0.3;
+            fallbackAudio.play().catch(() => {});
+          });
+        } catch (error) {
+          console.log('Could not play notification sound');
+        }
+        
         toast(
-          <div className="flex items-start space-x-3 p-2">
-            {/* Icon */}
-            <div className="flex-shrink-0">
-              <MessageCircle className="w-5 h-5 text-blue-500 dark:text-blue-400 mt-1" />
-            </div>
-    
-            {/* Content */}
-            <div className="min-w-0 flex-1">
-              <div className="font-medium text-gray-900 dark:text-white">
-                {senderName}
+          <div className="relative bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-xl border border-blue-200 dark:border-blue-700/50 overflow-hidden">
+            {/* Animated background effect */}
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+            
+            <div className="relative flex items-start space-x-3">
+              {/* Icon with animation */}
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 rounded-full bg-blue-500 dark:bg-blue-600 flex items-center justify-center shadow-lg animate-bounce">
+                  <MessageCircle className="w-5 h-5 text-white" />
+                </div>
               </div>
-              <div className="text-sm text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">
-                {msg.body}
+      
+              {/* Content */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                      New Message
+                    </div>
+                    <div className="flex items-center gap-1 mt-0.5">
+                      <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">
+                        {senderName}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
+                    <Clock className="w-3 h-3" />
+                    <span>Just now</span>
+                  </div>
+                </div>
+                
+                <div className="text-sm text-gray-700 dark:text-gray-300 mt-2 line-clamp-2 font-medium">
+                  {msg.body}
+                </div>
+                
+                <button
+                  onClick={() => {
+                    window.location.href = user.role === 'coach' ? '/coaches/messages' : '/clients/messages';
+                  }}
+                  className="mt-3 inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-blue-500 hover:bg-blue-600 text-white transition-all transform hover:scale-105 shadow-md"
+                >
+                  View Message
+                </button>
               </div>
             </div>
           </div>,
           {
             position: "top-right",
-            autoClose: 6000,
+            autoClose: 7000,
             hideProgressBar: false,
-            closeOnClick: true,
+            closeOnClick: false,
             pauseOnHover: true,
             draggable: true,
-            className: "custom-toast",
+            className: "!p-0 !bg-transparent !shadow-none",
           }
         );
         
@@ -90,34 +135,111 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
 
     // Listen for new appointments
     socketConnection.on('appointment:new', (data: any) => {
-      toast.success(
-        <div className="flex items-start space-x-3 p-2">
-          <div className="flex-shrink-0">
-            <Calendar className="w-5 h-5 text-green-500 dark:text-green-400 mt-1" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-              {user?.role === 'coach' 
-                ? (data.client_name ? `Appointment with ${data.client_name}` : 'New appointment received')
-                : (data.coach_name ? `Appointment with ${data.coach_name}` : 'New appointment confirmed')
-              }
-            </div>
-            {data.starts_at && (
-              <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 flex items-center">
-                <Bell className="w-3 h-3 mr-1" />
-                {new Date(data.starts_at).toLocaleDateString()} at {new Date(data.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+      // Play notification sound
+      try {
+        const audio = new Audio('/sounds/appointment.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+          // Fallback to system beep if custom sound fails
+          const fallbackAudio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZURE');
+          fallbackAudio.volume = 0.3;
+          fallbackAudio.play().catch(() => {});
+        });
+      } catch (error) {
+        console.log('Could not play notification sound');
+      }
+      
+      const appointmentWith = user?.role === 'coach' 
+        ? (data.client_name || 'Client')
+        : (data.coach_name || 'Coach');
+      
+      toast(
+        <div className="relative bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-xl border border-green-200 dark:border-green-700/50 overflow-hidden">
+          {/* Animated background effect */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+          
+          <div className="relative flex items-start space-x-3">
+            {/* Icon with animation */}
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-lg animate-bounce">
+                <Calendar className="w-5 h-5 text-white" />
               </div>
-            )}
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    New Appointment
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      with {appointmentWith}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {data.starts_at && (
+                <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
+                  <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">
+                      {new Date(data.starts_at).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                    <span className="text-green-600 dark:text-green-400">
+                      at {new Date(data.starts_at).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-green-500 hover:bg-green-600 text-white transition-all transform hover:scale-105 shadow-md"
+                >
+                  View Details
+                </button>
+                <button
+                  onClick={() => toast.dismiss()}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Status indicator */}
+          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-400">Status</span>
+              <span className="text-green-600 dark:text-green-400 font-medium flex items-center gap-1">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                Confirmed
+              </span>
+            </div>
           </div>
         </div>,
         {
           position: "top-right",
-          autoClose: 8000,
+          autoClose: 10000,
           hideProgressBar: false,
-          closeOnClick: true,
+          closeOnClick: false,
           pauseOnHover: true,
           draggable: true,
-          className: "custom-toast",
+          className: "!p-0 !bg-transparent !shadow-none",
         }
       );
       
