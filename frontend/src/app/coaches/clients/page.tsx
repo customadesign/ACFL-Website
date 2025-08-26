@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { X, MessageCircle, User, Calendar, Clock, FileText } from 'lucide-react';
@@ -27,6 +28,7 @@ interface Client {
 
 export default function MyClientsPage() {
   const { user } = useAuth();
+  const searchParams = useSearchParams();
   const [clients, setClients] = useState<Client[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('all');
@@ -44,6 +46,21 @@ export default function MyClientsPage() {
   useEffect(() => {
     loadClients();
   }, []);
+
+  // Handle view_client parameter from URL
+  useEffect(() => {
+    const viewClientId = searchParams.get('view_client');
+    if (viewClientId && clients.length > 0 && !loading) {
+      const clientToView = clients.find(client => client.id === viewClientId);
+      if (clientToView) {
+        handleViewDetails(clientToView);
+        // Remove the parameter from URL after opening the modal
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('view_client');
+        window.history.replaceState({}, '', newUrl.toString());
+      }
+    }
+  }, [searchParams, clients, loading]);
 
   const loadClients = async (isRefresh: boolean = false) => {
     try {

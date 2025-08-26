@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { ChevronRight, ChevronLeft, Check, Search } from "lucide-react"
-import { concernOptions, availabilityOptions, paymentOptions } from "@/constants/formOptions"
+import { concernOptions, availabilityOptions, priceRangeOptions } from "@/constants/formOptions"
 import { STATE_NAMES } from "@/constants/states"
 import { Input } from "@/components/ui/input"
 
@@ -22,7 +22,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
     areaOfConcern: [] as string[],
     location: "",
     availability: [] as string[],
-    paymentMethod: ""
+    priceRange: ""
   })
 
   // Close dropdown when clicking outside
@@ -70,9 +70,9 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
       type: "multiple"
     },
     {
-      id: "payment",
-      title: "How will you pay for coaching?",
-      subtitle: "Choose your payment method",
+      id: "priceRange",
+      title: "What's your budget for coaching sessions?",
+      subtitle: "Choose your preferred price range",
       type: "single"
     }
   ]
@@ -83,7 +83,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
       'concern': 'areaOfConcern',
       'location': 'location',
       'availability': 'availability',
-      'payment': 'paymentMethod'
+      'priceRange': 'priceRange'
     }
     
     const field = fieldMap[stepId]
@@ -111,7 +111,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
     if (step.id === "concern") return answers.areaOfConcern.length > 0
     if (step.id === "location") return answers.location !== ""
     if (step.id === "availability") return answers.availability.length > 0
-    if (step.id === "payment") return answers.paymentMethod !== ""
+    if (step.id === "priceRange") return answers.priceRange !== ""
     return false
   }
 
@@ -139,8 +139,8 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
         return Object.values(STATE_NAMES).map(state => ({ value: state, label: state }))
       case "availability":
         return availabilityOptions.map(option => ({ value: option.id, label: option.label }))
-      case "payment":
-        return paymentOptions
+      case "priceRange":
+        return priceRangeOptions
       default:
         return []
     }
@@ -152,7 +152,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
       'concern': 'areaOfConcern',
       'location': 'location',
       'availability': 'availability',
-      'payment': 'paymentMethod'
+      'priceRange': 'priceRange'
     }
     
     const field = fieldMap[step.id] as keyof typeof answers

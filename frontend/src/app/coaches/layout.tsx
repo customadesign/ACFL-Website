@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import { Bell, CircleUserRound, LogOut, Sun, Moon } from 'lucide-react';
@@ -18,20 +19,24 @@ export default function CoachLayout({
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const { unreadMessageCount, appointmentNotificationCount, markMessagesAsRead, markAppointmentsAsRead } = useNotifications();
+  
+  // Add safety check for ThemeProvider during SSR
+  let theme: 'light' | 'dark' = 'light';
+  let toggleTheme: () => void = () => {};
+  let hasStorageConsent = false;
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+    toggleTheme = themeContext.toggleTheme;
+    hasStorageConsent = themeContext.hasStorageConsent;
+  } catch (error) {
+    // ThemeProvider not available during SSR or initial render, use fallbacks
+    console.warn('ThemeProvider not available, using fallback theme state');
+  }
+  
   const [showDropdown, setShowDropdown] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    // Get theme from localStorage
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
-    if (savedTheme) {
-      setTheme(savedTheme);
-      if (savedTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    }
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,16 +49,37 @@ export default function CoachLayout({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    localStorage.setItem('theme', newTheme);
+  const handleThemeToggle = () => {
+    toggleTheme();
+    setShowDropdown(false);
     
-    if (newTheme === 'dark') {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    // Show user-friendly notification
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm';
+    toast.innerHTML = `
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          ${newTheme === 'dark' 
+            ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>'
+            : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>'
+          }
+        </svg>
+        <div>
+          <div class="font-semibold">Theme changed to ${newTheme} mode!</div>
+          ${hasStorageConsent 
+            ? `<div class="text-sm">Your preference has been saved.</div>`
+            : `<div class="text-sm">This will reset when you visit again.</div>`
+          }
+        </div>
+      </div>
+    `;
+    document.body.appendChild(toast);
+    setTimeout(() => {
+      if (toast.parentNode) {
+        toast.parentNode.removeChild(toast);
+      }
+    }, 4000);
   };
 
   const navItems = [
@@ -103,7 +129,7 @@ export default function CoachLayout({
                   {showDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-popover rounded-md shadow-lg py-1 z-50 border border-border">
                       <button
-                        onClick={toggleTheme}
+                        onClick={handleThemeToggle}
                         className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
                       >
                         {theme === 'light' ? (

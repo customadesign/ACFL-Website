@@ -16,11 +16,21 @@ function LoginForm() {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [hasAssessmentData, setHasAssessmentData] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect');
   const fromAssessment = searchParams.get('from') === 'assessment';
+
+  useEffect(() => {
+    // Check if there's assessment data in localStorage
+    const assessmentData = localStorage.getItem('assessmentData');
+    if (assessmentData) {
+      setHasAssessmentData(true);
+      console.log('Assessment data found in login page');
+    }
+  }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
@@ -35,18 +45,33 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      await login(formData.email, formData.password);
+      // Check if we have assessment data that needs special handling
+      const assessmentData = localStorage.getItem('assessmentData');
+      const shouldRedirectToSearch = (fromAssessment || hasAssessmentData) && assessmentData;
       
-      // Handle redirect after successful login
-      if (redirect) {
-        // If coming from assessment, redirect to search-coaches with assessment flag
-        if (fromAssessment) {
-          router.push(`${redirect}?from=assessment`);
-        } else {
-          router.push(redirect);
+      if (shouldRedirectToSearch || redirect) {
+        // Use skipRedirect for custom redirect handling
+        await login(formData.email, formData.password, true);
+        
+        // Handle custom redirects
+        if (shouldRedirectToSearch) {
+          console.log('Redirecting to search-coaches with assessment data after login');
+          setTimeout(() => {
+            router.push('/clients/search-coaches?from=assessment');
+          }, 100);
+        } else if (redirect) {
+          setTimeout(() => {
+            if (fromAssessment) {
+              router.push(`${redirect}?from=assessment`);
+            } else {
+              router.push(redirect);
+            }
+          }, 100);
         }
+      } else {
+        // Let AuthContext handle normal role-based redirect
+        await login(formData.email, formData.password);
       }
-      // Otherwise AuthContext will handle the redirect based on user role
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {
@@ -71,7 +96,7 @@ function LoginForm() {
             </div>
             <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
             <CardDescription>
-              {fromAssessment 
+              {fromAssessment || hasAssessmentData
                 ? 'Sign in to see your personalized coach matches'
                 : 'Sign in to your ACT Coaching For Life account'
               }

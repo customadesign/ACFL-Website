@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
+import { useAuth } from '@/contexts/AuthContext';
 import Footer from "@/components/Footer"
 import NavbarLandingPage  from '@/components/NavbarLandingPage';
 
@@ -29,6 +30,7 @@ export default function CoachRegister() {
   const [passwordStrength, setPasswordStrength] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { registerCoach } = useAuth();
 
   const validateForm = () => {
     const newErrors: {[key: string]: string} = {};
@@ -142,39 +144,23 @@ export default function CoachRegister() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/register/coach`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone || null,
-          bio: formData.bio || 'Professional ACT coach ready to help you achieve your goals',
-          qualifications: formData.qualifications || 'Certified Life Coach',
-          experience: formData.experience || '1',
-          hourlyRate: formData.hourlyRate || '75',
-          specialties: formData.specialties,
-          languages: formData.languages.length > 0 ? formData.languages : ['English']
-        }),
+      // Use registerCoach from AuthContext which handles auto-login
+      await registerCoach({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone || undefined,
+        bio: formData.bio || 'Professional ACT coach ready to help you achieve your goals',
+        qualifications: formData.qualifications ? [formData.qualifications] : ['Certified Life Coach'],
+        experience: parseInt(formData.experience) || 1,
+        hourlyRate: parseInt(formData.hourlyRate) || 75,
+        specialties: formData.specialties,
+        languages: formData.languages.length > 0 ? formData.languages : ['English']
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      // Store the token
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-
-      // Redirect to coaches page
-      router.push('/coaches');
+      // The registerCoach function already handles token storage and redirects to /coaches
+      // No need for manual redirect as it's handled in AuthContext
     } catch (err: any) {
       setErrors({ submit: err.message || 'Registration failed' });
     } finally {

@@ -707,6 +707,35 @@ router.put('/coach/appointments/:id', [
 
     const coachId = coachProfile.id; // Use the actual coach ID from database
 
+    // Get appointment with client and coach details before updating
+    const { data: currentAppointment, error: fetchError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        clients (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        coaches (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('id', id)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (fetchError || !currentAppointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+
     // Update appointment status
     const { data: updatedAppointment, error: updateError } = await supabase
       .from('sessions')
@@ -726,27 +755,33 @@ router.put('/coach/appointments/:id', [
     // Emit WebSocket event for status update
     const io = req.app.get('io');
     if (io) {
-      const statusData = {
-        sessionId: updatedAppointment.id,
-        scheduledAt: updatedAppointment.starts_at,
-        clientId: updatedAppointment.client_id,
-        coachId: coachId,
-        oldStatus: status, // Note: we don't have the old status here
-        newStatus: status,
-        type: 'status_updated'
+      const clientName = `${currentAppointment.clients.first_name} ${currentAppointment.clients.last_name}`;
+      const coachName = `${currentAppointment.coaches.first_name} ${currentAppointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        starts_at: updatedAppointment.starts_at,
+        client_id: updatedAppointment.client_id,
+        coach_id: coachId,
+        client_name: clientName,
+        coach_name: coachName,
+        cancelled_by: 'coach', // Since this endpoint is only accessible by coaches
+        reason: req.body.reason || ''
       };
 
-      // Notify client about status change
-      io.to(`user:${updatedAppointment.client_id}`).emit('appointment:status_updated', {
-        ...statusData,
-        message: `Coach has ${status === 'confirmed' ? 'confirmed' : status === 'completed' ? 'completed' : status === 'cancelled' ? 'cancelled' : 'updated'} your appointment`
-      });
-
-      // Notify coach about successful update
-      io.to(`user:${coachId}`).emit('appointment:status_updated', {
-        ...statusData,
-        message: `Appointment status updated to ${status}`
-      });
+      // Send specific notification based on status
+      if (status === 'cancelled' && currentAppointment.status !== 'cancelled') {
+        // Notify client about cancellation
+        io.to(`user:${updatedAppointment.client_id}`).emit('appointment:cancelled', notificationData);
+        
+        // Don't send notification to coach since they initiated it
+      } else if (status === 'confirmed') {
+        // Send appointment confirmation notification to client
+        io.to(`user:${updatedAppointment.client_id}`).emit('appointment:confirmed', {
+          ...notificationData,
+          message: `Coach has confirmed your appointment`
+        });
+      }
     }
 
     res.json({
@@ -759,6 +794,229 @@ router.put('/coach/appointments/:id', [
     res.status(500).json({ 
       success: false, 
       message: 'Failed to update appointment status' 
+    });
+  }
+});
+
+// Reschedule appointment
+router.put('/coach/appointments/:id/reschedule', [
+  authenticate,
+  body('new_starts_at').isISO8601(),
+  body('reason').optional().isString()
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const { id } = req.params;
+    const { new_starts_at, reason } = req.body;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    const coachId = coachProfile.id;
+
+    // Get appointment with client and coach details before updating
+    const { data: currentAppointment, error: fetchError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        clients (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        coaches (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('id', id)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (fetchError || !currentAppointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+
+    // Update appointment with new time
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('sessions')
+      .update({ 
+        starts_at: new_starts_at,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', id)
+      .eq('coach_id', coachId)
+      .select()
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    // Emit WebSocket event for reschedule
+    const io = req.app.get('io');
+    if (io) {
+      const clientName = `${currentAppointment.clients.first_name} ${currentAppointment.clients.last_name}`;
+      const coachName = `${currentAppointment.coaches.first_name} ${currentAppointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        old_starts_at: currentAppointment.starts_at,
+        new_starts_at: updatedAppointment.starts_at,
+        client_id: updatedAppointment.client_id,
+        coach_id: coachId,
+        client_name: clientName,
+        coach_name: coachName,
+        rescheduled_by: 'coach',
+        reason: reason || ''
+      };
+
+      // Notify client about reschedule
+      io.to(`user:${updatedAppointment.client_id}`).emit('appointment:rescheduled', notificationData);
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment rescheduled successfully',
+      data: updatedAppointment
+    });
+  } catch (error) {
+    console.error('Reschedule appointment error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to reschedule appointment' 
+    });
+  }
+});
+
+// Notify about appointment ready to join (called when meeting room is ready)
+router.post('/coach/appointments/:id/ready', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { id } = req.params;
+    const { meeting_link } = req.body;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    const coachId = coachProfile.id;
+
+    // Get appointment with client and coach details
+    const { data: appointment, error: fetchError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        clients (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        coaches (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .eq('id', id)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (fetchError || !appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found'
+      });
+    }
+
+    // Update appointment with meeting link if provided
+    if (meeting_link) {
+      await supabase
+        .from('sessions')
+        .update({ meeting_link })
+        .eq('id', id)
+        .eq('coach_id', coachId);
+    }
+
+    // Emit WebSocket event for appointment ready
+    const io = req.app.get('io');
+    if (io) {
+      const clientName = `${appointment.clients.first_name} ${appointment.clients.last_name}`;
+      const coachName = `${appointment.coaches.first_name} ${appointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: appointment.id,
+        starts_at: appointment.starts_at,
+        client_id: appointment.client_id,
+        coach_id: coachId,
+        client_name: clientName,
+        coach_name: coachName,
+        meeting_link: meeting_link || appointment.meeting_link
+      };
+
+      // Notify both client and coach that session is ready
+      io.to(`user:${appointment.client_id}`).emit('appointment:ready', notificationData);
+      io.to(`user:${coachId}`).emit('appointment:ready', notificationData);
+    }
+
+    res.json({
+      success: true,
+      message: 'Appointment ready notification sent'
+    });
+  } catch (error) {
+    console.error('Appointment ready notification error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to send ready notification' 
     });
   }
 });
@@ -916,6 +1174,20 @@ router.post('/coach/send-message', [
     if (messageError) {
       console.error('Database error:', messageError);
       return res.status(500).json({ success: false, message: 'Failed to send message' });
+    }
+
+    // Emit WebSocket event for real-time notification
+    const io = req.app.get('io');
+    if (io) {
+      const messageWithSenderName = {
+        ...newMessage,
+        sender_id: coachProfile.id,
+        recipient_id: receiverId,
+        sender_name: `${coachProfile.first_name} ${coachProfile.last_name}`
+      };
+      
+      // Send to recipient
+      io.to(`user:${receiverId}`).emit('message:new', messageWithSenderName);
     }
 
     res.json({
@@ -1334,24 +1606,53 @@ router.delete('/coach/conversations/:partnerId', authenticate, async (req: Reque
 
     const coachId = coachProfile.id;
 
-    // Delete all messages between coach and partner
-    const { error: deleteError } = await supabase
-      .from('messages')
-      .delete()
-      .or(`and(sender_id.eq.${coachId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${coachId})`);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    // Emit WebSocket event to notify partner about conversation deletion
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`user:${partnerId}`).emit('conversation:deleted', { 
-        deletedBy: coachId,
-        partnerId: coachId 
+    // Soft delete: Hide conversation for this coach only
+    // Add the coach's ID to the hidden_for_users array for all messages in the conversation
+    const { error: updateError } = await supabase
+      .rpc('append_hidden_user', {
+        user_id: coachId,
+        partner_id: partnerId
       });
+
+    if (updateError) {
+      // Fallback to manual update if RPC doesn't exist
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('id, hidden_for_users')
+        .or(`and(sender_id.eq.${coachId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${coachId})`)
+        .not('hidden_for_users', 'cs', `{${coachId}}`);
+
+      if (messages) {
+        for (const message of messages) {
+          const updatedHidden = [...(message.hidden_for_users || []), coachId];
+          await supabase
+            .from('messages')
+            .update({ hidden_for_users: updatedHidden })
+            .eq('id', message.id);
+        }
+      }
     }
+
+    // No WebSocket event needed - conversation is only hidden for the deleting user
+    console.log(`Conversation hidden for coach ${coachId} with partner ${partnerId}`);
+    
+    // Optional: Clean up completely deleted conversations (where both users have hidden it)
+    // This could be done in a background job instead
+    setTimeout(async () => {
+      try {
+        const { error: cleanupError } = await supabase
+          .from('messages')
+          .delete()
+          .or(`and(sender_id.eq.${coachId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${coachId})`)
+          .contains('hidden_for_users', [coachId, partnerId]); // Both users have hidden it
+        
+        if (cleanupError) {
+          console.error('Cleanup error (non-critical):', cleanupError);
+        }
+      } catch (error) {
+        console.error('Background cleanup failed:', error);
+      }
+    }, 1000); // 1 second delay for background cleanup
 
     res.json({
       success: true,

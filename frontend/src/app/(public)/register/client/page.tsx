@@ -27,7 +27,7 @@ function ClientRegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const fromAssessment = searchParams.get('from') === 'assessment';
-  const { login } = useAuth();
+  const { registerClient } = useAuth();
 
   useEffect(() => {
     // Check if there's assessment data in localStorage
@@ -104,50 +104,29 @@ function ClientRegisterForm() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/auth/register/client`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          password: formData.password,
-          phone: formData.phone || null,
-          dateOfBirth: formData.dateOfBirth || null
-        }),
+      // First check if we need special handling for assessment flow
+      const assessmentData = localStorage.getItem('assessmentData');
+      const needsAssessmentRedirect = fromAssessment && assessmentData;
+      
+      // Use registerClient from AuthContext which handles auto-login
+      await registerClient({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+        phone: formData.phone || undefined,
+        dateOfBirth: formData.dateOfBirth || undefined
       });
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        // Handle validation errors from backend
-        if (data.errors && Array.isArray(data.errors)) {
-          const validationErrors: {[key: string]: string} = {};
-          data.errors.forEach((error: any) => {
-            if (error.path) {
-              validationErrors[error.path] = error.msg;
-            }
-          });
-          setErrors(validationErrors);
-          return;
-        }
-        throw new Error(data.message || 'Registration failed');
+      // Override the default redirect if coming from assessment
+      if (needsAssessmentRedirect) {
+        console.log('Redirecting to search-coaches with assessment data');
+        // Use replace to prevent the /clients redirect from AuthContext
+        setTimeout(() => {
+          router.replace('/clients/search-coaches?from=assessment');
+        }, 100);
       }
-
-      // Auto-login the user after successful registration
-      await login(formData.email, formData.password, true);
-
-      // Check if user came from assessment and has assessment data
-      const assessmentData = localStorage.getItem('assessmentData');
-      if (fromAssessment && assessmentData) {
-        // Redirect to search-coaches with assessment flag
-        router.push('/clients/search-coaches?from=assessment');
-      } else {
-        // Redirect to client dashboard
-        router.push('/clients');
-      }
+      // Otherwise, the registerClient function handles the redirect to /clients
     } catch (err: any) {
       setErrors({ submit: err.message || 'Registration failed' });
     } finally {

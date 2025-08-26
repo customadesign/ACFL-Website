@@ -100,9 +100,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         }
         
         toast(
-          <div className="relative bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-xl border border-blue-200 dark:border-blue-700/50 overflow-hidden">
-            {/* Animated background effect */}
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+          <div className="relative w-full bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 rounded-lg p-4 shadow-xl border border-blue-200 dark:border-blue-700/50 overflow-hidden">
+            {/* Clean background - no blur effect */}
             
             <div className="relative flex items-start space-x-3">
               {/* Icon with animation */}
@@ -163,6 +162,299 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
       }
     });
 
+    // Listen for appointment cancellations
+    socketConnection.on('appointment:cancelled', (data: any) => {
+      // Play notification sound
+      try {
+        const audio = new Audio('/sounds/appointment.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+          playFallbackSound('appointment');
+        });
+      } catch (error) {
+        playFallbackSound('appointment');
+      }
+      
+      const appointmentWith = user?.role === 'coach' 
+        ? (data.client_name || 'Client')
+        : (data.coach_name || 'Coach');
+      const cancelledBy = data.cancelled_by === user?.role ? 'You' : appointmentWith;
+      
+      toast(
+        <div className="relative w-full bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/30 dark:to-red-800/30 rounded-lg p-4 shadow-xl border border-red-200 dark:border-red-700/50 overflow-hidden">
+          {/* Clean background - no blur effect */}
+          
+          <div className="relative flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-red-500 dark:bg-red-600 flex items-center justify-center shadow-lg animate-bounce">
+                <X className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    Appointment Cancelled
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      by {cancelledBy}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {data.starts_at && (
+                <div className="mt-2 p-2 bg-red-100 dark:bg-red-900/30 rounded-md">
+                  <div className="flex items-center gap-2 text-sm text-red-700 dark:text-red-300">
+                    <Calendar className="w-4 h-4" />
+                    <span className="font-medium">
+                      {new Date(data.starts_at).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                    <span className="text-red-600 dark:text-red-400">
+                      at {new Date(data.starts_at).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {data.reason && (
+                <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">Reason:</span> {data.reason}
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-red-500 hover:bg-red-600 text-white transition-all transform hover:scale-105 shadow-md"
+                >
+                  View Appointments
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 8000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          className: "!p-0 !bg-transparent !shadow-none",
+        }
+      );
+      
+      setAppointmentNotificationCount(prev => prev + 1);
+    });
+
+    // Listen for appointment reschedules
+    socketConnection.on('appointment:rescheduled', (data: any) => {
+      // Play notification sound
+      try {
+        const audio = new Audio('/sounds/appointment.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+          playFallbackSound('appointment');
+        });
+      } catch (error) {
+        playFallbackSound('appointment');
+      }
+      
+      const appointmentWith = user?.role === 'coach' 
+        ? (data.client_name || 'Client')
+        : (data.coach_name || 'Coach');
+      const rescheduledBy = data.rescheduled_by === user?.role ? 'You' : appointmentWith;
+      
+      toast(
+        <div className="relative w-full bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 rounded-lg p-4 shadow-xl border border-orange-200 dark:border-orange-700/50 overflow-hidden">
+          {/* Clean background - no blur effect */}
+          
+          <div className="relative flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-orange-500 dark:bg-orange-600 flex items-center justify-center shadow-lg animate-bounce">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    Appointment Rescheduled
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      by {rescheduledBy}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {data.new_starts_at && (
+                <div className="mt-2 p-2 bg-orange-100 dark:bg-orange-900/30 rounded-md">
+                  <div className="flex items-center gap-2 text-sm text-orange-700 dark:text-orange-300">
+                    <Calendar className="w-4 h-4" />
+                    <span className="font-medium">New time:</span>
+                    <span className="font-medium">
+                      {new Date(data.new_starts_at).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                    <span className="text-orange-600 dark:text-orange-400">
+                      at {new Date(data.new_starts_at).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {data.reason && (
+                <div className="mt-2 p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
+                  <div className="text-sm text-gray-700 dark:text-gray-300">
+                    <span className="font-medium">Reason:</span> {data.reason}
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 hover:bg-orange-600 text-white transition-all transform hover:scale-105 shadow-md"
+                >
+                  View Updated Schedule
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 8000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          className: "!p-0 !bg-transparent !shadow-none",
+        }
+      );
+      
+      setAppointmentNotificationCount(prev => prev + 1);
+    });
+
+    // Listen for appointment ready to join
+    socketConnection.on('appointment:ready', (data: any) => {
+      // Play notification sound
+      try {
+        const audio = new Audio('/sounds/appointment.mp3');
+        audio.volume = 0.7;
+        audio.play().catch(() => {
+          playFallbackSound('appointment');
+        });
+      } catch (error) {
+        playFallbackSound('appointment');
+      }
+      
+      const appointmentWith = user?.role === 'coach' 
+        ? (data.client_name || 'Client')
+        : (data.coach_name || 'Coach');
+      
+      toast(
+        <div className="relative w-full bg-gradient-to-r from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/30 rounded-lg p-4 shadow-xl border border-purple-200 dark:border-purple-700/50 overflow-hidden">
+          {/* Clean background - no blur effect */}
+          
+          <div className="relative flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-purple-500 dark:bg-purple-600 flex items-center justify-center shadow-lg animate-bounce">
+                <Video className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    Session Ready to Join!
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      with {appointmentWith}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 text-xs text-purple-600 dark:text-purple-400">
+                  <div className="w-2 h-2 bg-purple-500 rounded-full animate-pulse" />
+                  <span className="font-medium">LIVE</span>
+                </div>
+              </div>
+              
+              <div className="mt-2 p-3 bg-purple-100 dark:bg-purple-900/30 rounded-md">
+                <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300">
+                  <Clock className="w-4 h-4" />
+                  <span className="font-medium">Starting now</span>
+                </div>
+              </div>
+              
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    if (data.meeting_link) {
+                      window.open(data.meeting_link, '_blank');
+                    } else {
+                      window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                    }
+                  }}
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-purple-500 hover:bg-purple-600 text-white transition-all transform hover:scale-105 shadow-lg"
+                >
+                  <Video className="w-4 h-4 mr-1" />
+                  Join Session
+                </button>
+                <button
+                  onClick={() => toast.dismiss()}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 15000, // Longer duration for session notifications
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          className: "!p-0 !bg-transparent !shadow-none",
+        }
+      );
+      
+      setAppointmentNotificationCount(prev => prev + 1);
+    });
+
     // Listen for new appointments
     socketConnection.on('appointment:new', (data: any) => {
       // Play notification sound
@@ -183,9 +475,8 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         : (data.coach_name || 'Coach');
       
       toast(
-        <div className="relative bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-xl border border-green-200 dark:border-green-700/50 overflow-hidden">
-          {/* Animated background effect */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -skew-x-12 animate-pulse" />
+        <div className="relative w-full bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-xl border border-green-200 dark:border-green-700/50 overflow-hidden">
+          {/* Clean background - no blur effect */}
           
           <div className="relative flex items-start space-x-3">
             {/* Icon with animation */}
@@ -205,6 +496,114 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                     <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
                     <span className="text-xs text-gray-600 dark:text-gray-400">
                       with {appointmentWith}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              
+              {data.starts_at && (
+                <div className="mt-2 p-2 bg-green-100 dark:bg-green-900/30 rounded-md">
+                  <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-300">
+                    <Clock className="w-4 h-4" />
+                    <span className="font-medium">
+                      {new Date(data.starts_at).toLocaleDateString('en-US', { 
+                        weekday: 'short', 
+                        month: 'short', 
+                        day: 'numeric' 
+                      })}
+                    </span>
+                    <span className="text-green-600 dark:text-green-400">
+                      at {new Date(data.starts_at).toLocaleTimeString([], { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                      })}
+                    </span>
+                  </div>
+                </div>
+              )}
+              
+              <div className="mt-3 flex gap-2">
+                <button
+                  onClick={() => {
+                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                  }}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-green-500 hover:bg-green-600 text-white transition-all transform hover:scale-105 shadow-md"
+                >
+                  View Details
+                </button>
+                <button
+                  onClick={() => toast.dismiss()}
+                  className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 transition-all"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Status indicator */}
+          <div className="mt-3 pt-3 border-t border-green-200 dark:border-green-700">
+            <div className="flex items-center justify-between text-xs">
+              <span className="text-gray-600 dark:text-gray-400">Status</span>
+              <span className="text-orange-600 dark:text-orange-400 font-medium flex items-center gap-1">
+                <div className="w-2 h-2 bg-orange-500 rounded-full animate-pulse" />
+                Scheduled
+              </span>
+            </div>
+          </div>
+        </div>,
+        {
+          position: "top-right",
+          autoClose: 10000,
+          hideProgressBar: false,
+          closeOnClick: false,
+          pauseOnHover: true,
+          draggable: true,
+          className: "!p-0 !bg-transparent !shadow-none",
+        }
+      );
+      
+      setAppointmentNotificationCount(prev => prev + 1);
+    });
+
+    // Listen for appointment confirmations
+    socketConnection.on('appointment:confirmed', (data: any) => {
+      // Play notification sound
+      try {
+        const audio = new Audio('/sounds/appointment.mp3');
+        audio.volume = 0.5;
+        audio.play().catch(() => {
+          playFallbackSound('appointment');
+        });
+      } catch (error) {
+        playFallbackSound('appointment');
+      }
+      
+      const appointmentWith = user?.role === 'coach' 
+        ? (data.client_name || 'Client')
+        : (data.coach_name || 'Coach');
+      
+      toast(
+        <div className="relative w-full bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/30 dark:to-green-800/30 rounded-lg p-4 shadow-xl border border-green-200 dark:border-green-700/50 overflow-hidden">
+          {/* Clean background - no blur effect */}
+          
+          <div className="relative flex items-start space-x-3">
+            <div className="flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-green-500 dark:bg-green-600 flex items-center justify-center shadow-lg animate-bounce">
+                <Calendar className="w-5 h-5 text-white" />
+              </div>
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div>
+                  <div className="font-semibold text-gray-900 dark:text-white text-sm">
+                    Appointment Confirmed!
+                  </div>
+                  <div className="flex items-center gap-1 mt-0.5">
+                    <User className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400">
+                      by {appointmentWith}
                     </span>
                   </div>
                 </div>

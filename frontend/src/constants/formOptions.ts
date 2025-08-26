@@ -15,20 +15,14 @@ export const therapyModalityOptions = [
   { id: "emdr", label: "Eye Movement Desensitization and Reprocessing (EMDR)" },
 ];
 
-export const paymentOptions = [
-  { value: "self-pay", label: "Self-Pay" },
-  { value: "aetna", label: "Aetna" },
-  { value: "anthem", label: "Anthem Blue Cross Blue Shield" },
-  { value: "bcbs", label: "Blue Cross Blue Shield" },
-  { value: "cigna", label: "Cigna" },
-  { value: "humana", label: "Humana" },
-  { value: "united-healthcare", label: "United Healthcare" },
-  { value: "kaiser", label: "Kaiser Permanente" },
-  { value: "medicare", label: "Medicare" },
-  { value: "medicaid", label: "Medicaid" },
-  { value: "tricare", label: "Tricare" },
-  { value: "hsa-fsa", label: "HSA/FSA" },
-  { value: "employee-assistance", label: "Employee Assistance Program (EAP)" },
+export const priceRangeOptions = [
+  { value: "under-50", label: "Under $50 per session" },
+  { value: "50-75", label: "$50 - $75 per session" },
+  { value: "75-100", label: "$75 - $100 per session" },
+  { value: "100-150", label: "$100 - $150 per session" },
+  { value: "150-200", label: "$150 - $200 per session" },
+  { value: "over-200", label: "Over $200 per session" },
+  { value: "flexible", label: "I'm flexible with pricing" },
 ];
 
 export const availabilityOptions = [

@@ -400,9 +400,9 @@ export default function AppointmentsPage() {
                         </h3>
                         <p className="text-sm text-gray-500 dark:text-gray-400">{appointment.clients?.email || appointment.clients?.users?.email}</p>
                         <p className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer mt-1">
-                          <a href="/coaches/clients" className="hover:underline">
-                            View in My Clients →
-                          </a>
+                          <Link href={`/coaches/clients?view_client=${appointment.client_id}`} className="hover:underline">
+                            Read one client →
+                          </Link>
                         </p>
                       </div>
                       <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import PublicRoute from '@/components/PublicRoute';
 
 export default function PublicLayout({
   children,
@@ -54,8 +55,10 @@ export default function PublicLayout({
   }, []);
   
   return (
-    <div className="min-h-screen bg-white">
-      {children}
-    </div>
+    <PublicRoute>
+      <div className="min-h-screen bg-white">
+        {children}
+      </div>
+    </PublicRoute>
   )
 }

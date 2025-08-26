@@ -11,6 +11,7 @@ import {
   AuthResponse,
   JWTPayload 
 } from '../types/auth';
+import emailService from '../services/emailService';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -109,8 +110,25 @@ export const registerClient = async (req: Request, res: Response) => {
     
     console.log('✅ Client profile created successfully');
 
-    // Step 6: Generate JWT token
-    console.log('\n🔑 Step 6: Generating JWT token...');
+    // Step 6: Hash password and store it
+    console.log('\n🔐 Step 6: Hashing password...');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Update the client with hashed password
+    const { error: updateError } = await supabase
+      .from('clients')
+      .update({ password_hash: hashedPassword })
+      .eq('id', profile.id);
+    
+    if (updateError) {
+      console.error('❌ Failed to update password:', updateError);
+      throw updateError;
+    }
+    console.log('✅ Password hashed and stored');
+
+    // Step 7: Generate JWT token
+    console.log('\n🔑 Step 7: Generating JWT token...');
     const token = generateToken({
       userId: profile.id, // Use the client profile ID
       email: email,
@@ -118,7 +136,27 @@ export const registerClient = async (req: Request, res: Response) => {
     });
     console.log('✅ JWT token generated');
 
-    // Step 7: Send success response
+    // Step 8: Send welcome email
+    console.log('\n📧 Step 8: Sending welcome email...');
+    try {
+      const emailResult = await emailService.sendWelcomeEmail({
+        email: email,
+        first_name: firstName,
+        role: 'client'
+      });
+      
+      if (emailResult.success) {
+        console.log('✅ Welcome email sent successfully');
+      } else {
+        console.log('⚠️ Warning: Welcome email failed to send:', emailResult.error);
+        console.log('📋 Email error details:', emailResult.details);
+      }
+    } catch (emailError) {
+      console.log('⚠️ Warning: Welcome email failed to send:', emailError.message);
+      // Don't fail registration if email fails
+    }
+
+    // Step 9: Send success response
     const response: AuthResponse = {
       success: true,
       message: 'Registration successful',
@@ -337,8 +375,32 @@ export const registerCoach = async (req: Request, res: Response) => {
     
     console.log('✅ Coach profile created successfully');
 
-    // Step 6: Generate JWT token
-    console.log('\n🔑 Step 6: Generating JWT token...');
+    // Step 6: Hash password and update coach record
+    console.log('\n🔐 Step 6: Hashing password...');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    
+    // Update coach with password hash
+    const { error: updateError } = await supabase
+      .from('coaches')
+      .update({ password_hash: hashedPassword })
+      .eq('email', email);
+    
+    if (updateError) {
+      console.error('❌ Failed to update coach password:', updateError);
+      if (isNewUser) {
+        try {
+          await supabase.auth.admin.deleteUser(authData.user.id);
+        } catch (deleteError) {
+          console.error('❌ Failed to rollback user creation:', deleteError);
+        }
+      }
+      throw updateError;
+    }
+    console.log('✅ Password hashed and stored');
+
+    // Step 7: Generate JWT token
+    console.log('\n🔑 Step 7: Generating JWT token...');
     const token = generateToken({
       userId: authData.user.id,
       email: authData.user.email || email,
@@ -346,7 +408,27 @@ export const registerCoach = async (req: Request, res: Response) => {
     });
     console.log('✅ JWT token generated');
 
-    // Step 7: Send success response
+    // Step 8: Send welcome email
+    console.log('\n📧 Step 8: Sending welcome email...');
+    try {
+      const emailResult = await emailService.sendWelcomeEmail({
+        email: email,
+        first_name: firstName,
+        role: 'coach'
+      });
+      
+      if (emailResult.success) {
+        console.log('✅ Welcome email sent successfully');
+      } else {
+        console.log('⚠️ Warning: Welcome email failed to send:', emailResult.error);
+        console.log('📋 Email error details:', emailResult.details);
+      }
+    } catch (emailError) {
+      console.log('⚠️ Warning: Welcome email failed to send:', emailError.message);
+      // Don't fail registration if email fails
+    }
+
+    // Step 9: Send success response
     const response: AuthResponse = {
       success: true,
       message: 'Registration successful',
@@ -389,20 +471,27 @@ export const registerCoach = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('🔐 LOGIN ATTEMPT STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Email:', req.body.email);
+
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.log('❌ Validation failed:', errors.array());
       return res.status(400).json({ errors: errors.array() });
     }
 
     const { email, password } = req.body as LoginDto;
 
-    // For now, skip Supabase Auth and check profiles directly
-    console.log('Attempting login for email:', email);
+    console.log('\n🔍 Step 1: Looking up user profile...');
 
     // Check if user has a client profile
     let profile = null;
-    let role: 'client' | 'coach' | 'admin' = 'client'; // Default role
+    let role: 'client' | 'coach' | 'admin' = 'client';
     
     // Look for client profile by email
     const { data: clientProfile, error: clientError } = await supabase
@@ -414,7 +503,7 @@ export const login = async (req: Request, res: Response) => {
     if (clientProfile) {
       profile = clientProfile;
       role = 'client';
-      console.log('Found client profile');
+      console.log('✅ Found client profile');
     } else {
       // Check for coach profile if no client profile
       const { data: coachProfile, error: coachError } = await supabase
@@ -426,39 +515,82 @@ export const login = async (req: Request, res: Response) => {
       if (coachProfile) {
         profile = coachProfile;
         role = 'coach';
-        console.log('Found coach profile');
+        console.log('✅ Found coach profile');
       }
     }
 
     if (!profile) {
+      console.log('❌ No profile found for email:', email);
       return res.status(401).json({ 
         success: false, 
-        message: 'User not found' 
+        message: 'Invalid email or password' 
       });
     }
 
-    // Generate token
+    console.log('\n🔐 Step 2: Validating password...');
+    
+    // Check if profile has a password hash
+    if (!profile.password_hash) {
+      console.log('❌ No password hash found for user');
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password' 
+      });
+    }
+
+    // Validate password
+    const isValidPassword = await bcrypt.compare(password, profile.password_hash);
+    
+    if (!isValidPassword) {
+      console.log('❌ Password validation failed');
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid email or password' 
+      });
+    }
+    
+    console.log('✅ Password validation successful');
+
+    console.log('\n🔑 Step 3: Generating JWT token...');
     const token = generateToken({
-      userId: profile.id, // Use the profile ID
+      userId: profile.id,
       email: email,
       role: role
     });
+    console.log('✅ JWT token generated');
+
+    // Remove password_hash from response
+    const { password_hash, ...safeProfile } = profile;
 
     const response: AuthResponse = {
       success: true,
       message: 'Login successful',
       token,
       user: {
-        id: profile.id, // Use the profile ID
+        id: profile.id,
         email: email,
         role: role,
-        ...profile
+        ...safeProfile
       }
     };
 
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ LOGIN SUCCESSFUL');
+    console.log(`Total time: ${duration}ms`);
+    console.log('User ID:', profile.id);
+    console.log('Role:', role);
+    console.log('========================================\n');
+
     res.json(response);
   } catch (error) {
-    console.error('Login error:', error);
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ LOGIN FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+    
     res.status(500).json({ 
       success: false, 
       message: 'Login failed' 

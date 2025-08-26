@@ -1115,7 +1115,7 @@ router.put('/client/appointments/:id/reschedule', [
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
-      .select('id')
+      .select('id, first_name, last_name')
       .eq('id', req.user.userId)
       .single();
 
@@ -1123,10 +1123,18 @@ router.put('/client/appointments/:id/reschedule', [
       return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
 
-    // Verify this is the client's appointment
+    // Verify this is the client's appointment and get related names
     const { data: appointment, error: appointmentError } = await supabase
       .from('sessions')
-      .select('*')
+      .select(`
+        *,
+        coaches (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
       .eq('id', id)
       .eq('client_id', clientProfile.id)
       .single();
@@ -1159,27 +1167,25 @@ router.put('/client/appointments/:id/reschedule', [
     // Emit WebSocket event for rescheduled appointment
     const io = req.app.get('io');
     if (io) {
-      const rescheduleData = {
-        sessionId: updatedAppointment.id,
-        oldScheduledAt: appointment.starts_at,
-        newScheduledAt: updatedAppointment.starts_at,
-        clientId: clientProfile.id,
-        coachId: appointment.coach_id,
-        status: 'scheduled',
-        type: 'rescheduled'
+      const clientName = `${clientProfile.first_name} ${clientProfile.last_name}`;
+      const coachName = `${appointment.coaches.first_name} ${appointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        old_starts_at: appointment.starts_at,
+        new_starts_at: updatedAppointment.starts_at,
+        client_id: clientProfile.id,
+        coach_id: appointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        rescheduled_by: 'client',
+        reason: ''
       };
 
       // Notify coach about rescheduled appointment
-      io.to(`user:${appointment.coach_id}`).emit('appointment:rescheduled', {
-        ...rescheduleData,
-        message: 'Client has rescheduled the appointment'
-      });
+      io.to(`user:${appointment.coach_id}`).emit('appointment:rescheduled', notificationData);
 
-      // Notify client about successful reschedule
-      io.to(`user:${clientProfile.id}`).emit('appointment:rescheduled', {
-        ...rescheduleData,
-        message: 'Appointment rescheduled successfully'
-      });
+      // Don't send notification to client since they initiated it
     }
 
     res.json({
@@ -1205,7 +1211,7 @@ router.put('/client/appointments/:id/cancel', [
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
-      .select('id')
+      .select('id, first_name, last_name')
       .eq('id', req.user.userId)
       .single();
 
@@ -1213,10 +1219,18 @@ router.put('/client/appointments/:id/cancel', [
       return res.status(404).json({ success: false, message: 'Client profile not found' });
     }
 
-    // Verify this is the client's appointment
+    // Verify this is the client's appointment and get related names
     const { data: appointment, error: appointmentError } = await supabase
       .from('sessions')
-      .select('*')
+      .select(`
+        *,
+        coaches (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
       .eq('id', id)
       .eq('client_id', clientProfile.id)
       .single();
@@ -1253,27 +1267,24 @@ router.put('/client/appointments/:id/cancel', [
     // Emit WebSocket event for cancelled appointment
     const io = req.app.get('io');
     if (io) {
-      const cancelData = {
-        sessionId: updatedAppointment.id,
-        scheduledAt: appointment.starts_at,
-        clientId: clientProfile.id,
-        coachId: appointment.coach_id,
-        status: 'cancelled',
-        reason: reason || 'No reason provided',
-        type: 'cancelled'
+      const clientName = `${clientProfile.first_name} ${clientProfile.last_name}`;
+      const coachName = `${appointment.coaches.first_name} ${appointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        starts_at: appointment.starts_at,
+        client_id: clientProfile.id,
+        coach_id: appointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        cancelled_by: 'client',
+        reason: reason || ''
       };
 
       // Notify coach about cancelled appointment
-      io.to(`user:${appointment.coach_id}`).emit('appointment:cancelled', {
-        ...cancelData,
-        message: `Client has cancelled the appointment. Reason: ${reason || 'No reason provided'}`
-      });
+      io.to(`user:${appointment.coach_id}`).emit('appointment:cancelled', notificationData);
 
-      // Notify client about successful cancellation
-      io.to(`user:${clientProfile.id}`).emit('appointment:cancelled', {
-        ...cancelData,
-        message: 'Appointment cancelled successfully'
-      });
+      // Don't send notification to client since they initiated it
     }
 
     res.json({
@@ -1590,6 +1601,20 @@ router.post('/client/send-message', [
     if (messageError) {
       console.error('Database error:', messageError);
       return res.status(500).json({ success: false, message: 'Failed to send message' });
+    }
+
+    // Emit WebSocket event for real-time notification
+    const io = req.app.get('io');
+    if (io) {
+      const messageWithSenderName = {
+        ...newMessage,
+        sender_id: clientProfile.id,
+        recipient_id: receiverId,
+        sender_name: `${clientProfile.first_name} ${clientProfile.last_name}`
+      };
+      
+      // Send to recipient
+      io.to(`user:${receiverId}`).emit('message:new', messageWithSenderName);
     }
 
     res.json({
@@ -2051,24 +2076,53 @@ router.delete('/client/conversations/:partnerId', authenticate, async (req: Requ
 
     const clientId = clientProfile.id;
 
-    // Delete all messages between client and partner
-    const { error: deleteError } = await supabase
-      .from('messages')
-      .delete()
-      .or(`and(sender_id.eq.${clientId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${clientId})`);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    // Emit WebSocket event to notify partner about conversation deletion
-    const io = req.app.get('io');
-    if (io) {
-      io.to(`user:${partnerId}`).emit('conversation:deleted', { 
-        deletedBy: clientId,
-        partnerId: clientId 
+    // Soft delete: Hide conversation for this client only
+    // Add the client's ID to the hidden_for_users array for all messages in the conversation
+    const { error: updateError } = await supabase
+      .rpc('append_hidden_user', {
+        user_id: clientId,
+        partner_id: partnerId
       });
+
+    if (updateError) {
+      // Fallback to manual update if RPC doesn't exist
+      const { data: messages } = await supabase
+        .from('messages')
+        .select('id, hidden_for_users')
+        .or(`and(sender_id.eq.${clientId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${clientId})`)
+        .not('hidden_for_users', 'cs', `{${clientId}}`);
+
+      if (messages) {
+        for (const message of messages) {
+          const updatedHidden = [...(message.hidden_for_users || []), clientId];
+          await supabase
+            .from('messages')
+            .update({ hidden_for_users: updatedHidden })
+            .eq('id', message.id);
+        }
+      }
     }
+
+    // No WebSocket event needed - conversation is only hidden for the deleting user
+    console.log(`Conversation hidden for client ${clientId} with partner ${partnerId}`);
+    
+    // Optional: Clean up completely deleted conversations (where both users have hidden it)
+    // This could be done in a background job instead
+    setTimeout(async () => {
+      try {
+        const { error: cleanupError } = await supabase
+          .from('messages')
+          .delete()
+          .or(`and(sender_id.eq.${clientId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${clientId})`)
+          .contains('hidden_for_users', [clientId, partnerId]); // Both users have hidden it
+        
+        if (cleanupError) {
+          console.error('Cleanup error (non-critical):', cleanupError);
+        }
+      } catch (error) {
+        console.error('Background cleanup failed:', error);
+      }
+    }, 1000); // 1 second delay for background cleanup
 
     res.json({
       success: true,

@@ -203,16 +203,8 @@ export default function CoachMessagesPage() {
       setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at } as Message : m))
     })
 
-    socket.on('conversation:deleted', ({ deletedBy, partnerId }: { deletedBy: string; partnerId: string }) => {
-      // Remove the conversation from the list
-      setConversations(prev => prev.filter(c => c.partnerId !== partnerId))
-      
-      // If the deleted conversation was active, clear it
-      if (activePartnerId === partnerId) {
-        setActivePartnerId(null)
-        setMessages([])
-      }
-    })
+    // Removed conversation:deleted listener - conversations are now soft-deleted per-user
+    // The conversation list will be filtered server-side to exclude hidden conversations
 
     socket.on('message:deleted_everyone', ({ messageId, deletedBy }: { messageId: string; deletedBy: string }) => {
       // Update the message to show it was deleted

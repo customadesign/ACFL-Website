@@ -40,9 +40,16 @@ export default function HomePage() {
       areaOfConcern: data.areaOfConcern || [],
       location: data.location || '',
       availability: data.availability || [],
-      paymentMethod: data.paymentMethod || '',
+      priceRange: data.priceRange || '',
       completedAt: new Date().toISOString()
     }))
+    
+    console.log('Assessment completed, data stored:', {
+      areaOfConcern: data.areaOfConcern,
+      location: data.location,
+      availability: data.availability,
+      priceRange: data.priceRange
+    })
     
     // Show modal for user to choose login or register
     setShowAssessmentModal(true)

@@ -55,7 +55,6 @@ import {
   ethnicIdentityOptions,
   religiousBackgroundOptions,
   availabilityOptions,
-  paymentOptions,
 } from "@/constants/formOptions";
 import { LANGUAGES } from "@/constants/languages";
 import { useForm } from "react-hook-form";
@@ -337,8 +336,36 @@ function SearchCoachesContent() {
           
           // Set form values from assessment data
           form.setValue('areaOfConcern', assessmentData.areaOfConcern || []);
-          form.setValue('location', assessmentData.location || '');
+          
+          // Convert location from full state name to state code
+          const locationName = assessmentData.location || '';
+          let locationCode = '';
+          if (locationName) {
+            // Find the state code by matching the full name
+            const stateEntry = Object.entries(STATE_NAMES).find(
+              ([code, name]) => name === locationName
+            );
+            locationCode = stateEntry ? stateEntry[0] : '';
+            console.log('Converting location:', { locationName, locationCode });
+          }
+          form.setValue('location', locationCode);
+          
           form.setValue('availability_options', assessmentData.availability || []);
+          
+          // Convert priceRange string to numeric range
+          if (assessmentData.priceRange) {
+            const priceMap: Record<string, [number, number]> = {
+              'under-50': [0, 50],
+              '50-75': [50, 75],
+              '75-100': [75, 100],
+              '100-150': [100, 150],
+              '150-200': [150, 200],
+              'over-200': [200, 500],
+              'flexible': [0, 500]
+            };
+            const range = priceMap[assessmentData.priceRange] || [0, 500];
+            setPriceRange(range);
+          }
           
           // Switch to search tab and show form
           setActiveTab('search');
@@ -351,14 +378,30 @@ function SearchCoachesContent() {
               setTimeout(() => {
                 const formData = {
                   areaOfConcern: assessmentData.areaOfConcern || [],
-                  location: assessmentData.location || '',
+                  location: locationCode, // Use the converted location code
                   availability_options: assessmentData.availability || [],
                   therapistGender: 'any',
                   language: 'any'
                 };
+                console.log('Auto-submitting search with assessment data:', formData);
+                console.log('Price range set to:', priceRange);
                 handleSubmit(formData as SearchFormData);
               }, 500);
             });
+          } else {
+            // Coaches already loaded, auto-submit immediately
+            setTimeout(() => {
+              const formData = {
+                areaOfConcern: assessmentData.areaOfConcern || [],
+                location: locationCode, // Use the converted location code
+                availability_options: assessmentData.availability || [],
+                therapistGender: 'any',
+                language: 'any'
+              };
+              console.log('Auto-submitting search with assessment data (coaches already loaded):', formData);
+              console.log('Price range set to:', priceRange);
+              handleSubmit(formData as SearchFormData);
+            }, 500);
           }
           
           // Clear the assessment data from localStorage after using it
