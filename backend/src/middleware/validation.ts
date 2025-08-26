@@ -91,31 +91,7 @@ export const validateRegisterCoach: ValidationChain[] = [
       
       return true;
     })
-    .withMessage('Valid international phone number is required'),
-  body('specialties')
-    .optional({ nullable: true })
-    .isArray()
-    .withMessage('Specialties must be an array'),
-  body('languages')
-    .isArray({ min: 1 })
-    .withMessage('At least one language is required'),
-  body('bio')
-    .optional()
-    .isLength({ max: 1000 })
-    .withMessage('Bio must be less than 1000 characters'),
-  body('qualifications')
-    .optional()
-    .isString()
-    .isLength({ max: 1000 })
-    .withMessage('Qualifications must be a string with max 1000 characters'),
-  body('experience')
-    .optional()
-    .isInt({ min: 0 })
-    .withMessage('Experience must be a positive number'),
-  body('hourlyRate')
-    .optional()
-    .isFloat({ min: 0 })
-    .withMessage('Hourly rate must be a positive number')
+    .withMessage('Valid international phone number is required')
 ];
 
 export const validateLogin: ValidationChain[] = [

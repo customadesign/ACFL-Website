@@ -150,13 +150,7 @@ export default function CoachRegister() {
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        phone: formData.phone || undefined,
-        bio: formData.bio || 'Professional ACT coach ready to help you achieve your goals',
-        qualifications: formData.qualifications ? [formData.qualifications] : ['Certified Life Coach'],
-        experience: parseInt(formData.experience) || 1,
-        hourlyRate: parseInt(formData.hourlyRate) || 75,
-        specialties: formData.specialties,
-        languages: formData.languages.length > 0 ? formData.languages : ['English']
+        phone: formData.phone || undefined
       });
 
       // The registerCoach function already handles token storage and redirects to /coaches

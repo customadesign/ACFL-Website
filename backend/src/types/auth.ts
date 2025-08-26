@@ -62,12 +62,6 @@ export interface RegisterCoachDto {
   firstName: string;
   lastName: string;
   phone?: string;
-  specialties: string[];
-  languages: string[];
-  bio?: string;
-  qualifications?: string[];
-  experience?: number;
-  hourlyRate?: number;
 }
 
 export interface LoginDto {

@@ -233,13 +233,7 @@ export const registerCoach = async (req: Request, res: Response) => {
       password, 
       firstName, 
       lastName, 
-      phone, 
-      specialties,
-      languages,
-      bio,
-      qualifications,
-      experience,
-      hourlyRate
+      phone
     } = req.body as RegisterCoachDto;
 
     // Step 2: Check for existing coach
@@ -336,12 +330,12 @@ export const registerCoach = async (req: Request, res: Response) => {
       last_name: lastName,
       phone,
       is_available: true,
-      bio,
-      years_experience: experience || null,
-      hourly_rate_usd: hourlyRate || null,
-      qualifications,
-      specialties: specialties || [],
-      languages: languages || [],
+      bio: 'Professional ACT coach ready to help you achieve your goals',
+      years_experience: 1,
+      hourly_rate_usd: 75,
+      qualifications: ['Certified Life Coach'],
+      specialties: [],
+      languages: ['English'],
       rating: 4.5, // Default rating for new coaches
     };
     console.log('Profile data:', profileData);
