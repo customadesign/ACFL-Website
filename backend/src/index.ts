@@ -166,9 +166,43 @@ io.on('connection', (socket) => {
 
       if (error) throw error;
 
+      // Fetch sender information to include in the message
+      let senderName = 'Unknown';
+      try {
+        // Try to find sender in coaches table first
+        const { data: coachSender } = await supabase
+          .from('coaches')
+          .select('first_name, last_name')
+          .eq('id', senderId)
+          .single();
+        
+        if (coachSender) {
+          senderName = `${coachSender.first_name} ${coachSender.last_name}`;
+        } else {
+          // Try to find sender in clients table
+          const { data: clientSender } = await supabase
+            .from('clients')
+            .select('first_name, last_name')
+            .eq('id', senderId)
+            .single();
+          
+          if (clientSender) {
+            senderName = `${clientSender.first_name} ${clientSender.last_name}`;
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch sender name:', error);
+      }
+
+      // Add sender name to the message
+      const messageWithSender = {
+        ...saved,
+        sender_name: senderName
+      };
+
       // Emit to both participants
-      io.to(`user:${recipientId}`).emit('message:new', saved);
-      io.to(`user:${senderId}`).emit('message:new', saved);
+      io.to(`user:${recipientId}`).emit('message:new', messageWithSender);
+      io.to(`user:${senderId}`).emit('message:new', messageWithSender);
     } catch (err) {
       socket.emit('message:error', { message: 'Failed to send message' });
     }
