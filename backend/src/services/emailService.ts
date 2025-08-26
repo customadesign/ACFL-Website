@@ -1,11 +1,42 @@
-const { Resend } = require('resend');
+import { Resend } from 'resend';
 
 // Initialize Resend with API key
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@linkage-va-hub.com';
 
+interface EmailData {
+  to: string | string[];
+  subject: string;
+  text?: string;
+  html?: string;
+  templateData?: Record<string, any>;
+}
+
+interface User {
+  email: string;
+  first_name?: string;
+  role: string;
+}
+
+interface AppointmentDetails {
+  date: string;
+  time: string;
+  duration?: string;
+  type?: string;
+}
+
+interface AppointmentConfirmationData {
+  clientEmail: string;
+  coachEmail: string;
+  clientName: string;
+  coachName: string;
+  appointmentDetails: AppointmentDetails;
+}
+
 class EmailService {
+  private isConfigured: boolean;
+
   constructor() {
     this.isConfigured = !!process.env.RESEND_API_KEY;
     
@@ -14,7 +45,7 @@ class EmailService {
     }
   }
 
-  async sendEmail({ to, subject, text, html, templateData = {} }) {
+  async sendEmail({ to, subject, text, html, templateData = {} }: EmailData) {
     if (!this.isConfigured) {
       console.log('Email service not configured. Would have sent:', { to, subject });
       return { success: false, message: 'Email service not configured' };
@@ -51,7 +82,7 @@ class EmailService {
       console.log('Email sent successfully to:', to);
       console.log('Resend response:', data);
       return { success: true, messageId: data.id };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Email sending failed:', error);
       
       // Return detailed error for debugging
@@ -63,7 +94,7 @@ class EmailService {
     }
   }
 
-  async sendWelcomeEmail(user) {
+  async sendWelcomeEmail(user: User) {
     const subject = 'Welcome to ACT Coaching For Life!';
     const html = `
       <!DOCTYPE html>
@@ -154,7 +185,7 @@ class EmailService {
     });
   }
 
-  async sendAppointmentConfirmation({ clientEmail, coachEmail, clientName, coachName, appointmentDetails }) {
+  async sendAppointmentConfirmation({ clientEmail, coachEmail, clientName, coachName, appointmentDetails }: AppointmentConfirmationData) {
     const subject = 'Appointment Confirmed - ACT Coaching For Life';
     
     const clientHtml = `
@@ -223,7 +254,7 @@ class EmailService {
     });
   }
 
-  async sendPasswordResetEmail(email, resetToken) {
+  async sendPasswordResetEmail(email: string, resetToken: string) {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/reset-password?token=${resetToken}`;
     
     const subject = 'Reset Your Password - ACT Coaching For Life';
@@ -291,4 +322,4 @@ class EmailService {
   }
 }
 
-module.exports = new EmailService();
+export default new EmailService();
