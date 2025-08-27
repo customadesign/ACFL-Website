@@ -117,7 +117,7 @@ export default function ClientLayout({
                   className="sm:hidden p-2 rounded-md hover:bg-accent transition-colors"
                   aria-label="Toggle menu"
                 >
-                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                  {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6 dark:text-white" />}
                 </button>
                 
                 <img 
@@ -125,7 +125,7 @@ export default function ClientLayout({
                   alt="ACT Coaching For Life Logo" 
                   className="h-8 sm:h-10 w-auto"
                 />
-                <h1 className="text-lg sm:text-xl font-semibold text-card-foreground hidden sm:block">ACT Coaching For Life</h1>
+                <h1 className="text-lg sm:text-xl font-semibold text-card-foreground hidden sm:block ">ACT Coaching For Life</h1>
               </div>
               
               {/* Desktop user menu */}
@@ -282,13 +282,13 @@ export default function ClientLayout({
                       alt="ACT Logo" 
                       className="h-8 w-auto"
                     />
-                    <span className="font-semibold text-sm">ACT Coaching</span>
+                    <span className="font-semibold text-sm dark:text-white">ACT Coaching</span>
                   </div>
                   <button
                     onClick={() => setMobileMenuOpen(false)}
                     className="p-2 hover:bg-accent rounded-md transition-colors"
                   >
-                    <X className="w-5 h-5" />
+                    <X className="w-5 h-5 dark:text-white" />
                   </button>
                 </div>
               </div>
