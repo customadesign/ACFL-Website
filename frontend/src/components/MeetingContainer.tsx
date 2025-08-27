@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import PreCall from '@/components/PreCall'
 import VideoMeeting from '@/components/VideoMeeting'
 import { createOrGetMeeting } from '@/services/videoMeeting'
-import { Loader2 } from 'lucide-react'
+import { Loader2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useMeeting } from '@/contexts/MeetingContext'
 
 interface MeetingContainerProps {
   appointmentId: string
@@ -26,7 +27,8 @@ export default function MeetingContainer({
   onClose
 }: MeetingContainerProps) {
   const { user } = useAuth()
-  const [stage, setStage] = useState<'precall' | 'loading' | 'meeting' | 'ended'>('precall')
+  const { canJoinMeeting, isInMeeting, currentMeetingId } = useMeeting()
+  const [stage, setStage] = useState<'precall' | 'loading' | 'meeting' | 'ended' | 'blocked'>('precall')
   const [meetingConfig, setMeetingConfig] = useState<{
     meetingId: string
     token: string
@@ -35,10 +37,30 @@ export default function MeetingContainer({
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
+  const [meetingIdToCheck, setMeetingIdToCheck] = useState<string | null>(null)
 
   const participantName = user?.first_name && user?.last_name 
     ? `${user.first_name} ${user.last_name}`
     : user?.email || 'Participant'
+
+  // Check meeting access on mount by getting the meeting ID
+  useEffect(() => {
+    const checkMeetingAccess = async () => {
+      try {
+        const { meetingId } = await createOrGetMeeting(appointmentId, isHost)
+        setMeetingIdToCheck(meetingId)
+        
+        if (!canJoinMeeting(meetingId)) {
+          setStage('blocked')
+        }
+      } catch (error) {
+        console.error('Failed to check meeting access:', error)
+        setError('Failed to check meeting access')
+      }
+    }
+    
+    checkMeetingAccess()
+  }, [appointmentId, isHost, canJoinMeeting])
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {
     // Prevent double-clicking and multiple join attempts
@@ -53,6 +75,14 @@ export default function MeetingContainer({
     try {
       // Create or get VideoSDK meeting
       const { meetingId, token } = await createOrGetMeeting(appointmentId, isHost)
+      
+      // Double-check if user can still join (in case state changed)
+      if (!canJoinMeeting(meetingId)) {
+        setError('Cannot join meeting: You are already in another meeting session')
+        setStage('blocked')
+        setIsJoining(false)
+        return
+      }
       
       setMeetingConfig({
         meetingId,
@@ -106,6 +136,34 @@ export default function MeetingContainer({
           </div>
           <p className="text-lg font-medium">Meeting Ended</p>
           <p className="text-sm text-gray-600 mt-2">Thank you for your session</p>
+        </div>
+      </div>
+    )
+  }
+
+  // Blocked state - user is already in another meeting
+  if (stage === 'blocked') {
+    return (
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertTriangle className="w-8 h-8 text-orange-600" />
+          </div>
+          <p className="text-lg font-medium text-gray-900 mb-2">Cannot Join Meeting</p>
+          <p className="text-sm text-gray-600 mb-4">
+            You are already in another meeting session. Please leave your current meeting before joining this one.
+          </p>
+          {isInMeeting && currentMeetingId && (
+            <p className="text-xs text-orange-600 bg-orange-50 rounded px-3 py-2 mb-4">
+              Current meeting: {currentMeetingId}
+            </p>
+          )}
+          <button
+            onClick={onClose}
+            className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium"
+          >
+            Close
+          </button>
         </div>
       </div>
     )

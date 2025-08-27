@@ -177,7 +177,14 @@ export default function CoachProfilePage() {
       });
 
       if (response.data.success) {
-        setStats(response.data.data);
+        console.log('Coach stats received:', response.data.data);
+        const statsData = response.data.data;
+        setStats({
+          totalClients: statsData.totalClients || 0,
+          totalSessions: statsData.totalSessions || 0,
+          averageRating: statsData.averageRating || 0,
+          completionRate: statsData.completionRate || statsData.completion_rate || 0
+        });
       }
     } catch (error) {
       console.error('Error loading stats:', error);
@@ -404,9 +411,9 @@ export default function CoachProfilePage() {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
           <Card className="bg-card border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
                 <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
                   <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -422,9 +429,9 @@ export default function CoachProfilePage() {
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
                   <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -438,9 +445,9 @@ export default function CoachProfilePage() {
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
                   <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                   </svg>
@@ -454,16 +461,16 @@ export default function CoachProfilePage() {
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Completion Rate</p>
-                  <p className="text-2xl font-bold text-foreground">{stats.completionRate}%</p>
+                <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Completion</p>
+                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.completionRate || 0}%</p>
                 </div>
               </div>
             </CardContent>

@@ -424,21 +424,21 @@ function SearchCoachesContent() {
   }, [searchQuery, priceRange, selectedFilters, watchedExperience]);
 
   return (
-    <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
         {/* Page Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
             Find Your Perfect Coach
           </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
+          <p className="text-sm sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-2">
             Discover qualified coaches who match your needs and preferences
           </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8">
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+        <div className="flex flex-col sm:flex-row justify-center items-center mb-6 sm:mb-8 gap-4">
+          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto">
             <button
               onClick={() => {
                 setActiveTab('saved');
@@ -446,14 +446,15 @@ function SearchCoachesContent() {
                 setFilteredCoaches(savedCoaches);
                 setHasSearched(false);
               }}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors touch-manipulation ${
                 activeTab === 'saved'
                   ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <Heart className="w-4 h-4 inline mr-2" />
-              Saved Coaches ({savedCoaches.length})
+              <span className="hidden sm:inline">Saved Coaches ({savedCoaches.length})</span>
+              <span className="sm:hidden">Saved ({savedCoaches.length})</span>
             </button>
             <button
               onClick={() => {
@@ -465,14 +466,15 @@ function SearchCoachesContent() {
                 setFilteredCoaches(allCoaches);
                 setHasSearched(false);
               }}
-              className={`px-6 py-2 rounded-md font-medium transition-colors ${
+              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors touch-manipulation ${
                 activeTab === 'search'
                   ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
               }`}
             >
               <Search className="w-4 h-4 inline mr-2" />
-              Search New Coaches
+              <span className="hidden sm:inline">Search New Coaches</span>
+              <span className="sm:hidden">Search</span>
             </button>
           </div>
           {/* Refresh button for saved coaches */}
@@ -480,7 +482,7 @@ function SearchCoachesContent() {
             <Button
               onClick={refreshSavedCoaches}
               variant="outline"
-              className="ml-4 flex items-center gap-2 dark:text-white"
+              className="flex items-center gap-2 dark:text-white w-full sm:w-auto touch-manipulation"
             >
               <RefreshCw className="w-4 h-4" />
               Refresh
@@ -490,14 +492,14 @@ function SearchCoachesContent() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="text-center py-12">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-lg text-gray-600">
+          <div className="text-center py-8 sm:py-12">
+            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 px-4">
               {hasSearched
                 ? "Finding your perfect coach matches..."
                 : "Loading coaches from database..."}
             </p>
-            <p className="text-sm text-gray-500 mt-2">
+            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-2 px-4">
               This may take a few moments
             </p>
           </div>
@@ -505,30 +507,35 @@ function SearchCoachesContent() {
 
         {/* Error Message */}
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
+          <div className="mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md mx-2 sm:mx-0">
+            <div className="flex items-center">
+              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              {error}
+            </div>
           </div>
         )}
 
         {/* Search Form - Only show when on search tab */}
         {activeTab === 'search' && showForm && (
-          <Card className="mb-8 shadow-lg border-0 bg-white dark:bg-gray-800">
-            <CardContent className="p-6">
+          <Card className="mb-6 sm:mb-8 shadow-lg border-0 bg-white dark:bg-gray-800 mx-2 sm:mx-0">
+            <CardContent className="p-4 sm:p-6">
               {/* Modern Search Header */}
-              <div className="flex items-center justify-between mb-6">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <SlidersHorizontal className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <SlidersHorizontal className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div>
-                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Smart Search Filters</h2>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">Find coaches that match your preferences</p>
+                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Smart Search Filters</h2>
+                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Find coaches that match your preferences</p>
                   </div>
                 </div>
                 <Button
                   variant="outline"
                   onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="flex items-center space-x-2 bg-white dark:text-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600"
+                  className="flex items-center justify-center space-x-2 bg-white dark:text-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 touch-manipulation w-full sm:w-auto"
                 >
                   {showAdvancedFilters ? <ChevronUp className="w-4 h-4 dark:text-white" /> : <ChevronDown className="w-4 h-4 dark:text-white" />}
                   <span className="text-gray-900 dark:text-white">{showAdvancedFilters ? "Hide" : "Show"} Advanced</span>
@@ -536,22 +543,22 @@ function SearchCoachesContent() {
               </div>
 
               {/* Quick Search Bar */}
-              <div className="mb-6">
+              <div className="mb-4 sm:mb-6">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                   <Input
                     type="text"
                     placeholder="Search by name, specialty, or description..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 pr-4 py-3 text-lg border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-9 sm:pl-10 pr-10 sm:pr-4 py-2 sm:py-3 text-sm sm:text-lg border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-manipulation"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                 </div>
@@ -560,25 +567,25 @@ function SearchCoachesContent() {
               {/* Quick Filter Chips removed per requirements */}
 
               {/* Price Range Slider */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              <div className="mb-4 sm:mb-6">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
                   Price Range: ${priceRange[0]} - ${priceRange[1]}
                 </label>
-                <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-3 sm:space-x-4">
                   <Input
                     type="number"
                     placeholder="Min"
                     value={priceRange[0]}
                     onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                    className="w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-20 sm:w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
-                  <span className="text-gray-500 dark:text-gray-400">to</span>
+                  <span className="text-gray-500 dark:text-gray-400 text-sm">to</span>
                   <Input
                     type="number"
                     placeholder="Max"
                     value={priceRange[1]}
                     onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
-                    className="w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    className="w-20 sm:w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
                   />
                 </div>
               </div>
@@ -586,7 +593,7 @@ function SearchCoachesContent() {
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                   {/* Basic Filters */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <FormField
                       control={form.control}
                       name="areaOfConcern"
@@ -758,7 +765,7 @@ function SearchCoachesContent() {
 
                   {/* Advanced Filters */}
                   {showAdvancedFilters && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-6 border-t border-gray-200">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
                       <FormField
                         control={form.control}
                         name="therapistGender"
@@ -888,13 +895,13 @@ function SearchCoachesContent() {
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <div className="flex items-center space-x-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700 gap-4 sm:gap-0">
+                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={handleQuickSearch}
-                        className="flex items-center space-x-2"
+                        className="flex items-center justify-center space-x-2 w-full sm:w-auto touch-manipulation"
                       >
                         <Search className="w-4 h-4" />
                         <span>Quick Search</span>
@@ -909,7 +916,7 @@ function SearchCoachesContent() {
                           setSelectedFilters(new Set());
                           setFilteredCoaches(allCoaches);
                         }}
-                        className="flex items-center space-x-2"
+                        className="flex items-center justify-center space-x-2 w-full sm:w-auto touch-manipulation"
                       >
                         <RefreshCw className="w-4 h-4" />
                         <span>Reset All</span>
@@ -917,7 +924,7 @@ function SearchCoachesContent() {
                     </div>
                     <Button
                       type="submit"
-                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-3"
+                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-6 sm:px-8 py-3 w-full sm:w-auto touch-manipulation"
                     >
                       <Search className="w-4 h-4 mr-2" />
                       Find Matches
@@ -930,13 +937,13 @@ function SearchCoachesContent() {
         )}
 
         {/* Results Section */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
+            <div className="px-2 sm:px-0">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
                 {activeTab === 'saved' ? 'Your Saved Coaches' : 'Available Coaches'}
               </h2>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
                 {activeTab === 'saved' 
                   ? `${savedCoaches.length} saved coach${savedCoaches.length !== 1 ? 'es' : ''}`
                   : `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''} found`
@@ -947,7 +954,7 @@ function SearchCoachesContent() {
               <Button
                 variant="outline"
                 onClick={() => setShowForm(!showForm)}
-                className="flex items-center space-x-2"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto mx-2 sm:mx-0 touch-manipulation"
               >
                 {showForm ? <X className="w-4 h-4 dark:text-white" /> : <Filter className="w-4 h-4 dark:text-white" />}
                 <span className="text-gray-900 dark:text-white">{showForm ? 'Hide' : 'Show'} Filters</span>
@@ -957,13 +964,13 @@ function SearchCoachesContent() {
 
           {/* No Results Message */}
           {filteredCoaches.length === 0 && !isLoading && (
-            <Card className="p-12 text-center bg-white dark:bg-gray-800">
+            <Card className="p-6 sm:p-12 text-center bg-white dark:bg-gray-800 mx-2 sm:mx-0">
               <div className="max-w-md mx-auto">
                 {activeTab === 'saved' ? (
                   <>
                     <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Saved Coaches Yet</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Saved Coaches Yet</h3>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
                       You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
                     </p>
                     <Button
@@ -982,8 +989,8 @@ function SearchCoachesContent() {
                 ) : (
                   <>
                     <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">No Coaches Found</h3>
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Coaches Found</h3>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
                       Try adjusting your search criteria or filters to find more matches.
                     </p>
                     <Button
@@ -1005,7 +1012,7 @@ function SearchCoachesContent() {
 
                     {/* Coaches Grid */}
           {filteredCoaches.length > 0 && (
-            <div className="grid grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-6 px-2 sm:px-0">
               {getCurrentCoaches().map((coach) => (
                 <ProviderCard
                   key={coach.id}
@@ -1039,32 +1046,88 @@ function SearchCoachesContent() {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex justify-center mt-8">
-              <div className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage - 1)}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </Button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+            <div className="flex justify-center mt-6 sm:mt-8 px-2 sm:px-0">
+              <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-0">
+                {/* Mobile pagination info */}
+                <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 sm:hidden mb-2">
+                  Page {currentPage} of {totalPages}
+                </div>
+                
+                <div className="flex space-x-1 sm:space-x-2 overflow-x-auto">
                   <Button
-                    key={page}
-                    variant={currentPage === page ? 'default' : 'outline'}
-                    onClick={() => handlePageChange(page)}
-                    className="w-10"
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="touch-manipulation px-3 sm:px-4"
                   >
-                    {page}
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">←</span>
                   </Button>
-                ))}
-                <Button
-                  variant="outline"
-                  onClick={() => handlePageChange(currentPage + 1)}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </Button>
+                  
+                  {/* Show fewer page numbers on mobile */}
+                  {totalPages <= 5 ? (
+                    Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <Button
+                        key={page}
+                        variant={currentPage === page ? 'default' : 'outline'}
+                        onClick={() => handlePageChange(page)}
+                        className="w-8 h-8 sm:w-10 sm:h-10 touch-manipulation"
+                      >
+                        {page}
+                      </Button>
+                    ))
+                  ) : (
+                    // Show condensed pagination for many pages
+                    <>
+                      {currentPage > 2 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handlePageChange(1)}
+                          className="w-8 h-8 sm:w-10 sm:h-10 touch-manipulation"
+                        >
+                          1
+                        </Button>
+                      )}
+                      {currentPage > 3 && <span className="px-2 text-gray-400">...</span>}
+                      
+                      {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                        const page = Math.max(1, currentPage - 1) + i;
+                        if (page > totalPages) return null;
+                        return (
+                          <Button
+                            key={page}
+                            variant={currentPage === page ? 'default' : 'outline'}
+                            onClick={() => handlePageChange(page)}
+                            className="w-8 h-8 sm:w-10 sm:h-10 touch-manipulation"
+                          >
+                            {page}
+                          </Button>
+                        );
+                      }).filter(Boolean)}
+                      
+                      {currentPage < totalPages - 2 && <span className="px-2 text-gray-400">...</span>}
+                      {currentPage < totalPages - 1 && (
+                        <Button
+                          variant="outline"
+                          onClick={() => handlePageChange(totalPages)}
+                          className="w-8 h-8 sm:w-10 sm:h-10 touch-manipulation"
+                        >
+                          {totalPages}
+                        </Button>
+                      )}
+                    </>
+                  )}
+                  
+                  <Button
+                    variant="outline"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="touch-manipulation px-3 sm:px-4"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">→</span>
+                  </Button>
+                </div>
               </div>
             </div>
           )}

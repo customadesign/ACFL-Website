@@ -73,86 +73,80 @@ export default function CoachDashboardPage() {
   return (
     <CoachPageWrapper title="Dashboard" description="Overview of your coaching practice">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+              <div className="p-2 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Today's Appointments</p>
-                <p className="text-2xl font-bold text-foreground">{stats.todayAppointments || 0}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Today's Apps</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.todayAppointments || 0}</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 rounded-lg">
-                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+              <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                <Users className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Active Clients</p>
-                <p className="text-2xl font-bold text-foreground">{stats.activeClients || 0}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Active Clients</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.activeClients || 0}</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 rounded-lg">
-                <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                </svg>
+              <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">This Week Sessions</p>
-                <p className="text-2xl font-bold text-foreground">{stats.weekSessions || 0}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Week Sessions</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.weekSessions || 0}</p>
               </div>
             </div>
           </Card>
           
-          <Card className="p-6">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                 </svg>
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">Rating</p>
-                <p className="text-2xl font-bold text-foreground">{stats.rating || 0}</p>
+              <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Rating</p>
+                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.rating || 0}</p>
               </div>
             </div>
           </Card>
         </div>
 
-        {/* Two Column Layout with Fixed Height Cards */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Two Column Layout with Responsive Height Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
           {/* Today's Appointments Card */}
-          <Card className="h-[500px] flex flex-col">
-            <CardHeader>
+          <Card className="h-[400px] sm:h-[450px] lg:h-[500px] flex flex-col">
+            <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Calendar className="w-5 h-5" />
-                  <span>Today's Appointments</span>
+                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Today's Appointments</span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => loadDashboardData(true)}
                   disabled={isLoading}
-                  className="h-8 px-3"
+                  className="h-8 px-2 sm:px-3 touch-manipulation"
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
+            <CardContent className="flex-1 overflow-y-auto px-3 sm:px-6">
               {initialLoad ? (
                 <DashboardListSkeleton count={3} type="appointment" />
               ) : (
@@ -194,16 +188,17 @@ export default function CoachDashboardPage() {
                   )}
                   {/* Pagination Controls */}
                   {todayAppointments.length > pageSize && (
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                      <span className="text-xs text-gray-500">
+                    <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 gap-2 sm:gap-0">
+                      <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                         Page {appointmentsPage} of {Math.ceil(todayAppointments.length / pageSize)}
                       </span>
-                      <div className="space-x-2">
+                      <div className="flex space-x-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           disabled={appointmentsPage === 1} 
                           onClick={() => setAppointmentsPage(p => Math.max(1, p - 1))}
+                          className="text-xs px-2 sm:px-3 touch-manipulation"
                         >
                           Previous
                         </Button>
@@ -212,6 +207,7 @@ export default function CoachDashboardPage() {
                           size="sm" 
                           disabled={appointmentsPage * pageSize >= todayAppointments.length} 
                           onClick={() => setAppointmentsPage(p => p + 1)}
+                          className="text-xs px-2 sm:px-3 touch-manipulation"
                         >
                           Next
                         </Button>
@@ -224,25 +220,25 @@ export default function CoachDashboardPage() {
           </Card>
 
           {/* Recent Clients Card */}
-          <Card className="h-[500px] flex flex-col">
-            <CardHeader>
+          <Card className="h-[400px] sm:h-[450px] lg:h-[500px] flex flex-col">
+            <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Users className="w-5 h-5" />
-                  <span>Recent Clients</span>
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Recent Clients</span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => loadDashboardData(true)}
                   disabled={isLoading}
-                  className="h-8 px-3"
+                  className="h-8 px-2 sm:px-3 touch-manipulation"
                 >
                   <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
+            <CardContent className="flex-1 overflow-y-auto px-3 sm:px-6">
               {initialLoad ? (
                 <DashboardListSkeleton count={3} type="client" />
               ) : (
@@ -257,37 +253,38 @@ export default function CoachDashboardPage() {
                     recentClients
                       .slice((clientsPage - 1) * pageSize, clientsPage * pageSize)
                       .map((session: any) => (
-                        <div key={session.id} className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
-                          <div className="p-2 bg-green-100 rounded-full">
-                            <User className="w-5 h-5 text-green-600" />
+                        <div key={session.id} className="flex items-center space-x-3 p-3 sm:p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer touch-manipulation">
+                          <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full flex-shrink-0">
+                            <User className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
                           </div>
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">
                               {session.clients ? `${session.clients.first_name} ${session.clients.last_name}` : 'Client'}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-300">
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-300">
                               Last session: {new Date(session.scheduled_at || session.starts_at).toLocaleDateString()}
                             </p>
                             {session.clients?.users?.email && (
-                              <p className="text-xs text-gray-400">{session.clients.users.email}</p>
+                              <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500 truncate">{session.clients.users.email}</p>
                             )}
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                         </div>
                       ))
                   )}
                   {/* Pagination Controls */}
                   {recentClients.length > pageSize && (
-                    <div className="flex justify-between items-center pt-4 border-t border-gray-200">
-                      <span className="text-xs text-gray-500">
+                    <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 gap-2 sm:gap-0">
+                      <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">
                         Page {clientsPage} of {Math.ceil(recentClients.length / pageSize)}
                       </span>
-                      <div className="space-x-2">
+                      <div className="flex space-x-2">
                         <Button 
                           variant="outline" 
                           size="sm" 
                           disabled={clientsPage === 1} 
                           onClick={() => setClientsPage(p => Math.max(1, p - 1))}
+                          className="text-xs px-2 sm:px-3 touch-manipulation"
                         >
                           Previous
                         </Button>
@@ -296,6 +293,7 @@ export default function CoachDashboardPage() {
                           size="sm" 
                           disabled={clientsPage * pageSize >= recentClients.length} 
                           onClick={() => setClientsPage(p => p + 1)}
+                          className="text-xs px-2 sm:px-3 touch-manipulation"
                         >
                           Next
                         </Button>

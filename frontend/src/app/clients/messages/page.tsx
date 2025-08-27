@@ -9,7 +9,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff } from 'lucide-react'
+import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send } from 'lucide-react'
 import { io } from 'socket.io-client'
 
 type Conversation = {
@@ -50,6 +50,7 @@ const { user, logout } = useAuth()
 	const [text, setText] = useState('')
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 	const [uploading, setUploading] = useState(false)
+	const [showMobileChat, setShowMobileChat] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 const scrollerRef = useRef<HTMLDivElement>(null)
 
@@ -396,51 +397,66 @@ useEffect(() => {
 
 
 	return (
-		<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-			{/* Page Header */}
-			<div className="mb-8">
-				<h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Messages</h1>
-				<p className="text-lg text-gray-600 dark:text-gray-400">Send and receive messages with your coach</p>
+		<div className="flex flex-col h-screen sm:max-w-7xl sm:mx-auto sm:px-4 sm:px-6 lg:px-8 sm:pt-8 sm:pb-16 sm:h-auto">
+			{/* Page Header - Hidden on mobile when in chat view */}
+			<div className={`mb-4 sm:mb-8 px-4 pt-4 sm:px-0 sm:pt-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
+				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">My Messages</h1>
+				<p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400">Send and receive messages with your coach</p>
 			</div>
 			{/* Main Content */}
 			{initialLoad ? (
 				<MessagesSkeleton />
 			) : (
-			<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-					<div className="border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 overflow-hidden h-[70vh] flex flex-col">
-						<div className="p-3 border-b dark:border-gray-700 font-semibold text-gray-900 dark:text-white">Conversations</div>
+			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
+					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
+					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col`}>
+						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">Conversations</div>
 						<div className="flex-1 overflow-y-auto">
 							{conversations.map(c => (
 								<div key={c.partnerId} className="relative group">
 									<button
-										onClick={() => setActivePartnerId(c.partnerId)}
-										className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+										onClick={() => {
+											setActivePartnerId(c.partnerId)
+											setShowMobileChat(true)
+										}}
+										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
 									>
-										<div>
-											<div className="font-medium text-gray-900 dark:text-white">{c.partnerName}</div>
-											<div className="text-xs text-gray-500 dark:text-gray-400 truncate max-w-[200px]">{c.lastBody || 'No messages yet'}</div>
+										<div className="min-w-0 flex-1">
+											<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
+											<div className="text-xs sm:text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages yet'}</div>
 										</div>
 										{c.unreadCount > 0 && (
 											<span className="ml-2 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
 										)}
 									</button>
 									<button
-										onClick={() => deleteConversation(c.partnerId)}
-										className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-1 text-red-500 hover:text-red-700"
+										onClick={(e) => {
+											e.stopPropagation()
+											deleteConversation(c.partnerId)
+										}}
+										className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-2 sm:p-1 text-red-500 hover:text-red-700 touch-manipulation"
 										title="Delete conversation"
 									>
-										<Trash2 size={16} />
+										<Trash2 size={18} className="sm:w-4 sm:h-4" />
 									</button>
 								</div>
 							))}
 						</div>
 					</div>
 
-					<div className="md:col-span-2 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden h-[70vh]">
-						<div className="p-3 border-b dark:border-gray-700">
-							<div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
-						</div>
-						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-2 bg-gray-50 dark:bg-gray-900">
+				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
+				<div className={`${showMobileChat ? 'flex-1' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden`}>
+					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+						{/* Back button for mobile */}
+						<button
+							onClick={() => setShowMobileChat(false)}
+							className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full touch-manipulation"
+						>
+							<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+						</button>
+						<div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
+					</div>
+						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900">
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
 								<p>Select a conversation to start messaging</p>
@@ -539,7 +555,7 @@ useEffect(() => {
 								)
 							})}
 						</div>
-						<div className="p-3 border-t dark:border-gray-700">
+						<div className="p-3 sm:p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
 							{selectedFile && (
 								<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
 									<div className="flex items-center gap-2">
@@ -562,7 +578,7 @@ useEffect(() => {
 									</button>
 								</div>
 							)}
-							<div className="flex gap-2">
+							<div className="flex gap-2 items-end">
 								<input
 									ref={fileInputRef}
 									type="file"
@@ -572,7 +588,7 @@ useEffect(() => {
 								/>
 								<button
 									onClick={() => fileInputRef.current?.click()}
-									className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+									className="p-3 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
 									title={activePartnerId ? "Attach file" : "Select a conversation first"}
 									disabled={!activePartnerId}
 								>
@@ -582,7 +598,7 @@ useEffect(() => {
 									value={text}
 									onChange={e => setText(e.target.value)}
 									placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-									className="flex-1 dark:text-white"
+									className="flex-1 dark:text-white text-base sm:text-sm py-3 sm:py-2"
 									disabled={!activePartnerId}
 									onKeyDown={e => {
 										if (e.key === 'Enter' && !e.shiftKey) {
@@ -594,9 +610,10 @@ useEffect(() => {
 								<Button 
 									onClick={handleSend} 
 									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)} 
-									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white"
+									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white px-6 sm:px-4 py-3 sm:py-2 touch-manipulation"
 								>
-									{uploading ? 'Uploading...' : sending ? 'Sending...' : 'Send'}
+									<Send className="w-5 h-5 sm:hidden" />
+									<span className="hidden sm:inline">{uploading ? 'Uploading...' : sending ? 'Sending...' : 'Send'}</span>
 								</Button>
 							</div>
 						</div>

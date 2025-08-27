@@ -9,6 +9,7 @@ import MeetingContainer from '@/components/MeetingContainer';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { useMeeting } from '@/contexts/MeetingContext';
 import axios from 'axios';
 import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
 import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle } from 'lucide-react';
@@ -36,6 +37,7 @@ interface Appointment {
 
 function AppointmentsContent() {
   const { user } = useAuth();
+  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
@@ -145,6 +147,26 @@ function AppointmentsContent() {
     }
     if (toEnd > 0) return 'Live now';
     return 'Session ended';
+  };
+
+  const handleJoinMeeting = (appointment: Appointment) => {
+    // Check if user can join this meeting
+    const meetingId = appointment.meeting_id;
+    if (!meetingId || !canJoinMeeting(meetingId)) {
+      // Don't show alert, let the MeetingContainer handle the blocking UI
+      return;
+    }
+    
+    // Proceed with joining the meeting
+    setMeetingAppointment(appointment);
+    setShowMeeting(true);
+    setMeetingState(true, meetingId);
+  };
+
+  const handleLeaveMeeting = () => {
+    setShowMeeting(false);
+    setMeetingAppointment(null);
+    setMeetingState(false, null);
   };
 
   const loadAppointments = async (isRefresh: boolean = false) => {
@@ -293,7 +315,7 @@ function AppointmentsContent() {
       {/* Filter Tabs */}
       <div className="mb-6">
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-8">
+          <nav className="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto">
             {[
               { key: 'upcoming', label: 'Upcoming (Scheduled)' },
               { key: 'past', label: 'Past (Canceled/Completed)' },
@@ -303,14 +325,15 @@ function AppointmentsContent() {
               <button
                 key={tab.key}
                 onClick={() => setFilter(tab.key as any)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                className={`py-2 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
                   filter === tab.key
                     ? 'border-blue-500 text-blue-600 dark:text-blue-400'
                     : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }`}
               >
-                {tab.label}
-                <span className="ml-2 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-1 px-2 rounded-full">
+                <span className="hidden sm:inline">{tab.label}</span>
+                <span className="sm:hidden">{tab.key === 'upcoming' ? 'Upcoming' : tab.key === 'past' ? 'Past' : tab.key === 'pending' ? 'Pending' : 'All'}</span>
+                <span className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-0.5 sm:py-1 px-1 sm:px-2 rounded-full">
                   {appointments.filter(apt => {
                     const appointmentDate = new Date(apt.starts_at);
                     const today = new Date();
@@ -337,14 +360,14 @@ function AppointmentsContent() {
 
       {/* Sort Controls - Show for all tabs */}
       <div className="mb-6">
-        <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Sort by:</span>
-          <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Sort by:</span>
+          <div className="flex gap-1 sm:gap-2">
             <Button
               variant={sortBy === 'dateAdded' ? 'default' : 'outline'}
               size="sm"
               onClick={() => toggleSort('dateAdded')}
-              className={`flex items-center gap-1 ${sortBy === 'dateAdded' ? '' : 'dark:text-white'}`}
+              className={`flex items-center gap-1 text-xs sm:text-sm ${sortBy === 'dateAdded' ? '' : 'dark:text-white'}`}
             >
               Date Added
               {sortBy === 'dateAdded' && (
@@ -356,7 +379,7 @@ function AppointmentsContent() {
               variant={sortBy === 'name' ? 'default' : 'outline'}
               size="sm"
               onClick={() => toggleSort('name')}
-              className={`flex items-center gap-1 ${sortBy === 'name' ? '' : 'dark:text-white'}`}
+              className={`flex items-center gap-1 text-xs sm:text-sm ${sortBy === 'name' ? '' : 'dark:text-white'}`}
             >
               Coach Name
               {sortBy === 'name' && (
@@ -399,70 +422,73 @@ function AppointmentsContent() {
             </Card>
           ) : (
             sortedAppointments.map((appointment) => (
-            <Card key={appointment.id}>
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
+            <Card key={appointment.id} className="overflow-hidden">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col">
                   <div className="flex-1">
-                    <div className="flex items-start justify-between mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
                           Coach {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'TBD'}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
                       </div>
-                      <span className={`px-3 py-1 text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
+                      <span className={`self-start px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
                         {getStatusDisplay(appointment).label}
                       </span>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
                       <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Date & Time</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Date & Time</p>
+                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">
                           {new Date(appointment.starts_at).toLocaleDateString()} at {' '}
                           {new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Duration</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
+                        <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Duration</p>
+                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Session Type</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100">Virtual Session</p>
+                        <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Session Type</p>
+                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">Virtual Session</p>
                       </div>
                     </div>
 
                     {appointment.notes && (
-                      <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Notes</p>
-                        <p className="text-sm text-gray-900 dark:text-gray-100 mt-1">{appointment.notes}</p>
+                      <div className="mt-3 sm:mt-4">
+                        <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Notes</p>
+                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 mt-1">{appointment.notes}</p>
                       </div>
                     )}
 
                     {appointment.status === 'confirmed' && (
-                      <div className="mt-4 flex space-x-2">
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
                         {appointment.meeting_id && (
-                          <Button
-                            onClick={() => {
-                              setMeetingAppointment(appointment);
-                              setShowMeeting(true);
-                            }}
-                            className="bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed"
-                            disabled={!isJoinAvailable(appointment)}
-                            size="sm"
-                          >
-                            <Video className="mr-2 h-4 w-4" /> Join Session
-                          </Button>
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              onClick={() => handleJoinMeeting(appointment)}
+                              className={`${isInMeeting && currentMeetingId === appointment.meeting_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto`}
+                              disabled={!isJoinAvailable(appointment) || !canJoinMeeting(appointment.meeting_id || '')}
+                              size="sm"
+                            >
+                              <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                              {isInMeeting && currentMeetingId === appointment.meeting_id ? 'Rejoin Session' : 'Join Session'}
+                            </Button>
+                            {isInMeeting && !canJoinMeeting(appointment.meeting_id || '') && (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">Already in another meeting</span>
+                            )}
+                          </div>
                         )}
-                        <span className="text-xs text-gray-600 dark:text-gray-400 self-center">{getCountdownLabel(appointment)}</span>
-                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`}>
+                        <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 self-center">{getCountdownLabel(appointment)}</span>
+                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`} className="w-full sm:w-auto">
                           <Button
                             variant="outline"
-                            className="text-blue-600 hover:bg-blue-50"
+                            className="text-blue-600 hover:bg-blue-50 w-full sm:w-auto"
                             size="sm"
                           >
-                            <MessageCircle className="mr-2 h-4 w-4" /> Message Coach
+                            <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message
                           </Button>
                         </Link>
                       </div>
@@ -471,13 +497,13 @@ function AppointmentsContent() {
                     {/* Message button for appointments without confirmed status */}
                     {appointment.status !== 'confirmed' && (
                       <div className="mt-4">
-                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`}>
+                        <Link href={`/clients/messages?conversation_with=${appointment.coach_id}&partner_name=${encodeURIComponent(appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'Coach')}`} className="block">
                           <Button
                             variant="outline"
-                            className="text-blue-600 hover:bg-blue-50"
+                            className="text-blue-600 hover:bg-blue-50 w-full sm:w-auto"
                             size="sm"
                           >
-                            <MessageCircle className="mr-2 h-4 w-4" /> Message Coach
+                            <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message Coach
                           </Button>
                         </Link>
                       </div>
@@ -502,8 +528,7 @@ function AppointmentsContent() {
           }}
           isHost={false}
           onClose={() => {
-            setShowMeeting(false);
-            setMeetingAppointment(null);
+            handleLeaveMeeting();
             // Refresh appointments to update status
             loadAppointments();
           }}

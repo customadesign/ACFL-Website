@@ -116,71 +116,71 @@ function DashboardContent() {
   }
 
   return (
-    <div>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
         {/* Welcome Section */}
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold text-foreground mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
             Welcome back, {user?.first_name || 'Client'}!
           </h2>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Ready to continue your coaching journey? Here's what you can do today.
           </p>
         </div>
 
         {/* Quick Actions */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/search-coaches')}>
-            <CardContent className="p-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/search-coaches')}>
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Search className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                <div className="p-3 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Search className="w-6 h-6 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Find Coaches</h3>
-                  <p className="text-sm text-muted-foreground">Search for new coaches</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Find Coaches</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Search for new coaches</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/saved-coaches')}>
-            <CardContent className="p-6">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/saved-coaches')}>
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <Heart className="w-6 h-6 text-red-600 dark:text-red-400" />
+                <div className="p-3 sm:p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
+                  <Heart className="w-6 h-6 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Saved Coaches</h3>
-                  <p className="text-sm text-muted-foreground">View your favorites</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Saved Coaches</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">View your favorites</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/appointments')}>
-            <CardContent className="p-6">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/appointments')}>
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <Calendar className="w-6 h-6 text-green-600 dark:text-green-400" />
+                <div className="p-3 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <Calendar className="w-6 h-6 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Appointments</h3>
-                  <p className="text-sm text-muted-foreground">Manage your sessions</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Appointments</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Manage your sessions</p>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer" onClick={() => router.push('/clients/messages')}>
-            <CardContent className="p-6">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/messages')}>
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <MessageCircle className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                <div className="p-3 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <MessageCircle className="w-6 h-6 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
                 </div>
-                <div>
-                  <h3 className="font-semibold text-foreground">Messages</h3>
-                  <p className="text-sm text-muted-foreground">Chat with coaches</p>
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Messages</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground">Chat with coaches</p>
                 </div>
               </div>
             </CardContent>
@@ -188,26 +188,26 @@ function DashboardContent() {
         </div>
 
         {/* Recent Activity */}
-        <div className="grid lg:grid-cols-2 gap-8">
-          <Card className="h-[50vh] flex flex-col">
-            <CardHeader>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
+          <Card className="flex flex-col h-[60vh] sm:h-[50vh]">
+            <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5" />
-                  <span>Recent Activity</span>
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-sm sm:text-base">Recent Activity</span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={loadActivity}
                   disabled={loading}
-                  className="h-8 px-3"
+                  className="h-8 px-2 sm:px-3 touch-manipulation"
                 >
                   <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 </Button>
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto">
+            <CardContent className="flex-1 overflow-y-auto px-3 sm:px-6">
               {loading ? (
                 <div className="space-y-4">
                   {[1, 2, 3].map((i) => (
@@ -240,24 +240,24 @@ function DashboardContent() {
                       recentActivity
                         .slice((page - 1) * pageSize, page * pageSize)
                         .map((activity) => (
-                        <div key={activity.id} className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer" onClick={() => handleActivityClick(activity)}>
+                        <div key={activity.id} className="flex items-center space-x-3 p-3 sm:p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer touch-manipulation" onClick={() => handleActivityClick(activity)}>
                           {getActivityIcon(activity.type)}
-                          <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-gray-100">{activity.title}</p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">{activity.subtitle}</p>
-                            <p className="text-xs text-gray-400 dark:text-gray-500">{formatDate(activity.date)} at {activity.time}</p>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{activity.title}</p>
+                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{activity.subtitle}</p>
+                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{formatDate(activity.date)} at {activity.time}</p>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500" />
+                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
                         </div>
                         ))
                     )}
                     {/* Pagination Controls */}
                     {recentActivity.length > pageSize && (
-                      <div className="flex justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">Page {page} of {Math.ceil(recentActivity.length / pageSize)}</span>
-                        <div className="space-x-2">
-                          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>Previous</Button>
-                          <Button variant="outline" size="sm" disabled={page * pageSize >= recentActivity.length} onClick={() => setPage(p => p + 1)}>Next</Button>
+                      <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 gap-2 sm:gap-0">
+                        <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">Page {page} of {Math.ceil(recentActivity.length / pageSize)}</span>
+                        <div className="flex space-x-2">
+                          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="text-xs px-2 sm:px-3 touch-manipulation">Previous</Button>
+                          <Button variant="outline" size="sm" disabled={page * pageSize >= recentActivity.length} onClick={() => setPage(p => p + 1)} className="text-xs px-2 sm:px-3 touch-manipulation">Next</Button>
                         </div>
                       </div>
                     )}
@@ -267,21 +267,21 @@ function DashboardContent() {
           </Card>
 
           {/* Quick Assessment */}
-          <Card>
-            <CardHeader>
+          <Card className="h-auto">
+            <CardHeader className="pb-3 sm:pb-6">
               <CardTitle className="flex items-center space-x-2">
-                <Star className="w-5 h-5" />
-                <span>Get Started</span>
+                <Star className="w-4 h-4 sm:w-5 sm:h-5" />
+                <span className="text-sm sm:text-base">Get Started</span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-3 sm:px-6">
               <div className="text-center">
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-4">
                   Haven't found your perfect coach yet? Take our quick assessment to get personalized matches.
                 </p>
                 <Button 
                   onClick={() => router.push('/')}
-                  className="bg-blue-600 hover:bg-blue-700 dark:text-white"
+                  className="bg-blue-600 hover:bg-blue-700 dark:text-white w-full sm:w-auto px-6 py-3 sm:px-4 sm:py-2 touch-manipulation"
                 >
                   Start Assessment
                 </Button>

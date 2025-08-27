@@ -6,6 +6,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'ACT Coaching For Life',
   description: 'Find the right coach for your personal growth journey',
+  icons: {
+    icon: '/favicon.ico',
+  },
 }
 
 export default function RootLayout({

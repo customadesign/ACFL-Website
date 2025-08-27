@@ -6,6 +6,7 @@ import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
+import { MeetingProvider } from '@/contexts/MeetingContext';
 import 'react-toastify/dist/ReactToastify.css';
 
 const theme = createTheme({
@@ -61,23 +62,25 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-          <MuiThemeProvider theme={theme}>
-            <CssBaseline />
-            {children}
-            <ToastContainer
-              position="top-right"
-              autoClose={5000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss
-              draggable
-              pauseOnHover
-              theme="colored"
-              toastClassName="custom-toast"
-            />
-          </MuiThemeProvider>
+          <MeetingProvider>
+            <MuiThemeProvider theme={theme}>
+              <CssBaseline />
+              {children}
+              <ToastContainer
+                position="top-right"
+                autoClose={5000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                rtl={false}
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+                theme="colored"
+                toastClassName="custom-toast"
+              />
+            </MuiThemeProvider>
+          </MeetingProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>
