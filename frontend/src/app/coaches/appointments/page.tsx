@@ -37,7 +37,7 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
-  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
+  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting, registerMeetingAttempt } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
@@ -150,10 +150,11 @@ export default function AppointmentsPage() {
   };
 
   const handleJoinMeeting = (appointment: Appointment) => {
-    // Check if user can join this meeting
+    // Check if user can join this meeting and register the attempt
     const meetingId = appointment.meeting_id;
-    if (!meetingId || !canJoinMeeting(meetingId)) {
-      // Don't show alert, let the MeetingContainer handle the blocking UI
+    if (!meetingId || !registerMeetingAttempt(meetingId)) {
+      // Registration failed, user is already in another meeting
+      // The MeetingContainer will handle the blocking UI
       return;
     }
     

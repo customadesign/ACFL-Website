@@ -27,7 +27,7 @@ export default function MeetingContainer({
   onClose
 }: MeetingContainerProps) {
   const { user } = useAuth()
-  const { canJoinMeeting, isInMeeting, currentMeetingId } = useMeeting()
+  const { canJoinMeeting, isInMeeting, currentMeetingId, registerMeetingAttempt, unregisterMeetingAttempt } = useMeeting()
   const [stage, setStage] = useState<'precall' | 'loading' | 'meeting' | 'ended' | 'blocked'>('precall')
   const [meetingConfig, setMeetingConfig] = useState<{
     meetingId: string
@@ -43,14 +43,17 @@ export default function MeetingContainer({
     ? `${user.first_name} ${user.last_name}`
     : user?.email || 'Participant'
 
-  // Check meeting access on mount by getting the meeting ID
+  // Check meeting access on mount by getting the meeting ID and registering attempt
   useEffect(() => {
     const checkMeetingAccess = async () => {
       try {
         const { meetingId } = await createOrGetMeeting(appointmentId, isHost)
         setMeetingIdToCheck(meetingId)
         
-        if (!canJoinMeeting(meetingId)) {
+        // Register this meeting attempt - this will fail if user is already in another meeting
+        const canRegister = registerMeetingAttempt(meetingId)
+        
+        if (!canRegister) {
           setStage('blocked')
         }
       } catch (error) {
@@ -60,7 +63,14 @@ export default function MeetingContainer({
     }
     
     checkMeetingAccess()
-  }, [appointmentId, isHost, canJoinMeeting])
+    
+    // Cleanup function to unregister when component unmounts
+    return () => {
+      if (meetingIdToCheck) {
+        unregisterMeetingAttempt(meetingIdToCheck)
+      }
+    }
+  }, [appointmentId, isHost, registerMeetingAttempt, unregisterMeetingAttempt])
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {
     // Prevent double-clicking and multiple join attempts
@@ -105,6 +115,12 @@ export default function MeetingContainer({
   const handleMeetingEnd = () => {
     setStage('ended')
     setMeetingConfig(null)
+    
+    // Unregister the meeting attempt when meeting ends
+    if (meetingIdToCheck) {
+      unregisterMeetingAttempt(meetingIdToCheck)
+    }
+    
     // Small delay before closing to show transition
     setTimeout(() => {
       onClose()
@@ -159,7 +175,12 @@ export default function MeetingContainer({
             </p>
           )}
           <button
-            onClick={onClose}
+            onClick={() => {
+              if (meetingIdToCheck) {
+                unregisterMeetingAttempt(meetingIdToCheck)
+              }
+              onClose()
+            }}
             className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-lg font-medium"
           >
             Close

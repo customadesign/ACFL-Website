@@ -28,6 +28,7 @@ import {
 } from 'lucide-react'
 import MeetingChat from '@/components/MeetingChat'
 import { updateParticipantStatus } from '@/services/videoMeeting'
+import { useMeeting as useGlobalMeeting } from '@/contexts/MeetingContext'
 
 interface VideoMeetingProps {
   meetingId: string
@@ -673,10 +674,23 @@ function MeetingView({
   meetingId: string
   participantName: string
 }) {
+  const { canJoinMeeting: globalCanJoinMeeting } = useGlobalMeeting()
   const [hasJoined, setHasJoined] = useState(false)
   const [hasLeft, setHasLeft] = useState(false)
   const [connectionState, setConnectionState] = useState('CONNECTING')
   const [showChat, setShowChat] = useState(false)
+  const [blocked, setBlocked] = useState(false)
+
+  // Check if this meeting can be joined at the VideoSDK level
+  useEffect(() => {
+    if (!globalCanJoinMeeting(meetingId)) {
+      console.warn('VideoMeeting: Meeting access blocked by global meeting state')
+      setBlocked(true)
+      setTimeout(() => {
+        onMeetingEnd()
+      }, 2000)
+    }
+  }, [meetingId, globalCanJoinMeeting, onMeetingEnd])
 
   const {
     participants,
@@ -707,6 +721,23 @@ function MeetingView({
 
   const participantIds = [...participants.keys()]
   const presenterParticipant = presenterId ? participants.get(presenterId) : null
+
+  // Show blocked state if meeting access is denied
+  if (blocked) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
+        <div className="bg-white rounded-lg p-8 text-center max-w-md">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <AlertCircle className="w-8 h-8 text-red-600" />
+          </div>
+          <p className="text-lg font-medium text-gray-900 mb-2">Meeting Access Blocked</p>
+          <p className="text-sm text-gray-600 mb-4">
+            You are already in another meeting session. This meeting will be closed automatically.
+          </p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 bg-gray-900 flex flex-col">
