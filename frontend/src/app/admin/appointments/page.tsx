@@ -16,6 +16,7 @@ import {
   Video,
   MapPin
 } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface Appointment {
   id: string;
@@ -62,7 +63,7 @@ export default function AppointmentManagement() {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       console.log('Fetching appointments from:', `${API_URL}/api/admin/appointments`);
       
       const response = await fetch(`${API_URL}/api/admin/appointments`, {

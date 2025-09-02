@@ -21,6 +21,7 @@ import {
   UserX, 
   CircleUserRound
 } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface User {
   id: string;
@@ -110,7 +111,7 @@ export default function UserManagement() {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       console.log('Fetching users from:', `${API_URL}/api/admin/users`);
       
       const response = await fetch(`${API_URL}/api/admin/users`, {
@@ -211,7 +212,7 @@ export default function UserManagement() {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/admin/users/${userId}/${action}`, {
         method: 'POST',
         headers: {
@@ -271,7 +272,7 @@ export default function UserManagement() {
           return;
         }
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const API_URL = getApiUrl();
         const response = await fetch(`${API_URL}/api/admin/users/${userId}/impersonate`, {
           method: 'POST',
           headers: {
@@ -327,7 +328,7 @@ export default function UserManagement() {
           return;
         }
 
-        const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const API_URL = getApiUrl();
         const response = await fetch(`${API_URL}/api/admin/users/${userId}?userType=${userType}`, {
           method: 'DELETE',
           headers: {
@@ -378,7 +379,7 @@ export default function UserManagement() {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       
       // Generate temporary password for the new user
       const temporaryPassword = generateTemporaryPassword();
@@ -456,7 +457,7 @@ export default function UserManagement() {
         return;
       }
 
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/admin/users/${selectedUser.id}`, {
         method: 'PUT',
         headers: {

@@ -13,6 +13,7 @@ import {
   DollarSign,
   Activity
 } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface DashboardStats {
   totalUsers: number;
@@ -54,7 +55,7 @@ export default function AdminDashboard() {
       }
 
       // Fetch dashboard statistics from backend
-      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const API_URL = getApiUrl();
       const response = await fetch(`${API_URL}/api/admin/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`,
