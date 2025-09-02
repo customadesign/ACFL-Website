@@ -129,7 +129,7 @@ const NavbarLandingPage = () => {
               </Link>
 
               <Link href="/login">
-                <Button variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
+                <Button variant="outline" className="border-brand-teal bg-white text-brand-teal hover:bg-brand-teal hover:text-white">
                   Login
                 </Button>
               </Link>
@@ -211,7 +211,7 @@ const NavbarLandingPage = () => {
               
               <div className="px-4 py-2 space-y-2">
                 <Link href="/login">
-                  <Button variant="outline" className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
+                  <Button variant="outline" className="w-full bg-white border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
                     Login
                   </Button>
                 </Link>

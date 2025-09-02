@@ -396,7 +396,7 @@ export default function HomePage() {
                 <Button 
                   variant="outline" 
                   size="lg"
-                  className="border-2 border-gray-300 hover:border-brand-teal text-gray-700 px-8 py-4 text-lg w-full sm:w-auto"
+                  className="border-2 border-gray-300 bg-white hover:border-brand-teal text-gray-700 px-8 py-4 text-lg w-full sm:w-auto"
                 >
                   <Play className="mr-2 w-5 h-5" />
                   Watch Demo
@@ -504,7 +504,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-teal/10 rounded-lg flex items-center justify-center mb-6">
                     <Heart className="w-6 h-6 text-brand-teal" />
@@ -522,7 +522,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-orange/10 rounded-lg flex items-center justify-center mb-6">
                     <Clock className="w-6 h-6 text-brand-orange" />
@@ -540,7 +540,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-leaf/10 rounded-lg flex items-center justify-center mb-6">
                     <Shield className="w-6 h-6 text-brand-leaf" />
@@ -558,7 +558,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-coral/10 rounded-lg flex items-center justify-center mb-6">
                     <Users className="w-6 h-6 text-brand-coral" />
@@ -576,7 +576,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0 bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-teal/10 rounded-lg flex items-center justify-center mb-6">
                     <Award className="w-6 h-6 text-brand-teal" />
@@ -594,7 +594,7 @@ export default function HomePage() {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.5 }}
             >
-              <Card className="h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card className="h-full border-0  bg-white shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent className="p-8">
                   <div className="w-12 h-12 bg-brand-orange/10 rounded-lg flex items-center justify-center mb-6">
                     <MessageCircle className="w-6 h-6 text-brand-orange" />
