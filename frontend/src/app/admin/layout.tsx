@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { getApiUrl } from '@/lib/api';
 import {
   Users,
   UserCheck,
@@ -24,18 +26,14 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
-  const [adminInfo, setAdminInfo] = useState<any>(null);
+  const [authChecked, setAuthChecked] = useState(false);
+  const { user, loading: authLoading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    checkAdminAuth();
-  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -48,50 +46,39 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const checkAdminAuth = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+  // Handle admin authentication using AuthContext
+  useEffect(() => {
+    if (!authLoading && !authChecked) {
+      setAuthChecked(true);
+      
+      if (!user) {
+        console.log('No user found, redirecting to login');
         router.push('/login');
         return;
       }
 
-      const response = await fetch('/api/auth/profile', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.user && data.user.role === 'admin') {
-          setAdminInfo(data.user);
-          setIsAuthenticated(true);
+      if (user.role !== 'admin') {
+        console.log('User is not admin, redirecting based on role:', user.role);
+        // Not an admin, redirect to appropriate dashboard
+        if (user.role === 'client') {
+          router.push('/clients');
+        } else if (user.role === 'coach') {
+          router.push('/coaches');
         } else {
-          // Not an admin, redirect to appropriate dashboard
-          if (data.user?.role === 'client') {
-            router.push('/clients');
-          } else if (data.user?.role === 'coach') {
-            router.push('/coaches');
-          } else {
-            router.push('/login');
-          }
+          router.push('/login');
         }
-      } else {
-        localStorage.removeItem('token');
-        router.push('/login');
+        return;
       }
-    } catch (error) {
-      console.error('Admin auth check failed:', error);
-      router.push('/login');
-    } finally {
+
+      console.log('Admin user authenticated:', user);
       setIsLoading(false);
     }
-  };
+  }, [user, authLoading, router, authChecked]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    router.push('/login');
+    // Use the logout function from AuthContext
+    // This will handle token removal and user state cleanup
+    logout();
   };
 
   const navItems = [
@@ -115,7 +102,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 
@@ -146,7 +133,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Desktop user menu */}
             <div className="hidden sm:flex items-center space-x-4">
               <span className="text-sm text-gray-600">
-                Welcome back, {adminInfo?.first_name || 'Admin'}!
+                Welcome back, {user?.first_name || 'Admin'}!
               </span>
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -161,7 +148,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                     <div className="px-4 py-2 border-b border-gray-200">
                       <p className="text-sm font-medium text-gray-900">
-                        {adminInfo?.first_name || 'Admin'} {adminInfo?.last_name || ''}
+                        {user?.first_name || 'Admin'} {user?.last_name || ''}
                       </p>
                       <p className="text-xs text-gray-500">Administrator</p>
                     </div>
@@ -194,7 +181,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 <div className="absolute right-4 top-16 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                   <div className="px-4 py-2 border-b border-gray-200">
                     <p className="text-sm font-medium text-gray-900">
-                      {adminInfo?.first_name || 'Admin'} {adminInfo?.last_name || ''}
+                      {user?.first_name || 'Admin'} {user?.last_name || ''}
                     </p>
                     <p className="text-xs text-gray-500">Administrator</p>
                   </div>
