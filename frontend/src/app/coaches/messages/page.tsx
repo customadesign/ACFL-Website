@@ -443,7 +443,7 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'flex-1' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden`}>
 					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
 						{/* Back button for mobile */}
 						<button
@@ -454,7 +454,7 @@ useEffect(() => {
 						</button>
 						<div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
 					</div>
-						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900">
+						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900 min-h-0">
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
 								<p>Select a conversation to start messaging</p>
@@ -553,7 +553,7 @@ useEffect(() => {
 								)
 							})}
 						</div>
-						<div className="p-3 sm:p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800">
+						<div className="p-3 sm:p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
 							{selectedFile && (
 								<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
 									<div className="flex items-center gap-2">

@@ -194,6 +194,16 @@ function LoginForm() {
               </div>
             </div>
 
+            {/* Test Credentials */}
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Test Credentials:</h4>
+              <div className="text-xs text-gray-600 space-y-1">
+                <p><strong>Admin:</strong> admin@acfl.com / admin123</p>
+                <p><strong>Coach:</strong> coach@acfl.com / coach123</p>
+                <p><strong>Client:</strong> client@acfl.com / client123</p>
+              </div>
+            </div>
+
             <div className="mt-6 text-center text-xs text-gray-500">
               <p>
                 This platform is HIPAA-compliant and your data is secure.

@@ -53,7 +53,7 @@ export const registerClient = async (req: Request, res: Response) => {
     const { data: existingClient, error: checkClientError } = await supabase
       .from('clients')
       .select('id, email')
-      .eq('email', email)
+      .ilike('email', email)
       .single();
 
     if (existingClient) {
@@ -243,7 +243,7 @@ export const registerCoach = async (req: Request, res: Response) => {
     const { data: existingCoaches, error: checkError } = await supabase
       .from('coaches')
       .select('id, email')
-      .eq('email', email);
+      .ilike('email', email);
 
     // Only check for actual errors, not "no rows found" 
     if (checkError && checkError.code !== 'PGRST116') {
@@ -483,33 +483,46 @@ export const login = async (req: Request, res: Response) => {
 
     console.log('\n🔍 Step 1: Looking up user profile...');
 
-    // Check if user has a client profile
+    // Check if user has a profile (client, coach, or admin)
     let profile = null;
     let role: 'client' | 'coach' | 'admin' = 'client';
     
-    // Look for client profile by email
-    const { data: clientProfile, error: clientError } = await supabase
-      .from('clients')
+    // First check for admin profile (case-insensitive)
+    const { data: adminProfile, error: adminError } = await supabase
+      .from('admins')
       .select('*')
-      .eq('email', email)
+      .ilike('email', email)
       .single();
     
-    if (clientProfile) {
-      profile = clientProfile;
-      role = 'client';
-      console.log('✅ Found client profile');
+    if (adminProfile) {
+      profile = adminProfile;
+      role = 'admin';
+      console.log('✅ Found admin profile');
     } else {
-      // Check for coach profile if no client profile
-      const { data: coachProfile, error: coachError } = await supabase
-        .from('coaches')
+      // Look for client profile by email (case-insensitive)
+      const { data: clientProfile, error: clientError } = await supabase
+        .from('clients')
         .select('*')
-        .eq('email', email)
+        .ilike('email', email)
         .single();
       
-      if (coachProfile) {
-        profile = coachProfile;
-        role = 'coach';
-        console.log('✅ Found coach profile');
+      if (clientProfile) {
+        profile = clientProfile;
+        role = 'client';
+        console.log('✅ Found client profile');
+      } else {
+        // Check for coach profile if no client profile (case-insensitive)
+        const { data: coachProfile, error: coachError } = await supabase
+          .from('coaches')
+          .select('*')
+          .ilike('email', email)
+          .single();
+        
+        if (coachProfile) {
+          profile = coachProfile;
+          role = 'coach';
+          console.log('✅ Found coach profile');
+        }
       }
     }
 
@@ -519,6 +532,51 @@ export const login = async (req: Request, res: Response) => {
         success: false, 
         message: 'Invalid email or password' 
       });
+    }
+
+    // Check if user is suspended or deactivated (only for clients and coaches, not admins)
+    console.log(`👤 User status check for ${email}: ${profile.status || 'no status'} (role: ${role})`);
+    if (profile.status && role !== 'admin') {
+      if (profile.status === 'suspended') {
+        console.log('⚠️ User account is suspended:', email);
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been suspended. Please check your email for more information or contact support to appeal this decision.',
+          statusCode: 'ACCOUNT_SUSPENDED'
+        });
+      }
+      
+      if (profile.status === 'inactive' || profile.status === 'deactivated') {
+        console.log('⚠️ User account is deactivated:', email);
+        return res.status(403).json({
+          success: false,
+          message: 'Your account has been deactivated. Please check your email for reactivation instructions or contact support.',
+          statusCode: 'ACCOUNT_DEACTIVATED'
+        });
+      }
+
+      if (profile.status === 'rejected') {
+        console.log('⚠️ User account was rejected:', email);
+        return res.status(403).json({
+          success: false,
+          message: 'Your account application was not approved. Please check your email for more information or contact support if you believe this is an error.',
+          statusCode: 'ACCOUNT_REJECTED'
+        });
+      }
+
+      if (profile.status === 'pending') {
+        console.log('⚠️ User account is still pending approval:', email);
+        return res.status(403).json({
+          success: false,
+          message: 'Your account is still pending approval. Please wait for admin review or check your email for updates.',
+          statusCode: 'ACCOUNT_PENDING'
+        });
+      }
+
+      // Allow active, approved, and other valid statuses to continue
+      if (profile.status === 'active' || profile.status === 'approved') {
+        console.log(`✅ User account status is valid: ${profile.status}`);
+      }
     }
 
     console.log('\n🔐 Step 2: Validating password...');
@@ -552,6 +610,33 @@ export const login = async (req: Request, res: Response) => {
       role: role
     });
     console.log('✅ JWT token generated');
+
+    // Update last_login timestamp
+    console.log('\n🔄 Step 4: Updating last login timestamp...');
+    const now = new Date().toISOString();
+    
+    try {
+      if (role === 'admin') {
+        await supabase
+          .from('admins')
+          .update({ last_login: now })
+          .eq('id', profile.id);
+      } else if (role === 'client') {
+        await supabase
+          .from('clients')
+          .update({ last_login: now })
+          .eq('id', profile.id);
+      } else if (role === 'coach') {
+        await supabase
+          .from('coaches')
+          .update({ last_login: now })
+          .eq('id', profile.id);
+      }
+      console.log('✅ Last login timestamp updated');
+    } catch (loginUpdateError) {
+      console.log('⚠️ Failed to update last login (non-critical):', loginUpdateError.message);
+      // Don't fail the login if this update fails
+    }
 
     // Remove password_hash from response
     const { password_hash, ...safeProfile } = profile;
@@ -595,9 +680,9 @@ export const login = async (req: Request, res: Response) => {
 export const getProfile = async (req: Request & { user?: JWTPayload }, res: Response) => {
   try {
     if (!req.user) {
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Not authenticated' 
+      return res.status(401).json({
+        success: false,
+        message: 'Not authenticated'
       });
     }
 
@@ -607,18 +692,33 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
     let profile = null;
     let role: 'client' | 'coach' | 'admin' = req.user.role;
     
-    if (req.user.role === 'client') {
+    if (req.user.role === 'admin') {
+      const { data, error } = await supabase
+        .from('admins')
+        .select('*')
+        .ilike('email', req.user.email)
+        .single();
+      
+      if (error) {
+        console.error('Error fetching admin profile:', error);
+        return res.status(404).json({
+          success: false,
+          message: 'Admin profile not found'
+        });
+      }
+      profile = data;
+    } else if (req.user.role === 'client') {
       const { data, error } = await supabase
         .from('clients')
         .select('*')
-        .eq('id', req.user.userId)
+        .ilike('email', req.user.email)
         .single();
       
       if (error) {
         console.error('Error fetching client profile:', error);
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Client profile not found' 
+        return res.status(404).json({
+          success: false,
+          message: 'Client profile not found'
         });
       }
       profile = data;
@@ -626,14 +726,14 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
       const { data, error } = await supabase
         .from('coaches')
         .select('*')
-        .eq('id', req.user.userId)
+        .ilike('email', req.user.email)
         .single();
       
       if (error) {
         console.error('Error fetching coach profile:', error);
-        return res.status(404).json({ 
-          success: false, 
-          message: 'Coach profile not found' 
+        return res.status(404).json({
+          success: false,
+          message: 'Coach profile not found'
         });
       }
       profile = data;
@@ -661,6 +761,121 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
     res.status(500).json({ 
       success: false, 
       message: 'Failed to get profile' 
+    });
+  }
+};
+
+export const createAdmin = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('🚀 ADMIN CREATION STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Request body:', {
+    email: req.body.email,
+    firstName: req.body.firstName,
+    lastName: req.body.lastName
+  });
+
+  try {
+    const { email, password, firstName, lastName } = req.body;
+
+    // Validate required fields
+    if (!email || !password || !firstName || !lastName) {
+      return res.status(400).json({
+        success: false,
+        message: 'All fields are required'
+      });
+    }
+
+    // Check for existing admin
+    console.log('\n🔍 Checking for existing admin...');
+    const { data: existingAdmin, error: checkError } = await supabase
+      .from('admins')
+      .select('id, email')
+      .ilike('email', email)
+      .single();
+
+    if (existingAdmin) {
+      console.log('⚠️ Email already exists in admins table');
+      return res.status(400).json({
+        success: false,
+        message: 'Email already registered'
+      });
+    }
+
+    // Hash password
+    console.log('\n🔐 Hashing password...');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create admin profile
+    console.log('\n💾 Creating admin profile...');
+    const adminData = {
+      email: email,
+      first_name: firstName,
+      last_name: lastName,
+      password_hash: hashedPassword,
+      role: 'admin',
+      is_active: true
+    };
+
+    const { data: admin, error: adminError } = await supabase
+      .from('admins')
+      .insert(adminData)
+      .select()
+      .single();
+
+    if (adminError) {
+      console.error('❌ Admin creation failed:', adminError);
+      throw adminError;
+    }
+
+    console.log('✅ Admin created successfully');
+
+    // Generate JWT token
+    console.log('\n🔑 Generating JWT token...');
+    const token = generateToken({
+      userId: admin.id,
+      email: email,
+      role: 'admin'
+    });
+
+    // Remove password_hash from response
+    const { password_hash, ...safeAdmin } = admin;
+
+    const response: AuthResponse = {
+      success: true,
+      message: 'Admin created successfully',
+      token,
+      user: {
+        id: admin.id,
+        email: email,
+        role: 'admin',
+        ...safeAdmin
+      }
+    };
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ ADMIN CREATION COMPLETED SUCCESSFULLY');
+    console.log(`Total time: ${duration}ms`);
+    console.log('Admin ID:', admin.id);
+    console.log('Email:', email);
+    console.log('========================================\n');
+
+    res.status(201).json(response);
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ ADMIN CREATION FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+
+    res.status(500).json({
+      success: false,
+      message: 'Admin creation failed'
     });
   }
 };

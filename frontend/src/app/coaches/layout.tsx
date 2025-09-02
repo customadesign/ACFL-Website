@@ -10,6 +10,7 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { useMeeting } from '@/contexts/MeetingContext';
 import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
+import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User } from 'lucide-react';
 
 export default function CoachLayout({
@@ -87,6 +88,7 @@ export default function CoachLayout({
 
   const navItems = [
     { name: 'Dashboard', href: '/coaches', icon: Home },
+    { name: 'Calendar', href: '/coaches/availability', icon: Calendar },
     { 
       name: 'Appointments', 
       href: '/coaches/appointments',
@@ -106,6 +108,9 @@ export default function CoachLayout({
   return (
     <ProtectedRoute allowedRoles={['coach']}>
       <div className="min-h-screen bg-background">
+        {/* Admin Impersonation Float */}
+        <AdminImpersonationFloat />
+        
         {/* Header */}
         <div className="bg-card shadow-sm border-b border-border">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

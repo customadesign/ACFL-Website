@@ -320,6 +320,296 @@ class EmailService {
       html
     });
   }
+
+  async sendCoachApplicationConfirmation({ email, first_name, application_id }: { email: string; first_name: string; application_id: string }) {
+    const subject = 'Application Received - ACT Coaching For Life';
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Received</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .info-box { background: #e3f2fd; border: 1px solid #2196f3; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📋 Application Received</h1>
+          </div>
+          <div class="content">
+            <h2>Thank you, ${first_name}!</h2>
+            <p>We have received your coach application and it is currently under review.</p>
+            
+            <div class="info-box">
+              <h3>What happens next?</h3>
+              <ul>
+                <li>Our team will review your qualifications within 3-5 business days</li>
+                <li>We may contact your professional references</li>
+                <li>You'll receive an email notification with our decision</li>
+              </ul>
+            </div>
+            
+            <p><strong>Application ID:</strong> ${application_id}</p>
+            <p>Please keep this ID for your records.</p>
+            
+            <p>If you have any questions, please contact us at support@actcoachingforlife.com</p>
+            
+            <p>Best regards,<br><strong>ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p>© 2025 ACT Coaching For Life. All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Application Received - ACT Coaching For Life
+      
+      Thank you, ${first_name}!
+      
+      We have received your coach application and it is currently under review.
+      
+      What happens next:
+      - Our team will review your qualifications within 3-5 business days
+      - We may contact your professional references
+      - You'll receive an email notification with our decision
+      
+      Application ID: ${application_id}
+      Please keep this ID for your records.
+      
+      If you have questions, contact support@actcoachingforlife.com
+      
+      Best regards,
+      ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
+  async sendCoachApprovalEmail({ email, first_name }: { email: string; first_name: string }) {
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+    const subject = 'Congratulations! Your Coach Application Has Been Approved';
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Approved</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 12px 30px; background: #4CAF50; color: white; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+          .next-steps { background: #e8f5e8; border: 1px solid #4CAF50; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎉 Welcome to ACT Coaching For Life!</h1>
+          </div>
+          <div class="content">
+            <h2>Congratulations, ${first_name}!</h2>
+            <p>Your coach application has been approved. You can now log in to your coach dashboard and start helping clients achieve their goals.</p>
+            
+            <div class="next-steps">
+              <h3>Next Steps:</h3>
+              <ul>
+                <li>Complete your coach profile</li>
+                <li>Set your availability schedule</li>
+                <li>Review platform guidelines</li>
+                <li>Start accepting client bookings</li>
+              </ul>
+            </div>
+            
+            <p>Ready to get started?</p>
+            <p><a href="${loginUrl}" class="button">Login to Your Dashboard</a></p>
+            
+            <p>If you have any questions or need assistance, our support team is here to help at support@actcoachingforlife.com</p>
+            
+            <p>Welcome to the team!</p>
+            <p><strong>ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p>© 2025 ACT Coaching For Life. All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Congratulations! Your Coach Application Has Been Approved
+      
+      Dear ${first_name},
+      
+      Your coach application has been approved. You can now log in to your coach dashboard and start helping clients.
+      
+      Next Steps:
+      - Complete your coach profile
+      - Set your availability schedule
+      - Review platform guidelines
+      - Start accepting client bookings
+      
+      Login URL: ${loginUrl}
+      
+      Welcome to the team!
+      ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
+  async sendCoachRejectionEmail({ email, first_name, rejection_reason }: { email: string; first_name: string; rejection_reason: string }) {
+    const subject = 'Update on Your Coach Application';
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Application Update</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #ff7043 0%, #ff5722 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .reason-box { background: #fff3e0; border: 1px solid #ff9800; padding: 15px; border-radius: 5px; margin: 15px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>📋 Application Update</h1>
+          </div>
+          <div class="content">
+            <h2>Thank you for your interest, ${first_name}</h2>
+            <p>Thank you for your interest in becoming a coach with ACT Coaching For Life. After careful review, we have decided not to move forward with your application at this time.</p>
+            
+            <div class="reason-box">
+              <h3>Feedback:</h3>
+              <p>${rejection_reason}</p>
+            </div>
+            
+            <p>You may reapply after 6 months. We encourage you to gain additional experience or training in the areas mentioned above.</p>
+            
+            <p>If you have questions about this decision, please contact support@actcoachingforlife.com</p>
+            
+            <p>We appreciate your interest in our platform and wish you the best in your coaching journey.</p>
+            
+            <p>Best regards,<br><strong>ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p>© 2025 ACT Coaching For Life. All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Application Update - ACT Coaching For Life
+      
+      Dear ${first_name},
+      
+      Thank you for your interest in becoming a coach with ACT Coaching For Life. After careful review, we have decided not to move forward with your application at this time.
+      
+      Feedback: ${rejection_reason}
+      
+      You may reapply after 6 months. We encourage you to gain additional experience or training in the areas mentioned above.
+      
+      If you have questions, please contact support@actcoachingforlife.com
+      
+      Best regards,
+      ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
+  async sendFollowUpEmail({ email, first_name, application_id, days_remaining }: {
+    email: string;
+    first_name: string;
+    application_id: string;
+    days_remaining: number;
+  }) {
+    const applicationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/register/coach/verification?id=${application_id}`;
+    const subject = 'Complete Your Coach Application - ACT Coaching For Life';
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Complete Your Application</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: #667eea; color: white; padding: 20px; text-align: center; }
+          .content { background: #f9f9f9; padding: 20px; }
+          .button { display: inline-block; padding: 12px 30px; background: #667eea; color: white; text-decoration: none; border-radius: 5px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>Complete Your Application</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${first_name}!</h2>
+            <p>Your application expires in ${days_remaining} days.</p>
+            <p><a href="${applicationUrl}" class="button">Complete Application</a></p>
+            <p>Best regards,<br>ACT Coaching For Life Team</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `Complete Your Coach Application\n\nHi ${first_name}!\n\nYour application expires in ${days_remaining} days.\n\nComplete at: ${applicationUrl}\n\nACT Coaching For Life Team`;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
 }
 
 export default new EmailService();

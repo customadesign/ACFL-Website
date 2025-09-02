@@ -163,6 +163,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error: any) {
       console.error('Login error:', error);
+      
+      // Handle account status errors specifically
+      if (error.response?.status === 403) {
+        const { message, statusCode } = error.response.data;
+        
+        // These are account status issues, show the message directly
+        if (statusCode === 'ACCOUNT_SUSPENDED' || 
+            statusCode === 'ACCOUNT_DEACTIVATED' || 
+            statusCode === 'ACCOUNT_REJECTED' || 
+            statusCode === 'ACCOUNT_PENDING') {
+          throw new Error(message);
+        }
+      }
+      
+      // For other errors, use generic message
       throw new Error(error.response?.data?.message || 'Login failed');
     }
   };

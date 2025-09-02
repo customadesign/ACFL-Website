@@ -65,21 +65,45 @@ import axios from 'axios';
 import { getApiUrl } from '@/lib/api';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-// Enhanced form validation schema
+// Enhanced form validation schema focused on coach registration sections
 const searchFormSchema = z.object({
-  areaOfConcern: z
-    .array(z.string())
-    .min(1, "Please select at least one area of concern"),
-  location: z.string().min(1, "Please select your location"),
-  availability_options: z
-    .array(z.string())
-    .min(1, "Please select at least one availability option"),
-  therapistGender: z.string().optional().or(z.literal("any")),
-  language: z.string().optional().or(z.literal("any")),
+  // Required base filters
+  location: z.string().optional(),
   maxPrice: z.number().optional(),
-  experience: z.string().optional(),
-  modalities: z.array(z.string()).optional(),
-  insurance: z.array(z.string()).optional(),
+  
+  // Professional Background
+  educationalBackground: z.string().optional().or(z.literal("any")),
+  coachingExperienceYears: z.string().optional().or(z.literal("any")),
+  professionalCertifications: z.array(z.string()).optional(),
+  
+  // Specialization
+  coachingExpertise: z.array(z.string()).optional(),
+  ageGroupsComfortable: z.array(z.string()).optional(),
+  actTrainingLevel: z.string().optional().or(z.literal("any")),
+  
+  // Approach & Methods
+  coachingPhilosophy: z.string().optional(),
+  coachingTechniques: z.array(z.string()).optional(),
+  sessionStructure: z.string().optional().or(z.literal("any")),
+  
+  // Ethics & Boundaries
+  scopeHandlingApproach: z.string().optional(),
+  boundaryMaintenanceApproach: z.string().optional().or(z.literal("any")),
+  
+  // Crisis Management
+  comfortableWithSuicidalThoughts: z.string().optional().or(z.literal("any")),
+  
+  // Availability
+  weeklyHoursAvailable: z.string().optional().or(z.literal("any")),
+  preferredSessionLength: z.string().optional().or(z.literal("any")),
+  availabilityTimes: z.array(z.string()).optional(),
+  
+  // Technology
+  videoConferencingComfort: z.string().optional().or(z.literal("any")),
+  internetConnectionQuality: z.string().optional().or(z.literal("any")),
+  
+  // Languages
+  languagesFluent: z.array(z.string()).optional(),
 });
 
 type SearchFormData = z.infer<typeof searchFormSchema>;
@@ -87,27 +111,55 @@ type SearchFormData = z.infer<typeof searchFormSchema>;
 interface Coach {
   id: string;
   name: string;
-  specialties: string[];
-  modalities?: string[];
-  languages: string[];
+  email?: string;
   bio: string;
   sessionRate: string;
-  experience: string;
   rating: number;
   matchScore: number;
-  virtualAvailable: boolean;
-  inPersonAvailable: boolean;
-  email?: string;
-  // Additional fields that might be returned from database
+  
+  // Professional Background
+  educationalBackground?: string;
+  coachingExperienceYears?: string;
+  professionalCertifications?: string[];
+  
+  // Specialization
+  coachingExpertise?: string[];
+  ageGroupsComfortable?: string[];
+  actTrainingLevel?: string;
+  
+  // Approach & Methods
+  coachingPhilosophy?: string;
+  coachingTechniques?: string[];
+  sessionStructure?: string;
+  
+  // Ethics & Boundaries
+  scopeHandlingApproach?: string;
+  boundaryMaintenanceApproach?: string;
+  professionalDisciplineHistory?: boolean;
+  
+  // Crisis Management
+  comfortableWithSuicidalThoughts?: string;
+  selfHarmProtocol?: string;
+  
+  // Availability
+  weeklyHoursAvailable?: string;
+  preferredSessionLength?: string;
+  availabilityTimes?: string[];
+  
+  // Technology
+  videoConferencingComfort?: string;
+  internetConnectionQuality?: string;
+  
+  // Languages
+  languagesFluent?: string[];
+  
+  // Legacy fields for compatibility
+  specialties?: string[];
+  languages?: string[];
+  experience?: string;
   location?: string[];
-  availableTimes?: string[];
-  certifications?: string[];
-  insuranceAccepted?: string[];
-  demographics?: {
-    gender: string;
-    ethnicity: string;
-    religious_background: string;
-  };
+  virtualAvailable?: boolean;
+  inPersonAvailable?: boolean;
 }
 
 interface SavedCoach extends Coach {
@@ -138,15 +190,34 @@ function SearchCoachesContent() {
   const form = useForm<SearchFormData>({
     resolver: zodResolver(searchFormSchema),
     defaultValues: {
-      areaOfConcern: [],
       location: '',
-      availability_options: [],
-      therapistGender: 'any',
-      language: 'any',
       maxPrice: 500,
-      experience: 'any',
-      modalities: [],
-      insurance: [],
+      // Professional Background
+      educationalBackground: 'any',
+      coachingExperienceYears: 'any',
+      professionalCertifications: [],
+      // Specialization
+      coachingExpertise: [],
+      ageGroupsComfortable: [],
+      actTrainingLevel: 'any',
+      // Approach & Methods
+      coachingPhilosophy: '',
+      coachingTechniques: [],
+      sessionStructure: 'any',
+      // Ethics & Boundaries
+      scopeHandlingApproach: '',
+      boundaryMaintenanceApproach: 'any',
+      // Crisis Management
+      comfortableWithSuicidalThoughts: 'any',
+      // Availability
+      weeklyHoursAvailable: 'any',
+      preferredSessionLength: 'any',
+      availabilityTimes: [],
+      // Technology
+      videoConferencingComfort: 'any',
+      internetConnectionQuality: 'any',
+      // Languages
+      languagesFluent: [],
     },
   });
 
@@ -217,15 +288,69 @@ function SearchCoachesContent() {
     }
   };
 
-  // Quick search without form submission
+  // Quick search with focus on registration fields
   const handleQuickSearch = () => {
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       const filtered = allCoaches.filter(coach => 
-        coach.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        coach.specialties.some(specialty => 
-          specialty.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        coach.bio.toLowerCase().includes(searchQuery.toLowerCase())
+        // Basic info
+        coach.name.toLowerCase().includes(query) ||
+        coach.bio.toLowerCase().includes(query) ||
+        
+        // Professional Background
+        (coach.educationalBackground && coach.educationalBackground.toLowerCase().includes(query)) ||
+        (coach.coachingExperienceYears && coach.coachingExperienceYears.toLowerCase().includes(query)) ||
+        (coach.professionalCertifications && coach.professionalCertifications.some(cert => 
+          cert.toLowerCase().includes(query)
+        )) ||
+        
+        // Specialization
+        (coach.coachingExpertise && coach.coachingExpertise.some(expertise => 
+          expertise.toLowerCase().includes(query)
+        )) ||
+        (coach.ageGroupsComfortable && coach.ageGroupsComfortable.some(ageGroup => 
+          ageGroup.toLowerCase().includes(query)
+        )) ||
+        (coach.actTrainingLevel && coach.actTrainingLevel.toLowerCase().includes(query)) ||
+        
+        // Approach & Methods
+        (coach.coachingPhilosophy && coach.coachingPhilosophy.toLowerCase().includes(query)) ||
+        (coach.coachingTechniques && coach.coachingTechniques.some(technique => 
+          technique.toLowerCase().includes(query)
+        )) ||
+        (coach.sessionStructure && coach.sessionStructure.toLowerCase().includes(query)) ||
+        
+        // Ethics & Boundaries
+        (coach.scopeHandlingApproach && coach.scopeHandlingApproach.toLowerCase().includes(query)) ||
+        (coach.boundaryMaintenanceApproach && coach.boundaryMaintenanceApproach.toLowerCase().includes(query)) ||
+        
+        // Crisis Management
+        (coach.comfortableWithSuicidalThoughts && coach.comfortableWithSuicidalThoughts.toLowerCase().includes(query)) ||
+        (coach.selfHarmProtocol && coach.selfHarmProtocol.toLowerCase().includes(query)) ||
+        
+        // Availability
+        (coach.weeklyHoursAvailable && coach.weeklyHoursAvailable.toLowerCase().includes(query)) ||
+        (coach.preferredSessionLength && coach.preferredSessionLength.toLowerCase().includes(query)) ||
+        (coach.availabilityTimes && coach.availabilityTimes.some(time => 
+          time.toLowerCase().includes(query)
+        )) ||
+        
+        // Technology
+        (coach.videoConferencingComfort && coach.videoConferencingComfort.toLowerCase().includes(query)) ||
+        (coach.internetConnectionQuality && coach.internetConnectionQuality.toLowerCase().includes(query)) ||
+        
+        // Languages
+        (coach.languagesFluent && coach.languagesFluent.some(language => 
+          language.toLowerCase().includes(query)
+        )) ||
+        
+        // Legacy fields for backward compatibility
+        (coach.specialties && coach.specialties.some(specialty => 
+          specialty.toLowerCase().includes(query)
+        )) ||
+        (coach.languages && coach.languages.some(language => 
+          language.toLowerCase().includes(query)
+        ))
       );
       setFilteredCoaches(filtered);
       setHasSearched(true);
@@ -279,18 +404,48 @@ function SearchCoachesContent() {
   // Calculate total pages
   const totalPages = Math.ceil(filteredCoaches.length / coachesPerPage);
 
-  // Apply real-time filters
+  // Apply real-time filters focused on registration fields
   const applyFilters = () => {
     let filtered = allCoaches;
 
-    // Apply search query
+    // Apply comprehensive search query
     if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(coach => 
-        coach.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        coach.specialties.some(specialty => 
-          specialty.toLowerCase().includes(searchQuery.toLowerCase())
-        ) ||
-        coach.bio.toLowerCase().includes(searchQuery.toLowerCase())
+        // Basic info
+        coach.name.toLowerCase().includes(query) ||
+        coach.bio.toLowerCase().includes(query) ||
+        
+        // Professional Background
+        (coach.educationalBackground && coach.educationalBackground.toLowerCase().includes(query)) ||
+        (coach.coachingExperienceYears && coach.coachingExperienceYears.toLowerCase().includes(query)) ||
+        (coach.professionalCertifications && coach.professionalCertifications.some(cert => 
+          cert.toLowerCase().includes(query)
+        )) ||
+        
+        // Specialization
+        (coach.coachingExpertise && coach.coachingExpertise.some(expertise => 
+          expertise.toLowerCase().includes(query)
+        )) ||
+        (coach.actTrainingLevel && coach.actTrainingLevel.toLowerCase().includes(query)) ||
+        
+        // Approach & Methods
+        (coach.coachingPhilosophy && coach.coachingPhilosophy.toLowerCase().includes(query)) ||
+        (coach.coachingTechniques && coach.coachingTechniques.some(technique => 
+          technique.toLowerCase().includes(query)
+        )) ||
+        (coach.sessionStructure && coach.sessionStructure.toLowerCase().includes(query)) ||
+        
+        // Ethics & Boundaries
+        (coach.boundaryMaintenanceApproach && coach.boundaryMaintenanceApproach.toLowerCase().includes(query)) ||
+        
+        // Crisis Management
+        (coach.comfortableWithSuicidalThoughts && coach.comfortableWithSuicidalThoughts.toLowerCase().includes(query)) ||
+        
+        // Languages
+        (coach.languagesFluent && coach.languagesFluent.some(language => 
+          language.toLowerCase().includes(query)
+        ))
       );
     }
 
@@ -300,17 +455,125 @@ function SearchCoachesContent() {
       return price >= priceRange[0] && price <= priceRange[1];
     });
 
-    // Apply selected filters
-    // Remove virtual/verified/accepts-insurance quick filters
+    // Apply filters based on registration sections
+    
+    // Professional Background filters
+    const educationalBg = form.getValues().educationalBackground;
+    if (educationalBg && educationalBg !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.educationalBackground === educationalBg
+      );
+    }
 
-    // Apply experience filter (minimum years)
-    const minExpStr = form.getValues().experience;
-    if (minExpStr && minExpStr !== 'any') {
-      const minYears = parseInt(minExpStr, 10) || 0;
-      filtered = filtered.filter(coach => {
-        const years = parseInt((coach.experience || '').replace(/[^0-9]/g, '')) || 0;
-        return years >= minYears;
-      });
+    const experienceYears = form.getValues().coachingExperienceYears;
+    if (experienceYears && experienceYears !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.coachingExperienceYears === experienceYears
+      );
+    }
+
+    const certifications = form.getValues().professionalCertifications;
+    if (certifications && certifications.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.professionalCertifications && 
+        certifications.some(cert => coach.professionalCertifications?.includes(cert))
+      );
+    }
+
+    // Specialization filters
+    const expertise = form.getValues().coachingExpertise;
+    if (expertise && expertise.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.coachingExpertise && 
+        expertise.some(exp => coach.coachingExpertise?.includes(exp))
+      );
+    }
+
+    const ageGroups = form.getValues().ageGroupsComfortable;
+    if (ageGroups && ageGroups.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.ageGroupsComfortable && 
+        ageGroups.some(age => coach.ageGroupsComfortable?.includes(age))
+      );
+    }
+
+    const actLevel = form.getValues().actTrainingLevel;
+    if (actLevel && actLevel !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.actTrainingLevel === actLevel
+      );
+    }
+
+    // Approach & Methods filters
+    const sessionStruct = form.getValues().sessionStructure;
+    if (sessionStruct && sessionStruct !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.sessionStructure === sessionStruct
+      );
+    }
+
+    const techniques = form.getValues().coachingTechniques;
+    if (techniques && techniques.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.coachingTechniques && 
+        techniques.some(technique => coach.coachingTechniques?.includes(technique))
+      );
+    }
+
+    // Ethics & Boundaries filters
+    const boundaryApproach = form.getValues().boundaryMaintenanceApproach;
+    if (boundaryApproach && boundaryApproach !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.boundaryMaintenanceApproach === boundaryApproach
+      );
+    }
+
+    // Crisis Management filter
+    const crisisMgmt = form.getValues().comfortableWithSuicidalThoughts;
+    if (crisisMgmt && crisisMgmt !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.comfortableWithSuicidalThoughts === crisisMgmt
+      );
+    }
+
+    // Availability filters
+    const weeklyHours = form.getValues().weeklyHoursAvailable;
+    if (weeklyHours && weeklyHours !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.weeklyHoursAvailable === weeklyHours
+      );
+    }
+
+    const sessionLength = form.getValues().preferredSessionLength;
+    if (sessionLength && sessionLength !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.preferredSessionLength === sessionLength
+      );
+    }
+
+    const availTimes = form.getValues().availabilityTimes;
+    if (availTimes && availTimes.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.availabilityTimes && 
+        availTimes.some(time => coach.availabilityTimes?.includes(time))
+      );
+    }
+
+    // Technology filters
+    const videoComfort = form.getValues().videoConferencingComfort;
+    if (videoComfort && videoComfort !== 'any') {
+      filtered = filtered.filter(coach => 
+        coach.videoConferencingComfort === videoComfort
+      );
+    }
+
+    // Languages filter
+    const languages = form.getValues().languagesFluent;
+    if (languages && languages.length > 0) {
+      filtered = filtered.filter(coach => 
+        coach.languagesFluent && 
+        languages.some(lang => coach.languagesFluent?.includes(lang))
+      );
     }
 
     setFilteredCoaches(filtered);
@@ -592,175 +855,8 @@ function SearchCoachesContent() {
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Basic Filters */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-                    <FormField
-                      control={form.control}
-                      name="areaOfConcern"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center space-x-2">
-                            <Users className="w-4 h-4 text-blue-600" />
-                            <span>Areas of Concern</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className="space-y-2 max-h-32 overflow-y-auto">
-                              {concernOptions.map((concern) => (
-                                <div key={concern.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={concern.id}
-                                    checked={field.value?.includes(concern.id)}
-                                    onCheckedChange={(checked) => {
-                                      const current = field.value || [];
-                                      if (checked) {
-                                        field.onChange([...current, concern.id]);
-                                      } else {
-                                        field.onChange(current.filter((item) => item !== concern.id));
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={concern.id}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
-                                  >
-                                    {concern.label}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="location"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center space-x-2">
-                            <MapPin className="w-4 h-4 text-blue-600" />
-                            <span>Location</span>
-                          </FormLabel>
-                          <FormControl>
-                            <Popover
-                              modal={false}
-                              open={openLocation}
-                              onOpenChange={(open) => {
-                                setOpenLocation(open)
-                                if (open) setLocationQuery("")
-                              }}
-                            >
-                              <PopoverTrigger asChild>
-                                <Button
-                                  type="button"
-                                  variant="outline"
-                                  role="combobox"
-                                  aria-expanded={openLocation}
-                                  className="w-full justify-between bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                                >
-                                  {field.value ? (STATE_NAMES as any)[field.value] || "Select your state" : "Select your state"}
-                                  <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                              </PopoverTrigger>
-                              <PopoverContent onOpenAutoFocus={(e) => e.preventDefault()} className="p-0 w-72 sm:w-96">
-                                <div className="p-2">
-                                  <Input
-                                    placeholder="Search states..."
-                                    value={locationQuery}
-                                    onChange={(e) => setLocationQuery(e.target.value)}
-                                    className="mb-2"
-                                  />
-                                  <div className="max-h-[300px] overflow-y-auto">
-                                    {Object.entries(STATE_NAMES)
-                                      .filter(([code, name]) =>
-                                        name.toLowerCase().includes(locationQuery.toLowerCase()) ||
-                                        code.toLowerCase().includes(locationQuery.toLowerCase())
-                                      )
-                                      .map(([code, name]) => (
-                                        <div
-                                          key={code}
-                                          role="option"
-                                          tabIndex={0}
-                                          aria-selected={field.value === code}
-                                          className={`w-full cursor-pointer text-left px-3 py-2 rounded hover:bg-accent ${field.value === code ? 'bg-accent' : ''}`}
-                                          onPointerDown={(e) => {
-                                            e.preventDefault()
-                                            field.onChange(code)
-                                            setOpenLocation(false)
-                                          }}
-                                          onKeyDown={(e) => {
-                                            if (e.key === 'Enter' || e.key === ' ') {
-                                              e.preventDefault()
-                                              field.onChange(code)
-                                              setOpenLocation(false)
-                                            }
-                                          }}
-                                          onClick={() => {
-                                            field.onChange(code)
-                                            setOpenLocation(false)
-                                          }}
-                                        >
-                                          {name}
-                                        </div>
-                                      ))}
-                                    {Object.entries(STATE_NAMES)
-                                      .filter(([code, name]) =>
-                                        name.toLowerCase().includes(locationQuery.toLowerCase()) ||
-                                        code.toLowerCase().includes(locationQuery.toLowerCase())
-                                      ).length === 0 && (
-                                        <div className="px-3 py-2 text-sm text-muted-foreground">No states found.</div>
-                                    )}
-                                  </div>
-                                </div>
-                              </PopoverContent>
-                            </Popover>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name="availability_options"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center space-x-2">
-                            <Clock className="w-4 h-4 text-blue-600" />
-                            <span>Availability</span>
-                          </FormLabel>
-                          <FormControl>
-                            <div className="space-y-2 max-h-32 overflow-y-auto">
-                              {availabilityOptions.map((option) => (
-                                <div key={option.id} className="flex items-center space-x-2">
-                                  <Checkbox
-                                    id={option.id}
-                                    checked={field.value?.includes(option.id)}
-                                    onCheckedChange={(checked) => {
-                                      const current = field.value || [];
-                                      if (checked) {
-                                        field.onChange([...current, option.id]);
-                                      } else {
-                                        field.onChange(current.filter((item) => item !== option.id));
-                                      }
-                                    }}
-                                  />
-                                  <label
-                                    htmlFor={option.id}
-                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
-                                  >
-                                    {option.label}
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                  {/* Coach Registration Based Filters */}
+                  <div className="space-y-6">
                   </div>
 
                   {/* Advanced Filters */}
@@ -887,6 +983,215 @@ function SearchCoachesContent() {
                                 ))}
                               </div>
                             </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="educationalBackground"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Award className="w-4 h-4 text-blue-600" />
+                              <span>Educational Background</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any education" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any education</SelectItem>
+                                <SelectItem value="High School Diploma">High School</SelectItem>
+                                <SelectItem value="Associate's Degree">Associate's</SelectItem>
+                                <SelectItem value="Bachelor's Degree">Bachelor's</SelectItem>
+                                <SelectItem value="Master's Degree">Master's</SelectItem>
+                                <SelectItem value="Doctoral Degree">Doctoral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="actTrainingLevel"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Award className="w-4 h-4 text-blue-600" />
+                              <span>ACT Training Level</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any ACT level" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any level</SelectItem>
+                                <SelectItem value="Yes, formal ACT training/certification">Formal ACT Certification</SelectItem>
+                                <SelectItem value="Yes, workshop or seminar attendance">Workshop/Seminar</SelectItem>
+                                <SelectItem value="Self-study of ACT principles">Self-study</SelectItem>
+                                <SelectItem value="No, but willing to learn">Willing to learn</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="sessionStructure"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>Session Structure</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any structure" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any structure</SelectItem>
+                                <SelectItem value="Highly structured with specific agendas">Highly structured</SelectItem>
+                                <SelectItem value="Semi-structured with flexibility">Semi-structured</SelectItem>
+                                <SelectItem value="Client-led and organic">Client-led</SelectItem>
+                                <SelectItem value="Varies based on client needs">Varies by needs</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="ageGroupsComfortable"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Users className="w-4 h-4 text-blue-600" />
+                              <span>Age Groups</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-32 overflow-y-auto">
+                                {[
+                                  { id: 'children', label: 'Children (6-12)' },
+                                  { id: 'adolescents', label: 'Adolescents (13-17)' },
+                                  { id: 'young-adults', label: 'Young adults (18-25)' },
+                                  { id: 'adults', label: 'Adults (26-64)' },
+                                  { id: 'seniors', label: 'Seniors (65+)' },
+                                ].map((ageGroup) => (
+                                  <div key={ageGroup.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={ageGroup.id}
+                                      checked={field.value?.includes(ageGroup.label)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, ageGroup.label]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== ageGroup.label));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={ageGroup.id}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
+                                    >
+                                      {ageGroup.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="coachingTechniques"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Award className="w-4 h-4 text-blue-600" />
+                              <span>Coaching Techniques</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-32 overflow-y-auto">
+                                {[
+                                  { id: 'cbt', label: 'Cognitive Behavioral Techniques' },
+                                  { id: 'mindfulness', label: 'Mindfulness practices' },
+                                  { id: 'goal-setting', label: 'Goal setting & action planning' },
+                                  { id: 'values', label: 'Values clarification' },
+                                  { id: 'solution-focused', label: 'Solution-focused techniques' },
+                                  { id: 'motivational', label: 'Motivational interviewing' },
+                                  { id: 'positive-psych', label: 'Positive psychology' },
+                                  { id: 'somatic', label: 'Somatic/body-based approaches' },
+                                  { id: 'visualization', label: 'Visualization & imagery' },
+                                  { id: 'journaling', label: 'Journaling exercises' },
+                                ].map((technique) => (
+                                  <div key={technique.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={technique.id}
+                                      checked={field.value?.includes(technique.label)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, technique.label]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== technique.label));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={technique.id}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
+                                    >
+                                      {technique.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="crisisManagement"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Heart className="w-4 h-4 text-blue-600" />
+                              <span>Crisis Management Experience</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any experience" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any experience</SelectItem>
+                                <SelectItem value="Yes, I have training and experience">Training & experience</SelectItem>
+                                <SelectItem value="Yes, but would need additional support">Would need support</SelectItem>
+                                <SelectItem value="No, I would immediately refer">Would refer</SelectItem>
+                              </SelectContent>
+                            </Select>
                             <FormMessage />
                           </FormItem>
                         )}

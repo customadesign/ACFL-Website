@@ -27,7 +27,7 @@ export default function MeetingContainer({
   onClose
 }: MeetingContainerProps) {
   const { user } = useAuth()
-  const { canJoinMeeting, isInMeeting, currentMeetingId, registerMeetingAttempt, unregisterMeetingAttempt } = useMeeting()
+  const { canJoinMeeting, isInMeeting, currentMeetingId, setMeetingState } = useMeeting()
   const [stage, setStage] = useState<'precall' | 'loading' | 'meeting' | 'ended' | 'blocked'>('precall')
   const [meetingConfig, setMeetingConfig] = useState<{
     meetingId: string
@@ -43,19 +43,24 @@ export default function MeetingContainer({
     ? `${user.first_name} ${user.last_name}`
     : user?.email || 'Participant'
 
-  // Check meeting access on mount by getting the meeting ID and registering attempt
+  // Check meeting access on mount and immediately reserve this meeting
   useEffect(() => {
     const checkMeetingAccess = async () => {
       try {
         const { meetingId } = await createOrGetMeeting(appointmentId, isHost)
         setMeetingIdToCheck(meetingId)
         
-        // Register this meeting attempt - this will fail if user is already in another meeting
-        const canRegister = registerMeetingAttempt(meetingId)
-        
-        if (!canRegister) {
+        // Check if user can join this meeting
+        if (!canJoinMeeting(meetingId)) {
+          console.log('❌ Cannot join meeting - user already in another meeting')
           setStage('blocked')
+          return
         }
+        
+        // Immediately mark as in meeting to prevent other meetings from starting
+        console.log('🔒 Reserving meeting access:', meetingId)
+        setMeetingState(true, meetingId)
+        
       } catch (error) {
         console.error('Failed to check meeting access:', error)
         setError('Failed to check meeting access')
@@ -64,13 +69,14 @@ export default function MeetingContainer({
     
     checkMeetingAccess()
     
-    // Cleanup function to unregister when component unmounts
+    // Cleanup function to release meeting when component unmounts
     return () => {
       if (meetingIdToCheck) {
-        unregisterMeetingAttempt(meetingIdToCheck)
+        console.log('🔓 Releasing meeting access:', meetingIdToCheck)
+        setMeetingState(false, null)
       }
     }
-  }, [appointmentId, isHost, registerMeetingAttempt, unregisterMeetingAttempt])
+  }, [appointmentId, isHost, canJoinMeeting, setMeetingState])
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {
     // Prevent double-clicking and multiple join attempts
@@ -86,13 +92,7 @@ export default function MeetingContainer({
       // Create or get VideoSDK meeting
       const { meetingId, token } = await createOrGetMeeting(appointmentId, isHost)
       
-      // Double-check if user can still join (in case state changed)
-      if (!canJoinMeeting(meetingId)) {
-        setError('Cannot join meeting: You are already in another meeting session')
-        setStage('blocked')
-        setIsJoining(false)
-        return
-      }
+      // Since we already reserved this meeting, we can proceed directly
       
       setMeetingConfig({
         meetingId,
@@ -116,10 +116,9 @@ export default function MeetingContainer({
     setStage('ended')
     setMeetingConfig(null)
     
-    // Unregister the meeting attempt when meeting ends
-    if (meetingIdToCheck) {
-      unregisterMeetingAttempt(meetingIdToCheck)
-    }
+    // Release the meeting when it ends
+    console.log('🔓 Meeting ended, releasing access:', meetingIdToCheck)
+    setMeetingState(false, null)
     
     // Small delay before closing to show transition
     setTimeout(() => {
@@ -177,7 +176,8 @@ export default function MeetingContainer({
           <button
             onClick={() => {
               if (meetingIdToCheck) {
-                unregisterMeetingAttempt(meetingIdToCheck)
+                console.log('🔓 User closed blocked meeting, releasing access:', meetingIdToCheck)
+                setMeetingState(false, null)
               }
               onClose()
             }}

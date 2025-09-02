@@ -12,12 +12,14 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMeeting } from '@/contexts/MeetingContext';
 import axios from 'axios';
 import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle } from 'lucide-react';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Calendar, Clock } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
+import RescheduleModal from '@/components/RescheduleModal';
 
 interface Appointment {
   id: string;
   client_id: string;
+  coach_id: string;
   starts_at: string;
   ends_at: string;
   status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
@@ -37,7 +39,7 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const { user } = useAuth();
-  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting, registerMeetingAttempt } = useMeeting();
+  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
@@ -48,6 +50,8 @@ export default function AppointmentsPage() {
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [showMeeting, setShowMeeting] = useState(false);
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [selectedAppointmentForReschedule, setSelectedAppointmentForReschedule] = useState<Appointment | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
   const API_URL = getApiUrl();
@@ -136,7 +140,13 @@ export default function AppointmentsPage() {
     const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
     const toStart = start - nowMs;
     const toEnd = end - nowMs;
+    
+    // For future appointments
     if (toStart > 0) {
+      const days = Math.floor(toStart / 86400000);
+      if (days > 0) {
+        return `In ${days} day${days > 1 ? 's' : ''}`;
+      }
       const h = Math.floor(toStart / 3600000);
       const m = Math.floor((toStart % 3600000) / 60000);
       const s = Math.floor((toStart % 60000) / 1000);
@@ -145,29 +155,33 @@ export default function AppointmentsPage() {
       const ss = s.toString().padStart(2, '0');
       return `Starts in ${hh}:${mm}:${ss}`;
     }
+    
+    // For ongoing appointments
     if (toEnd > 0) return 'Live now';
-    return 'Session ended';
+    
+    // For past appointments
+    return 'Completed';
   };
 
   const handleJoinMeeting = (appointment: Appointment) => {
-    // Check if user can join this meeting and register the attempt
     const meetingId = appointment.meeting_id;
-    if (!meetingId || !registerMeetingAttempt(meetingId)) {
-      // Registration failed, user is already in another meeting
-      // The MeetingContainer will handle the blocking UI
+    if (!meetingId) return;
+    
+    // Simple check - if already in a different meeting, don't allow
+    if (isInMeeting && currentMeetingId !== meetingId) {
+      console.log('❌ Already in meeting:', currentMeetingId, 'cannot join:', meetingId);
       return;
     }
     
-    // Proceed with joining the meeting
+    console.log('✅ Opening meeting container for:', meetingId);
     setMeetingAppointment(appointment);
     setShowMeeting(true);
-    setMeetingState(true, meetingId);
   };
 
   const handleLeaveMeeting = () => {
     setShowMeeting(false);
     setMeetingAppointment(null);
-    setMeetingState(false, null);
+    // Don't manually set meeting state here - let MeetingContainer handle it
   };
 
   const loadAppointments = async (isRefresh: boolean = false) => {
@@ -188,6 +202,17 @@ export default function AppointmentsPage() {
       setLoading(false);
       setInitialLoad(false);
     }
+  };
+
+  const handleReschedule = (appointment: Appointment) => {
+    setSelectedAppointmentForReschedule(appointment);
+    setShowRescheduleModal(true);
+  };
+
+  const handleRescheduleSuccess = () => {
+    setShowRescheduleModal(false);
+    setSelectedAppointmentForReschedule(null);
+    loadAppointments(); // Refresh appointments list
   };
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
@@ -495,15 +520,17 @@ export default function AppointmentsPage() {
                             <div className="flex flex-col gap-1">
                               <Button
                                 onClick={() => handleJoinMeeting(appointment)}
-                                className={`${isInMeeting && currentMeetingId === appointment.meeting_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} dark:text-white disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto`}
-                                disabled={!isJoinAvailable(appointment) || !canJoinMeeting(appointment.meeting_id || '')}
+                                className={`${isInMeeting && currentMeetingId === appointment.meeting_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} dark:text-white disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto`}
+                                disabled={!isJoinAvailable(appointment) || (isInMeeting && currentMeetingId !== appointment.meeting_id)}
                                 size="sm"
                               >
                                 <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
                                 {isInMeeting && currentMeetingId === appointment.meeting_id ? 'Rejoin Session' : 'Join Session'}
                               </Button>
-                              {isInMeeting && !canJoinMeeting(appointment.meeting_id || '') && (
-                                <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">Already in another meeting</span>
+                              {isInMeeting && currentMeetingId !== appointment.meeting_id && (
+                                <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">
+                                  📞 Already in meeting: {currentMeetingId?.substring(0, 8)}...
+                                </span>
                               )}
                             </div>
                           )}
@@ -516,6 +543,15 @@ export default function AppointmentsPage() {
                           </Button>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
+                          <Button
+                            onClick={() => handleReschedule(appointment)}
+                            variant="outline"
+                            className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full sm:w-auto"
+                            size="sm"
+                          >
+                            <Calendar className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                            Reschedule
+                          </Button>
                           <Button
                             onClick={() => handleStatusChange(appointment.id, 'cancelled')}
                             variant="outline"
@@ -578,6 +614,16 @@ export default function AppointmentsPage() {
             // Refresh appointments to update status
             loadAppointments(true);
           }}
+        />
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && selectedAppointmentForReschedule && (
+        <RescheduleModal
+          isOpen={showRescheduleModal}
+          onClose={() => setShowRescheduleModal(false)}
+          appointment={selectedAppointmentForReschedule}
+          onSuccess={handleRescheduleSuccess}
         />
       )}
     </CoachPageWrapper>

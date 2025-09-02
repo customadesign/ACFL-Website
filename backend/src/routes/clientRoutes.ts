@@ -1313,7 +1313,7 @@ router.post('/client/message-coach', [
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id, first_name, last_name')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1375,7 +1375,7 @@ router.get('/client/messages', authenticate, async (req: Request & { user?: any 
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1428,7 +1428,7 @@ router.get('/client/conversations', authenticate, async (req: Request & { user?:
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1504,7 +1504,7 @@ router.put('/client/messages/:messageId/read', authenticate, async (req: Request
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1549,7 +1549,7 @@ router.post('/client/send-message', [
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id, first_name, last_name')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1642,7 +1642,7 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id, first_name, last_name')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1897,7 +1897,7 @@ router.post('/client/upload-attachment', authenticate, uploadAttachment.single('
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -1942,7 +1942,7 @@ router.delete('/client/messages/:messageId/everyone', authenticate, async (req: 
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -2020,7 +2020,7 @@ router.put('/client/messages/:messageId/hide', authenticate, async (req: Request
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {
@@ -2067,7 +2067,7 @@ router.delete('/client/conversations/:partnerId', authenticate, async (req: Requ
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (clientError || !clientProfile) {

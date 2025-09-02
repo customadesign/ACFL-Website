@@ -37,7 +37,7 @@ interface Appointment {
 
 function AppointmentsContent() {
   const { user } = useAuth();
-  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting, registerMeetingAttempt } = useMeeting();
+  const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
@@ -150,24 +150,24 @@ function AppointmentsContent() {
   };
 
   const handleJoinMeeting = (appointment: Appointment) => {
-    // Check if user can join this meeting and register the attempt
     const meetingId = appointment.meeting_id;
-    if (!meetingId || !registerMeetingAttempt(meetingId)) {
-      // Registration failed, user is already in another meeting
-      // The MeetingContainer will handle the blocking UI
+    if (!meetingId) return;
+    
+    // Simple check - if already in a different meeting, don't allow
+    if (isInMeeting && currentMeetingId !== meetingId) {
+      console.log('❌ Already in meeting:', currentMeetingId, 'cannot join:', meetingId);
       return;
     }
     
-    // Proceed with joining the meeting
+    console.log('✅ Opening meeting container for:', meetingId);
     setMeetingAppointment(appointment);
     setShowMeeting(true);
-    setMeetingState(true, meetingId);
   };
 
   const handleLeaveMeeting = () => {
     setShowMeeting(false);
     setMeetingAppointment(null);
-    setMeetingState(false, null);
+    // Don't manually set meeting state here - let MeetingContainer handle it
   };
 
   const loadAppointments = async (isRefresh: boolean = false) => {
@@ -470,15 +470,17 @@ function AppointmentsContent() {
                           <div className="flex flex-col gap-1">
                             <Button
                               onClick={() => handleJoinMeeting(appointment)}
-                              className={`${isInMeeting && currentMeetingId === appointment.meeting_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-60 disabled:cursor-not-allowed w-full sm:w-auto`}
-                              disabled={!isJoinAvailable(appointment) || !canJoinMeeting(appointment.meeting_id || '')}
+                              className={`${isInMeeting && currentMeetingId === appointment.meeting_id ? 'bg-blue-600 hover:bg-blue-700' : 'bg-green-600 hover:bg-green-700'} disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto`}
+                              disabled={!isJoinAvailable(appointment) || (isInMeeting && currentMeetingId !== appointment.meeting_id)}
                               size="sm"
                             >
                               <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
                               {isInMeeting && currentMeetingId === appointment.meeting_id ? 'Rejoin Session' : 'Join Session'}
                             </Button>
-                            {isInMeeting && !canJoinMeeting(appointment.meeting_id || '') && (
-                              <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">Already in another meeting</span>
+                            {isInMeeting && currentMeetingId !== appointment.meeting_id && (
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">
+                                📞 Already in meeting: {currentMeetingId?.substring(0, 8)}...
+                              </span>
                             )}
                           </div>
                         )}

@@ -27,6 +27,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMounted(true);
     
+    // Only run on client side
+    if (typeof window === 'undefined') return;
+    
     // Check if user has already given consent
     const storageConsent = localStorage.getItem('theme-storage-consent');
     const savedTheme = localStorage.getItem('theme') as Theme;
@@ -51,7 +54,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       correctTheme = 'light';
       console.log('ThemeContext: Using light theme (consent denied)');
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       correctTheme = prefersDark ? 'dark' : 'light';
       console.log('ThemeContext: Using system preference:', correctTheme);
     }
@@ -194,7 +197,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }, 4000);
   };
 
-  if (!mounted || !consentChecked) {
+  // Prevent hydration mismatch by not rendering theme-dependent content until mounted
+  if (!mounted) {
     return <>{children}</>;
   }
 

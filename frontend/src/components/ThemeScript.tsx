@@ -1,20 +1,24 @@
 // This script runs immediately to prevent theme flash
 export const ThemeScript = () => (
   <script
+    suppressHydrationWarning
     dangerouslySetInnerHTML={{
       __html: `
         (function() {
           try {
+            // Only run on client side
+            if (typeof window === 'undefined') return;
+            
             console.log('ThemeScript: Starting theme initialization...');
             
             var storageConsent = localStorage.getItem('theme-storage-consent');
             var savedTheme = localStorage.getItem('theme');
             
-            console.log('ThemeScript: Storage values', { 
-              storageConsent: storageConsent, 
+            console.log('ThemeScript: Storage values', {
+              storageConsent: storageConsent,
               savedTheme: savedTheme,
               consentType: typeof storageConsent,
-              themeType: typeof savedTheme 
+              themeType: typeof savedTheme
             });
             
             var theme = 'light'; // default

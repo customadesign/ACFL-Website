@@ -181,16 +181,61 @@ export default function CoachRegister() {
             </div>
             <CardTitle className="text-2xl font-bold">Become a Coach</CardTitle>
             <CardDescription>
-              Create your coach account now and complete your professional profile later
+              Join our professional coaching platform with comprehensive verification
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {errors.submit && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                  {errors.submit}
-                </div>
-              )}
+            <div className="space-y-6">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-semibold text-blue-800 mb-2">New Coach Application Process</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  We've enhanced our coach onboarding with a comprehensive verification process to ensure the highest quality coaching experience.
+                </p>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Complete 20-question professional assessment</li>
+                  <li>• Provide professional references</li>
+                  <li>• Undergo thorough review process</li>
+                  <li>• Receive approval notification within 3-5 business days</li>
+                </ul>
+              </div>
+
+              <div className="text-center">
+                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
+                  <Link href="/register/coach/verification">
+                    Start Coach Application
+                  </Link>
+                </Button>
+              </div>
+
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="font-medium text-gray-800 mb-2">What You'll Need:</h4>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Professional background information</li>
+                  <li>• Details about your coaching experience and training</li>
+                  <li>• Contact information for 2 professional references</li>
+                  <li>• Information about your specialties and approach</li>
+                </ul>
+              </div>
+
+              {/* Legacy form for existing process - hidden by default */}
+              <details className="border border-gray-200 rounded-lg">
+                <summary className="p-4 cursor-pointer text-sm text-gray-600 hover:bg-gray-50">
+                  Use Legacy Registration (Not Recommended)
+                </summary>
+                <div className="p-4 border-t border-gray-200">
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Note:</strong> This legacy registration creates an unverified coach account.
+                      We recommend using the new verification process above for faster approval.
+                    </p>
+                  </div>
+                  
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    {errors.submit && (
+                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                        {errors.submit}
+                      </div>
+                    )}
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -371,9 +416,9 @@ export default function CoachRegister() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Creating Account...' : 'Create Coach Account'}
               </Button>
-            </form>
+                  </form>
 
-            <div className="mt-6 text-center">
+                  <div className="mt-6 text-center">
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
                 <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
@@ -385,7 +430,10 @@ export default function CoachRegister() {
                 <Link href="/register/client" className="text-green-600 hover:text-green-500 font-medium">
                   Register as Client
                 </Link>
-              </p>
+                    </p>
+                  </div>
+                </div>
+              </details>
             </div>
           </CardContent>
         </Card>

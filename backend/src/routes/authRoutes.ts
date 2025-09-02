@@ -4,14 +4,15 @@ import {
   registerCoach,
   login,
   logout,
-  getProfile
+  getProfile,
+  createAdmin
 } from '../controllers/authController';
 import {
   validateRegisterClient,
   validateRegisterCoach,
   validateLogin
 } from '../middleware/validation';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireAdmin } from '../middleware/auth';
 
 const router = Router();
 
@@ -20,6 +21,9 @@ router.post('/register/client', validateRegisterClient, registerClient);
 router.post('/register/coach', validateRegisterCoach, registerCoach);
 router.post('/login', validateLogin, login);
 router.post('/logout', logout);
+
+// Admin routes (protected)
+router.post('/create-admin', requireAdmin, createAdmin);
 
 // Protected routes
 router.get('/profile', authenticate, getProfile);

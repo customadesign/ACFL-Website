@@ -19,11 +19,11 @@ router.get('/coach/profile', authenticate, async (req: Request & { user?: any },
       });
     }
 
-    // Get coach profile by email first
+    // Get coach profile by email first (case-insensitive)
     const { data: coachProfile, error: profileError } = await supabase
       .from('coaches')
       .select('*')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (profileError || !coachProfile) {
@@ -189,7 +189,7 @@ router.put('/coach/profile', [
     const { data: coachProfile, error: profileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (profileError || !coachProfile) {
@@ -324,7 +324,7 @@ router.get('/coach/dashboard', authenticate, async (req: Request & { user?: any 
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id, rating')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -438,7 +438,7 @@ router.get('/coach/appointments', authenticate, async (req: Request & { user?: a
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -562,7 +562,7 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -695,7 +695,7 @@ router.put('/coach/appointments/:id', [
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -827,7 +827,7 @@ router.put('/coach/appointments/:id/reschedule', [
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -937,7 +937,7 @@ router.post('/coach/appointments/:id/ready', authenticate, async (req: Request &
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
@@ -1035,7 +1035,7 @@ router.get('/coach/profile/stats', authenticate, async (req: Request & { user?: 
     const { data: coachProfile, error: profileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (profileError || !coachProfile) {
@@ -1122,7 +1122,7 @@ router.post('/coach/send-message', [
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id, first_name, last_name')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1211,7 +1211,7 @@ router.get('/coach/messages', authenticate, async (req: Request & { user?: any }
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1270,7 +1270,7 @@ router.get('/coach/conversations', authenticate, async (req: Request & { user?: 
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1379,7 +1379,7 @@ router.put('/coach/messages/:messageId/read', authenticate, async (req: Request 
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1427,7 +1427,7 @@ router.post('/coach/upload-attachment', authenticate, uploadAttachment.single('a
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1472,7 +1472,7 @@ router.delete('/coach/messages/:messageId/everyone', authenticate, async (req: R
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1550,7 +1550,7 @@ router.put('/coach/messages/:messageId/hide', authenticate, async (req: Request 
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1597,7 +1597,7 @@ router.delete('/coach/conversations/:partnerId', authenticate, async (req: Reque
     const { data: coachProfile, error: coachError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachError || !coachProfile) {
@@ -1683,7 +1683,7 @@ router.get('/coaches/appointments', authenticate, async (req: Request & { user?:
     const { data: coachProfile, error: coachProfileError } = await supabase
       .from('coaches')
       .select('id')
-      .eq('email', req.user.email)
+      .ilike('email', req.user.email)
       .single();
 
     if (coachProfileError || !coachProfile) {
