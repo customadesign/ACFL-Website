@@ -60,6 +60,49 @@ interface Coach {
   sessionRate?: string
   virtualAvailable?: boolean
   inPersonAvailable?: boolean
+  
+  // Coach Verification Questionnaire Fields
+  
+  // Section 1: Professional Background
+  educationalBackground?: string
+  educationalBackgroundOther?: string
+  coachingExperienceYears?: string
+  professionalCertifications?: string[]
+  
+  // Section 2: Specialization & Expertise  
+  coachingExpertise?: string[]
+  coachingExpertiseOther?: string
+  ageGroupsComfortable?: string[]
+  actTrainingLevel?: string
+  
+  // Section 3: Approach & Methodology
+  coachingPhilosophy?: string
+  coachingTechniques?: string[]
+  sessionStructure?: string
+  
+  // Section 4: Ethics & Boundaries
+  scopeHandlingApproach?: string
+  professionalDisciplineHistory?: boolean
+  disciplineExplanation?: string
+  boundaryMaintenanceApproach?: string
+  boundaryMaintenanceOther?: string
+  
+  // Section 5: Crisis Management
+  comfortableWithSuicidalThoughts?: string
+  selfHarmProtocol?: string
+  
+  // Section 6: Availability & Commitment
+  weeklyHoursAvailable?: string
+  preferredSessionLength?: string
+  availabilityTimes?: string[]
+  
+  // Section 7: Technology
+  videoConferencingComfort?: string
+  internetConnectionQuality?: string
+  
+  // Section 8: Languages & Cultural Competency
+  languagesFluent?: string[]
+  languagesFluentOther?: string
 }
 
 function CoachProfileContent() {
@@ -109,7 +152,45 @@ function CoachProfileContent() {
               sessionRate: "$150-200/session",
               rating: 4.8,
               virtualAvailable: true,
-              inPersonAvailable: true
+              inPersonAvailable: true,
+              
+              // Coach Verification Questionnaire Responses
+              
+              // Section 1: Professional Background
+              educationalBackground: "Master's Degree",
+              coachingExperienceYears: "6-10 years", 
+              professionalCertifications: ["ICF (International Coach Federation) Certified", "ACT Training Certificate", "Mental Health First Aid"],
+              
+              // Section 2: Specialization & Expertise
+              coachingExpertise: ["Anxiety & worry", "Stress management", "Life transitions", "Self-esteem & confidence", "Work-life balance"],
+              ageGroupsComfortable: ["Young adults (18-25)", "Adults (26-64)", "Seniors (65+)"],
+              actTrainingLevel: "Yes, formal ACT training/certification",
+              
+              // Section 3: Approach & Methodology
+              coachingPhilosophy: "I believe in empowering clients through acceptance and mindfulness-based approaches. My philosophy centers on helping individuals develop psychological flexibility, align with their core values, and take committed action toward meaningful goals. I create a safe, non-judgmental space where clients can explore their thoughts and emotions while building resilience.",
+              coachingTechniques: ["Cognitive Behavioral Techniques", "Mindfulness practices", "Goal setting & action planning", "Values clarification", "Solution-focused techniques", "Motivational interviewing"],
+              sessionStructure: "Semi-structured with flexibility",
+              
+              // Section 4: Ethics & Boundaries  
+              scopeHandlingApproach: "I maintain clear professional boundaries and immediately refer clients to appropriate mental health professionals when issues exceed my scope of practice as a coach. I have established relationships with licensed therapists and psychiatrists for seamless referrals. I clearly communicate the differences between coaching and therapy during intake and regularly assess if coaching remains appropriate throughout our work together.",
+              professionalDisciplineHistory: false,
+              boundaryMaintenanceApproach: "All of the above",
+              
+              // Section 5: Crisis Management
+              comfortableWithSuicidalThoughts: "Yes, I have training and experience",
+              selfHarmProtocol: "I follow a structured safety protocol that includes: immediate risk assessment, development of safety plan with the client, connection to crisis resources (988 Suicide & Crisis Lifeline), involvement of support system when appropriate, and follow-up within 24 hours. I maintain current training in crisis intervention and work closely with licensed mental health professionals for ongoing support and consultation.",
+              
+              // Section 6: Availability & Commitment
+              weeklyHoursAvailable: "21-30 hours",
+              preferredSessionLength: "60 minutes", 
+              availabilityTimes: ["Weekday mornings (6am-12pm)", "Weekday afternoons (12pm-5pm)", "Weekday evenings (5pm-10pm)"],
+              
+              // Section 7: Technology
+              videoConferencingComfort: "Very comfortable - use it regularly",
+              internetConnectionQuality: "Excellent - high-speed fiber/cable",
+              
+              // Section 8: Languages & Cultural Competency
+              languagesFluent: ["English"]
             },
             {
               id: '2',
@@ -644,6 +725,282 @@ function CoachProfileContent() {
                       ))}
                     </div>
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 1: Professional Background */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <GraduationCap className="w-5 h-5 text-purple-600" />
+                  <span>Section 1: Professional Background</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.educationalBackground && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Educational Background</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-sm">{coach.educationalBackground}</p>
+                    </div>
+                  )}
+                  {coach.coachingExperienceYears && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Years of Coaching Experience</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-violet-50 dark:bg-violet-900/20 p-3 rounded-lg text-sm">{coach.coachingExperienceYears}</p>
+                    </div>
+                  )}
+                  {coach.professionalCertifications && coach.professionalCertifications.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Professional Certifications</h4>
+                      <div className="space-y-2">
+                        {coach.professionalCertifications.map((cert, idx) => (
+                          <div key={idx} className="flex items-center space-x-2 p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                            <Award className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                            <span className="text-xs sm:text-sm font-medium">{cert}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 2: Specialization & Expertise */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Target className="w-5 h-5 text-rose-600" />
+                  <span>Section 2: Specialization & Expertise</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.coachingExpertise && coach.coachingExpertise.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Primary Areas of Coaching Expertise</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.coachingExpertise.map((expertise, idx) => (
+                          <span key={idx} className="inline-block text-xs bg-rose-100 dark:bg-rose-900/30 text-rose-800 dark:text-rose-200 px-3 py-1 rounded-full font-medium">
+                            {expertise}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {coach.ageGroupsComfortable && coach.ageGroupsComfortable.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Age Groups Comfortable Working With</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.ageGroupsComfortable.map((ageGroup, idx) => (
+                          <span key={idx} className="inline-block text-xs bg-pink-100 dark:bg-pink-900/30 text-pink-800 dark:text-pink-200 px-3 py-1 rounded-full font-medium">
+                            {ageGroup}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {coach.actTrainingLevel && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">ACT (Acceptance and Commitment Therapy) Training</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg text-sm">{coach.actTrainingLevel}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 3: Approach & Methodology */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <User className="w-5 h-5 text-emerald-600" />
+                  <span>Section 3: Approach & Methodology</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.coachingPhilosophy && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Coaching Philosophy</h4>
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{coach.coachingPhilosophy}</p>
+                      </div>
+                    </div>
+                  )}
+                  {coach.coachingTechniques && coach.coachingTechniques.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Coaching Techniques Used</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.coachingTechniques.map((technique, idx) => (
+                          <span key={idx} className="inline-block text-xs bg-teal-100 dark:bg-teal-900/30 text-teal-800 dark:text-teal-200 px-3 py-1 rounded-full font-medium">
+                            {technique}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  {coach.sessionStructure && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Session Structure</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-emerald-50 dark:bg-emerald-900/20 p-3 rounded-lg text-sm">{coach.sessionStructure}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 4: Professional Boundaries & Ethics */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5 text-blue-600" />
+                  <span>Section 4: Professional Boundaries & Ethics</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.scopeHandlingApproach && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Handling Situations Beyond Scope of Practice</h4>
+                      <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{coach.scopeHandlingApproach}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Professional License History</h4>
+                    <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">No professional licenses suspended, revoked, or disciplined</span>
+                    </div>
+                  </div>
+                  {coach.boundaryMaintenanceApproach && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Professional Boundary Maintenance</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg text-sm">{coach.boundaryMaintenanceApproach}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 5: Crisis Management */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Heart className="w-5 h-5 text-red-600" />
+                  <span>Section 5: Crisis Management</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.comfortableWithSuicidalThoughts && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Working with Clients with Suicidal Thoughts</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-red-50 dark:bg-red-900/20 p-3 rounded-lg text-sm">{coach.comfortableWithSuicidalThoughts}</p>
+                    </div>
+                  )}
+                  {coach.selfHarmProtocol && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Self-Harm Protocol</h4>
+                      <div className="bg-rose-50 dark:bg-rose-900/20 p-4 rounded-lg">
+                        <p className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">{coach.selfHarmProtocol}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 6: Availability & Commitment */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Clock className="w-5 h-5 text-amber-600" />
+                  <span>Section 6: Availability & Commitment</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.weeklyHoursAvailable && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Weekly Hours Available</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg text-sm">{coach.weeklyHoursAvailable}</p>
+                    </div>
+                  )}
+                  {coach.preferredSessionLength && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Preferred Session Length</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg text-sm">{coach.preferredSessionLength}</p>
+                    </div>
+                  )}
+                  {coach.availabilityTimes && coach.availabilityTimes.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">General Availability Times</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.availabilityTimes.map((time, idx) => (
+                          <span key={idx} className="inline-block text-xs bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-200 px-3 py-1 rounded-full font-medium">
+                            {time}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 7: Technology & Communication */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Video className="w-5 h-5 text-cyan-600" />
+                  <span>Section 7: Technology & Communication</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.videoConferencingComfort && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Video Conferencing Comfort Level</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-cyan-50 dark:bg-cyan-900/20 p-3 rounded-lg text-sm">{coach.videoConferencingComfort}</p>
+                    </div>
+                  )}
+                  {coach.internetConnectionQuality && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Internet Connection Quality</h4>
+                      <p className="text-gray-700 dark:text-gray-300 bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg text-sm">{coach.internetConnectionQuality}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Section 8: Languages & Cultural Competency */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Languages className="w-5 h-5 text-green-600" />
+                  <span>Section 8: Languages & Cultural Competency</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {coach.languagesFluent && coach.languagesFluent.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-3 text-sm sm:text-base">Languages for Coaching</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {coach.languagesFluent.map((language, idx) => (
+                          <span key={idx} className="inline-block text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200 px-3 py-1 rounded-full font-medium">
+                            {language}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

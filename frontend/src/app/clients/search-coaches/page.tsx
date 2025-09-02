@@ -42,6 +42,7 @@ import {
   ChevronDown,
   ChevronUp,
   Clock,
+  Timer,
   DollarSign,
   Award,
   Languages,
@@ -221,7 +222,7 @@ function SearchCoachesContent() {
     },
   });
 
-  const watchedExperience = form.watch('experience');
+  const watchedExperience = form.watch('coachingExperienceYears');
 
   // Load user preferences from profile
   const loadUserPreferences = () => {
@@ -375,11 +376,10 @@ function SearchCoachesContent() {
       const result = await findMatches(data);
       const incoming = (result && (result as any).matches) ? (result as any).matches : (result as any) || [];
       let processed = incoming;
-      if (data.experience && data.experience !== 'any') {
-        const minYears = parseInt(data.experience, 10) || 0;
+      if (data.coachingExperienceYears && data.coachingExperienceYears !== 'any') {
+        // Filter based on coaching experience years directly matching the selection
         processed = incoming.filter((coach: any) => {
-          const years = parseInt((coach.experience || '').replace(/[^0-9]/g, '')) || 0;
-          return years >= minYears;
+          return coach.coachingExperienceYears === data.coachingExperienceYears;
         });
       }
       setMatches(processed);
@@ -597,9 +597,6 @@ function SearchCoachesContent() {
           const assessmentData = JSON.parse(assessmentDataStr);
           console.log('Loading assessment data:', assessmentData);
           
-          // Set form values from assessment data
-          form.setValue('areaOfConcern', assessmentData.areaOfConcern || []);
-          
           // Convert location from full state name to state code
           const locationName = assessmentData.location || '';
           let locationCode = '';
@@ -611,9 +608,9 @@ function SearchCoachesContent() {
             locationCode = stateEntry ? stateEntry[0] : '';
             console.log('Converting location:', { locationName, locationCode });
           }
-          form.setValue('location', locationCode);
-          
-          form.setValue('availability_options', assessmentData.availability || []);
+          if (locationCode) {
+            form.setValue('location', locationCode);
+          }
           
           // Convert priceRange string to numeric range
           if (assessmentData.priceRange) {
@@ -640,11 +637,8 @@ function SearchCoachesContent() {
               // Auto-submit the form with assessment data after coaches are loaded
               setTimeout(() => {
                 const formData = {
-                  areaOfConcern: assessmentData.areaOfConcern || [],
                   location: locationCode, // Use the converted location code
-                  availability_options: assessmentData.availability || [],
-                  therapistGender: 'any',
-                  language: 'any'
+                  maxPrice: priceRange[1] || 500
                 };
                 console.log('Auto-submitting search with assessment data:', formData);
                 console.log('Price range set to:', priceRange);
@@ -655,11 +649,8 @@ function SearchCoachesContent() {
             // Coaches already loaded, auto-submit immediately
             setTimeout(() => {
               const formData = {
-                areaOfConcern: assessmentData.areaOfConcern || [],
                 location: locationCode, // Use the converted location code
-                availability_options: assessmentData.availability || [],
-                therapistGender: 'any',
-                language: 'any'
+                maxPrice: priceRange[1] || 500
               };
               console.log('Auto-submitting search with assessment data (coaches already loaded):', formData);
               console.log('Price range set to:', priceRange);
@@ -862,131 +853,9 @@ function SearchCoachesContent() {
                   {/* Advanced Filters */}
                   {showAdvancedFilters && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
-                      <FormField
-                        control={form.control}
-                        name="therapistGender"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Users className="w-4 h-4 text-blue-600" />
-                              <span>Preferred Coach Gender</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any gender" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any gender</SelectItem>
-                                {genderIdentityOptions.map((option) => (
-                                  <SelectItem key={option.value} value={option.value}>
-                                    {option.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="language"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Languages className="w-4 h-4 text-blue-600" />
-                              <span>Preferred Language</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any language" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any language</SelectItem>
-                                {LANGUAGES.map((language) => (
-                                  <SelectItem key={language} value={language}>
-                                    {language}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                              <span>Years of Experience (min)</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value || 'any'}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any</SelectItem>
-                                <SelectItem value="1">1+ years</SelectItem>
-                                <SelectItem value="3">3+ years</SelectItem>
-                                <SelectItem value="5">5+ years</SelectItem>
-                                <SelectItem value="10">10+ years</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
-                      <FormField
-                        control={form.control}
-                        name="modalities"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Award className="w-4 h-4 text-blue-600" />
-                              <span>Therapy Modalities</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {therapyModalityOptions.map((modality) => (
-                                  <div key={modality.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={modality.id}
-                                      checked={field.value?.includes(modality.id)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, modality.id]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== modality.id));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={modality.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
-                                    >
-                                      {modality.label}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
 
                       <FormField
                         control={form.control}
@@ -1010,6 +879,35 @@ function SearchCoachesContent() {
                                 <SelectItem value="Bachelor's Degree">Bachelor's</SelectItem>
                                 <SelectItem value="Master's Degree">Master's</SelectItem>
                                 <SelectItem value="Doctoral Degree">Doctoral</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="coachingExperienceYears"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>Coaching Experience</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any experience" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any experience</SelectItem>
+                                <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
+                                <SelectItem value="1-2 years">1-2 years</SelectItem>
+                                <SelectItem value="3-5 years">3-5 years</SelectItem>
+                                <SelectItem value="6-10 years">6-10 years</SelectItem>
+                                <SelectItem value="More than 10 years">More than 10 years</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormMessage />
@@ -1172,7 +1070,7 @@ function SearchCoachesContent() {
 
                       <FormField
                         control={form.control}
-                        name="crisisManagement"
+                        name="comfortableWithSuicidalThoughts"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel className="flex items-center space-x-2">
@@ -1190,8 +1088,220 @@ function SearchCoachesContent() {
                                 <SelectItem value="Yes, I have training and experience">Training & experience</SelectItem>
                                 <SelectItem value="Yes, but would need additional support">Would need support</SelectItem>
                                 <SelectItem value="No, I would immediately refer">Would refer</SelectItem>
+                                <SelectItem value="Prefer not to work with high-risk clients">Prefer not to work with high-risk</SelectItem>
                               </SelectContent>
                             </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="languagesFluent"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Languages className="w-4 h-4 text-blue-600" />
+                              <span>Languages Spoken</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                                {[
+                                  'English',
+                                  'Spanish', 
+                                  'French',
+                                  'Mandarin',
+                                  'Other'
+                                ].map((language) => (
+                                  <div key={language} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={language}
+                                      checked={field.value?.includes(language)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, language]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== language));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={language}
+                                      className="text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                      {language}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="weeklyHoursAvailable"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Clock className="w-4 h-4 text-blue-600" />
+                              <span>Weekly Hours Available</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any hours" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any hours</SelectItem>
+                                <SelectItem value="5-10 hours">5-10 hours</SelectItem>
+                                <SelectItem value="11-20 hours">11-20 hours</SelectItem>
+                                <SelectItem value="21-30 hours">21-30 hours</SelectItem>
+                                <SelectItem value="31-40 hours">31-40 hours</SelectItem>
+                                <SelectItem value="More than 40 hours">More than 40 hours</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="preferredSessionLength"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Timer className="w-4 h-4 text-blue-600" />
+                              <span>Preferred Session Length</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700">
+                                  <SelectValue placeholder="Any length" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any length</SelectItem>
+                                <SelectItem value="30 minutes">30 minutes</SelectItem>
+                                <SelectItem value="45 minutes">45 minutes</SelectItem>
+                                <SelectItem value="60 minutes">60 minutes</SelectItem>
+                                <SelectItem value="90 minutes">90 minutes</SelectItem>
+                                <SelectItem value="Flexible based on client needs">Flexible based on client needs</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="availabilityTimes"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Calendar className="w-4 h-4 text-blue-600" />
+                              <span>Availability Times</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
+                                {[
+                                  'Weekday mornings (6am-12pm)',
+                                  'Weekday afternoons (12pm-5pm)',
+                                  'Weekday evenings (5pm-10pm)',
+                                  'Weekend mornings',
+                                  'Weekend afternoons', 
+                                  'Weekend evenings',
+                                  'Late night (10pm-12am)'
+                                ].map((timeSlot) => (
+                                  <div key={timeSlot} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={timeSlot}
+                                      checked={field.value?.includes(timeSlot)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, timeSlot]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== timeSlot));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={timeSlot}
+                                      className="text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                      {timeSlot}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="coachingExpertise"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2">
+                              <Award className="w-4 h-4 text-blue-600" />
+                              <span>Areas of Coaching Expertise</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
+                                {[
+                                  'Life transitions',
+                                  'Career development', 
+                                  'Relationship coaching',
+                                  'Stress management',
+                                  'Anxiety & worry',
+                                  'Depression & mood',
+                                  'Self-esteem & confidence',
+                                  'Work-life balance',
+                                  'Parenting & family',
+                                  'Grief & loss',
+                                  'Trauma & PTSD',
+                                  'Addiction recovery',
+                                  'LGBTQ+ issues',
+                                  'Cultural/diversity issues',
+                                  'Executive coaching',
+                                  'Health & wellness',
+                                  'Financial coaching',
+                                  'Spiritual growth'
+                                ].map((expertise) => (
+                                  <div key={expertise} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={expertise}
+                                      checked={field.value?.includes(expertise)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, expertise]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== expertise));
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={expertise}
+                                      className="text-sm text-gray-700 dark:text-gray-300"
+                                    >
+                                      {expertise}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
@@ -1323,8 +1433,8 @@ function SearchCoachesContent() {
                   key={coach.id}
                   id={coach.id}
                   name={coach.name}
-                  matchScore={coach.matchScore}
-                  specialties={coach.specialties}
+                  matchScore={coach.matchScore || 0}
+                  specialties={coach.specialties || []}
                   modalities={(() => {
                     const raw = (coach as any).modalities || (coach as any).therapy_modalities
                     if (!Array.isArray(raw)) return []
@@ -1334,14 +1444,14 @@ function SearchCoachesContent() {
                       return match ? match.label : m
                     }).filter(Boolean) as string[]
                   })()}
-                  languages={coach.languages}
-                  bio={coach.bio}
-                  sessionRate={coach.sessionRate}
-                  experience={coach.experience}
-                  rating={coach.rating}
-                  virtualAvailable={coach.virtualAvailable}
-                  email={coach.email}
-                  isBestMatch={coach.matchScore >= 90}
+                  languages={coach.languages || []}
+                  bio={coach.bio || ''}
+                  sessionRate={coach.sessionRate || ''}
+                  experience={coach.experience || ''}
+                  rating={coach.rating || 0}
+                  virtualAvailable={coach.virtualAvailable || false}
+                  email={coach.email || ''}
+                  isBestMatch={(coach.matchScore || 0) >= 90}
                   initialIsSaved={savedCoaches.some(sc => sc.id === coach.id)}
                   onSaveChange={refreshSavedCoaches}
                 />
