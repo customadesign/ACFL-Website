@@ -1185,6 +1185,12 @@ router.put('/client/appointments/:id/reschedule', [
       // Notify coach about rescheduled appointment
       io.to(`user:${appointment.coach_id}`).emit('appointment:rescheduled', notificationData);
 
+      // Notify admin about reschedule
+      io.to('admin:notifications').emit('admin:appointment_rescheduled', {
+        ...notificationData,
+        updated_at: new Date().toISOString()
+      });
+
       // Don't send notification to client since they initiated it
     }
 
@@ -1283,6 +1289,12 @@ router.put('/client/appointments/:id/cancel', [
 
       // Notify coach about cancelled appointment
       io.to(`user:${appointment.coach_id}`).emit('appointment:cancelled', notificationData);
+
+      // Notify admin about cancellation
+      io.to('admin:notifications').emit('admin:appointment_cancelled', {
+        ...notificationData,
+        updated_at: new Date().toISOString()
+      });
 
       // Don't send notification to client since they initiated it
     }

@@ -774,12 +774,33 @@ router.put('/coach/appointments/:id', [
         // Notify client about cancellation
         io.to(`user:${updatedAppointment.client_id}`).emit('appointment:cancelled', notificationData);
         
+        // Notify admin about cancellation
+        io.to('admin:notifications').emit('admin:appointment_cancelled', {
+          ...notificationData,
+          status: 'cancelled',
+          updated_at: new Date().toISOString()
+        });
+        
         // Don't send notification to coach since they initiated it
       } else if (status === 'confirmed') {
         // Send appointment confirmation notification to client
         io.to(`user:${updatedAppointment.client_id}`).emit('appointment:confirmed', {
           ...notificationData,
           message: `Coach has confirmed your appointment`
+        });
+        
+        // Notify admin about confirmation
+        io.to('admin:notifications').emit('admin:appointment_confirmed', {
+          ...notificationData,
+          status: 'confirmed',
+          updated_at: new Date().toISOString()
+        });
+      } else if (status === 'completed') {
+        // Notify admin about completion
+        io.to('admin:notifications').emit('admin:appointment_completed', {
+          ...notificationData,
+          status: 'completed',
+          updated_at: new Date().toISOString()
         });
       }
     }
@@ -795,6 +816,31 @@ router.put('/coach/appointments/:id', [
       success: false, 
       message: 'Failed to update appointment status' 
     });
+  }
+});
+
+// Test admin notification endpoint
+router.post('/test-admin-notification', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const io = req.app.get('io');
+    if (io) {
+      const adminRoom = io.sockets.adapter.rooms.get('admin:notifications');
+      console.log(`Test: Emitting to admin room (${adminRoom ? adminRoom.size : 0} clients)`);
+      
+      io.to('admin:notifications').emit('admin:appointment_rescheduled', {
+        id: 'test-123',
+        client_name: 'Test Client',
+        coach_name: 'Test Coach',
+        rescheduled_by: 'coach',
+        reason: 'Testing notification',
+        updated_at: new Date().toISOString()
+      });
+    }
+    
+    res.json({ success: true, message: 'Test notification sent' });
+  } catch (error) {
+    console.error('Test notification error:', error);
+    res.status(500).json({ success: false, message: 'Failed to send test notification' });
   }
 });
 
@@ -904,6 +950,14 @@ router.put('/coach/appointments/:id/reschedule', [
 
       // Notify client about reschedule
       io.to(`user:${updatedAppointment.client_id}`).emit('appointment:rescheduled', notificationData);
+      
+      // Notify admin about reschedule
+      const adminRoom = io.sockets.adapter.rooms.get('admin:notifications');
+      console.log(`Emitting admin:appointment_rescheduled to admin room (${adminRoom ? adminRoom.size : 0} clients)`);
+      io.to('admin:notifications').emit('admin:appointment_rescheduled', {
+        ...notificationData,
+        updated_at: new Date().toISOString()
+      });
     }
 
     res.json({

@@ -13,6 +13,54 @@ const router = Router();
 router.use(authenticate);
 router.use(authorize('admin'));
 
+// Notification counts endpoint
+router.get('/notification-counts', async (req, res) => {
+  try {
+    const now = new Date();
+    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    
+    // Count new users (clients registered in last 24 hours)
+    const { count: newClientsCount } = await supabase
+      .from('clients')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', twentyFourHoursAgo.toISOString());
+    
+    // Count new coaches (coaches registered in last 24 hours)
+    const { count: newCoachesCount } = await supabase
+      .from('coaches')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', twentyFourHoursAgo.toISOString());
+    
+    // Count new appointments (scheduled in last 24 hours)
+    const { count: newAppointmentsCount } = await supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true })
+      .gte('created_at', twentyFourHoursAgo.toISOString())
+      .in('status', ['scheduled', 'confirmed']);
+    
+    // Count unread system messages (this would need a system_messages table)
+    // For now, we'll return 0 or you can implement your own logic
+    const systemMessagesCount = 0;
+    
+    res.json({
+      newUsers: (newClientsCount || 0) + (newCoachesCount || 0),
+      newClients: newClientsCount || 0,
+      newCoaches: newCoachesCount || 0,
+      newAppointments: newAppointmentsCount || 0,
+      systemMessages: systemMessagesCount,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching notification counts:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch notification counts',
+      newUsers: 0,
+      newAppointments: 0,
+      systemMessages: 0
+    });
+  }
+});
+
 // Dashboard stats endpoint
 router.get('/dashboard', async (req, res) => {
   try {
@@ -1043,6 +1091,10 @@ router.put('/staff/:id/:action', async (req, res) => {
 // Appointments management (using sessions table)
 router.get('/appointments', async (req, res) => {
   try {
+    console.log('Admin appointments endpoint called');
+    console.log('User:', (req as AuthRequest).user);
+    console.log('Query params:', req.query);
+    
     const { status, date } = req.query;
 
     // Build query for sessions (appointments) with related data
@@ -1093,6 +1145,10 @@ router.get('/appointments', async (req, res) => {
     }
 
     const { data: sessions, error } = await query;
+    console.log('Sessions query result:', { 
+      sessionsCount: sessions?.length || 0, 
+      error: error?.message || 'No error'
+    });
 
     if (error) {
       console.error('Sessions query error:', error);
@@ -1144,10 +1200,112 @@ router.get('/appointments', async (req, res) => {
       };
     }) || [];
 
+    console.log('Returning appointments:', { 
+      appointmentsCount: formattedAppointments?.length || 0,
+      sample: formattedAppointments?.[0] || 'No appointments'
+    });
+    
     res.json({ appointments: formattedAppointments });
   } catch (error) {
     console.error('Sessions fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch appointments' });
+  }
+});
+
+// Update appointment status (admin only)
+router.put('/appointments/:appointmentId/status', async (req, res) => {
+  try {
+    console.log('Admin appointment status update called');
+    console.log('User:', (req as AuthRequest).user);
+    console.log('Appointment ID:', req.params.appointmentId);
+    console.log('New status:', req.body.status);
+    
+    const { appointmentId } = req.params;
+    const { status, reason } = req.body;
+
+    if (!appointmentId || !status) {
+      return res.status(400).json({ error: 'Appointment ID and status are required' });
+    }
+
+    // Validate status
+    const validStatuses = ['scheduled', 'confirmed', 'cancelled', 'completed', 'no-show'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    // Get current appointment details for notifications
+    const { data: currentAppointment, error: fetchError } = await supabase
+      .from('sessions')
+      .select(`
+        *,
+        clients:client_id(first_name, last_name, email),
+        coaches:coach_id(first_name, last_name, email)
+      `)
+      .eq('id', appointmentId)
+      .single();
+
+    if (fetchError || !currentAppointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Update appointment status
+    const updateData: any = { 
+      status,
+      updated_at: new Date().toISOString()
+    };
+
+    if (reason) {
+      updateData.cancellation_reason = reason;
+    }
+
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('sessions')
+      .update(updateData)
+      .eq('id', appointmentId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Update error:', updateError);
+      throw updateError;
+    }
+
+    // Emit WebSocket notifications
+    const io = req.app.get('io');
+    if (io && currentAppointment.clients && currentAppointment.coaches) {
+      const clientName = `${currentAppointment.clients.first_name} ${currentAppointment.clients.last_name}`;
+      const coachName = `${currentAppointment.coaches.first_name} ${currentAppointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        starts_at: updatedAppointment.starts_at,
+        client_id: updatedAppointment.client_id,
+        coach_id: updatedAppointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        status: status,
+        reason: reason || '',
+        updated_by: 'admin',
+        updated_at: new Date().toISOString()
+      };
+
+      // Notify client and coach about status change
+      io.to(`user:${updatedAppointment.client_id}`).emit(`appointment:${status}`, notificationData);
+      io.to(`user:${updatedAppointment.coach_id}`).emit(`appointment:${status}`, notificationData);
+
+      // Emit specific admin notification
+      io.to('admin:notifications').emit(`admin:appointment_${status}`, notificationData);
+    }
+
+    console.log('Appointment status updated successfully');
+    res.json({
+      success: true,
+      message: `Appointment status updated to ${status}`,
+      appointment: updatedAppointment
+    });
+  } catch (error) {
+    console.error('Update appointment status error:', error);
+    res.status(500).json({ error: 'Failed to update appointment status' });
   }
 });
 

@@ -88,7 +88,19 @@ export default function CoachAvailabilityPage() {
       
       if (availabilityResponse.ok) {
         const availabilityData = await availabilityResponse.json();
-        setAvailabilitySlots(availabilityData.availability || []);
+        // Ensure available_durations is always an array
+        const slots = (availabilityData.availability || []).map((slot: any) => ({
+          ...slot,
+          available_durations: Array.isArray(slot.available_durations) 
+            ? slot.available_durations 
+            : slot.available_durations 
+              ? [slot.available_durations] 
+              : [60], // Default to 60 minutes if not specified
+          is_flexible_duration: slot.is_flexible_duration || false,
+          min_session_minutes: slot.min_session_minutes || 30,
+          max_session_minutes: slot.max_session_minutes || 120
+        }));
+        setAvailabilitySlots(slots);
       }
 
       // Load blocked slots
@@ -354,7 +366,7 @@ export default function CoachAvailabilityPage() {
                             <span className="text-sm text-gray-600 dark:text-gray-300">
                               {slot.is_flexible_duration 
                                 ? `Flexible (${slot.min_session_minutes}-${slot.max_session_minutes}min)`
-                                : slot.available_durations?.length > 1 
+                                : Array.isArray(slot.available_durations) && slot.available_durations.length > 1 
                                   ? `${slot.available_durations.join('/')}min options`
                                   : `${slot.slot_duration_minutes}min slots`
                               }, {slot.buffer_minutes}min buffer
@@ -376,7 +388,12 @@ export default function CoachAvailabilityPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <button
-                            onClick={() => setEditingSlot(slot)}
+                            onClick={() => setEditingSlot({
+                              ...slot,
+                              available_durations: Array.isArray(slot.available_durations) 
+                                ? slot.available_durations 
+                                : [60]
+                            })}
                             className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded"
                           >
                             <Edit3 className="w-4 h-4" />

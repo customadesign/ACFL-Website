@@ -116,13 +116,7 @@ export default function AdminImpersonationFloat() {
                 Switch to Admin
               </button>
               
-              <button
-                onClick={handleStopImpersonation}
-                className="w-full flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-md text-sm font-medium transition-colors"
-              >
-                <LogOut className="w-4 h-4" />
-                Stop Impersonation
-              </button>
+            
             </div>
 
             {/* Info Text */}

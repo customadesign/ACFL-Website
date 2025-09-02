@@ -17,6 +17,7 @@ import {
   MapPin
 } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
+import RescheduleModal from '@/components/RescheduleModal';
 
 interface Appointment {
   id: string;
@@ -27,7 +28,7 @@ interface Appointment {
   date: string;
   time: string;
   duration: number;
-  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show';
+  status: 'scheduled' | 'completed' | 'cancelled' | 'no-show' | 'confirmed';
   type: 'video' | 'in-person';
   notes?: string;
   created_at: string;
@@ -44,6 +45,8 @@ export default function AppointmentManagement() {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [showAppointmentModal, setShowAppointmentModal] = useState(false);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false);
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   useEffect(() => {
     fetchAppointments();
@@ -59,14 +62,17 @@ export default function AppointmentManagement() {
       
       if (!token) {
         console.log('No token found, redirecting to login');
+        alert('No authentication token found. Please login again.');
         window.location.href = '/login';
         return;
       }
 
       const API_URL = getApiUrl();
-      console.log('Fetching appointments from:', `${API_URL}/api/admin/appointments`);
+      const url = `${API_URL}/api/admin/appointments`;
+      console.log('Fetching appointments from:', url);
+      console.log('Using token:', token ? `${token.substring(0, 20)}...` : 'No token');
       
-      const response = await fetch(`${API_URL}/api/admin/appointments`, {
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -74,16 +80,19 @@ export default function AppointmentManagement() {
       });
 
       console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
 
       if (!response.ok) {
         if (response.status === 401) {
           console.log('Unauthorized, removing token and redirecting');
           localStorage.removeItem('token');
+          alert('Your session has expired. Please login again.');
           window.location.href = '/login';
           return;
         }
         const errorText = await response.text();
         console.error('Response error:', response.status, errorText);
+        alert(`Failed to fetch appointments: HTTP ${response.status} - ${errorText}`);
         throw new Error(`HTTP ${response.status}: Failed to fetch appointments`);
       }
 
@@ -134,7 +143,14 @@ export default function AppointmentManagement() {
     }
 
     if (statusFilter !== 'all') {
-      filtered = filtered.filter(appointment => appointment.status === statusFilter);
+      filtered = filtered.filter(appointment => {
+        // Handle the mapping between UI filter and database status
+        if (statusFilter === 'confirmed') {
+          // When "Confirmed" is selected, show appointments with status "confirmed"
+          return appointment.status === 'confirmed';
+        }
+        return appointment.status === statusFilter;
+      });
     }
 
     if (dateFilter !== 'all') {
@@ -162,26 +178,74 @@ export default function AppointmentManagement() {
     setFilteredAppointments(filtered);
   };
 
+  const updateAppointmentStatus = async (appointmentId: string, newStatus: string, reason?: string) => {
+    setIsUpdatingStatus(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_URL = getApiUrl();
+      
+      const response = await fetch(`${API_URL}/api/admin/appointments/${appointmentId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          status: newStatus,
+          reason: reason || ''
+        })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to update appointment: ${errorText}`);
+      }
+
+      // Refresh appointments list
+      await fetchAppointments();
+      setShowActionMenu(null);
+      
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert(`Failed to update appointment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsUpdatingStatus(false);
+    }
+  };
+
+  const handleStatusChange = async (appointmentId: string, newStatus: string) => {
+    let reason = '';
+    if (newStatus === 'cancelled') {
+      reason = prompt('Please provide a reason for cancellation (optional):') || '';
+    }
+    
+    const confirmMessage = `Are you sure you want to mark this appointment as ${newStatus.toUpperCase()}?`;
+    if (window.confirm(confirmMessage)) {
+      await updateAppointmentStatus(appointmentId, newStatus, reason);
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      scheduled: { color: 'bg-blue-100 text-blue-800', icon: Clock },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle },
-      'no-show': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-      confirmed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle }
+      scheduled: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Scheduled' },
+      confirmed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle, label: 'Confirmed' },
+      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Completed' },
+      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
+      'no-show': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle, label: 'No Show' },
+      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || {
       color: 'bg-gray-100 text-gray-800',
-      icon: AlertCircle
+      icon: AlertCircle,
+      label: status.charAt(0).toUpperCase() + status.slice(1)
     };
     const Icon = config.icon;
 
     return (
       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.color}`}>
         <Icon className="h-3 w-3 mr-1" />
-        {status === 'no-show' ? 'No Show' : status.charAt(0).toUpperCase() + status.slice(1)}
+        {config.label}
       </span>
     );
   };
@@ -204,7 +268,7 @@ export default function AppointmentManagement() {
 
   const stats = {
     total: appointments.length,
-    scheduled: appointments.filter(a => a.status === 'scheduled').length,
+    scheduled: appointments.filter(a => a.status === 'confirmed').length,
     completed: appointments.filter(a => a.status === 'completed').length,
     cancelled: appointments.filter(a => a.status === 'cancelled').length,
     noShow: appointments.filter(a => a.status === 'no-show').length
@@ -271,7 +335,7 @@ export default function AppointmentManagement() {
           <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.total}</div>
         </div>
         <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Scheduled</div>
+          <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Confirmed</div>
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.scheduled}</div>
         </div>
         <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
@@ -311,6 +375,7 @@ export default function AppointmentManagement() {
               className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
             >
               <option value="all">All Status</option>
+              <option value="confirmed">Confirmed</option>
               <option value="scheduled">Scheduled</option>
               <option value="completed">Completed</option>
               <option value="cancelled">Cancelled</option>
@@ -419,7 +484,7 @@ export default function AppointmentManagement() {
                         </button>
                         
                         {showActionMenu === appointment.id && (
-                          <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10 border">
                             <div className="py-1">
                               <button
                                 onClick={() => {
@@ -432,6 +497,72 @@ export default function AppointmentManagement() {
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </button>
+                              
+                              {/* Status Actions */}
+                              <div className="border-t border-gray-100 my-1"></div>
+                              
+                              {appointment.status !== 'confirmed' && (
+                                <button
+                                  onClick={() => handleStatusChange(appointment.id, 'confirmed')}
+                                  disabled={isUpdatingStatus}
+                                  className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 w-full text-left disabled:opacity-50"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark as Confirmed
+                                </button>
+                              )}
+                              
+                              {appointment.status !== 'completed' && (
+                                <button
+                                  onClick={() => handleStatusChange(appointment.id, 'completed')}
+                                  disabled={isUpdatingStatus}
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left disabled:opacity-50"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Mark as Completed
+                                </button>
+                              )}
+                              
+                              {appointment.status !== 'cancelled' && (
+                                <button
+                                  onClick={() => handleStatusChange(appointment.id, 'cancelled')}
+                                  disabled={isUpdatingStatus}
+                                  className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left disabled:opacity-50"
+                                >
+                                  <XCircle className="h-4 w-4 mr-2" />
+                                  Cancel Appointment
+                                </button>
+                              )}
+                              
+                              {appointment.status !== 'no-show' && (
+                                <button
+                                  onClick={() => handleStatusChange(appointment.id, 'no-show')}
+                                  disabled={isUpdatingStatus}
+                                  className="flex items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50 w-full text-left disabled:opacity-50"
+                                >
+                                  <AlertCircle className="h-4 w-4 mr-2" />
+                                  Mark as No Show
+                                </button>
+                              )}
+                              
+                              {/* Reschedule Action */}
+                              {(appointment.status === 'confirmed' || appointment.status === 'scheduled') && (
+                                <>
+                                  <div className="border-t border-gray-100 my-1"></div>
+                                  <button
+                                    onClick={() => {
+                                      setSelectedAppointment(appointment);
+                                      setShowRescheduleModal(true);
+                                      setShowActionMenu(null);
+                                    }}
+                                    disabled={isUpdatingStatus}
+                                    className="flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 w-full text-left disabled:opacity-50"
+                                  >
+                                    <Calendar className="h-4 w-4 mr-2" />
+                                    Reschedule
+                                  </button>
+                                </>
+                              )}
                             </div>
                           </div>
                         )}
@@ -546,6 +677,34 @@ export default function AppointmentManagement() {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && selectedAppointment && (
+        <RescheduleModal
+          appointment={{
+            id: selectedAppointment.id,
+            client_id: 'admin-reschedule', // Admin can reschedule any appointment
+            coach_id: selectedAppointment.id, // Will be handled by the component
+            starts_at: `${selectedAppointment.date}T${selectedAppointment.time}`,
+            ends_at: `${selectedAppointment.date}T${selectedAppointment.time}`, // Will calculate end time
+            status: selectedAppointment.status,
+            clients: {
+              first_name: selectedAppointment.clientName.split(' ')[0] || '',
+              last_name: selectedAppointment.clientName.split(' ')[1] || ''
+            }
+          }}
+          isOpen={showRescheduleModal}
+          onClose={() => {
+            setShowRescheduleModal(false);
+            setSelectedAppointment(null);
+          }}
+          onSuccess={() => {
+            setShowRescheduleModal(false);
+            setSelectedAppointment(null);
+            fetchAppointments(); // Refresh the appointments list
+          }}
+        />
       )}
     </div>
   );

@@ -169,6 +169,18 @@ export const registerClient = async (req: Request, res: Response) => {
       }
     };
 
+    // Emit admin notification for new client registration
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admin:notifications').emit('admin:new_client', {
+        id: profile.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        created_at: new Date().toISOString()
+      });
+    }
+
     const duration = Date.now() - startTime;
     console.log('\n========================================');
     console.log('✅ REGISTRATION COMPLETED SUCCESSFULLY');
@@ -433,6 +445,18 @@ export const registerCoach = async (req: Request, res: Response) => {
         role: 'coach'
       }
     };
+
+    // Emit admin notification for new coach registration
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admin:notifications').emit('admin:new_coach', {
+        id: authData.user.id,
+        first_name: firstName,
+        last_name: lastName,
+        email: email,
+        created_at: new Date().toISOString()
+      });
+    }
 
     const duration = Date.now() - startTime;
     console.log('\n========================================');

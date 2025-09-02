@@ -5,7 +5,9 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
 import { getApiUrl } from '@/lib/api';
+import NotificationBadge from '@/components/NotificationBadge';
 import {
   Users,
   UserCheck,
@@ -21,7 +23,8 @@ import {
   CircleUserRound,
   FileText,
   Moon,
-  Sun
+  Sun,
+  Bell
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -32,10 +35,22 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const { user, loading: authLoading, logout } = useAuth();
+  const { 
+    displayNewUsersCount,
+    displayNewCoachApplicationsCount, 
+    displayNewAppointmentsCount, 
+    displayNewMessagesCount,
+    markNewUsersAsRead,
+    markNewCoachApplicationsAsRead,
+    markNewAppointmentsAsRead,
+    markNewMessagesAsRead 
+  } = useAdminNotifications();
   const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const notificationRef = useRef<HTMLDivElement>(null);
   
   // Theme context with safety check for SSR
   let theme: 'light' | 'dark' = 'light';
@@ -54,11 +69,30 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
       }
+      if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
+        setShowNotificationDropdown(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  // Clear notification counts when visiting specific pages
+  useEffect(() => {
+    if (pathname === '/admin/users') {
+      markNewUsersAsRead();
+    }
+    if (pathname === '/admin/coach-applications') {
+      markNewCoachApplicationsAsRead();
+    }
+    if (pathname === '/admin/appointments') {
+      markNewAppointmentsAsRead();
+    }
+    if (pathname === '/admin/messages') {
+      markNewMessagesAsRead();
+    }
+  }, [pathname, markNewUsersAsRead, markNewCoachApplicationsAsRead, markNewAppointmentsAsRead, markNewMessagesAsRead]);
 
   const handleThemeToggle = () => {
     toggleTheme();
@@ -98,10 +132,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   const navItems = [
     { name: 'Dashboard', href: '/admin', icon: Home },
-    { name: 'Users', href: '/admin/users', icon: Users },
-    { name: 'Coach Applications', href: '/admin/coach-applications', icon: FileText },
-    { name: 'Appointments', href: '/admin/appointments', icon: Calendar },
-    { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
+    { name: 'Users', href: '/admin/users', icon: Users, notificationCount: displayNewUsersCount },
+    { name: 'Coach Applications', href: '/admin/coach-applications', icon: FileText, notificationCount: displayNewCoachApplicationsCount },
+    { name: 'Appointments', href: '/admin/appointments', icon: Calendar, notificationCount: displayNewAppointmentsCount },
+    { name: 'Messages', href: '/admin/messages', icon: MessageSquare, notificationCount: displayNewMessagesCount },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
     { name: 'Settings', href: '/admin/settings', icon: Settings },
   ];
@@ -150,6 +184,126 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <span className="text-sm text-gray-600 dark:text-gray-400">
                 Welcome back, {user?.first_name || 'Admin'}!
               </span>
+              
+              {/* Notification Bell */}
+              <div className="relative" ref={notificationRef}>
+                <button
+                  onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && (
+                    <NotificationBadge 
+                      count={displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount}
+                      size="sm"
+                      variant="red"
+                    />
+                  )}
+                </button>
+                
+                {/* Notification Dropdown */}
+                {showNotificationDropdown && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-600">
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Notifications</h3>
+                      
+                      {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) === 0 ? (
+                        <div className="text-center py-8">
+                          <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                          <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {displayNewUsersCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">New Users</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewUsersCount} new registrations</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/users');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 text-sm font-medium"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+
+                          {displayNewCoachApplicationsCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">Coach Applications</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewCoachApplicationsCount} new applications</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/coach-applications');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm font-medium"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+                          
+                          {displayNewAppointmentsCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">New Appointments</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewAppointmentsCount} new bookings</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/appointments');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 text-sm font-medium"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+                          
+                          {displayNewMessagesCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">System Messages</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewMessagesCount} new messages</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/messages');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-orange-600 dark:text-orange-400 hover:text-orange-700 text-sm font-medium"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
               
               <div className="relative" ref={dropdownRef}>
                 <button
@@ -201,7 +355,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
             
             {/* Mobile user menu button */}
-            <div className="sm:hidden flex items-center">
+            <div className="sm:hidden flex items-center space-x-2">
+              {/* Mobile Notification Bell */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                  {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && (
+                    <NotificationBadge 
+                      count={displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount}
+                      size="sm"
+                      variant="red"
+                    />
+                  )}
+                </button>
+              </div>
+              
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -268,6 +440,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               >
                 <span className="relative inline-block">
                   {item.name}
+                  {(item.notificationCount ?? 0) > 0 && (
+                    <NotificationBadge 
+                      count={item.notificationCount!}
+                      size="sm"
+                      variant="red"
+                      className="ml-1"
+                    />
+                  )}
                 </span>
               </Link>
             ))}
@@ -319,6 +499,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       >
                         <Icon className="w-5 h-5" />
                         <span className="flex-1">{item.name}</span>
+                        {(item.notificationCount ?? 0) > 0 && (
+                          <NotificationBadge 
+                            count={item.notificationCount!}
+                            size="sm"
+                            variant="red"
+                          />
+                        )}
                       </Link>
                     </li>
                   );
@@ -344,7 +531,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                 }`}
               >
-                <Icon className="w-5 h-5" />
+                <div className="relative">
+                  <Icon className="w-5 h-5" />
+                  {(item.notificationCount ?? 0) > 0 && (
+                    <NotificationBadge 
+                      count={item.notificationCount!}
+                      size="sm"
+                      variant="red"
+                    />
+                  )}
+                </div>
                 <span className="text-[10px] mt-1">{item.name}</span>
               </Link>
             );

@@ -143,6 +143,12 @@ io.on('connection', (socket) => {
   }
   const room = `user:${user.userId}`;
   socket.join(room);
+  
+  // Join admin room if user is admin
+  if (user.role === 'admin') {
+    socket.join('admin:notifications');
+    console.log(`Admin user ${user.userId} joined admin notifications room`);
+  }
 
   socket.on('message:send', async (payload: { recipientId: string; body: string; attachment?: { url: string; name: string; size: number; type: string } }) => {
     try {

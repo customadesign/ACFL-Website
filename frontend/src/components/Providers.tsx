@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { ToastContainer } from 'react-toastify';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { NotificationProvider } from '@/contexts/NotificationContext';
+import { AdminNotificationProvider } from '@/contexts/AdminNotificationContext';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import { MeetingProvider } from '@/contexts/MeetingContext';
 import 'react-toastify/dist/ReactToastify.css';
@@ -62,25 +63,27 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <AuthProvider>
         <NotificationProvider>
-          <MeetingProvider>
-            <MuiThemeProvider theme={theme}>
-              <CssBaseline />
-              {children}
-              <ToastContainer
-                position="top-right"
-                autoClose={5000}
-                hideProgressBar={false}
-                newestOnTop={false}
-                closeOnClick
-                rtl={false}
-                pauseOnFocusLoss
-                draggable
-                pauseOnHover
-                theme="colored"
-                toastClassName="custom-toast"
-              />
-            </MuiThemeProvider>
-          </MeetingProvider>
+          <AdminNotificationProvider>
+            <MeetingProvider>
+              <MuiThemeProvider theme={theme}>
+                <CssBaseline />
+                {children}
+                <ToastContainer
+                  position="top-right"
+                  autoClose={5000}
+                  hideProgressBar={false}
+                  newestOnTop={false}
+                  closeOnClick
+                  rtl={false}
+                  pauseOnFocusLoss
+                  draggable
+                  pauseOnHover
+                  theme="colored"
+                  toastClassName="custom-toast"
+                />
+              </MuiThemeProvider>
+            </MeetingProvider>
+          </AdminNotificationProvider>
         </NotificationProvider>
       </AuthProvider>
     </ThemeProvider>

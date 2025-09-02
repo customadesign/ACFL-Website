@@ -37,9 +37,36 @@ router.get('/coach/:coachId/availability', async (req, res) => {
 
     if (error) throw error;
 
+    // Ensure available_durations is always an array (for backward compatibility)
+    const parsedSlots = slots?.map(slot => {
+      let availableDurations = [60]; // Default fallback
+      
+      try {
+        if (slot.available_durations) {
+          if (Array.isArray(slot.available_durations)) {
+            availableDurations = slot.available_durations;
+          } else if (typeof slot.available_durations === 'string') {
+            // Handle legacy string data
+            availableDurations = JSON.parse(slot.available_durations);
+          } else {
+            // Handle other potential formats
+            availableDurations = [60];
+          }
+        }
+      } catch (jsonError) {
+        console.warn('Error parsing available_durations for slot', slot.id, jsonError);
+        availableDurations = [60]; // Fallback to default
+      }
+      
+      return {
+        ...slot,
+        available_durations: availableDurations
+      };
+    });
+
     res.json({
       success: true,
-      availability: slots
+      availability: parsedSlots
     });
   } catch (error) {
     console.error('Error fetching availability:', error);
@@ -106,7 +133,7 @@ router.post('/coach/:coachId/availability', async (req, res) => {
         timezone,
         is_active: true,
         // New flexible session fields
-        available_durations: JSON.stringify(availableDurations),
+        available_durations: availableDurations, // Store as JSONB directly
         is_flexible_duration: isFlexibleDuration,
         min_session_minutes: minSessionMinutes,
         max_session_minutes: maxSessionMinutes
@@ -170,7 +197,7 @@ router.put('/coach/:coachId/availability/:slotId', async (req, res) => {
     if (timezone) updateData.timezone = timezone;
     if (isActive !== undefined) updateData.is_active = isActive;
     // New flexible session fields
-    if (availableDurations !== undefined) updateData.available_durations = JSON.stringify(availableDurations);
+    if (availableDurations !== undefined) updateData.available_durations = availableDurations; // Store as JSONB directly
     if (isFlexibleDuration !== undefined) updateData.is_flexible_duration = isFlexibleDuration;
     if (minSessionMinutes !== undefined) updateData.min_session_minutes = minSessionMinutes;
     if (maxSessionMinutes !== undefined) updateData.max_session_minutes = maxSessionMinutes;
@@ -494,6 +521,19 @@ router.post('/book-appointment', async (req, res) => {
 
     if (error) throw error;
 
+    // Emit admin notification for new appointment
+    const io = req.app.get('io');
+    if (io) {
+      io.to('admin:notifications').emit('admin:new_appointment', {
+        id: newAppointment.id,
+        client_name: `${newAppointment.clients.first_name} ${newAppointment.clients.last_name}`,
+        coach_name: `${newAppointment.coaches.first_name} ${newAppointment.coaches.last_name}`,
+        starts_at: newAppointment.starts_at,
+        ends_at: newAppointment.ends_at,
+        created_at: new Date().toISOString()
+      });
+    }
+
     // TODO: Send booking confirmation emails
     // TODO: Create VideoSDK meeting room
     // TODO: Add calendar events
@@ -628,7 +668,39 @@ router.put('/appointment/:appointmentId/reschedule', async (req, res) => {
 
     if (error) throw error;
 
-    // TODO: Send reschedule notifications
+    // Send reschedule notifications
+    const io = req.app.get('io');
+    if (io) {
+      const clientName = `${updatedAppointment.clients.first_name} ${updatedAppointment.clients.last_name}`;
+      const coachName = `${updatedAppointment.coaches.first_name} ${updatedAppointment.coaches.last_name}`;
+      
+      const notificationData = {
+        id: updatedAppointment.id,
+        old_starts_at: appointment.starts_at,
+        new_starts_at: updatedAppointment.starts_at,
+        client_id: updatedAppointment.client_id,
+        coach_id: updatedAppointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        rescheduled_by: authReq.user?.role || 'unknown',
+        reason: req.body.reason || ''
+      };
+
+      // Notify other party about reschedule
+      if (authReq.user?.role === 'client') {
+        io.to(`user:${updatedAppointment.coach_id}`).emit('appointment:rescheduled', notificationData);
+      } else if (authReq.user?.role === 'coach') {
+        io.to(`user:${updatedAppointment.client_id}`).emit('appointment:rescheduled', notificationData);
+      }
+
+      // Notify admin about reschedule
+      const adminRoom = io.sockets.adapter.rooms.get('admin:notifications');
+      console.log(`Calendar reschedule: Emitting admin:appointment_rescheduled to admin room (${adminRoom ? adminRoom.size : 0} clients)`);
+      io.to('admin:notifications').emit('admin:appointment_rescheduled', {
+        ...notificationData,
+        updated_at: new Date().toISOString()
+      });
+    }
 
     res.json({
       success: true,
