@@ -407,11 +407,14 @@ router.post('/users', async (req, res) => {
           last_name: userData.lastName,
           email: userData.email,
           phone: userData.phone || null,
-          specialties: userData.specialties || null,
-          years_experience: userData.yearsExperience || null,
-          hourly_rate_usd: userData.hourlyRate || null,
-          bio: userData.bio || null,
-          qualifications: userData.qualifications || null,
+          specialties: userData.specialties || [],
+          years_experience: userData.yearsExperience || 1,
+          hourly_rate_usd: userData.hourlyRate || 75,
+          bio: userData.bio || 'Professional ACT coach ready to help you achieve your goals',
+          qualifications: userData.qualifications || ['Certified Life Coach'],
+          languages: userData.languages || ['English'],
+          is_available: true,
+          rating: 4.5,
           status: userData.status || 'pending',
           password_hash: hashedPassword,
           created_at: new Date().toISOString()
@@ -590,7 +593,43 @@ router.put('/users/:id', async (req, res) => {
     }
 
     let result;
-    const updateData = { ...userData, updated_at: new Date().toISOString() };
+    
+    // Transform camelCase to snake_case for database fields
+    const transformToSnakeCase = (data: any) => {
+      const transformed: any = {
+        updated_at: new Date().toISOString()
+      };
+      
+      // Map common fields
+      if (data.firstName) transformed.first_name = data.firstName;
+      if (data.lastName) transformed.last_name = data.lastName;
+      if (data.email) transformed.email = data.email;
+      if (data.phone !== undefined) transformed.phone = data.phone || null;
+      if (data.status) transformed.status = data.status;
+      
+      // Client specific fields
+      if (data.dob !== undefined) transformed.dob = data.dob || null;
+      if (data.genderIdentity !== undefined) transformed.gender_identity = data.genderIdentity || null;
+      if (data.ethnicIdentity !== undefined) transformed.ethnic_identity = data.ethnicIdentity || null;
+      if (data.religiousBackground !== undefined) transformed.religious_background = data.religiousBackground || null;
+      
+      // Coach specific fields
+      if (data.specialties !== undefined) transformed.specialties = data.specialties || [];
+      if (data.yearsExperience !== undefined) transformed.years_experience = data.yearsExperience || null;
+      if (data.hourlyRate !== undefined) transformed.hourly_rate_usd = data.hourlyRate || null;
+      if (data.bio !== undefined) transformed.bio = data.bio || null;
+      if (data.qualifications !== undefined) transformed.qualifications = data.qualifications || [];
+      if (data.languages !== undefined) transformed.languages = data.languages || [];
+      
+      // Staff specific fields
+      if (data.department !== undefined) transformed.department = data.department || null;
+      if (data.permissions !== undefined) transformed.permissions = data.permissions || [];
+      if (data.roleLevel !== undefined) transformed.role_level = data.roleLevel || null;
+      
+      return transformed;
+    };
+
+    const updateData = transformToSnakeCase(userData);
 
     switch (userType) {
       case 'client':

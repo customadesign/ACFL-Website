@@ -19,7 +19,10 @@ import {
   LogIn,
   User,
   UserX, 
-  CircleUserRound
+  CircleUserRound,
+  Copy,
+  AlertTriangle,
+  Info
 } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
 
@@ -83,6 +86,23 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [successData, setSuccessData] = useState<{
+    email: string;
+    password: string;
+    userType: string;
+  } | null>(null);
+  const [showAlertModal, setShowAlertModal] = useState(false);
+  const [alertData, setAlertData] = useState<{
+    type: 'error' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+  } | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [formData, setFormData] = useState<UserFormData>({
     firstName: '',
@@ -145,7 +165,10 @@ export default function UserManagement() {
       setUsers(usersArray);
     } catch (error) {
       console.error('Failed to fetch users:', error);
-      alert('Failed to load users. Check console for details.');
+      showError(
+        'Failed to Load Users',
+        'Unable to fetch user data from the server. Please check your internet connection and try refreshing the page.'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -194,15 +217,21 @@ export default function UserManagement() {
         reject: 'This will reject the user application. This action can be reversed later.'
       };
       
-      const confirmed = window.confirm(
-        `Are you sure you want to ${action} this user?\n\n${actionMessages[action as keyof typeof actionMessages] || ''}`
+      setShowActionMenu(null);
+      showWarning(
+        `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
+        `Are you sure you want to ${action} this user?\n\n${actionMessages[action as keyof typeof actionMessages] || ''}`,
+        () => performUserAction(userId, action, userType),
+        () => {} // Do nothing on cancel
       );
-      
-      if (!confirmed) {
-        setShowActionMenu(null);
-        return;
-      }
+      return;
     }
+    
+    // For non-destructive actions, proceed directly
+    await performUserAction(userId, action, userType);
+  };
+
+  const performUserAction = async (userId: string, action: string, userType: string) => {
 
     try {
       const token = localStorage.getItem('token');
@@ -243,27 +272,38 @@ export default function UserManagement() {
       // Show success message for important actions
       if (['deactivate', 'activate', 'suspend', 'approve', 'reject'].includes(action)) {
         const successMessages = {
-          deactivate: 'User has been deactivated',
-          activate: 'User has been activated',
-          suspend: 'User has been suspended',
-          approve: 'User has been approved',
-          reject: 'User has been rejected'
+          deactivate: 'User has been deactivated successfully.',
+          activate: 'User has been activated successfully.',
+          suspend: 'User has been suspended successfully.',
+          approve: 'User has been approved successfully.',
+          reject: 'User has been rejected successfully.'
         };
         
-        // You could replace this with a toast notification system
-        setTimeout(() => {
-          alert(successMessages[action as keyof typeof successMessages] || `User ${action} successful`);
-        }, 100);
+        showInfo(
+          'Action Completed',
+          successMessages[action as keyof typeof successMessages] || `User ${action} completed successfully.`
+        );
       }
       
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
-      alert(`Failed to ${action} user. Please try again.`);
+      showError(
+        'Action Failed',
+        `Failed to ${action} user. Please check your connection and try again.`
+      );
     }
   };
 
   const handleLoginAsUser = async (userId: string, userType: string, userName: string) => {
-    if (window.confirm(`Are you sure you want to login as ${userName}? This will redirect you to their dashboard.`)) {
+    showWarning(
+      'Login as User',
+      `Are you sure you want to login as ${userName}? This will redirect you to their dashboard and you will be impersonating this user.`,
+      () => performLoginAsUser(userId, userType, userName),
+      () => {} // Do nothing on cancel
+    );
+  };
+
+  const performLoginAsUser = async (userId: string, userType: string, userName: string) => {
       try {
         const token = localStorage.getItem('token');
         
@@ -313,13 +353,23 @@ export default function UserManagement() {
       } catch (error) {
         console.error('Failed to impersonate user:', error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-        alert(`Failed to login as user: ${errorMessage}`);
+        showError(
+          'Login Failed',
+          `Failed to login as user: ${errorMessage}. Please try again.`
+        );
       }
-    }
   };
 
   const handleDeleteUser = async (userId: string, userType: string) => {
-    if (window.confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
+    showWarning(
+      'Delete User',
+      'Are you sure you want to delete this user? This action cannot be undone and will permanently remove all user data.',
+      () => performDeleteUser(userId, userType),
+      () => {} // Do nothing on cancel
+    );
+  };
+
+  const performDeleteUser = async (userId: string, userType: string) => {
       try {
         const token = localStorage.getItem('token');
         
@@ -343,11 +393,14 @@ export default function UserManagement() {
 
         setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
         setShowActionMenu(null);
+        showInfo('User Deleted', 'User has been deleted successfully.');
       } catch (error) {
         console.error('Failed to delete user:', error);
-        alert('Failed to delete user. Please try again.');
+        showError(
+          'Delete Failed',
+          'Failed to delete user. Please check your connection and try again.'
+        );
       }
-    }
   };
 
   // Generate temporary password
@@ -411,11 +464,17 @@ export default function UserManagement() {
         // Handle specific error cases
         if (response.status === 409) {
           // Email already exists
-          alert(`${result.message || 'A user with this email already exists in the system.'}`);
+          showError(
+            'Email Already Exists',
+            result.message || 'A user with this email already exists in the system. Please use a different email address.'
+          );
           return;
         } else if (response.status === 400) {
           // Validation error
-          alert(`${result.error || 'Please check your input and try again.'}`);
+          showError(
+            'Invalid Input',
+            result.error || 'Please check your input and ensure all required fields are filled correctly.'
+          );
           return;
         } else {
           throw new Error(result.error || 'Failed to create user');
@@ -424,14 +483,13 @@ export default function UserManagement() {
 
       console.log('User created successfully:', result);
       
-      // Show temporary password to admin
-      alert(
-        `User created successfully!\n\n` +
-        `Email: ${formData.email}\n` +
-        `Temporary Password: ${temporaryPassword}\n\n` +
-        `Please share these credentials with the user. ` +
-        `They should change their password upon first login.`
-      );
+      // Show success modal with credentials
+      setSuccessData({
+        email: formData.email,
+        password: temporaryPassword,
+        userType: formData.userType
+      });
+      setShowSuccessModal(true);
       
       // Add new user to local state
       setUsers(prevUsers => [...prevUsers, result.user]);
@@ -442,7 +500,10 @@ export default function UserManagement() {
     } catch (error) {
       console.error('Failed to create user:', error);
       const errorMessage = error instanceof Error ? error.message : 'Please try again.';
-      alert(`Failed to create user: ${errorMessage}`);
+      showError(
+        'User Creation Failed',
+        `Failed to create user: ${errorMessage}. Please check your connection and try again.`
+      );
     }
   };
 
@@ -476,11 +537,17 @@ export default function UserManagement() {
         // Handle specific error cases
         if (response.status === 409) {
           // Email already exists
-          alert(`${result.message || 'A user with this email already exists in the system.'}`);
+          showError(
+            'Email Already Exists',
+            result.message || 'A user with this email already exists in the system. Please use a different email address.'
+          );
           return;
         } else if (response.status === 400) {
           // Validation error
-          alert(`${result.error || 'Please check your input and try again.'}`);
+          showError(
+            'Invalid Input',
+            result.error || 'Please check your input and ensure all required fields are filled correctly.'
+          );
           return;
         } else {
           throw new Error(result.error || 'Failed to update user');
@@ -497,12 +564,21 @@ export default function UserManagement() {
         })
       );
       
+      // Show success message
+      showInfo(
+        'User Updated',
+        `${formData.userType.charAt(0).toUpperCase() + formData.userType.slice(1)} profile has been updated successfully.`
+      );
+      
       // Reset form and close modal
       resetForm();
       
     } catch (error) {
       console.error('Failed to update user:', error);
-      alert('Failed to update user. Please try again.');
+      showError(
+        'Update Failed',
+        'Failed to update user. Please check your connection and try again.'
+      );
     }
   };
 
@@ -518,6 +594,59 @@ export default function UserManagement() {
     setShowUserModal(false);
     setSelectedUser(null);
     setIsEditMode(false);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      // You could add a toast notification here
+    }).catch(err => {
+      console.error('Failed to copy: ', err);
+    });
+  };
+
+  const closeSuccessModal = () => {
+    setShowSuccessModal(false);
+    setSuccessData(null);
+  };
+
+  const showAlert = (config: {
+    type: 'error' | 'warning' | 'info' | 'success';
+    title: string;
+    message: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+    confirmText?: string;
+    cancelText?: string;
+    showCancel?: boolean;
+  }) => {
+    setAlertData(config);
+    setShowAlertModal(true);
+  };
+
+  const closeAlertModal = () => {
+    setShowAlertModal(false);
+    setAlertData(null);
+  };
+
+  const showError = (title: string, message: string) => {
+    showAlert({ type: 'error', title, message, confirmText: 'OK' });
+  };
+
+  const showWarning = (title: string, message: string, onConfirm?: () => void, onCancel?: () => void) => {
+    showAlert({
+      type: 'warning',
+      title,
+      message,
+      onConfirm,
+      onCancel,
+      confirmText: 'Confirm',
+      cancelText: 'Cancel',
+      showCancel: true
+    });
+  };
+
+  const showInfo = (title: string, message: string) => {
+    showAlert({ type: 'info', title, message, confirmText: 'OK' });
   };
 
   const openCreateModal = () => {
@@ -1231,6 +1360,157 @@ export default function UserManagement() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Alert Modal */}
+      {showAlertModal && alertData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+                alertData.type === 'error' ? 'bg-red-100' :
+                alertData.type === 'warning' ? 'bg-yellow-100' :
+                alertData.type === 'success' ? 'bg-green-100' :
+                'bg-blue-100'
+              }`}>
+                {alertData.type === 'error' && <XCircle className="h-6 w-6 text-red-600" />}
+                {alertData.type === 'warning' && <AlertTriangle className="h-6 w-6 text-yellow-600" />}
+                {alertData.type === 'success' && <CheckCircle className="h-6 w-6 text-green-600" />}
+                {alertData.type === 'info' && <Info className="h-6 w-6 text-blue-600" />}
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {alertData.title}
+              </h3>
+              <p className="text-sm text-gray-600 whitespace-pre-line">
+                {alertData.message}
+              </p>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              {alertData.showCancel && (
+                <button
+                  onClick={() => {
+                    alertData.onCancel?.();
+                    closeAlertModal();
+                  }}
+                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  {alertData.cancelText || 'Cancel'}
+                </button>
+              )}
+              <button
+                onClick={() => {
+                  alertData.onConfirm?.();
+                  closeAlertModal();
+                }}
+                className={`px-4 py-2 rounded-lg transition-colors ${
+                  alertData.type === 'error' ? 'bg-red-600 hover:bg-red-700 text-white' :
+                  alertData.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' :
+                  alertData.type === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' :
+                  'bg-blue-600 hover:bg-blue-700 text-white'
+                }`}
+              >
+                {alertData.confirmText || 'OK'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Success Modal for User Creation */}
+      {showSuccessModal && successData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-6 w-6 text-green-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {successData.userType.charAt(0).toUpperCase() + successData.userType.slice(1)} Created Successfully!
+              </h3>
+              <p className="text-sm text-gray-600">
+                The new {successData.userType} account has been created. Please share these credentials securely.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={successData.email}
+                    readOnly
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(successData.email)}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Copy email"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Temporary Password
+                </label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={successData.password}
+                    readOnly
+                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-mono text-sm"
+                  />
+                  <button
+                    onClick={() => copyToClipboard(successData.password)}
+                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+                    title="Copy password"
+                  >
+                    <Copy className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div className="flex">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-blue-800">
+                    <strong>Important:</strong> The user should change their password upon first login for security.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => {
+                  copyToClipboard(`Email: ${successData.email}\nPassword: ${successData.password}`);
+                }}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
+              >
+                <Copy className="h-4 w-4" />
+                <span>Copy Both</span>
+              </button>
+              <button
+                onClick={closeSuccessModal}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Done
+              </button>
+            </div>
           </div>
         </div>
       )}
