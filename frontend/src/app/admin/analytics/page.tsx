@@ -144,19 +144,77 @@ export default function Analytics() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="h-9 bg-gray-200 rounded w-1/3 animate-pulse mb-3"></div>
-          <div className="h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-8 sm:pb-16">
+        {/* Header Skeleton - Mobile-optimized */}
+        <div className="mb-6 sm:mb-8">
+          <div className="text-center sm:text-left">
+            <div className="h-7 sm:h-9 bg-gray-200 rounded w-3/4 mx-auto sm:mx-0 animate-pulse mb-2 sm:mb-3"></div>
+            <div className="h-4 sm:h-5 bg-gray-200 rounded w-2/3 mx-auto sm:mx-0 animate-pulse"></div>
+          </div>
+          <div className="mt-4 space-y-3">
+            <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+            <div className="flex flex-col sm:flex-row gap-2">
+              <div className="h-12 bg-gray-200 rounded flex-1 animate-pulse"></div>
+              <div className="h-12 bg-gray-200 rounded flex-1 animate-pulse"></div>
+            </div>
+          </div>
         </div>
         
-        {/* Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="bg-white p-6 rounded-lg shadow-sm border animate-pulse">
-              <div className="h-4 bg-gray-200 rounded w-3/4 mb-4"></div>
-              <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+        {/* Overview Cards Skeleton - Mobile-optimized */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border animate-pulse">
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <div className="h-3 sm:h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                  <div className="h-6 sm:h-8 bg-gray-200 rounded w-1/2 mb-2"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                </div>
+                <div className="h-8 w-8 sm:h-12 sm:w-12 bg-gray-200 rounded-full flex-shrink-0"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Detailed Cards Skeleton - Mobile-optimized */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border animate-pulse">
+              <div className="h-4 sm:h-5 bg-gray-200 rounded w-2/3 mb-3 sm:mb-4"></div>
+              <div className="space-y-3">
+                {[...Array(4)].map((_, j) => (
+                  <div key={j} className="flex justify-between items-center">
+                    <div className="h-3 bg-gray-200 rounded w-2/3"></div>
+                    <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Top Performers Skeleton - Mobile-optimized */}
+        <div className="space-y-4">
+          {[...Array(2)].map((_, i) => (
+            <div key={i} className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border animate-pulse">
+              <div className="h-4 sm:h-5 bg-gray-200 rounded w-1/2 mb-3 sm:mb-4"></div>
+              <div className="space-y-3">
+                {[...Array(3)].map((_, j) => (
+                  <div key={j} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <div className="flex items-center flex-1">
+                      <div className="h-6 w-6 sm:h-8 sm:w-8 bg-gray-200 rounded-full mr-3 flex-shrink-0"></div>
+                      <div className="flex-1">
+                        <div className="h-3 bg-gray-200 rounded w-2/3 mb-1"></div>
+                        <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="h-3 bg-gray-200 rounded w-16 mb-1"></div>
+                      <div className="h-3 bg-gray-200 rounded w-12"></div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
@@ -173,261 +231,295 @@ export default function Analytics() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-8 sm:pb-16">
       {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Analytics & Reports</h1>
-            <p className="text-gray-600 dark:text-gray-400">Platform performance metrics and insights</p>
+      <div className="mb-6 sm:mb-8">
+        <div className="flex flex-col gap-4">
+          <div className="text-center sm:text-left">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Analytics & Reports</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Platform performance metrics and insights</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Export Buttons */}
-            <div className="flex gap-2">
+          
+          {/* Mobile-optimized controls */}
+          <div className="flex flex-col gap-3">
+            {/* Time Range Selector - Full width on mobile */}
+            <div className="w-full">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+              >
+                <option value="7d">Last 7 days</option>
+                <option value="30d">Last 30 days</option>
+                <option value="90d">Last 90 days</option>
+                <option value="1y">Last year</option>
+              </select>
+            </div>
+            
+            {/* Export Buttons - Stack on mobile, inline on larger screens */}
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => exportToCSV(analyticsData, 'analytics-report')}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 transition-colors text-base font-medium touch-manipulation"
                 title="Export to CSV"
               >
-                <FileSpreadsheet className="h-4 w-4" />
-                <span className="hidden sm:inline">Export CSV</span>
+                <FileSpreadsheet className="h-5 w-5" />
+                <span>Export CSV</span>
               </button>
               <button
                 onClick={() => exportToPDF(analyticsData, 'analytics-report')}
-                className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 transition-colors text-base font-medium touch-manipulation"
                 title="Export to PDF"
               >
-                <FileText className="h-4 w-4" />
-                <span className="hidden sm:inline">Export PDF</span>
+                <FileText className="h-5 w-5" />
+                <span>Export PDF</span>
               </button>
             </div>
-            {/* Time Range Selector */}
-            <select
-              value={timeRange}
-              onChange={(e) => setTimeRange(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            >
-              <option value="7d">Last 7 days</option>
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="1y">Last year</option>
-            </select>
           </div>
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+      {/* Overview Cards - Mobile-optimized layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Users</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{analyticsData.overview.totalUsers}</p>
-              <div className="flex items-center mt-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Users</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{analyticsData.overview.totalUsers.toLocaleString()}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
                 {getGrowthIcon(analyticsData.overview.userGrowth)}
-                <span className={`text-sm ml-1 ${getGrowthColor(analyticsData.overview.userGrowth)}`}>
+                <span className={`text-xs sm:text-sm ml-1 font-medium ${getGrowthColor(analyticsData.overview.userGrowth)}`}>
                   {formatPercentage(analyticsData.overview.userGrowth)}
                 </span>
               </div>
             </div>
-            <div className="p-3 rounded-full bg-blue-100">
-              <Users className="h-6 w-6 text-blue-600" />
+            <div className="p-2 sm:p-3 rounded-full bg-blue-100 flex-shrink-0 ml-2">
+              <Users className="h-5 w-5 sm:h-6 sm:w-6 text-blue-600" />
             </div>
           </div>
         </div>
 
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Coaches</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{analyticsData.overview.totalCoaches}</p>
-              <div className="flex items-center mt-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Coaches</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{analyticsData.overview.totalCoaches.toLocaleString()}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
                 {getGrowthIcon(analyticsData.overview.coachGrowth)}
-                <span className={`text-sm ml-1 ${getGrowthColor(analyticsData.overview.coachGrowth)}`}>
+                <span className={`text-xs sm:text-sm ml-1 font-medium ${getGrowthColor(analyticsData.overview.coachGrowth)}`}>
                   {formatPercentage(analyticsData.overview.coachGrowth)}
                 </span>
               </div>
             </div>
-            <div className="p-3 rounded-full bg-purple-100">
-              <UserCheck className="h-6 w-6 text-purple-600" />
+            <div className="p-2 sm:p-3 rounded-full bg-purple-100 flex-shrink-0 ml-2">
+              <UserCheck className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
             </div>
           </div>
         </div>
 
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed Sessions</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{analyticsData.overview.totalSessions}</p>
-              <div className="flex items-center mt-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Completed Sessions</p>
+              <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{analyticsData.overview.totalSessions.toLocaleString()}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
                 {getGrowthIcon(analyticsData.overview.sessionGrowth)}
-                <span className={`text-sm ml-1 ${getGrowthColor(analyticsData.overview.sessionGrowth)}`}>
+                <span className={`text-xs sm:text-sm ml-1 font-medium ${getGrowthColor(analyticsData.overview.sessionGrowth)}`}>
                   {formatPercentage(analyticsData.overview.sessionGrowth)}
                 </span>
               </div>
             </div>
-            <div className="p-3 rounded-full bg-green-100">
-              <Calendar className="h-6 w-6 text-green-600" />
+            <div className="p-2 sm:p-3 rounded-full bg-green-100 flex-shrink-0 ml-2">
+              <Calendar className="h-5 w-5 sm:h-6 sm:w-6 text-green-600" />
             </div>
           </div>
         </div>
 
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{formatCurrency(analyticsData.overview.totalRevenue)}</p>
-              <div className="flex items-center mt-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 mb-1">Total Revenue</p>
+              <p className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">{formatCurrency(analyticsData.overview.totalRevenue)}</p>
+              <div className="flex items-center mt-1 sm:mt-2">
                 {getGrowthIcon(analyticsData.overview.revenueGrowth)}
-                <span className={`text-sm ml-1 ${getGrowthColor(analyticsData.overview.revenueGrowth)}`}>
+                <span className={`text-xs sm:text-sm ml-1 font-medium ${getGrowthColor(analyticsData.overview.revenueGrowth)}`}>
                   {formatPercentage(analyticsData.overview.revenueGrowth)}
                 </span>
               </div>
             </div>
-            <div className="p-3 rounded-full bg-emerald-100">
-              <DollarSign className="h-6 w-6 text-emerald-600" />
+            <div className="p-2 sm:p-3 rounded-full bg-emerald-100 flex-shrink-0 ml-2">
+              <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
             </div>
           </div>
         </div>
       </div>
 
-      {/* Detailed Metrics */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 mb-6">
+      {/* Detailed Metrics - Mobile-optimized */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6">
         {/* User Metrics */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Users className="h-5 w-5 mr-2 text-blue-600" />
-            User Metrics
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 flex-shrink-0" />
+            <span className="truncate">User Metrics</span>
           </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">New Users This Month</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.userMetrics.newUsersThisMonth}</span>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">New Users This Month</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.userMetrics.newUsersThisMonth.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Active Users</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.userMetrics.activeUsers}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Active Users</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.userMetrics.activeUsers.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">User Retention Rate</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.userMetrics.userRetentionRate}%</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">User Retention Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.userMetrics.userRetentionRate}%</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg Sessions Per User</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.userMetrics.averageSessionsPerUser}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Avg Sessions Per User</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.userMetrics.averageSessionsPerUser}</span>
             </div>
           </div>
         </div>
 
         {/* Coach Metrics */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <UserCheck className="h-5 w-5 mr-2 text-purple-600" />
-            Coach Metrics
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <UserCheck className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-purple-600 flex-shrink-0" />
+            <span className="truncate">Coach Metrics</span>
           </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Average Rating</span>
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                <span className="text-sm font-medium text-gray-900">{analyticsData.coachMetrics.averageRating}</span>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Average Rating</span>
+              <div className="flex items-center text-right">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 mr-1 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-900">{analyticsData.coachMetrics.averageRating}</span>
               </div>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Total Coach Hours</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.coachMetrics.totalCoachHours.toLocaleString()}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Total Coach Hours</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.coachMetrics.totalCoachHours.toLocaleString()}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Avg Session Duration</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.coachMetrics.averageSessionDuration} min</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Avg Session Duration</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.coachMetrics.averageSessionDuration} min</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Coach Utilization Rate</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.coachMetrics.coachUtilizationRate}%</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Coach Utilization Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.coachMetrics.coachUtilizationRate}%</span>
             </div>
           </div>
         </div>
 
         {/* Financial Metrics */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <DollarSign className="h-5 w-5 mr-2 text-emerald-600" />
-            Financial Metrics
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-emerald-600 flex-shrink-0" />
+            <span className="truncate">Financial Metrics</span>
           </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Monthly Recurring Revenue</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(analyticsData.financialMetrics.monthlyRecurringRevenue)}</span>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Monthly Recurring Revenue</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{formatCurrency(analyticsData.financialMetrics.monthlyRecurringRevenue)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Average Session Value</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(analyticsData.financialMetrics.averageSessionValue)}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Average Session Value</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{formatCurrency(analyticsData.financialMetrics.averageSessionValue)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Revenue Per User</span>
-              <span className="text-sm font-medium text-gray-900">{formatCurrency(analyticsData.financialMetrics.revenuePerUser)}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Revenue Per User</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{formatCurrency(analyticsData.financialMetrics.revenuePerUser)}</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Conversion Rate</span>
-              <span className="text-sm font-medium text-gray-900">{analyticsData.financialMetrics.conversionRate}%</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Conversion Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-900 text-right">{analyticsData.financialMetrics.conversionRate}%</span>
             </div>
           </div>
         </div>
 
         {/* Session Metrics */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Activity className="h-5 w-5 mr-2 text-orange-600" />
-            Session Metrics
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-orange-600 flex-shrink-0" />
+            <span className="truncate">Session Metrics</span>
           </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Completion Rate</span>
-              <span className="text-sm font-medium text-green-600">{analyticsData.sessionMetrics.completionRate}%</span>
+          <div className="space-y-3 sm:space-y-4">
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Completion Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-green-600 text-right">{analyticsData.sessionMetrics.completionRate}%</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">No-Show Rate</span>
-              <span className="text-sm font-medium text-yellow-600">{analyticsData.sessionMetrics.noShowRate}%</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">No-Show Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-yellow-600 text-right">{analyticsData.sessionMetrics.noShowRate}%</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Cancellation Rate</span>
-              <span className="text-sm font-medium text-red-600">{analyticsData.sessionMetrics.cancellationRate}%</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Cancellation Rate</span>
+              <span className="text-xs sm:text-sm font-medium text-red-600 text-right">{analyticsData.sessionMetrics.cancellationRate}%</span>
             </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-gray-600">Average Session Rating</span>
-              <div className="flex items-center">
-                <Star className="h-4 w-4 text-yellow-400 mr-1" />
-                <span className="text-sm font-medium text-gray-900">{analyticsData.sessionMetrics.averageRating}</span>
+            <div className="flex justify-between items-start gap-2">
+              <span className="text-xs sm:text-sm text-gray-600 leading-tight">Average Session Rating</span>
+              <div className="flex items-center text-right">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 mr-1 flex-shrink-0" />
+                <span className="text-xs sm:text-sm font-medium text-gray-900">{analyticsData.sessionMetrics.averageRating}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Top Performers and Specialties */}
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        {/* Top Coaches */}
+      {/* Top Performers and Specialties - Mobile-optimized */}
+      <div className="space-y-4 sm:space-y-6">
+        {/* Top Coaches - Mobile with horizontal scroll */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <BarChart3 className="h-5 w-5 mr-2 text-blue-600" />
-            Top Performing Coaches
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <BarChart3 className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-blue-600 flex-shrink-0" />
+            <span className="truncate">Top Performing Coaches</span>
           </h3>
-          <div className="space-y-3">
+          
+          {/* Mobile: Horizontal scrolling cards */}
+          <div className="block sm:hidden">
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4" style={{
+              scrollbarWidth: 'none',
+              msOverflowStyle: 'none',
+            }}>
+              {analyticsData.topCoaches.map((coach, index) => (
+                <div key={coach.id} className="flex-shrink-0 w-64 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center mb-2">
+                    <div className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white text-xs font-medium mr-2">
+                      {index + 1}
+                    </div>
+                    <p className="text-sm font-medium text-gray-900 truncate">{coach.name}</p>
+                  </div>
+                  <div className="flex items-center text-xs text-gray-500 mb-2">
+                    <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
+                    <span>{coach.rating} • {coach.sessions} sessions</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium text-gray-900">{formatCurrency(coach.revenue)}</p>
+                    <p className="text-xs text-gray-500">revenue</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          {/* Desktop: Vertical list */}
+          <div className="hidden sm:block space-y-3">
             {analyticsData.topCoaches.map((coach, index) => (
               <div key={coach.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex items-center">
-                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                <div className="flex items-center min-w-0 flex-1">
+                  <div className="w-8 h-8 bg-purple-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3 flex-shrink-0">
                     {index + 1}
                   </div>
-                  <div>
-                    <p className="text-sm font-medium text-gray-900">{coach.name}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{coach.name}</p>
                     <div className="flex items-center text-xs text-gray-500">
-                      <Star className="h-3 w-3 text-yellow-400 mr-1" />
-                      {coach.rating} • {coach.sessions} sessions
+                      <Star className="h-3 w-3 text-yellow-400 mr-1 flex-shrink-0" />
+                      <span>{coach.rating} • {coach.sessions} sessions</span>
                     </div>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex-shrink-0 ml-2">
                   <p className="text-sm font-medium text-gray-900">{formatCurrency(coach.revenue)}</p>
                   <p className="text-xs text-gray-500">revenue</p>
                 </div>
@@ -438,22 +530,25 @@ export default function Analytics() {
 
         {/* Top Specialties */}
         <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <PieChart className="h-5 w-5 mr-2 text-green-600" />
-            Popular Specialties
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center">
+            <PieChart className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 flex-shrink-0" />
+            <span className="truncate">Popular Specialties</span>
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-3 sm:space-y-4">
             {analyticsData.topSpecialties.map((specialty, index) => (
-              <div key={specialty.name} className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full mr-3" style={{
-                    backgroundColor: `hsl(${index * 60}, 70%, 50%)`
-                  }}></div>
-                  <span className="text-sm font-medium text-gray-900">{specialty.name}</span>
+              <div key={specialty.name} className="flex items-center justify-between gap-3">
+                <div className="flex items-center min-w-0 flex-1">
+                  <div 
+                    className="w-3 h-3 rounded-full mr-3 flex-shrink-0" 
+                    style={{
+                      backgroundColor: `hsl(${index * 60}, 70%, 50%)`
+                    }}
+                  ></div>
+                  <span className="text-xs sm:text-sm font-medium text-gray-900 truncate">{specialty.name}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-600">{specialty.sessions}</span>
-                  <span className="text-sm text-gray-500">({specialty.percentage}%)</span>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  <span className="text-xs sm:text-sm text-gray-600">{specialty.sessions}</span>
+                  <span className="text-xs sm:text-sm text-gray-500">({specialty.percentage}%)</span>
                 </div>
               </div>
             ))}
@@ -461,64 +556,62 @@ export default function Analytics() {
         </div>
       </div>
 
-      {/* Export Section */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border mt-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900 flex items-center">
-            <Download className="h-5 w-5 mr-2" />
-            Export Reports
+      {/* Export Section - Mobile-optimized */}
+      <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border mt-4 sm:mt-6">
+        <div className="mb-3 sm:mb-4">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center">
+            <Download className="h-4 w-4 sm:h-5 sm:w-5 mr-2 flex-shrink-0" />
+            <span className="truncate">Export Reports</span>
           </h3>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 leading-relaxed">
           Generate and download comprehensive analytics reports in your preferred format.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <FileSpreadsheet className="h-5 w-5 mr-2 text-green-600" />
-                  CSV Export
-                </h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  Export raw data in CSV format for further analysis in spreadsheet applications.
-                </p>
-              </div>
+        
+        <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+          <div className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+            <div className="mb-3">
+              <h4 className="text-sm sm:text-base font-medium text-gray-900 flex items-center mb-1 sm:mb-2">
+                <FileSpreadsheet className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-green-600 flex-shrink-0" />
+                <span>CSV Export</span>
+              </h4>
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+                Export raw data in CSV format for further analysis in spreadsheet applications.
+              </p>
             </div>
             <button
               onClick={() => {
                 exportToCSV(analyticsData, 'analytics-report');
               }}
-              className="mt-3 w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm font-medium"
+              className="w-full px-4 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 active:bg-green-800 transition-colors text-sm font-medium touch-manipulation"
             >
               Download CSV
             </button>
           </div>
           
-          <div className="border rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900 flex items-center">
-                  <FileText className="h-5 w-5 mr-2 text-red-600" />
-                  PDF Report
-                </h4>
-                <p className="text-sm text-gray-500 mt-1">
-                  Generate a formatted PDF report with charts and tables for presentations.
-                </p>
-              </div>
+          <div className="border rounded-lg p-3 sm:p-4 hover:shadow-md transition-shadow">
+            <div className="mb-3">
+              <h4 className="text-sm sm:text-base font-medium text-gray-900 flex items-center mb-1 sm:mb-2">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-red-600 flex-shrink-0" />
+                <span>PDF Report</span>
+              </h4>
+              <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
+                Generate a formatted PDF report with charts and tables for presentations.
+              </p>
             </div>
             <button
               onClick={() => {
                 exportToPDF(analyticsData, 'analytics-report');
               }}
-              className="mt-3 w-full px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm font-medium"
+              className="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800 transition-colors text-sm font-medium touch-manipulation"
             >
               Download PDF
             </button>
           </div>
         </div>
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-          <p className="text-sm text-blue-800">
+        
+        <div className="mt-3 sm:mt-4 p-3 bg-blue-50 rounded-lg">
+          <p className="text-xs sm:text-sm text-blue-800 leading-relaxed">
             <strong>Note:</strong> Reports include data from the selected time range ({timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'Last year'}).
             All financial data is calculated based on completed sessions only.
           </p>

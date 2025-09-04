@@ -24,7 +24,8 @@ import {
   FileText,
   Moon,
   Sun,
-  Bell
+  Bell,
+  MoreHorizontal
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -36,6 +37,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const [showBottomNavMore, setShowBottomNavMore] = useState(false);
+  const [themeToggleLoading, setThemeToggleLoading] = useState(false);
+  const bottomNavMoreRef = useRef<HTMLDivElement>(null);
   const { user, loading: authLoading, logout } = useAuth();
   const { 
     displayNewUsersCount,
@@ -72,6 +76,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
         setShowNotificationDropdown(false);
       }
+      if (bottomNavMoreRef.current && !bottomNavMoreRef.current.contains(event.target as Node)) {
+        setShowBottomNavMore(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -94,9 +101,24 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [pathname, markNewUsersAsRead, markNewCoachApplicationsAsRead, markNewAppointmentsAsRead, markNewMessagesAsRead]);
 
-  const handleThemeToggle = () => {
+  const handleThemeToggle = async () => {
+    setThemeToggleLoading(true);
+    
+    // Add haptic feedback for mobile devices
+    if (navigator.vibrate) {
+      navigator.vibrate(50);
+    }
+    
+    // Small delay for visual feedback
+    await new Promise(resolve => setTimeout(resolve, 150));
+    
     toggleTheme();
-    setShowDropdown(false);
+    setThemeToggleLoading(false);
+    
+    // Close dropdown after a short delay to allow user to see the change
+    setTimeout(() => {
+      setShowDropdown(false);
+    }, 300);
   };
 
   // Handle admin authentication using AuthContext
@@ -124,10 +146,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [user, authLoading, router]);
 
-  const handleLogout = () => {
-    // Use the logout function from AuthContext
-    // This will handle token removal and user state cleanup
-    logout();
+  const handleLogout = async () => {
+    console.log('🔓 Admin logout initiated...');
+    try {
+      // Use the logout function from AuthContext
+      // This will handle token removal and user state cleanup
+      await logout();
+      console.log('✅ Admin logout completed');
+    } catch (error) {
+      console.error('❌ Logout error:', error);
+      // Even if logout fails, redirect to login page
+      router.push('/login');
+    }
   };
 
   const navItems = [
@@ -324,25 +354,31 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     </div>
                     <button
                       onClick={handleThemeToggle}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      disabled={themeToggleLoading}
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {theme === 'light' ? (
+                      {themeToggleLoading ? (
                         <>
-                          <Moon className="w-4 h-4" />
+                          <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
+                          <span>Switching...</span>
+                        </>
+                      ) : theme === 'light' ? (
+                        <>
+                          <Moon className="w-4 h-4 transition-transform hover:scale-110" />
                           <span>Dark Mode</span>
                         </>
                       ) : (
                         <>
-                          <Sun className="w-4 h-4" />
+                          <Sun className="w-4 h-4 transition-transform hover:scale-110" />
                           <span>Light Mode</span>
                         </>
                       )}
                     </button>
                     <hr className="my-1 border-gray-200 dark:border-gray-600" />
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         setShowDropdown(false);
-                        handleLogout();
+                        await handleLogout();
                       }}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
@@ -374,55 +410,105 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
               </div>
               
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                aria-label="User menu"
-              >
-                <CircleUserRound className="w-6 h-6 text-gray-600 dark:text-gray-400" />
-              </button>
-              
-              {showDropdown && (
-                <div className="absolute right-4 top-16 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-600">
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user?.first_name || 'Admin'} {user?.last_name || ''}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
-                  </div>
-                  <button
-                    onClick={handleThemeToggle}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    {theme === 'light' ? (
-                      <>
-                        <Moon className="w-4 h-4" />
-                        <span>Dark Mode</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sun className="w-4 h-4" />
-                        <span>Light Mode</span>
-                      </>
-                    )}
-                  </button>
-                  <hr className="my-1 border-gray-200 dark:border-gray-600" />
-                  <button
-                    onClick={() => {
-                      setShowDropdown(false);
-                      handleLogout();
-                    }}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setShowDropdown(!showDropdown)}
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="User menu"
+                >
+                  <CircleUserRound className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Mobile Dropdown Menu - positioned absolutely */}
+      {showDropdown && (
+        <>
+          {/* Enhanced backdrop for mobile dropdown with smooth animation */}
+          <div 
+            className="sm:hidden fixed inset-0 bg-black/30 dark:bg-black/50 z-40 backdrop-blur-sm animate-in fade-in duration-200"
+            onClick={() => setShowDropdown(false)}
+          />
+          <div 
+            key={`dropdown-${theme}-${themeToggleLoading}`} 
+            className="sm:hidden absolute right-4 top-16 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-50 border border-gray-200 dark:border-gray-600 animate-in slide-in-from-top-2 fade-in duration-300"
+          >
+            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
+                  <CircleUserRound className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
+                    {user?.first_name || 'Admin'} {user?.last_name || ''}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Theme Toggle Button with enhanced mobile UX */}
+            <div className="px-2 py-1">
+              <button
+                onClick={handleThemeToggle}
+                disabled={themeToggleLoading}
+                className={`w-full px-4 py-3 text-left text-sm rounded-lg flex items-center space-x-3 transition-all duration-200 ${
+                  themeToggleLoading 
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 cursor-not-allowed opacity-75' 
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95'
+                }`}
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-600">
+                  {themeToggleLoading ? (
+                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
+                  ) : theme === 'light' ? (
+                    <Moon className="w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform" />
+                  ) : (
+                    <Sun className="w-4 h-4 text-yellow-500 transition-transform" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <div className="font-medium">
+                    {themeToggleLoading ? 'Switching Theme...' : theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+                  </div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    {themeToggleLoading ? 'Please wait' : theme === 'light' ? 'Better for low light' : 'Easier on the eyes'}
+                  </div>
+                </div>
+                {!themeToggleLoading && (
+                  <div className={`w-2 h-2 rounded-full ${theme === 'light' ? 'bg-gray-400' : 'bg-yellow-400'} animate-pulse`} />
+                )}
+              </button>
+            </div>
+            
+            <hr className="my-2 border-gray-100 dark:border-gray-700" />
+            
+            {/* Logout Button */}
+            <div className="px-2 py-1">
+              <button
+                onClick={async () => {
+                  setShowDropdown(false);
+                  // Add small delay to allow dropdown to close smoothly
+                  await new Promise(resolve => setTimeout(resolve, 150));
+                  await handleLogout();
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center space-x-3 transition-all duration-200 active:scale-95"
+              >
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="font-medium">Sign Out</div>
+                  <div className="text-xs text-red-500 dark:text-red-400">End your session</div>
+                </div>
+              </button>
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Desktop Navigation */}
       <div className="hidden sm:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
@@ -519,13 +605,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Mobile Bottom Navigation */}
       <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 z-30">
         <div className="grid grid-cols-4 gap-1">
-          {navItems.slice(0, 4).map((item) => {
+          {/* First 3 navigation items */}
+          {navItems.slice(0, 3).map((item) => {
             const Icon = item.icon;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex flex-col items-center justify-center py-2 px-1 relative transition-colors ${
+                className={`flex flex-col items-center justify-center py-2 px-1 relative transition-colors min-h-[60px] ${
                   pathname === item.href
                     ? 'text-blue-600 dark:text-blue-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -541,15 +628,89 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     />
                   )}
                 </div>
-                <span className="text-[10px] mt-1">{item.name}</span>
+                <span className="text-[10px] mt-1 leading-3 text-center">
+                  {item.name.length > 8 ? item.name.split(' ')[0] : item.name}
+                </span>
               </Link>
             );
           })}
+          
+          {/* More menu for remaining items */}
+          <div className="relative" ref={bottomNavMoreRef}>
+            <button
+              onClick={() => setShowBottomNavMore(!showBottomNavMore)}
+              className={`flex flex-col items-center justify-center py-2 px-1 w-full min-h-[60px] transition-colors ${
+                showBottomNavMore || navItems.slice(3).some(item => pathname === item.href)
+                  ? 'text-blue-600 dark:text-blue-400'
+                  : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
+              }`}
+            >
+              <div className="relative">
+                <MoreHorizontal className="w-5 h-5" />
+                {/* Show notification badge if any of the hidden items have notifications */}
+                {navItems.slice(3).some(item => (item.notificationCount ?? 0) > 0) && (
+                  <NotificationBadge 
+                    count={navItems.slice(3).reduce((total, item) => total + (item.notificationCount ?? 0), 0)}
+                    size="sm"
+                    variant="red"
+                  />
+                )}
+              </div>
+              <span className="text-[10px] mt-1 leading-3 text-center">More</span>
+            </button>
+            
+            {/* More menu dropdown */}
+            {showBottomNavMore && (
+              <>
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 bg-black/20 dark:bg-black/40 z-40"
+                  onClick={() => setShowBottomNavMore(false)}
+                />
+                {/* Dropdown */}
+                <div className="absolute bottom-full right-0 mb-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-600 py-2 z-50 animate-in slide-in-from-bottom-2 fade-in duration-200">
+                  <div className="px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+                    <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">More Options</p>
+                  </div>
+                  {navItems.slice(3).map((item, index) => {
+                    const Icon = item.icon;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setShowBottomNavMore(false)}
+                        className={`flex items-center space-x-3 px-4 py-3 mx-1 rounded-lg transition-all duration-200 hover:scale-[0.98] ${
+                          pathname === item.href
+                            ? 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-400 shadow-sm'
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                        }`}
+                        style={{
+                          animationDelay: `${index * 50}ms`
+                        }}
+                      >
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-700">
+                          <Icon className="w-4 h-4" />
+                        </div>
+                        <span className="flex-1 text-sm font-medium">{item.name}</span>
+                        {(item.notificationCount ?? 0) > 0 && (
+                          <NotificationBadge 
+                            count={item.notificationCount!}
+                            size="sm"
+                            variant="red"
+                          />
+                        )}
+                      </Link>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-auto pb-16 sm:pb-0">
+      <div className="flex-1 overflow-auto pb-[72px] sm:pb-0">
         <main className="p-4 lg:p-8">
           <div className="max-w-7xl mx-auto">
             {children}

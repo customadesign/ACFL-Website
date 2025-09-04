@@ -19,7 +19,7 @@ interface AuthContextType {
   login: (email: string, password: string, skipRedirect?: boolean) => Promise<void>;
   registerClient: (data: RegisterClientData) => Promise<void>;
   registerCoach: (data: RegisterCoachData) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -242,24 +242,130 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
-    // Remove token
+  const logout = async () => {
+    console.log('🔓 Starting logout process...');
+    
+    // Check if we're in a valid browser environment
+    if (typeof window === 'undefined') {
+      console.warn('⚠️ Logout called in non-browser environment');
+      return;
+    }
+    
+    try {
+      // Call backend logout endpoint if token exists and we're online
+      const token = localStorage.getItem('token');
+      if (token && navigator.onLine !== false) {
+        console.log('📞 Calling backend logout endpoint...');
+        try {
+          const response = await axios.post(`${API_URL}/api/auth/logout`, {}, {
+            timeout: 5000 // 5 second timeout
+          });
+          console.log('✅ Backend logout successful:', response.data.message);
+        } catch (backendError: any) {
+          console.warn('⚠️ Backend logout failed (continuing with client cleanup):', 
+            backendError.response?.data?.message || backendError.message);
+          
+          // Log specific error types for debugging
+          if (backendError.code === 'NETWORK_ERROR') {
+            console.log('📡 Network error during logout - user may be offline');
+          } else if (backendError.response?.status === 401) {
+            console.log('🔒 Token already invalid - proceeding with cleanup');
+          }
+          // Continue with client-side cleanup even if backend fails
+        }
+      } else if (!navigator.onLine) {
+        console.log('📴 User appears offline - skipping backend logout call');
+      } else {
+        console.log('🚫 No token found - skipping backend logout call');
+      }
+    } catch (error: any) {
+      console.warn('⚠️ Error during backend logout:', error.message || error);
+      // Continue with cleanup regardless
+    }
+
+    console.log('🧹 Starting comprehensive client-side cleanup...');
+    
+    // Remove authentication token
     localStorage.removeItem('token');
+    console.log('✅ Token removed from localStorage');
+    
+    // Remove any other potential auth-related items
+    const authRelatedKeys = [
+      'refreshToken',
+      'tokenExpiry', 
+      'lastAuthCheck',
+      'rememberMe',
+      'userId',
+      'userRole',
+      'sessionId'
+    ];
+    
+    authRelatedKeys.forEach(key => {
+      if (localStorage.getItem(key)) {
+        localStorage.removeItem(key);
+        console.log(`✅ Removed ${key} from localStorage`);
+      }
+    });
+    
+    // Clear session storage as well
+    try {
+      const sessionKeys = Object.keys(sessionStorage);
+      const authSessionKeys = sessionKeys.filter(key => 
+        key.toLowerCase().includes('token') || 
+        key.toLowerCase().includes('auth') ||
+        key.toLowerCase().includes('user')
+      );
+      
+      authSessionKeys.forEach(key => {
+        sessionStorage.removeItem(key);
+        console.log(`✅ Removed ${key} from sessionStorage`);
+      });
+    } catch (error) {
+      console.warn('Could not clear sessionStorage:', error);
+    }
+    
+    // Clear axios default headers thoroughly
     try {
       delete axios.defaults.headers.common['Authorization'];
+      delete axios.defaults.headers['Authorization'];
+      // Reset axios instance to defaults
+      axios.defaults.headers.common = {};
+      console.log('✅ Axios headers completely cleared');
     } catch (error) {
       console.warn('Could not delete axios default headers:', error);
     }
     
-    // Reset theme to light
+    // Reset theme to light (optional cleanup)
     localStorage.setItem('theme', 'light');
     document.documentElement.classList.remove('dark');
+    console.log('✅ Theme reset to light');
     
-    // Clear user
+    // Clear user state
     setUser(null);
+    setAuthChecked(false); // Reset auth check state
+    console.log('✅ User state and auth check cleared');
     
-    // Redirect to home
-    router.push('/');
+    // Force a page refresh after logout to ensure complete cleanup
+    // and prevent any lingering state issues
+    setTimeout(() => {
+      console.log('🚀 Redirecting to home page...');
+      
+      // Check if we're in the admin section to redirect to login instead
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/admin')) {
+        console.log('🔄 Admin logout - redirecting to login page');
+        router.push('/login');
+      } else {
+        console.log('🏠 Regular logout - redirecting to home page');
+        router.push('/');
+      }
+      
+      // Optional: Force a page refresh to ensure complete state cleanup
+      // Uncomment if you encounter persistent state issues
+      // setTimeout(() => window.location.reload(), 500);
+    }, 150); // Slightly longer delay for mobile devices
+    
+    console.log('✅ Logout process completed');
   };
 
   const value = {

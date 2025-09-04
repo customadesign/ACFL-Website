@@ -190,40 +190,53 @@ export default function ClientLayout({
                 </button>
                 
                 {showDropdown && (
-                  <div className="absolute right-4 top-16 w-48 bg-popover rounded-md shadow-lg py-1 z-50 border border-border">
-                    <div className="px-4 py-2 border-b border-border">
-                      <p className="text-sm font-medium text-popover-foreground">
-                        {user?.first_name || 'Client'}
-                      </p>
+                  <>
+                    {/* Backdrop for mobile dropdown */}
+                    <div 
+                      className="fixed inset-0 bg-transparent z-40"
+                      onClick={() => setShowDropdown(false)}
+                    />
+                    <div className="absolute right-4 top-16 w-48 bg-popover rounded-md shadow-lg py-1 z-50 border border-border">
+                      <div className="px-4 py-2 border-b border-border">
+                        <p className="text-sm font-medium text-popover-foreground">
+                          {user?.first_name || 'Client'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleThemeToggle();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
+                      >
+                        {theme === 'light' ? (
+                          <>
+                            <Moon className="w-4 h-4" />
+                            <span>Dark Mode</span>
+                          </>
+                        ) : (
+                          <>
+                            <Sun className="w-4 h-4" />
+                            <span>Light Mode</span>
+                          </>
+                        )}
+                      </button>
+                      <hr className="my-1 border-border" />
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowDropdown(false);
+                          logout();
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
                     </div>
-                    <button
-                      onClick={handleThemeToggle}
-                      className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
-                    >
-                      {theme === 'light' ? (
-                        <>
-                          <Moon className="w-4 h-4" />
-                          <span>Dark Mode</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sun className="w-4 h-4" />
-                          <span>Light Mode</span>
-                        </>
-                      )}
-                    </button>
-                    <hr className="my-1 border-border" />
-                    <button
-                      onClick={() => {
-                        setShowDropdown(false);
-                        logout();
-                      }}
-                      className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
+                  </>
                 )}
               </div>
             </div>

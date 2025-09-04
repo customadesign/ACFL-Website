@@ -20,7 +20,7 @@ const router = Router();
 router.post('/register/client', validateRegisterClient, registerClient);
 router.post('/register/coach', validateRegisterCoach, registerCoach);
 router.post('/login', validateLogin, login);
-router.post('/logout', logout);
+router.post('/logout', authenticate, logout); // Protect logout to access user info for logging
 
 // Admin routes (protected)
 router.post('/create-admin', requireAdmin, createAdmin);

@@ -904,11 +904,70 @@ export const createAdmin = async (req: Request, res: Response) => {
   }
 };
 
-export const logout = async (req: Request, res: Response) => {
-  // Since we're using JWT, we don't need to do anything server-side
-  // The client should remove the token
-  res.json({
-    success: true,
-    message: 'Logged out successfully'
-  });
+export const logout = async (req: Request & { user?: JWTPayload }, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('🔓 LOGOUT REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('User:', req.user?.email || 'anonymous');
+  console.log('Role:', req.user?.role || 'unknown');
+
+  try {
+    // Log the logout activity if user is authenticated
+    if (req.user) {
+      console.log('\n📝 Recording logout activity...');
+      try {
+        const now = new Date().toISOString();
+        
+        // Update last_logout timestamp based on role
+        if (req.user.role === 'admin') {
+          await supabase
+            .from('admins')
+            .update({ last_logout: now })
+            .eq('id', req.user.userId);
+        } else if (req.user.role === 'client') {
+          await supabase
+            .from('clients')
+            .update({ last_logout: now })
+            .eq('id', req.user.userId);
+        } else if (req.user.role === 'coach') {
+          await supabase
+            .from('coaches')
+            .update({ last_logout: now })
+            .eq('id', req.user.userId);
+        }
+        
+        console.log('✅ Logout activity recorded');
+      } catch (logoutUpdateError) {
+        console.log('⚠️ Failed to record logout activity (non-critical):', logoutUpdateError.message);
+        // Don't fail the logout if this update fails
+      }
+    }
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ LOGOUT COMPLETED SUCCESSFULLY');
+    console.log(`Total time: ${duration}ms`);
+    console.log('========================================\n');
+
+    // Send success response
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ LOGOUT FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+    
+    // Still return success since JWT logout is primarily client-side
+    res.json({
+      success: true,
+      message: 'Logged out successfully'
+    });
+  }
 };

@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
 import RescheduleModal from '@/components/RescheduleModal';
+import NotificationModal from '@/components/NotificationModal';
+import useNotification from '@/hooks/useNotification';
 
 interface Appointment {
   id: string;
@@ -47,6 +49,7 @@ export default function AppointmentManagement() {
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const { notification, hideNotification, showError, showConfirm } = useNotification();
 
   useEffect(() => {
     fetchAppointments();
@@ -62,8 +65,10 @@ export default function AppointmentManagement() {
       
       if (!token) {
         console.log('No token found, redirecting to login');
-        alert('No authentication token found. Please login again.');
-        window.location.href = '/login';
+        showError('Authentication Error', 'No authentication token found. Please login again.');
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 2000);
         return;
       }
 
@@ -86,13 +91,15 @@ export default function AppointmentManagement() {
         if (response.status === 401) {
           console.log('Unauthorized, removing token and redirecting');
           localStorage.removeItem('token');
-          alert('Your session has expired. Please login again.');
-          window.location.href = '/login';
+          showError('Session Expired', 'Your session has expired. Please login again.');
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
           return;
         }
         const errorText = await response.text();
         console.error('Response error:', response.status, errorText);
-        alert(`Failed to fetch appointments: HTTP ${response.status} - ${errorText}`);
+        showError('Fetch Error', `Failed to fetch appointments: HTTP ${response.status} - ${errorText}`);
         throw new Error(`HTTP ${response.status}: Failed to fetch appointments`);
       }
 
@@ -124,7 +131,7 @@ export default function AppointmentManagement() {
     } catch (error) {
       console.error('Failed to fetch appointments:', error);
       const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
-      alert(`Failed to load appointments: ${errorMessage}`);
+      showError('Load Error', `Failed to load appointments: ${errorMessage}`);
     } finally {
       setIsLoading(false);
     }
@@ -207,21 +214,37 @@ export default function AppointmentManagement() {
       
     } catch (error) {
       console.error('Error updating appointment status:', error);
-      alert(`Failed to update appointment: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showError('Update Error', `Failed to update appointment: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsUpdatingStatus(false);
     }
   };
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
-    let reason = '';
-    if (newStatus === 'cancelled') {
-      reason = prompt('Please provide a reason for cancellation (optional):') || '';
-    }
-    
     const confirmMessage = `Are you sure you want to mark this appointment as ${newStatus.toUpperCase()}?`;
-    if (window.confirm(confirmMessage)) {
-      await updateAppointmentStatus(appointmentId, newStatus, reason);
+    
+    if (newStatus === 'cancelled') {
+      // For cancellations, we can add a textarea in the modal for reason
+      showConfirm(
+        'Cancel Appointment',
+        `${confirmMessage}\n\nThis action will notify both the client and coach about the cancellation.`,
+        async () => {
+          // For now, we'll use empty reason. Later this could be enhanced with a form
+          await updateAppointmentStatus(appointmentId, newStatus, '');
+        },
+        'Cancel Appointment',
+        'Keep Appointment'
+      );
+    } else {
+      showConfirm(
+        'Update Status',
+        confirmMessage,
+        async () => {
+          await updateAppointmentStatus(appointmentId, newStatus);
+        },
+        'Confirm',
+        'Cancel'
+      );
     }
   };
 
@@ -706,6 +729,19 @@ export default function AppointmentManagement() {
           }}
         />
       )}
+      
+      {/* Notification Modal */}
+      <NotificationModal
+        isOpen={notification.isOpen}
+        onClose={hideNotification}
+        onConfirm={notification.onConfirm}
+        type={notification.type}
+        title={notification.title}
+        message={notification.message}
+        confirmText={notification.confirmText}
+        cancelText={notification.cancelText}
+        loading={notification.loading}
+      />
     </div>
   );
 }

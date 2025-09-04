@@ -91,8 +91,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   };
 
   const setTheme = (newTheme: Theme) => {
+    const storageConsent = localStorage.getItem('theme-storage-consent');
+    
     // If user hasn't given consent yet and is trying to change theme, show modal
-    if (!hasStorageConsent && localStorage.getItem('theme-storage-consent') === null) {
+    if (storageConsent === null && !hasStorageConsent) {
       setShowConsentModal(true);
       // Apply theme immediately but don't save
       applyTheme(newTheme);
@@ -102,9 +104,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyTheme(newTheme);
     
     // Only save to localStorage if user has given consent
-    if (hasStorageConsent) {
+    if (hasStorageConsent && storageConsent === 'granted') {
       localStorage.setItem('theme', newTheme);
     }
+    // If consent was denied, theme still changes but isn't persisted
   };
 
   const toggleTheme = () => {

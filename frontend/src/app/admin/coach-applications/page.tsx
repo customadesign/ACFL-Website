@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
+import { X, User, Users, Check, AlertTriangle, FileCheck } from 'lucide-react';
 
 // Simple Badge component since ui/badge doesn't exist
 const Badge = ({ children, className = '', variant = 'default' }: {
@@ -244,18 +245,18 @@ export default function CoachApplicationsPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
+    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
+      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold">Coach Applications</h1>
-          <p className="text-gray-600">Review and manage coach verification applications</p>
+          <h1 className="text-2xl sm:text-3xl font-bold">Coach Applications</h1>
+          <p className="text-sm sm:text-base text-gray-600">Review and manage coach verification applications</p>
         </div>
         
-        <div className="flex items-center space-x-4">
+        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm focus-ring-inset"
           >
             <option value="all">All Applications</option>
             <option value="pending">Pending</option>
@@ -265,14 +266,18 @@ export default function CoachApplicationsPage() {
             <option value="suspended">Suspended</option>
           </select>
           
-          <Button onClick={() => fetchApplications()} variant="outline">
+          <Button 
+            onClick={() => fetchApplications()} 
+            variant="outline"
+            className="w-full sm:w-auto min-h-[44px]"
+          >
             Refresh
           </Button>
         </div>
       </div>
 
       {/* Applications List */}
-      <div className="grid gap-4">
+      <div className="grid gap-3 sm:gap-4">
         {loading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -287,42 +292,45 @@ export default function CoachApplicationsPage() {
         ) : (
           applications.map((application) => (
             <Card key={application.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-6">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-3 mb-2">
-                      <h3 className="text-lg font-semibold">
+              <CardContent className="p-4 sm:p-6">
+                <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3 mb-3">
+                      <h3 className="text-lg font-semibold truncate">
                         {application.first_name} {application.last_name}
                       </h3>
-                      {getStatusBadge(application.status)}
+                      <div className="flex-shrink-0">
+                        {getStatusBadge(application.status)}
+                      </div>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div>
-                        <p><strong>Email:</strong> {application.email}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm text-gray-600">
+                      <div className="space-y-1">
+                        <p className="break-all"><strong>Email:</strong> {application.email}</p>
                         <p><strong>Phone:</strong> {application.phone || 'Not provided'}</p>
                         <p><strong>Experience:</strong> {application.coaching_experience_years}</p>
                       </div>
-                      <div>
-                        <p><strong>ACT Training:</strong> {application.act_training_level}</p>
-                        <p><strong>Languages:</strong> {application.languages_fluent.join(', ')}</p>
-                        <p><strong>Submitted:</strong> {formatDate(application.submitted_at)}</p>
+                      <div className="space-y-1">
+                        <p className="break-words"><strong>ACT Training:</strong> {application.act_training_level}</p>
+                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent.join(', ')}</p>
+                        <p className="break-words"><strong>Submitted:</strong> {formatDate(application.submitted_at)}</p>
                       </div>
                     </div>
                     
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600">
+                      <p className="text-sm text-gray-600 break-words">
                         <strong>Expertise:</strong> {application.coaching_expertise.slice(0, 3).join(', ')}
                         {application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex flex-col space-y-2 ml-4">
+                  <div className="flex flex-row space-x-2 lg:flex-col lg:space-x-0 lg:space-y-2 lg:ml-4 flex-shrink-0 coach-app-buttons">
                     <Button
                       onClick={() => fetchApplicationDetails(application.id)}
                       variant="outline"
                       size="sm"
+                      className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring"
                     >
                       Review
                     </Button>
@@ -332,16 +340,17 @@ export default function CoachApplicationsPage() {
                         <Button
                           onClick={() => updateApplicationStatus(application.id, 'approved')}
                           size="sm"
-                          className="bg-green-600 hover:bg-green-700"
+                          className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 min-h-[44px] text-xs sm:text-sm focus-ring"
                         >
-                          Quick Approve
+                          <span className="hidden sm:inline">Quick </span>Approve
                         </Button>
                         <Button
                           onClick={() => updateApplicationStatus(application.id, 'rejected', 'Application did not meet requirements')}
                           size="sm"
                           variant="destructive"
+                          className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring"
                         >
-                          Quick Reject
+                          <span className="hidden sm:inline">Quick </span>Reject
                         </Button>
                       </>
                     )}
@@ -383,6 +392,53 @@ const ApplicationDetailsModal = ({
 }) => {
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionForm, setShowRejectionForm] = useState(false);
+  const [validationError, setValidationError] = useState('');
+  const [isVisible, setIsVisible] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  const lastActiveElement = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    // Store the currently focused element
+    lastActiveElement.current = document.activeElement as HTMLElement;
+    
+    // Show modal with animation
+    setIsVisible(true);
+    
+    // Disable body scroll
+    document.body.style.overflow = 'hidden';
+    
+    return () => {
+      document.body.style.overflow = '';
+      // Restore focus to the previously focused element
+      if (lastActiveElement.current) {
+        lastActiveElement.current.focus();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        handleClose();
+      }
+    };
+    
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleClose = () => {
+    setIsVisible(false);
+    setTimeout(() => {
+      onClose();
+    }, 150);
+  };
+
+  const handleBackdropClick = (event: React.MouseEvent) => {
+    if (event.target === event.currentTarget) {
+      handleClose();
+    }
+  };
 
   const handleApprove = () => {
     onStatusUpdate(application.id, 'approved');
@@ -390,72 +446,127 @@ const ApplicationDetailsModal = ({
 
   const handleReject = () => {
     if (!rejectionReason.trim()) {
-      alert('Please provide a reason for rejection');
+      setValidationError('Please provide a reason for rejection');
       return;
     }
+    setValidationError('');
     onStatusUpdate(application.id, 'rejected', rejectionReason);
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b p-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-2xl font-bold">
-                {application.first_name} {application.last_name}
-              </h2>
-              <p className="text-gray-600">{application.email}</p>
+    <div
+      className={`fixed inset-0 z-50 flex items-start sm:items-center justify-center p-2 sm:p-4 transition-all duration-200 overflow-y-auto ${
+        isVisible ? 'bg-black/60 backdrop-blur-sm' : 'bg-transparent'
+      }`}
+      onClick={handleBackdropClick}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="application-modal-title"
+    >
+      <div 
+        ref={modalRef}
+        className={`bg-white dark:bg-gray-900 rounded-xl shadow-2xl w-full max-w-sm sm:max-w-2xl lg:max-w-4xl my-2 sm:my-4 max-h-[98vh] sm:max-h-[90vh] overflow-y-auto custom-scrollbar mobile-modal-content border-0 transition-all duration-200 transform ${
+          isVisible ? 'scale-100 opacity-100 translate-y-0' : 'scale-95 opacity-0 translate-y-4'
+        }`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 p-4 sm:p-6 z-10">
+          <div className="flex justify-between items-start">
+            <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-lg flex-shrink-0">
+                {application.first_name[0]}{application.last_name[0]}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h2 id="application-modal-title" className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">
+                  {application.first_name} {application.last_name}
+                </h2>
+                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 flex items-start sm:items-center">
+                  <span className="inline-block w-2 h-2 bg-green-500 rounded-full mr-2 mt-2 sm:mt-0 flex-shrink-0"></span>
+                  <span className="break-all">{application.email}</span>
+                </p>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              {getStatusBadge(application.status)}
-              <Button onClick={onClose} variant="outline">
-                Close
+            <div className="flex items-start space-x-2 sm:space-x-3 flex-shrink-0 ml-2">
+              <div className="hidden sm:block">
+                {getStatusBadge(application.status)}
+              </div>
+              <Button 
+                onClick={handleClose} 
+                variant="ghost"
+                className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full h-8 w-8 sm:h-10 sm:w-10 p-0 min-h-[44px] sm:min-h-0 focus-ring"
+                aria-label="Close modal"
+              >
+                <X className="w-4 h-4 sm:w-5 sm:h-5" />
               </Button>
             </div>
           </div>
+          <div className="block sm:hidden mt-3">
+            {getStatusBadge(application.status)}
+          </div>
         </div>
 
-        <div className="p-6 space-y-8">
+        <div className="p-4 sm:p-6 space-y-6 sm:space-y-8">
           {/* Professional Background */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Professional Background</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p><strong>Education:</strong> {application.educational_background}</p>
-                <p><strong>Experience:</strong> {application.coaching_experience_years}</p>
-                <p><strong>ACT Training:</strong> {application.act_training_level}</p>
+          <section className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-4 sm:p-6 border border-blue-200 dark:border-blue-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                <User className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400" />
               </div>
-              <div>
-                <p><strong>Certifications:</strong></p>
-                <ul className="list-disc list-inside ml-2">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Professional Background</h3>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-3 sm:space-y-4">
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Education</label>
+                  <p className="text-sm text-gray-900 dark:text-white font-medium mt-1 break-words">{application.educational_background}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">Experience</label>
+                  <p className="text-sm text-gray-900 dark:text-white font-medium mt-1 break-words">{application.coaching_experience_years}</p>
+                </div>
+                <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                  <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">ACT Training Level</label>
+                  <p className="text-sm text-gray-900 dark:text-white font-medium mt-1 break-words">{application.act_training_level}</p>
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Professional Certifications</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
                   {application.professional_certifications.map((cert, index) => (
-                    <li key={index}>{cert}</li>
+                    <div key={index} className="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{cert}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             </div>
           </section>
 
           {/* Specialization */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Specialization & Expertise</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p><strong>Areas of Expertise:</strong></p>
-                <div className="flex flex-wrap gap-1 mt-1">
+          <section className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-xl p-4 sm:p-6 border border-purple-200 dark:border-purple-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 dark:text-purple-400" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Specialization & Expertise</h3>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Areas of Expertise</label>
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {application.coaching_expertise.map((area, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                    <Badge key={index} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs break-words mobile-badge">
                       {area}
                     </Badge>
                   ))}
                 </div>
               </div>
-              <div>
-                <p><strong>Age Groups:</strong></p>
-                <div className="flex flex-wrap gap-1 mt-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Comfortable Age Groups</label>
+                <div className="flex flex-wrap gap-1 sm:gap-2">
                   {application.age_groups_comfortable.map((group, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                    <Badge key={index} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 text-xs break-words mobile-badge">
                       {group}
                     </Badge>
                   ))}
@@ -465,57 +576,76 @@ const ApplicationDetailsModal = ({
           </section>
 
           {/* Coaching Philosophy */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Coaching Philosophy</h3>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <p className="text-sm">{application.coaching_philosophy}</p>
-            </div>
-            <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p><strong>Techniques Used:</strong></p>
-                <ul className="list-disc list-inside ml-2 mt-1">
-                  {application.coaching_techniques.map((technique, index) => (
-                    <li key={index}>{technique}</li>
-                  ))}
-                </ul>
+          <section className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-xl p-4 sm:p-6 border border-green-200 dark:border-green-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
               </div>
-              <div>
-                <p><strong>Session Structure:</strong> {application.session_structure}</p>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Coaching Philosophy & Approach</h3>
+            </div>
+            <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-lg border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6">
+              <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 block">Philosophy Statement</label>
+              <div className="prose dark:prose-invert max-w-none">
+                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed italic break-words">
+                  "{application.coaching_philosophy}"
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Techniques Used</label>
+                <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
+                  {application.coaching_techniques.map((technique, index) => (
+                    <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
+                      <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{technique}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2 block">Session Structure</label>
+                <p className="text-sm text-gray-900 dark:text-white font-medium break-words">{application.session_structure}</p>
               </div>
             </div>
           </section>
 
           {/* Ethics & Crisis Management */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Ethics & Crisis Management</h3>
+          <section className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20 rounded-xl p-4 sm:p-6 border border-orange-200 dark:border-orange-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-full">
+                <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Ethics & Crisis Management</h3>
+            </div>
             <div className="space-y-4 text-sm">
-              <div>
-                <p><strong>Scope Handling Approach:</strong></p>
-                <div className="bg-gray-50 p-3 rounded mt-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium mb-2"><strong>Scope Handling Approach:</strong></p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words">
                   {application.scope_handling_approach}
                 </div>
               </div>
               
-              <div>
-                <p><strong>Professional Discipline History:</strong> {application.professional_discipline_history ? 'Yes' : 'No'}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium break-words"><strong>Professional Discipline History:</strong> {application.professional_discipline_history ? 'Yes' : 'No'}</p>
                 {application.professional_discipline_history && application.discipline_explanation && (
-                  <div className="bg-yellow-50 p-3 rounded mt-1">
-                    <p><strong>Explanation:</strong> {application.discipline_explanation}</p>
+                  <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded mt-2">
+                    <p className="break-words"><strong>Explanation:</strong> {application.discipline_explanation}</p>
                   </div>
                 )}
               </div>
               
-              <div>
-                <p><strong>Boundary Maintenance:</strong> {application.boundary_maintenance_approach}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium break-words"><strong>Boundary Maintenance:</strong> {application.boundary_maintenance_approach}</p>
               </div>
               
-              <div>
-                <p><strong>Comfort with Suicidal Thoughts:</strong> {application.comfortable_with_suicidal_thoughts}</p>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium break-words"><strong>Comfort with Suicidal Thoughts:</strong> {application.comfortable_with_suicidal_thoughts}</p>
               </div>
               
-              <div>
-                <p><strong>Self-Harm Protocol:</strong></p>
-                <div className="bg-gray-50 p-3 rounded mt-1">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium mb-2"><strong>Self-Harm Protocol:</strong></p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words">
                   {application.self_harm_protocol}
                 </div>
               </div>
@@ -523,29 +653,34 @@ const ApplicationDetailsModal = ({
           </section>
 
           {/* Availability & Technology */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Availability & Technology</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <p><strong>Weekly Hours:</strong> {application.weekly_hours_available}</p>
-                <p><strong>Session Length:</strong> {application.preferred_session_length}</p>
-                <p><strong>Video Comfort:</strong> {application.video_conferencing_comfort}</p>
-                <p><strong>Internet Quality:</strong> {application.internet_connection_quality}</p>
+          <section className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20 rounded-xl p-4 sm:p-6 border border-teal-200 dark:border-teal-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-teal-100 dark:bg-teal-900/30 rounded-full">
+                <Check className="w-4 h-4 sm:w-5 sm:h-5 text-teal-600 dark:text-teal-400" />
               </div>
-              <div>
-                <p><strong>Availability Times:</strong></p>
-                <div className="flex flex-wrap gap-1 mt-1">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Availability & Technology</h3>
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 text-sm">
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 space-y-3">
+                <p className="break-words"><strong>Weekly Hours:</strong> {application.weekly_hours_available}</p>
+                <p className="break-words"><strong>Session Length:</strong> {application.preferred_session_length}</p>
+                <p className="break-words"><strong>Video Comfort:</strong> {application.video_conferencing_comfort}</p>
+                <p className="break-words"><strong>Internet Quality:</strong> {application.internet_connection_quality}</p>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
+                <p className="font-medium mb-2"><strong>Availability Times:</strong></p>
+                <div className="flex flex-wrap gap-1 mt-1 mb-4">
                   {application.availability_times.map((time, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
+                    <Badge key={index} variant="outline" className="text-xs break-words">
                       {time}
                     </Badge>
                   ))}
                 </div>
                 
-                <p className="mt-3"><strong>Languages:</strong></p>
+                <p className="font-medium mb-2"><strong>Languages:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {application.languages_fluent.map((lang, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs">
+                    <Badge key={index} variant="secondary" className="text-xs break-words">
                       {lang}
                     </Badge>
                   ))}
@@ -555,21 +690,26 @@ const ApplicationDetailsModal = ({
           </section>
 
           {/* Professional References */}
-          <section>
-            <h3 className="text-lg font-semibold mb-4">Professional References</h3>
+          <section className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-xl p-4 sm:p-6 border border-indigo-200 dark:border-indigo-800">
+            <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-full">
+                <Users className="w-4 h-4 sm:w-5 sm:h-5 text-indigo-600 dark:text-indigo-400" />
+              </div>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Professional References</h3>
+            </div>
             <div className="grid gap-4">
               {application.references.map((ref, index) => (
-                <div key={index} className="border border-gray-200 rounded-lg p-4">
-                  <h4 className="font-medium">Reference {index + 1}</h4>
-                  <div className="grid grid-cols-2 gap-4 mt-2 text-sm">
-                    <div>
-                      <p><strong>Name:</strong> {ref.name}</p>
-                      <p><strong>Title:</strong> {ref.title}</p>
+                <div key={index} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 sm:p-4">
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-3">Reference {index + 1}</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
+                    <div className="space-y-2">
+                      <p className="break-words"><strong>Name:</strong> {ref.name}</p>
+                      <p className="break-words"><strong>Title:</strong> {ref.title}</p>
                     </div>
-                    <div>
-                      <p><strong>Organization:</strong> {ref.organization}</p>
-                      <p><strong>Email:</strong> {ref.email}</p>
-                      {ref.phone && <p><strong>Phone:</strong> {ref.phone}</p>}
+                    <div className="space-y-2">
+                      <p className="break-words"><strong>Organization:</strong> {ref.organization}</p>
+                      <p className="break-all"><strong>Email:</strong> {ref.email}</p>
+                      {ref.phone && <p className="break-words"><strong>Phone:</strong> {ref.phone}</p>}
                     </div>
                   </div>
                 </div>
@@ -579,50 +719,99 @@ const ApplicationDetailsModal = ({
 
           {/* Action Buttons */}
           {application.status === 'pending' && (
-            <div className="border-t pt-6">
-              <div className="flex justify-end space-x-4">
-                <Button
-                  onClick={() => setShowRejectionForm(true)}
-                  variant="destructive"
-                  disabled={loading}
-                >
-                  Reject Application
-                </Button>
-                
-                <Button
-                  onClick={handleApprove}
-                  className="bg-green-600 hover:bg-green-700"
-                  disabled={loading}
-                >
-                  {loading ? 'Processing...' : 'Approve Application'}
-                </Button>
+            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6 bg-gray-50 dark:bg-gray-800/50 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 rounded-b-xl">
+              <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4">
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">Application Review</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Make a decision on this application</p>
+                </div>
+                <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3">
+                  <Button
+                    onClick={() => setShowRejectionForm(true)}
+                    variant="outline"
+                    disabled={loading}
+                    className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 min-h-[44px] focus-ring"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Reject
+                  </Button>
+                  
+                  <Button
+                    onClick={handleApprove}
+                    disabled={loading}
+                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-[44px] focus-ring"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                        <span className="hidden sm:inline">Processing...</span>
+                        <span className="sm:hidden">Processing...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check className="w-4 h-4 mr-2" />
+                        <span className="hidden sm:inline">Approve Application</span>
+                        <span className="sm:hidden">Approve</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
               </div>
               
               {showRejectionForm && (
-                <div className="mt-4 p-4 border border-red-200 rounded-lg bg-red-50">
-                  <h4 className="font-medium text-red-800 mb-2">Rejection Reason</h4>
+                <div className="mt-4 p-4 sm:p-6 border border-red-200 dark:border-red-800 rounded-xl bg-red-50 dark:bg-red-900/20 animate-in slide-in-from-top duration-300">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+                      <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400" />
+                    </div>
+                    <h4 className="font-semibold text-red-800 dark:text-red-300 text-sm sm:text-base">Rejection Reason</h4>
+                  </div>
                   <textarea
                     value={rejectionReason}
-                    onChange={(e) => setRejectionReason(e.target.value)}
-                    className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500"
-                    rows={3}
-                    placeholder="Please provide a detailed reason for rejection..."
+                    onChange={(e) => {
+                      setRejectionReason(e.target.value);
+                      if (validationError) setValidationError('');
+                    }}
+                    className="w-full px-3 sm:px-4 py-3 border border-red-300 dark:border-red-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-sm sm:text-base min-h-[120px] focus-ring-inset"
+                    rows={4}
+                    placeholder="Please provide a detailed reason for rejection. This will be included in the notification email to the applicant..."
                   />
-                  <div className="flex justify-end space-x-2 mt-3">
+                  {validationError && (
+                    <p className="text-red-600 dark:text-red-400 text-sm mt-2 flex items-center">
+                      <AlertTriangle className="w-4 h-4 mr-1" />
+                      {validationError}
+                    </p>
+                  )}
+                  <div className="flex flex-col space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-3 mt-4">
                     <Button
-                      onClick={() => setShowRejectionForm(false)}
+                      onClick={() => {
+                        setShowRejectionForm(false);
+                        setRejectionReason('');
+                        setValidationError('');
+                      }}
                       variant="outline"
-                      size="sm"
+                      className="w-full sm:w-auto transition-all duration-200 min-h-[44px] order-2 sm:order-1 focus-ring"
                     >
                       Cancel
                     </Button>
                     <Button
                       onClick={handleReject}
-                      variant="destructive"
-                      size="sm"
                       disabled={loading || !rejectionReason.trim()}
+                      className="w-full sm:w-auto bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 min-h-[44px] order-1 sm:order-2 focus-ring"
                     >
-                      {loading ? 'Rejecting...' : 'Confirm Rejection'}
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <span className="hidden sm:inline">Rejecting...</span>
+                          <span className="sm:hidden">Rejecting...</span>
+                        </>
+                      ) : (
+                        <>
+                          <X className="w-4 h-4 mr-2" />
+                          <span className="hidden sm:inline">Confirm Rejection</span>
+                          <span className="sm:hidden">Reject</span>
+                        </>
+                      )}
                     </Button>
                   </div>
                 </div>
