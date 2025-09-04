@@ -215,7 +215,7 @@ export default function AdminDashboard() {
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-8">
           {[...Array(6)].map((_, i) => (
-            <div key={i} className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border min-h-[140px] sm:min-h-[160px]">
+            <div key={i} className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 min-h-[140px] sm:min-h-[160px]">
               <div className="animate-pulse">
                 <div className="h-4 sm:h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-4"></div>
                 <div className="h-8 sm:h-10 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-3"></div>
@@ -228,8 +228,8 @@ export default function AdminDashboard() {
         {/* Activity & Quick Actions Skeleton */}
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 mb-6">
           {/* Activity Section Skeleton */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div className="p-5 sm:p-6 pb-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-5 sm:p-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div className="h-6 sm:h-7 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse"></div>
             </div>
             <div className="p-5 sm:p-6">
@@ -249,8 +249,8 @@ export default function AdminDashboard() {
           </div>
           
           {/* Quick Actions Skeleton */}
-          <div className="bg-white rounded-xl shadow-sm border">
-            <div className="p-5 sm:p-6 pb-4 border-b border-gray-100">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-5 sm:p-6 pb-4 border-b border-gray-100 dark:border-gray-700">
               <div className="h-6 sm:h-7 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse"></div>
             </div>
             <div className="p-5 sm:p-6">
@@ -273,11 +273,11 @@ export default function AdminDashboard() {
         
         {/* System Status & Health Skeleton */}
         <div className="space-y-6">
-          <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border">
+          <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="h-6 sm:h-7 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse mb-5 sm:mb-6"></div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {[...Array(3)].map((_, i) => (
-                <div key={i} className="p-3 sm:p-4 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse">
+                <div key={i} className="p-3 sm:p-4 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse">
                   <div className="flex items-center space-x-4">
                     <div className="w-4 h-4 sm:w-5 sm:h-5 bg-gray-300 dark:bg-gray-600 rounded-full"></div>
                     <div className="flex-1">
@@ -290,11 +290,11 @@ export default function AdminDashboard() {
             </div>
           </div>
           
-          <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border">
+          <div className="bg-white dark:bg-gray-800 p-5 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
             <div className="h-6 sm:h-7 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse mb-5 sm:mb-6"></div>
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="text-center p-4 sm:p-5 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse">
+                <div key={i} className="text-center p-4 sm:p-5 rounded-xl bg-gray-100 dark:bg-gray-700 animate-pulse">
                   <div className="h-8 sm:h-10 bg-gray-300 dark:bg-gray-600 rounded w-3/4 mx-auto mb-2"></div>
                   <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-2/3 mx-auto"></div>
                 </div>
@@ -327,7 +327,7 @@ export default function AdminDashboard() {
               }`}
             >
               <Grid3x3 className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">Cards</span>
+              <span className="hidden sm:inline"></span>
             </button>
             <button
               onClick={() => setViewMode('compact')}
@@ -338,7 +338,7 @@ export default function AdminDashboard() {
               }`}
             >
               <BarChart3 className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">Compact</span>
+              <span className="hidden sm:inline"></span>
             </button>
             <button
               onClick={() => setViewMode('list')}
@@ -349,7 +349,7 @@ export default function AdminDashboard() {
               }`}
             >
               <List className="h-4 w-4 sm:mr-1.5" />
-              <span className="hidden sm:inline">List</span>
+              <span className="hidden sm:inline"></span>
             </button>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function AdminDashboard() {
           {statCards.map((card, index) => (
             <div 
               key={index} 
-              className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border hover:shadow-md hover:border-gray-300 transition-all duration-200 min-h-[120px] sm:min-h-[140px]"
+              className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 min-h-[120px] sm:min-h-[140px]"
             >
               <div className="flex items-center justify-between h-full">
                 <div className="flex-1 mr-3">
@@ -393,8 +393,8 @@ export default function AdminDashboard() {
 
       {/* Compact View */}
       {viewMode === 'compact' && (
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <div className="p-4 border-b border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
                 <BarChart3 className="h-5 w-5 mr-2" />
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
             <div className="grid grid-cols-3 gap-4 mb-4">
               {getPriorityStats().slice(0, 3).map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className={`inline-flex p-2 rounded-lg ${'bgColor' in stat ? stat.bgColor : 'bg-gray-100'} mb-2`}>
+                  <div className={`inline-flex p-2 rounded-lg ${'bgColor' in stat ? `${(stat as any).bgColor} dark:${(stat as any).bgColor.replace('-50', '-900/20')}` : 'bg-gray-100 dark:bg-gray-700'} mb-2`}>
                     <stat.icon className={`h-4 w-4 ${stat.color}`} />
                   </div>
                   <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
@@ -432,7 +432,7 @@ export default function AdminDashboard() {
             
             {/* Expandable Additional Stats */}
             {showAllStats && (
-              <div className="border-t border-gray-100 pt-4">
+              <div className="border-t border-gray-100 dark:border-gray-700 pt-4">
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {statCards.slice(3).map((card, index) => (
                     <div key={index} className="flex items-center p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
@@ -458,14 +458,14 @@ export default function AdminDashboard() {
 
       {/* List View */}
       {viewMode === 'list' && (
-        <div className="bg-white rounded-lg shadow-sm border mb-6">
-          <div className="p-4 border-b border-gray-100">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
               <List className="h-5 w-5 mr-2" />
               Statistics
             </h3>
           </div>
-          <div className="divide-y divide-gray-100">
+          <div className="divide-y divide-gray-100 dark:divide-gray-700">
             {statCards.map((card, index) => (
               <div key={index} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
                 <div className="flex items-center justify-between">
@@ -502,10 +502,10 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Collapsible Sections Layout */}
-      <div className="space-y-4 sm:space-y-6">
+      {/* Main Dashboard Sections Layout with Consistent Spacing */}
+      <div className="space-y-6">
         {/* Recent Activity - Collapsible */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <button
               onClick={() => toggleSection('activity')}
@@ -538,7 +538,7 @@ export default function AdminDashboard() {
           </div>
           
           {expandedSections.activity && (
-            <div className="border-t border-gray-100 p-4">
+            <div className="border-t border-gray-100 dark:border-gray-700 p-4">
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3].map((i) => (
@@ -605,7 +605,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions - Collapsible */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <button
             onClick={() => toggleSection('actions')}
             className="w-full p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
@@ -620,7 +620,7 @@ export default function AdminDashboard() {
           </button>
           
           {expandedSections.actions && (
-            <div className="border-t border-gray-100 p-4">
+            <div className="border-t border-gray-100 dark:border-gray-700 p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <button 
                   onClick={() => window.location.href = '/admin/coach-applications'}
@@ -693,77 +693,77 @@ export default function AdminDashboard() {
             </div>
           )}
         </div>
-      </div>
 
-      {/* System Status & Health - Compact Horizontal Cards */}
-      <div className="bg-white rounded-lg shadow-sm border mb-4">
-        <div className="p-4 border-b border-gray-100">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">System Status</h3>
-        </div>
-        <div className="p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-              <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">API</span>
-                <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+        {/* System Status & Health - Compact Horizontal Cards */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">System Status</h3>
+          </div>
+          <div className="p-4">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">API</span>
+                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-              <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Database</span>
-                <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Database</span>
+                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+                </div>
               </div>
-            </div>
-            <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-              <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-              <div className="flex-1 min-w-0">
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Services</span>
-                <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Services</span>
+                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Platform Health - Horizontal Layout */}
-      <div className="bg-white rounded-lg shadow-sm border">
-        <div className="p-4 border-b border-gray-100">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Platform Health</h3>
-        </div>
-        <div className="p-4">
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-              <div className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 mb-1">
-                98.5%
+        {/* Platform Health - Horizontal Layout */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+          <div className="p-4 border-b border-gray-100 dark:border-gray-700">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Platform Health</h3>
+          </div>
+          <div className="p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+                <div className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 mb-1">
+                  98.5%
+                </div>
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Uptime
+                </div>
               </div>
-              <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Uptime
+              <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
+                <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                  1.2s
+                </div>
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Response
+                </div>
               </div>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
-              <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                1.2s
+              <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
+                <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                  99.2%
+                </div>
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Success
+                </div>
               </div>
-              <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Response
-              </div>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
-              <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                99.2%
-              </div>
-              <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Success
-              </div>
-            </div>
-            <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-900/10">
-              <div className="text-lg sm:text-xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                0
-              </div>
-              <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                Issues
+              <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-900/10">
+                <div className="text-lg sm:text-xl font-bold text-orange-600 dark:text-orange-400 mb-1">
+                  0
+                </div>
+                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                  Issues
+                </div>
               </div>
             </div>
           </div>

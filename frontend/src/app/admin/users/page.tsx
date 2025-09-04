@@ -735,7 +735,7 @@ export default function UserManagement() {
         </div>
 
         {/* Filter Skeleton */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="flex gap-4">
             <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
             <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
@@ -743,7 +743,7 @@ export default function UserManagement() {
         </div>
 
         {/* Table Skeleton */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {[...Array(5)].map((_, i) => (
             <div key={i} className="p-4 border-b animate-pulse">
               <div className="flex items-center space-x-4">
@@ -809,7 +809,7 @@ export default function UserManagement() {
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 lg:max-w-md">
             <div className="relative">
@@ -819,7 +819,7 @@ export default function UserManagement() {
                 placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -827,7 +827,7 @@ export default function UserManagement() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
           >
             <option value="all">All Status</option>
             <option value="active">Active</option>
@@ -841,24 +841,24 @@ export default function UserManagement() {
       </div>
 
       {/* Users Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   User
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Joined
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Last Login
                 </th>
                 <th className="relative px-6 py-3">
@@ -866,9 +866,9 @@ export default function UserManagement() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {Array.isArray(filteredUsers) && filteredUsers.length > 0 ? filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
@@ -879,15 +879,15 @@ export default function UserManagement() {
                         </div>
                       </div>
                       <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
                         </div>
-                        <div className="text-sm text-gray-500 flex items-center">
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                           <Mail className="h-3 w-3 mr-1" />
                           {user.email}
                         </div>
                         {user.phone && (
-                          <div className="text-sm text-gray-500 flex items-center">
+                          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                             <Phone className="h-3 w-3 mr-1" />
                             {user.phone}
                           </div>
@@ -901,30 +901,30 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     {getStatusBadge(user.status)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="relative">
                       <button
                         onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
-                        className="text-gray-400 hover:text-gray-600"
+                        className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                       >
                         <MoreVertical className="h-5 w-5" />
                       </button>
                       
                       {showActionMenu === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
                           <div className="py-1">
                             <button
                               onClick={() => {
                                 openEditModal(user);
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                             >
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
@@ -934,7 +934,7 @@ export default function UserManagement() {
                                 openEditModal(user);
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Profile
@@ -944,7 +944,7 @@ export default function UserManagement() {
                                 handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 w-full text-left"
+                              className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
                             >
                               <LogIn className="h-4 w-4 mr-2" />
                               Login As User
@@ -953,14 +953,14 @@ export default function UserManagement() {
                               <>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'deactivate', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-orange-700 hover:bg-orange-50 w-full text-left"
+                                  className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
                                 >
                                   <UserX className="h-4 w-4 mr-2" />
                                   Deactivate User
                                 </button>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'suspend', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left"
+                                  className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
                                 >
                                   <Ban className="h-4 w-4 mr-2" />
                                   Suspend User
@@ -969,7 +969,7 @@ export default function UserManagement() {
                             ) : user.status === 'inactive' ? (
                               <button
                                 onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left"
+                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Activate User
@@ -977,7 +977,7 @@ export default function UserManagement() {
                             ) : user.status === 'suspended' ? (
                               <button
                                 onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left"
+                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Reactivate User
@@ -985,7 +985,7 @@ export default function UserManagement() {
                             ) : (
                               <button
                                 onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left"
+                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Activate User
@@ -994,7 +994,7 @@ export default function UserManagement() {
                             {user.role === 'coach' && user.status === 'pending' && (
                               <button
                                 onClick={() => handleUserAction(user.id, 'approve', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left"
+                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
                               >
                                 <CheckCircle className="h-4 w-4 mr-2" />
                                 Approve Coach
@@ -1002,7 +1002,7 @@ export default function UserManagement() {
                             )}
                             <button
                               onClick={() => handleDeleteUser(user.id, user.role)}
-                              className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left"
+                              className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
                             >
                               <Trash2 className="h-4 w-4 mr-2" />
                               Delete User
@@ -1015,7 +1015,7 @@ export default function UserManagement() {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                     {isLoading ? 'Loading users...' : 'No users found'}
                   </td>
                 </tr>
@@ -1028,7 +1028,7 @@ export default function UserManagement() {
       {/* Enhanced User Modal */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
               <h3 className="text-lg font-semibold">
                 {isEditMode ? 'Edit User' : 'Create New User'}

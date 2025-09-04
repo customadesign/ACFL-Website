@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { X, User, Users, Check, AlertTriangle, FileCheck } from 'lucide-react';
+import CoachApplicationSkeleton from '@/components/CoachApplicationSkeleton';
 
 // Simple Badge component since ui/badge doesn't exist
 const Badge = ({ children, className = '', variant = 'default' }: {
@@ -15,10 +16,10 @@ const Badge = ({ children, className = '', variant = 'default' }: {
 }) => {
   const baseClasses = 'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium';
   const variantClasses = {
-    default: 'bg-blue-100 text-blue-800',
-    secondary: 'bg-gray-100 text-gray-800',
-    outline: 'border border-gray-300 text-gray-700',
-    destructive: 'bg-red-100 text-red-800'
+    default: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+    secondary: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    outline: 'border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300',
+    destructive: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
   };
   
   return (
@@ -218,11 +219,11 @@ export default function CoachApplicationsPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-      under_review: { color: 'bg-blue-100 text-blue-800', label: 'Under Review' },
-      approved: { color: 'bg-green-100 text-green-800', label: 'Approved' },
-      rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' },
-      suspended: { color: 'bg-gray-100 text-gray-800', label: 'Suspended' }
+      pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Pending' },
+      under_review: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', label: 'Under Review' },
+      approved: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'Approved' },
+      rejected: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Rejected' },
+      suspended: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300', label: 'Suspended' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;
@@ -244,19 +245,23 @@ export default function CoachApplicationsPage() {
     });
   };
 
+  if (loading) {
+    return <CoachApplicationSkeleton count={5} />;
+  }
+
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
       <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Coach Applications</h1>
-          <p className="text-sm sm:text-base text-gray-600">Review and manage coach verification applications</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Coach Applications</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Review and manage coach verification applications</p>
         </div>
         
         <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm focus-ring-inset"
+            className="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm focus-ring-inset"
           >
             <option value="all">All Applications</option>
             <option value="pending">Pending</option>
@@ -266,10 +271,10 @@ export default function CoachApplicationsPage() {
             <option value="suspended">Suspended</option>
           </select>
           
-          <Button 
-            onClick={() => fetchApplications()} 
+          <Button
+            onClick={() => fetchApplications()}
             variant="outline"
-            className="w-full sm:w-auto min-h-[44px]"
+            className="w-full sm:w-auto min-h-[44px] dark:text-white"
           >
             Refresh
           </Button>
@@ -278,25 +283,20 @@ export default function CoachApplicationsPage() {
 
       {/* Applications List */}
       <div className="grid gap-3 sm:gap-4">
-        {loading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-2 text-gray-600">Loading applications...</p>
-          </div>
-        ) : applications.length === 0 ? (
-          <Card>
+        {applications.length === 0 ? (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="text-center py-8">
-              <p className="text-gray-600">No applications found</p>
+              <p className="text-gray-600 dark:text-gray-400">No applications found</p>
             </CardContent>
           </Card>
         ) : (
           applications.map((application) => (
-            <Card key={application.id} className="hover:shadow-md transition-shadow">
+            <Card key={application.id} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3 mb-3">
-                      <h3 className="text-lg font-semibold truncate">
+                      <h3 className="text-lg font-semibold truncate text-gray-900 dark:text-white">
                         {application.first_name} {application.last_name}
                       </h3>
                       <div className="flex-shrink-0">
@@ -304,7 +304,7 @@ export default function CoachApplicationsPage() {
                       </div>
                     </div>
                     
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm text-gray-600">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
                       <div className="space-y-1">
                         <p className="break-all"><strong>Email:</strong> {application.email}</p>
                         <p><strong>Phone:</strong> {application.phone || 'Not provided'}</p>
@@ -318,7 +318,7 @@ export default function CoachApplicationsPage() {
                     </div>
                     
                     <div className="mt-3">
-                      <p className="text-sm text-gray-600 break-words">
+                      <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
                         <strong>Expertise:</strong> {application.coaching_expertise.slice(0, 3).join(', ')}
                         {application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
                       </p>
@@ -493,7 +493,7 @@ const ApplicationDetailsModal = ({
               <Button 
                 onClick={handleClose} 
                 variant="ghost"
-                className="hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full h-8 w-8 sm:h-10 sm:w-10 p-0 min-h-[44px] sm:min-h-0 focus-ring"
+                className="hover:bg-gray-100 dark:text-white dark:hover:bg-gray-800 rounded-full h-8 w-8 sm:h-10 sm:w-10 p-0 min-h-[44px] sm:min-h-0 focus-ring"
                 aria-label="Close modal"
               >
                 <X className="w-4 h-4 sm:w-5 sm:h-5" />
@@ -620,32 +620,32 @@ const ApplicationDetailsModal = ({
             </div>
             <div className="space-y-4 text-sm">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium mb-2"><strong>Scope Handling Approach:</strong></p>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words">
+                <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Scope Handling Approach:</strong></p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words text-gray-900 dark:text-white">
                   {application.scope_handling_approach}
                 </div>
               </div>
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium break-words"><strong>Professional Discipline History:</strong> {application.professional_discipline_history ? 'Yes' : 'No'}</p>
+                <p className="font-medium break-words text-gray-900 dark:text-white"><strong>Professional Discipline History:</strong> {application.professional_discipline_history ? 'Yes' : 'No'}</p>
                 {application.professional_discipline_history && application.discipline_explanation && (
                   <div className="bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded mt-2">
-                    <p className="break-words"><strong>Explanation:</strong> {application.discipline_explanation}</p>
+                    <p className="break-words text-gray-900 dark:text-white"><strong>Explanation:</strong> {application.discipline_explanation}</p>
                   </div>
                 )}
               </div>
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium break-words"><strong>Boundary Maintenance:</strong> {application.boundary_maintenance_approach}</p>
+                <p className="font-medium break-words text-gray-900 dark:text-white"><strong>Boundary Maintenance:</strong> {application.boundary_maintenance_approach}</p>
               </div>
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium break-words"><strong>Comfort with Suicidal Thoughts:</strong> {application.comfortable_with_suicidal_thoughts}</p>
+                <p className="font-medium break-words text-gray-900 dark:text-white"><strong>Comfort with Suicidal Thoughts:</strong> {application.comfortable_with_suicidal_thoughts}</p>
               </div>
               
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium mb-2"><strong>Self-Harm Protocol:</strong></p>
-                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words">
+                <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Self-Harm Protocol:</strong></p>
+                <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded mt-1 break-words text-gray-900 dark:text-white">
                   {application.self_harm_protocol}
                 </div>
               </div>
@@ -662,13 +662,13 @@ const ApplicationDetailsModal = ({
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 text-sm">
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700 space-y-3">
-                <p className="break-words"><strong>Weekly Hours:</strong> {application.weekly_hours_available}</p>
-                <p className="break-words"><strong>Session Length:</strong> {application.preferred_session_length}</p>
-                <p className="break-words"><strong>Video Comfort:</strong> {application.video_conferencing_comfort}</p>
-                <p className="break-words"><strong>Internet Quality:</strong> {application.internet_connection_quality}</p>
+                <p className="break-words text-gray-900 dark:text-white"><strong>Weekly Hours:</strong> {application.weekly_hours_available}</p>
+                <p className="break-words text-gray-900 dark:text-white"><strong>Session Length:</strong> {application.preferred_session_length}</p>
+                <p className="break-words text-gray-900 dark:text-white"><strong>Video Comfort:</strong> {application.video_conferencing_comfort}</p>
+                <p className="break-words text-gray-900 dark:text-white"><strong>Internet Quality:</strong> {application.internet_connection_quality}</p>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
-                <p className="font-medium mb-2"><strong>Availability Times:</strong></p>
+                <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Availability Times:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1 mb-4">
                   {application.availability_times.map((time, index) => (
                     <Badge key={index} variant="outline" className="text-xs break-words">
@@ -677,7 +677,7 @@ const ApplicationDetailsModal = ({
                   ))}
                 </div>
                 
-                <p className="font-medium mb-2"><strong>Languages:</strong></p>
+                <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Languages:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {application.languages_fluent.map((lang, index) => (
                     <Badge key={index} variant="secondary" className="text-xs break-words">
@@ -703,13 +703,13 @@ const ApplicationDetailsModal = ({
                   <h4 className="font-medium text-gray-900 dark:text-white mb-3">Reference {index + 1}</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
                     <div className="space-y-2">
-                      <p className="break-words"><strong>Name:</strong> {ref.name}</p>
-                      <p className="break-words"><strong>Title:</strong> {ref.title}</p>
+                      <p className="break-words text-gray-900 dark:text-white"><strong>Name:</strong> {ref.name}</p>
+                      <p className="break-words text-gray-900 dark:text-white"><strong>Title:</strong> {ref.title}</p>
                     </div>
                     <div className="space-y-2">
-                      <p className="break-words"><strong>Organization:</strong> {ref.organization}</p>
-                      <p className="break-all"><strong>Email:</strong> {ref.email}</p>
-                      {ref.phone && <p className="break-words"><strong>Phone:</strong> {ref.phone}</p>}
+                      <p className="break-words text-gray-900 dark:text-white"><strong>Organization:</strong> {ref.organization}</p>
+                      <p className="break-all text-gray-900 dark:text-white"><strong>Email:</strong> {ref.email}</p>
+                      {ref.phone && <p className="break-words text-gray-900 dark:text-white"><strong>Phone:</strong> {ref.phone}</p>}
                     </div>
                   </div>
                 </div>
@@ -826,11 +826,11 @@ const ApplicationDetailsModal = ({
 
 const getStatusBadge = (status: string) => {
   const statusConfig = {
-    pending: { color: 'bg-yellow-100 text-yellow-800', label: 'Pending' },
-    under_review: { color: 'bg-blue-100 text-blue-800', label: 'Under Review' },
-    approved: { color: 'bg-green-100 text-green-800', label: 'Approved' },
-    rejected: { color: 'bg-red-100 text-red-800', label: 'Rejected' },
-    suspended: { color: 'bg-gray-100 text-gray-800', label: 'Suspended' }
+    pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', label: 'Pending' },
+    under_review: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', label: 'Under Review' },
+    approved: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', label: 'Approved' },
+    rejected: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', label: 'Rejected' },
+    suspended: { color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300', label: 'Suspended' }
   };
 
   const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.pending;

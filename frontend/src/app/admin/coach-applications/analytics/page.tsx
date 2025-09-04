@@ -98,11 +98,11 @@ export default function CoachApplicationAnalytics() {
     return (
       <div className="space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold">Coach Application Analytics</h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Coach Application Analytics</h1>
         </div>
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading analytics...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400 mx-auto"></div>
+          <p className="mt-2 text-gray-600 dark:text-gray-400">Loading analytics...</p>
         </div>
       </div>
     );
@@ -124,15 +124,15 @@ export default function CoachApplicationAnalytics() {
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold">Coach Application Analytics</h1>
-          <p className="text-gray-600">Insights and trends for coach applications</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Coach Application Analytics</h1>
+          <p className="text-gray-600 dark:text-gray-400">Insights and trends for coach applications</p>
         </div>
         
         <div className="flex items-center space-x-4">
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
           >
             <option value="1m">Last Month</option>
             <option value="3m">Last 3 Months</option>
@@ -141,7 +141,7 @@ export default function CoachApplicationAnalytics() {
             <option value="all">All Time</option>
           </select>
           
-          <Button onClick={fetchAnalytics} variant="outline">
+          <Button onClick={fetchAnalytics} variant="outline" className='h-8 px-3 dark:text-white'>
             Refresh
           </Button>
         </div>
@@ -153,10 +153,10 @@ export default function CoachApplicationAnalytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Applications</p>
-                <p className="text-2xl font-bold text-gray-900">{stats?.total || 0}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Applications</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats?.total || 0}</p>
               </div>
-              <Users className="w-8 h-8 text-blue-600" />
+              <Users className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -165,12 +165,12 @@ export default function CoachApplicationAnalytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Approval Rate</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Approval Rate</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                   {stats?.total ? Math.round((stats.approved / stats.total) * 100) : 0}%
                 </p>
               </div>
-              <CheckCircle className="w-8 h-8 text-green-600" />
+              <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -179,10 +179,10 @@ export default function CoachApplicationAnalytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Pending Review</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats?.pending || 0}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Pending Review</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats?.pending || 0}</p>
               </div>
-              <AlertCircle className="w-8 h-8 text-yellow-600" />
+              <AlertCircle className="w-8 h-8 text-yellow-600 dark:text-yellow-400" />
             </div>
           </CardContent>
         </Card>
@@ -191,12 +191,12 @@ export default function CoachApplicationAnalytics() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Avg Review Time</p>
-                <p className="text-2xl font-bold text-blue-600">
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg Review Time</p>
+                <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                   {stats?.averageReviewTime || 0}h
                 </p>
               </div>
-              <Clock className="w-8 h-8 text-blue-600" />
+              <Clock className="w-8 h-8 text-blue-600 dark:text-blue-400" />
             </div>
           </CardContent>
         </Card>
@@ -244,10 +244,17 @@ export default function CoachApplicationAnalytics() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={analyticsData?.monthlyTrends || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="month" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                  <XAxis dataKey="month" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <YAxis tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--foreground)'
+                    }}
+                  />
                   <Line 
                     type="monotone" 
                     dataKey="applications" 
@@ -281,16 +288,24 @@ export default function CoachApplicationAnalytics() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={analyticsData?.expertiseDistribution?.slice(0, 8) || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis 
-                    dataKey="name" 
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                  <XAxis
+                    dataKey="name"
                     angle={-45}
                     textAnchor="end"
                     height={80}
                     fontSize={12}
+                    tick={{ fill: 'currentColor' }}
                   />
-                  <YAxis />
-                  <Tooltip />
+                  <YAxis tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--foreground)'
+                    }}
+                  />
                   <Bar dataKey="count" fill="#3B82F6" />
                 </BarChart>
               </ResponsiveContainer>
@@ -308,10 +323,17 @@ export default function CoachApplicationAnalytics() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={analyticsData?.experienceDistribution || []}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
+                  <CartesianGrid strokeDasharray="3 3" stroke="currentColor" opacity={0.1} />
+                  <XAxis dataKey="name" tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <YAxis tick={{ fill: 'currentColor', fontSize: 12 }} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderRadius: '8px',
+                      color: 'var(--foreground)'
+                    }}
+                  />
                   <Bar dataKey="count" fill="#10B981" />
                 </BarChart>
               </ResponsiveContainer>
@@ -329,20 +351,20 @@ export default function CoachApplicationAnalytics() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Approval Rate</span>
-                <span className="font-medium">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Approval Rate</span>
+                <span className="font-medium text-gray-900 dark:text-white">
                   {stats?.total ? Math.round((stats.approved / stats.total) * 100) : 0}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Rejection Rate</span>
-                <span className="font-medium">
+                <span className="text-sm text-gray-600 dark:text-gray-400">Rejection Rate</span>
+                <span className="font-medium text-gray-900 dark:text-white">
                   {stats?.total ? Math.round((stats.rejected / stats.total) * 100) : 0}%
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Under Review</span>
-                <span className="font-medium">{stats?.under_review || 0}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Under Review</span>
+                <span className="font-medium text-gray-900 dark:text-white">{stats?.under_review || 0}</span>
               </div>
             </div>
           </CardContent>
@@ -355,16 +377,16 @@ export default function CoachApplicationAnalytics() {
           <CardContent>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Avg Review Time</span>
-                <span className="font-medium">{stats?.averageReviewTime || 0} hours</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Avg Review Time</span>
+                <span className="font-medium text-gray-900 dark:text-white">{stats?.averageReviewTime || 0} hours</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">Pending Applications</span>
-                <span className="font-medium">{stats?.pending || 0}</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">Pending Applications</span>
+                <span className="font-medium text-gray-900 dark:text-white">{stats?.pending || 0}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-sm text-gray-600">This Month</span>
-                <span className="font-medium">
+                <span className="text-sm text-gray-600 dark:text-gray-400">This Month</span>
+                <span className="font-medium text-gray-900 dark:text-white">
                   {analyticsData?.monthlyTrends?.[analyticsData.monthlyTrends.length - 1]?.applications || 0}
                 </span>
               </div>
@@ -423,16 +445,16 @@ export default function CoachApplicationAnalytics() {
               {analyticsData?.expertiseDistribution?.slice(0, 10).map((item, index) => (
                 <div key={item.name} className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <span className="text-sm font-medium text-gray-500">#{index + 1}</span>
-                    <span className="text-sm text-gray-900">{item.name}</span>
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">#{index + 1}</span>
+                    <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
                   </div>
                   <div className="flex items-center space-x-2">
-                    <span className="text-sm font-medium">{item.count}</span>
-                    <span className="text-xs text-gray-500">({item.percentage}%)</span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{item.count}</span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">({item.percentage}%)</span>
                   </div>
                 </div>
               )) || (
-                <p className="text-gray-500 text-center py-4">No data available</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No data available</p>
               )}
             </div>
           </CardContent>
@@ -448,21 +470,21 @@ export default function CoachApplicationAnalytics() {
             <div className="space-y-3">
               {analyticsData?.experienceDistribution?.map((item, index) => (
                 <div key={item.name} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-900">{item.name}</span>
+                  <span className="text-sm text-gray-900 dark:text-white">{item.name}</span>
                   <div className="flex items-center space-x-2">
-                    <div className="w-20 bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full"
-                        style={{ 
-                          width: `${(item.count / (stats?.total || 1)) * 100}%` 
+                    <div className="w-20 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div
+                        className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full"
+                        style={{
+                          width: `${(item.count / (stats?.total || 1)) * 100}%`
                         }}
                       />
                     </div>
-                    <span className="text-sm font-medium w-8 text-right">{item.count}</span>
+                    <span className="text-sm font-medium w-8 text-right text-gray-900 dark:text-white">{item.count}</span>
                   </div>
                 </div>
               )) || (
-                <p className="text-gray-500 text-center py-4">No data available</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-4">No data available</p>
               )}
             </div>
           </CardContent>

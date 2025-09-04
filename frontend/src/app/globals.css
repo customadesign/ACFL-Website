@@ -53,39 +53,6 @@
   transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
-/* Theme toggle animations */
-@keyframes themeToggleIcon {
-  0% { transform: rotate(0deg) scale(1); opacity: 1; }
-  50% { transform: rotate(180deg) scale(0.8); opacity: 0.5; }
-  100% { transform: rotate(360deg) scale(1); opacity: 1; }
-}
-
-.theme-toggle-icon-animate {
-  animation: themeToggleIcon 0.4s ease-in-out;
-}
-
-/* Mobile dropdown slide animation */
-@keyframes slideInFromTop {
-  from {
-    opacity: 0;
-    transform: translateY(-10px) scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-/* Loading spinner for theme toggle */
-@keyframes spinTheme {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
 
 /* Custom scrollbar styles */
 .custom-scrollbar {
@@ -316,12 +283,3 @@
 } 
 
 
-/* Remove default white background */
-.Toastify__toast {
-  background: transparent !important;
-  box-shadow: none !important;
-  padding: 0 !important;
-}
-.custom-toast.Toastify__toast {
-  @apply bg-transparent shadow-none border-none p-0;
-}

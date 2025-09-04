@@ -68,33 +68,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const token = localStorage.getItem('token');
       if (token) {
         try {
-          console.log('Checking authentication with token...');
-          const response = await axios.get(`${API_URL}/api/auth/profile`);
+          console.log(`Checking authentication with token... (attempt ${retryCount + 1})`);
+          console.log('API URL:', API_URL);
+          
+          const response = await axios.get(`${API_URL}/api/auth/profile`, {
+            timeout: 10000, // 10 second timeout
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+          
           console.log('Auth check successful:', response.data.user);
           setUser(response.data.user);
         } catch (error: any) {
           console.error('Auth check failed:', error);
+          console.error('Error details:', {
+            message: error.message,
+            code: error.code,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data
+          });
+          
           // Only remove token if it's a 401 or 404 error (not network issues)
           if (error.response?.status === 401 || error.response?.status === 404) {
-            console.log('Removing invalid token');
+            console.log('Removing invalid token due to auth error');
             localStorage.removeItem('token');
             try {
-              try {
-      delete axios.defaults.headers.common['Authorization'];
-    } catch (error) {
-      console.warn('Could not delete axios default headers:', error);
-    }
-            } catch (error) {
-              console.warn('Could not delete axios default headers:', error);
+              delete axios.defaults.headers.common['Authorization'];
+            } catch (headerError) {
+              console.warn('Could not delete axios default headers:', headerError);
             }
             setUser(null);
-          } else if (retryCount < 2) {
-            // Retry on network errors
-            console.log(`Network error, retrying... (${retryCount + 1}/3)`);
-            setTimeout(() => checkAuth(retryCount + 1), 1000);
-            return;
+          } else if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED' || !error.response) {
+            // Network error - retry with exponential backoff
+            if (retryCount < 3) {
+              const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+              console.log(`Network error, retrying in ${delay}ms... (${retryCount + 1}/4)`);
+              setTimeout(() => checkAuth(retryCount + 1), delay);
+              return;
+            } else {
+              console.log('Max retries reached for network error, keeping token for manual retry');
+              console.log('User can try refreshing the page or check network connection');
+            }
           } else {
-            console.log('Max retries reached, keeping token for manual retry');
+            console.log('Unknown error during auth check, keeping token');
           }
         }
       } else {
@@ -104,15 +123,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthChecked(true);
     };
 
-    checkAuth();
+    // Add a small delay to ensure the app is fully mounted
+    const timer = setTimeout(() => {
+      checkAuth();
+    }, 100);
+
+    return () => clearTimeout(timer);
   }, []);
 
   const login = async (email: string, password: string, skipRedirect?: boolean) => {
     try {
       console.log('Attempting login with:', email);
+      console.log('API URL:', API_URL);
+      
       const response = await axios.post(`${API_URL}/api/auth/login`, {
         email,
         password
+      }, {
+        timeout: 10000, // 10 second timeout
+        headers: {
+          'Content-Type': 'application/json'
+        }
       });
 
       const { token, user } = response.data;
@@ -163,15 +194,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     } catch (error: any) {
       console.error('Login error:', error);
+      console.error('Login error details:', {
+        message: error.message,
+        code: error.code,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data
+      });
+      
+      // Handle network errors
+      if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED' || !error.response) {
+        throw new Error('Unable to connect to server. Please check your internet connection and try again.');
+      }
       
       // Handle account status errors specifically
       if (error.response?.status === 403) {
         const { message, statusCode } = error.response.data;
         
         // These are account status issues, show the message directly
-        if (statusCode === 'ACCOUNT_SUSPENDED' || 
-            statusCode === 'ACCOUNT_DEACTIVATED' || 
-            statusCode === 'ACCOUNT_REJECTED' || 
+        if (statusCode === 'ACCOUNT_SUSPENDED' ||
+            statusCode === 'ACCOUNT_DEACTIVATED' ||
+            statusCode === 'ACCOUNT_REJECTED' ||
             statusCode === 'ACCOUNT_PENDING') {
           throw new Error(message);
         }

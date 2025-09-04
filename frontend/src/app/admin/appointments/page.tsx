@@ -250,16 +250,16 @@ export default function AppointmentManagement() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig = {
-      scheduled: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Scheduled' },
-      confirmed: { color: 'bg-blue-100 text-blue-800', icon: CheckCircle, label: 'Confirmed' },
-      completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Completed' },
-      cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
-      'no-show': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle, label: 'No Show' },
-      pending: { color: 'bg-yellow-100 text-yellow-800', icon: Clock, label: 'Pending' }
+      scheduled: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', icon: Clock, label: 'Scheduled' },
+      confirmed: { color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', icon: CheckCircle, label: 'Confirmed' },
+      completed: { color: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300', icon: CheckCircle, label: 'Completed' },
+      cancelled: { color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', icon: XCircle, label: 'Cancelled' },
+      'no-show': { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', icon: AlertCircle, label: 'No Show' },
+      pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', icon: Clock, label: 'Pending' }
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || {
-      color: 'bg-gray-100 text-gray-800',
+      color: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
       icon: AlertCircle,
       label: status.charAt(0).toUpperCase() + status.slice(1)
     };
@@ -302,14 +302,14 @@ export default function AppointmentManagement() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
         {/* Header Skeleton */}
         <div className="mb-8">
-          <div className="h-9 bg-gray-200 rounded w-1/3 animate-pulse mb-3"></div>
-          <div className="h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+          <div className="h-9 bg-gray-200 dark:bg-gray-700 rounded w-1/3 animate-pulse mb-3"></div>
+          <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-1/2 animate-pulse"></div>
         </div>
         
         {/* Stats Cards Skeleton */}
         <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-6">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="bg-white p-4 rounded-lg shadow-sm border animate-pulse">
+            <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
               <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
               <div className="h-6 bg-gray-200 rounded w-1/2"></div>
             </div>
@@ -317,23 +317,23 @@ export default function AppointmentManagement() {
         </div>
         
         {/* Filters Skeleton */}
-        <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
           <div className="flex gap-4">
-            <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
-            <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
-            <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
+            <div className="flex-1 h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+            <div className="w-32 h-10 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
           </div>
         </div>
         
         {/* Table Skeleton */}
-        <div className="bg-white rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 border-b animate-pulse">
+            <div key={i} className="p-4 border-b border-gray-200 dark:border-gray-700 animate-pulse">
               <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
+                <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
                 <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
+                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/3"></div>
                 </div>
               </div>
             </div>
@@ -353,30 +353,30 @@ export default function AppointmentManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 mb-6">
-        <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Total</div>
           <div className="text-2xl font-bold text-gray-900 dark:text-white mt-1">{stats.total}</div>
         </div>
-        <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Confirmed</div>
           <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 mt-1">{stats.scheduled}</div>
         </div>
-        <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</div>
           <div className="text-2xl font-bold text-green-600 dark:text-green-400 mt-1">{stats.completed}</div>
         </div>
-        <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">Cancelled</div>
           <div className="text-2xl font-bold text-red-600 dark:text-red-400 mt-1">{stats.cancelled}</div>
         </div>
-        <div className="bg-white p-4 sm:p-5 rounded-lg shadow-sm border">
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="text-sm font-medium text-gray-600 dark:text-gray-400">No Shows</div>
           <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400 mt-1">{stats.noShow}</div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white p-6 rounded-lg shadow-sm border mb-6">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
         <div className="flex flex-col lg:flex-row gap-4">
           <div className="flex-1 lg:max-w-md">
             <div className="relative">
@@ -386,7 +386,7 @@ export default function AppointmentManagement() {
                 placeholder="Search appointments..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function AppointmentManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
             >
               <option value="all">All Status</option>
               <option value="confirmed">Confirmed</option>
@@ -408,7 +408,7 @@ export default function AppointmentManagement() {
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
+              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
             >
               <option value="all">All Dates</option>
               <option value="today">Today</option>
@@ -420,24 +420,24 @@ export default function AppointmentManagement() {
       </div>
 
       {/* Appointments Table */}
-      <div className="bg-white rounded-lg shadow-sm border overflow-hidden mb-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden mb-6">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
+          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+            <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Client
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Coach
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Date & Time
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Type
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Status
                 </th>
                 <th className="relative px-6 py-3">
@@ -445,11 +445,11 @@ export default function AppointmentManagement() {
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {filteredAppointments.map((appointment) => {
                 const { date, time } = formatDateTime(appointment.date, appointment.time);
                 return (
-                  <tr key={appointment.id} className="hover:bg-gray-50">
+                  <tr key={appointment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
@@ -458,8 +458,8 @@ export default function AppointmentManagement() {
                           </div>
                         </div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{appointment.clientName}</div>
-                          <div className="text-sm text-gray-500">{appointment.clientEmail}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.clientName}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{appointment.clientEmail}</div>
                         </div>
                       </div>
                     </td>
@@ -471,17 +471,17 @@ export default function AppointmentManagement() {
                           </div>
                         </div>
                         <div className="ml-3">
-                          <div className="text-sm font-medium text-gray-900">{appointment.coachName}</div>
-                          <div className="text-sm text-gray-500">{appointment.coachEmail}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.coachName}</div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">{appointment.coachEmail}</div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 flex items-center">
+                      <div className="text-sm text-gray-900 dark:text-white flex items-center">
                         <Calendar className="h-4 w-4 mr-1 text-gray-400" />
                         {date}
                       </div>
-                      <div className="text-sm text-gray-500 flex items-center">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
                         <Clock className="h-4 w-4 mr-1 text-gray-400" />
                         {time} ({appointment.duration} min)
                       </div>
@@ -489,7 +489,7 @@ export default function AppointmentManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         {getTypeIcon(appointment.type)}
-                        <span className="ml-2 text-sm text-gray-900 capitalize">
+                        <span className="ml-2 text-sm text-gray-900 dark:text-white capitalize">
                           {appointment.type === 'video' ? 'Video Call' : 'In Person'}
                         </span>
                       </div>
@@ -501,13 +501,13 @@ export default function AppointmentManagement() {
                       <div className="relative">
                         <button
                           onClick={() => setShowActionMenu(showActionMenu === appointment.id ? null : appointment.id)}
-                          className="text-gray-400 hover:text-gray-600"
+                          className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                         >
                           <MoreVertical className="h-5 w-5" />
                         </button>
                         
                         {showActionMenu === appointment.id && (
-                          <div className="absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg z-10 border">
+                          <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
                             <div className="py-1">
                               <button
                                 onClick={() => {
@@ -515,20 +515,20 @@ export default function AppointmentManagement() {
                                   setShowAppointmentModal(true);
                                   setShowActionMenu(null);
                                 }}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
                               >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </button>
                               
                               {/* Status Actions */}
-                              <div className="border-t border-gray-100 my-1"></div>
+                              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                               
                               {appointment.status !== 'confirmed' && (
                                 <button
                                   onClick={() => handleStatusChange(appointment.id, 'confirmed')}
                                   disabled={isUpdatingStatus}
-                                  className="flex items-center px-4 py-2 text-sm text-blue-700 hover:bg-blue-50 w-full text-left disabled:opacity-50"
+                                  className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left disabled:opacity-50"
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Mark as Confirmed
@@ -539,7 +539,7 @@ export default function AppointmentManagement() {
                                 <button
                                   onClick={() => handleStatusChange(appointment.id, 'completed')}
                                   disabled={isUpdatingStatus}
-                                  className="flex items-center px-4 py-2 text-sm text-green-700 hover:bg-green-50 w-full text-left disabled:opacity-50"
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left disabled:opacity-50"
                                 >
                                   <CheckCircle className="h-4 w-4 mr-2" />
                                   Mark as Completed
@@ -550,7 +550,7 @@ export default function AppointmentManagement() {
                                 <button
                                   onClick={() => handleStatusChange(appointment.id, 'cancelled')}
                                   disabled={isUpdatingStatus}
-                                  className="flex items-center px-4 py-2 text-sm text-red-700 hover:bg-red-50 w-full text-left disabled:opacity-50"
+                                  className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left disabled:opacity-50"
                                 >
                                   <XCircle className="h-4 w-4 mr-2" />
                                   Cancel Appointment
@@ -561,7 +561,7 @@ export default function AppointmentManagement() {
                                 <button
                                   onClick={() => handleStatusChange(appointment.id, 'no-show')}
                                   disabled={isUpdatingStatus}
-                                  className="flex items-center px-4 py-2 text-sm text-yellow-700 hover:bg-yellow-50 w-full text-left disabled:opacity-50"
+                                  className="flex items-center px-4 py-2 text-sm text-yellow-700 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 w-full text-left disabled:opacity-50"
                                 >
                                   <AlertCircle className="h-4 w-4 mr-2" />
                                   Mark as No Show
@@ -571,7 +571,7 @@ export default function AppointmentManagement() {
                               {/* Reschedule Action */}
                               {(appointment.status === 'confirmed' || appointment.status === 'scheduled') && (
                                 <>
-                                  <div className="border-t border-gray-100 my-1"></div>
+                                  <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                                   <button
                                     onClick={() => {
                                       setSelectedAppointment(appointment);
@@ -579,7 +579,7 @@ export default function AppointmentManagement() {
                                       setShowActionMenu(null);
                                     }}
                                     disabled={isUpdatingStatus}
-                                    className="flex items-center px-4 py-2 text-sm text-purple-700 hover:bg-purple-50 w-full text-left disabled:opacity-50"
+                                    className="flex items-center px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full text-left disabled:opacity-50"
                                   >
                                     <Calendar className="h-4 w-4 mr-2" />
                                     Reschedule
@@ -602,15 +602,15 @@ export default function AppointmentManagement() {
       {/* Appointment Details Modal */}
       {showAppointmentModal && selectedAppointment && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-gray-200 dark:border-gray-700">
             <div className="flex justify-between items-start mb-4">
-              <h3 className="text-lg font-semibold">Appointment Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Appointment Details</h3>
               <button
                 onClick={() => {
                   setShowAppointmentModal(false);
                   setSelectedAppointment(null);
                 }}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
                 <XCircle className="h-6 w-6" />
               </button>
@@ -619,14 +619,14 @@ export default function AppointmentManagement() {
             <div className="space-y-4">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
                   {getStatusBadge(selectedAppointment.status)}
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Type</label>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Type</label>
                   <div className="flex items-center mt-1">
                     {getTypeIcon(selectedAppointment.type)}
-                    <span className="ml-2 text-sm text-gray-900 capitalize">
+                    <span className="ml-2 text-sm text-gray-900 dark:text-white capitalize">
                       {selectedAppointment.type === 'video' ? 'Video Call' : 'In Person'}
                     </span>
                   </div>
@@ -635,53 +635,53 @@ export default function AppointmentManagement() {
               
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Client</label>
-                  <p className="text-sm text-gray-900">{selectedAppointment.clientName}</p>
-                  <p className="text-sm text-gray-500">{selectedAppointment.clientEmail}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Client</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.clientName}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedAppointment.clientEmail}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Coach</label>
-                  <p className="text-sm text-gray-900">{selectedAppointment.coachName}</p>
-                  <p className="text-sm text-gray-500">{selectedAppointment.coachEmail}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Coach</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.coachName}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">{selectedAppointment.coachEmail}</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Date</label>
-                  <p className="text-sm text-gray-900">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Date</label>
+                  <p className="text-sm text-gray-900 dark:text-white">
                     {formatDateTime(selectedAppointment.date, selectedAppointment.time).date}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Time</label>
-                  <p className="text-sm text-gray-900">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Time</label>
+                  <p className="text-sm text-gray-900 dark:text-white">
                     {formatDateTime(selectedAppointment.date, selectedAppointment.time).time}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Duration</label>
-                  <p className="text-sm text-gray-900">{selectedAppointment.duration} minutes</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Duration</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.duration} minutes</p>
                 </div>
               </div>
               
               {selectedAppointment.notes && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Notes</label>
-                  <p className="text-sm text-gray-900">{selectedAppointment.notes}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Notes</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.notes}</p>
                 </div>
               )}
               
               {selectedAppointment.sessionNotes && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Session Notes</label>
-                  <p className="text-sm text-gray-900">{selectedAppointment.sessionNotes}</p>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Session Notes</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.sessionNotes}</p>
                 </div>
               )}
               
               <div>
-                <label className="block text-sm font-medium text-gray-700">Created</label>
-                <p className="text-sm text-gray-900">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
+                <p className="text-sm text-gray-900 dark:text-white">
                   {new Date(selectedAppointment.created_at).toLocaleString()}
                 </p>
               </div>
@@ -693,7 +693,7 @@ export default function AppointmentManagement() {
                   setShowAppointmentModal(false);
                   setSelectedAppointment(null);
                 }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 Close
               </button>

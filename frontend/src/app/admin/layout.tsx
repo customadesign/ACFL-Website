@@ -4,10 +4,10 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
 import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
 import { getApiUrl } from '@/lib/api';
 import NotificationBadge from '@/components/NotificationBadge';
+import ThemeConsentModal from '@/components/ThemeConsentModal';
 import {
   Users,
   UserCheck,
@@ -38,7 +38,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showBottomNavMore, setShowBottomNavMore] = useState(false);
-  const [themeToggleLoading, setThemeToggleLoading] = useState(false);
   const bottomNavMoreRef = useRef<HTMLDivElement>(null);
   const { user, loading: authLoading, logout } = useAuth();
   const { 
@@ -54,23 +53,84 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileDropdownRef = useRef<HTMLDivElement>(null);
   const notificationRef = useRef<HTMLDivElement>(null);
   
-  // Theme context with safety check for SSR
-  let theme: 'light' | 'dark' = 'light';
-  let toggleTheme: () => void = () => {};
-  
-  try {
-    const themeContext = useTheme();
-    theme = themeContext.theme;
-    toggleTheme = themeContext.toggleTheme;
-  } catch (error) {
-    console.warn('ThemeProvider not available, using fallback theme state');
-  }
+  // Admin theme management with localStorage integration
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const [hasStorageConsent, setHasStorageConsent] = useState(false);
+  const [showConsentModal, setShowConsentModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  // Initialize theme from localStorage on mount
+  useEffect(() => {
+    setMounted(true);
+    
+    // Check if user has already given consent
+    const storageConsent = localStorage.getItem('theme-storage-consent');
+    
+    if (storageConsent === 'granted') {
+      setHasStorageConsent(true);
+      // Get saved theme
+      const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
+      const initialTheme = (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) ? savedTheme : 'light';
+      setTheme(initialTheme);
+      // Apply theme to DOM
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(initialTheme);
+      console.log('Admin theme initialized to:', initialTheme, '(consent granted)');
+    } else if (storageConsent === 'denied') {
+      setHasStorageConsent(false);
+      // Use light theme without saving
+      setTheme('light');
+      document.documentElement.classList.remove('dark');
+      document.documentElement.classList.add('light');
+      console.log('Admin theme initialized to: light (consent denied)');
+    } else {
+      // No consent recorded yet - use system preference
+      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = prefersDark ? 'dark' : 'light';
+      setTheme(initialTheme);
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(initialTheme);
+      console.log('Admin theme initialized to:', initialTheme, '(no consent yet)');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    
+    // Apply theme to DOM immediately
+    document.documentElement.classList.remove('dark', 'light');
+    document.documentElement.classList.add(newTheme);
+    
+    // Check if we have storage consent
+    const storageConsent = localStorage.getItem('theme-storage-consent');
+    
+    if (storageConsent === 'granted') {
+      // Save to localStorage if consent granted
+      localStorage.setItem('theme', newTheme);
+      console.log('Admin theme changed to:', newTheme, '- saved to localStorage');
+    } else if (storageConsent === null) {
+      // No consent yet - show modal
+      setShowConsentModal(true);
+      console.log('Admin theme changed to:', newTheme, '- showing consent modal');
+    } else {
+      // Consent denied - theme will reset on refresh
+      console.log('Admin theme changed to:', newTheme, '- not saved (consent denied)');
+    }
+    
+    // Update state after DOM changes
+    setTheme(newTheme);
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      const isInsideDropdown = dropdownRef.current && dropdownRef.current.contains(target);
+      const isInsideMobileDropdown = mobileDropdownRef.current && mobileDropdownRef.current.contains(target);
+      
+      if (!isInsideDropdown && !isInsideMobileDropdown) {
         setShowDropdown(false);
       }
       if (notificationRef.current && !notificationRef.current.contains(event.target as Node)) {
@@ -81,8 +141,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
   }, []);
 
   // Clear notification counts when visiting specific pages
@@ -101,24 +161,58 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   }, [pathname, markNewUsersAsRead, markNewCoachApplicationsAsRead, markNewAppointmentsAsRead, markNewMessagesAsRead]);
 
-  const handleThemeToggle = async () => {
-    setThemeToggleLoading(true);
-    
-    // Add haptic feedback for mobile devices
-    if (navigator.vibrate) {
-      navigator.vibrate(50);
-    }
-    
-    // Small delay for visual feedback
-    await new Promise(resolve => setTimeout(resolve, 150));
-    
+  const handleConsentAccept = () => {
+    localStorage.setItem('theme-storage-consent', 'granted');
+    localStorage.setItem('theme', theme);
+    setHasStorageConsent(true);
+    setShowConsentModal(false);
+    console.log('Storage consent granted - theme saved');
+  };
+
+  const handleConsentDecline = () => {
+    localStorage.setItem('theme-storage-consent', 'denied');
+    setHasStorageConsent(false);
+    setShowConsentModal(false);
+    console.log('Storage consent denied - theme not saved');
+  };
+
+  const handleThemeToggle = (e: React.MouseEvent) => {
+    console.log('Theme toggle clicked!');
+    e.preventDefault();
+    e.stopPropagation();
+    const newTheme = theme === 'light' ? 'dark' : 'light';
+    console.log('Changing theme from', theme, 'to', newTheme);
     toggleTheme();
-    setThemeToggleLoading(false);
+    setShowDropdown(false);
     
-    // Close dropdown after a short delay to allow user to see the change
+    // Show user-friendly notification with a small delay to ensure theme has been applied
     setTimeout(() => {
-      setShowDropdown(false);
-    }, 300);
+      const toast = document.createElement('div');
+      toast.className = 'fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm';
+      toast.innerHTML = `
+        <div class="flex items-center gap-2">
+          <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ${newTheme === 'dark' 
+              ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>'
+              : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>'
+            }
+          </svg>
+          <div>
+            <div class="font-semibold">Theme changed to ${newTheme} mode!</div>
+            ${hasStorageConsent 
+              ? `<div class="text-sm">Your preference has been saved.</div>`
+              : `<div class="text-sm">This will reset when you visit again.</div>`
+            }
+          </div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => {
+        if (toast.parentNode) {
+          toast.parentNode.removeChild(toast);
+        }
+      }, 4000);
+    }, 100);
   };
 
   // Handle admin authentication using AuthContext
@@ -147,16 +241,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }, [user, authLoading, router]);
 
   const handleLogout = async () => {
-    console.log('🔓 Admin logout initiated...');
+    console.log('Admin logout clicked');
+    setShowDropdown(false);
     try {
-      // Use the logout function from AuthContext
-      // This will handle token removal and user state cleanup
       await logout();
-      console.log('✅ Admin logout completed');
+      console.log('Admin logout completed');
     } catch (error) {
-      console.error('❌ Logout error:', error);
-      // Even if logout fails, redirect to login page
-      router.push('/login');
+      console.error('Admin logout error:', error);
     }
   };
 
@@ -353,33 +444,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
                     </div>
                     <button
-                      onClick={handleThemeToggle}
-                      disabled={themeToggleLoading}
-                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      onClick={(e) => handleThemeToggle(e)}
+                      type="button"
+                      className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
-                      {themeToggleLoading ? (
+                      {theme === 'light' ? (
                         <>
-                          <div className="w-4 h-4 animate-spin rounded-full border-2 border-gray-300 border-t-blue-600" />
-                          <span>Switching...</span>
-                        </>
-                      ) : theme === 'light' ? (
-                        <>
-                          <Moon className="w-4 h-4 transition-transform hover:scale-110" />
+                          <Moon className="w-4 h-4" />
                           <span>Dark Mode</span>
                         </>
                       ) : (
                         <>
-                          <Sun className="w-4 h-4 transition-transform hover:scale-110" />
+                          <Sun className="w-4 h-4" />
                           <span>Light Mode</span>
                         </>
                       )}
                     </button>
                     <hr className="my-1 border-gray-200 dark:border-gray-600" />
                     <button
-                      onClick={async () => {
-                        setShowDropdown(false);
-                        await handleLogout();
-                      }}
+                      onClick={handleLogout}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
                     >
                       <LogOut className="w-4 h-4" />
@@ -410,7 +493,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
               </div>
               
-              <div className="relative" ref={dropdownRef}>
+              <div className="relative">
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -424,88 +507,46 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
 
-      {/* Mobile Dropdown Menu - positioned absolutely */}
+      {/* Mobile Dropdown Menu */}
       {showDropdown && (
         <>
-          {/* Enhanced backdrop for mobile dropdown with smooth animation */}
-          <div 
-            className="sm:hidden fixed inset-0 bg-black/30 dark:bg-black/50 z-40 backdrop-blur-sm animate-in fade-in duration-200"
+          {/* Backdrop for mobile dropdown */}
+          <div
+            className="sm:hidden fixed inset-0 bg-black/20 z-40"
             onClick={() => setShowDropdown(false)}
           />
-          <div 
-            key={`dropdown-${theme}-${themeToggleLoading}`} 
-            className="sm:hidden absolute right-4 top-16 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-2xl py-2 z-50 border border-gray-200 dark:border-gray-600 animate-in slide-in-from-top-2 fade-in duration-300"
-          >
-            <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center">
-                  <CircleUserRound className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900 dark:text-white">
-                    {user?.first_name || 'Admin'} {user?.last_name || ''}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
-                </div>
-              </div>
+          <div ref={mobileDropdownRef} className="sm:hidden absolute right-4 top-16 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-600">
+            <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
+              <p className="text-sm font-medium text-gray-900 dark:text-white">
+                {user?.first_name || 'Admin'} {user?.last_name || ''}
+              </p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
             </div>
-            
-            {/* Theme Toggle Button with enhanced mobile UX */}
-            <div className="px-2 py-1">
-              <button
-                onClick={handleThemeToggle}
-                disabled={themeToggleLoading}
-                className={`w-full px-4 py-3 text-left text-sm rounded-lg flex items-center space-x-3 transition-all duration-200 ${
-                  themeToggleLoading 
-                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 cursor-not-allowed opacity-75' 
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95'
-                }`}
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gray-100 dark:bg-gray-600">
-                  {themeToggleLoading ? (
-                    <div className="w-4 h-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-600" />
-                  ) : theme === 'light' ? (
-                    <Moon className="w-4 h-4 text-gray-600 dark:text-gray-300 transition-transform" />
-                  ) : (
-                    <Sun className="w-4 h-4 text-yellow-500 transition-transform" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">
-                    {themeToggleLoading ? 'Switching Theme...' : theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-                  </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400">
-                    {themeToggleLoading ? 'Please wait' : theme === 'light' ? 'Better for low light' : 'Easier on the eyes'}
-                  </div>
-                </div>
-                {!themeToggleLoading && (
-                  <div className={`w-2 h-2 rounded-full ${theme === 'light' ? 'bg-gray-400' : 'bg-yellow-400'} animate-pulse`} />
-                )}
-              </button>
-            </div>
-            
-            <hr className="my-2 border-gray-100 dark:border-gray-700" />
-            
-            {/* Logout Button */}
-            <div className="px-2 py-1">
-              <button
-                onClick={async () => {
-                  setShowDropdown(false);
-                  // Add small delay to allow dropdown to close smoothly
-                  await new Promise(resolve => setTimeout(resolve, 150));
-                  await handleLogout();
-                }}
-                className="w-full px-4 py-3 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg flex items-center space-x-3 transition-all duration-200 active:scale-95"
-              >
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/30">
-                  <LogOut className="w-4 h-4" />
-                </div>
-                <div>
-                  <div className="font-medium">Sign Out</div>
-                  <div className="text-xs text-red-500 dark:text-red-400">End your session</div>
-                </div>
-              </button>
-            </div>
+            <button
+              onClick={(e) => handleThemeToggle(e)}
+              type="button"
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+            >
+              {theme === 'light' ? (
+                <>
+                  <Moon className="w-4 h-4" />
+                  <span>Dark Mode</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="w-4 h-4" />
+                  <span>Light Mode</span>
+                </>
+              )}
+            </button>
+            <hr className="my-1 border-gray-200 dark:border-gray-600" />
+            <button
+              onClick={handleLogout}
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+            >
+              <LogOut className="w-4 h-4" />
+              <span>Logout</span>
+            </button>
           </div>
         </>
       )}
@@ -717,6 +758,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </div>
         </main>
       </div>
+
+      {/* Theme Storage Consent Modal */}
+      <ThemeConsentModal
+        isOpen={showConsentModal}
+        onAccept={handleConsentAccept}
+        onDecline={handleConsentDecline}
+      />
     </div>
   );
 }
