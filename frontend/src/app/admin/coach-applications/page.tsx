@@ -5,7 +5,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, User, Users, Check, AlertTriangle, FileCheck } from 'lucide-react';
+import { X, User, Users, Check, AlertTriangle, FileCheck, MessageSquare } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import CoachApplicationSkeleton from '@/components/CoachApplicationSkeleton';
 
 // Simple Badge component since ui/badge doesn't exist
@@ -44,6 +45,7 @@ interface CoachApplication {
   coaching_experience_years: string;
   act_training_level: string;
   languages_fluent: string[];
+  coach_id?: string; // The actual coach user ID if application is approved
 }
 
 interface ApplicationDetails extends CoachApplication {
@@ -75,6 +77,7 @@ interface ApplicationDetails extends CoachApplication {
 }
 
 export default function CoachApplicationsPage() {
+  const router = useRouter();
   const [applications, setApplications] = useState<CoachApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -86,6 +89,26 @@ export default function CoachApplicationsPage() {
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const { user } = useAuth();
+
+  const handleMessageApplicant = (application: CoachApplication) => {
+    const userName = `${application.first_name} ${application.last_name}`;
+    
+    // Use coach_id if available (for approved applications), otherwise use application.id
+    const conversationId = application.coach_id || application.id;
+    
+    // If no coach_id and application is not approved, show warning
+    if (!application.coach_id && application.status === 'approved') {
+      alert('Coach user ID not found. This may be an approved application without a coach profile.');
+      return;
+    }
+    
+    const params = new URLSearchParams({
+      conversation_with: conversationId,
+      partner_name: encodeURIComponent(userName),
+      partner_role: 'coach'
+    });
+    router.push(`/admin/messages?${params.toString()}`);
+  };
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
@@ -335,6 +358,16 @@ export default function CoachApplicationsPage() {
                       Review
                     </Button>
                     
+                    <Button
+                      onClick={() => handleMessageApplicant(application)}
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring text-blue-600 border-blue-300 hover:bg-blue-50"
+                    >
+                      <MessageSquare className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Message</span>
+                    </Button>
+                    
                     {application.status === 'pending' && (
                       <>
                         <Button
@@ -379,23 +412,45 @@ export default function CoachApplicationsPage() {
 }
 
 // Application Details Modal Component
-const ApplicationDetailsModal = ({ 
-  application, 
-  onClose, 
-  onStatusUpdate, 
-  loading 
+const ApplicationDetailsModal = ({
+  application,
+  onClose,
+  onStatusUpdate,
+  loading
 }: {
   application: ApplicationDetails;
   onClose: () => void;
   onStatusUpdate: (id: string, status: string, reason?: string) => Promise<void>;
   loading: boolean;
 }) => {
+  const router = useRouter();
   const [rejectionReason, setRejectionReason] = useState('');
   const [showRejectionForm, setShowRejectionForm] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   const lastActiveElement = useRef<HTMLElement | null>(null);
+
+  const handleMessageApplicant = () => {
+    const userName = `${application.first_name} ${application.last_name}`;
+    
+    // Use coach_id if available (for approved applications), otherwise use application.id
+    const conversationId = application.coach_id || application.id;
+    
+    // If no coach_id and application is approved, show warning
+    if (!application.coach_id && application.status === 'approved') {
+      alert('Coach user ID not found. This may be an approved application without a coach profile.');
+      return;
+    }
+    
+    const params = new URLSearchParams({
+      conversation_with: conversationId,
+      partner_name: encodeURIComponent(userName),
+      partner_role: 'coach'
+    });
+    router.push(`/admin/messages?${params.toString()}`);
+    onClose();
+  };
 
   useEffect(() => {
     // Store the currently focused element
@@ -718,45 +773,61 @@ const ApplicationDetailsModal = ({
           </section>
 
           {/* Action Buttons */}
-          {application.status === 'pending' && (
-            <div className="border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6 bg-gray-50 dark:bg-gray-800/50 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 rounded-b-xl">
-              <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4">
-                <div className="flex-1">
-                  <h4 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">Application Review</h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Make a decision on this application</p>
-                </div>
-                <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3">
-                  <Button
-                    onClick={() => setShowRejectionForm(true)}
-                    variant="outline"
-                    disabled={loading}
-                    className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 min-h-[44px] focus-ring"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Reject
-                  </Button>
-                  
-                  <Button
-                    onClick={handleApprove}
-                    disabled={loading}
-                    className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-[44px] focus-ring"
-                  >
-                    {loading ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                        <span className="hidden sm:inline">Processing...</span>
-                        <span className="sm:hidden">Processing...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Check className="w-4 h-4 mr-2" />
-                        <span className="hidden sm:inline">Approve Application</span>
-                        <span className="sm:hidden">Approve</span>
-                      </>
-                    )}
-                  </Button>
-                </div>
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6 bg-gray-50 dark:bg-gray-800/50 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 rounded-b-xl">
+            <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4">
+              <div className="flex-1">
+                <h4 className="font-semibold text-gray-900 dark:text-white text-base sm:text-lg">
+                  {application.status === 'pending' ? 'Application Review' : 'Application Actions'}
+                </h4>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  {application.status === 'pending' ? 'Make a decision on this application' : 'Available actions for this application'}
+                </p>
               </div>
+              <div className="flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-3">
+                <Button
+                  onClick={handleMessageApplicant}
+                  variant="outline"
+                  className="w-full sm:w-auto border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-all duration-200 min-h-[44px] focus-ring"
+                >
+                  <MessageSquare className="w-4 h-4 mr-2" />
+                  Message Applicant
+                </Button>
+                
+                {application.status === 'pending' && (
+                  <>
+                    <Button
+                      onClick={() => setShowRejectionForm(true)}
+                      variant="outline"
+                      disabled={loading}
+                      className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 min-h-[44px] focus-ring"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Reject
+                    </Button>
+                    
+                    <Button
+                      onClick={handleApprove}
+                      disabled={loading}
+                      className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-[44px] focus-ring"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <span className="hidden sm:inline">Processing...</span>
+                          <span className="sm:hidden">Processing...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          <span className="hidden sm:inline">Approve Application</span>
+                          <span className="sm:hidden">Approve</span>
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
               
               {showRejectionForm && (
                 <div className="mt-4 p-4 sm:p-6 border border-red-200 dark:border-red-800 rounded-xl bg-red-50 dark:bg-red-900/20 animate-in slide-in-from-top duration-300">
@@ -817,7 +888,6 @@ const ApplicationDetailsModal = ({
                 </div>
               )}
             </div>
-          )}
         </div>
       </div>
     </div>

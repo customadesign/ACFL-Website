@@ -464,16 +464,8 @@ useEffect(() => {
 								const isMine = m.sender_id === (user?.id || '')
 								const hasAttachment = m.attachment_url && m.attachment_name && !m.deleted_for_everyone
 								const isDeleted = m.deleted_for_everyone
-								const messageLength = m.body ? m.body.length : 0
-								const getMaxWidth = () => {
-									if (hasAttachment) return 'max-w-[75%]'
-									if (messageLength > 100) return 'max-w-[75%]'
-									if (messageLength > 50) return 'max-w-[60%]'
-									if (messageLength > 20) return 'max-w-[45%]'
-									return 'max-w-[30%]'
-								}
 								return (
-									<div key={m.id} className={`${getMaxWidth()} ${isMine ? 'ml-auto' : ''} group relative w-fit`}>
+									<div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''} group relative w-fit`}>
 										<div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${
 											isDeleted 
 												? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic' 

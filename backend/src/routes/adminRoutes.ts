@@ -10,7 +10,16 @@ interface AuthRequest extends Request {
 const router = Router();
 
 // Apply authentication and admin authorization to all routes
+router.use((req: AuthRequest, res, next) => {
+  console.log('Admin route accessed:', req.path);
+  console.log('Request headers auth:', req.headers.authorization ? 'Present' : 'Missing');
+  next();
+});
 router.use(authenticate);
+router.use((req: AuthRequest, res, next) => {
+  console.log('After authentication - user:', req.user);
+  next();
+});
 router.use(authorize('admin'));
 
 // Notification counts endpoint
@@ -810,8 +819,8 @@ router.post('/users/:id/impersonate', async (req, res) => {
     const jwt = require('jsonwebtoken');
     const impersonationToken = jwt.sign(
       {
-        userId: userData.id, // Use userId to match existing auth system
         id: userData.id,
+        userId: userData.id, // Use userId to match existing auth system
         email: userData.email,
         role: userType,
         first_name: userData.first_name,
@@ -1202,6 +1211,8 @@ router.get('/appointments', async (req, res) => {
         const startDate = new Date(session.starts_at);
         return {
           id: session.id,
+          client_id: session.client_id, // Include the actual client ID
+          coach_id: session.coach_id,   // Include the actual coach ID
           clientName: 'Unknown Client',
           clientEmail: 'N/A',
           coachName: 'Unknown Coach',
@@ -1225,6 +1236,8 @@ router.get('/appointments', async (req, res) => {
       const startDate = new Date(session.starts_at);
       return {
         id: session.id,
+        client_id: session.client_id, // Include the actual client ID
+        coach_id: session.coach_id,   // Include the actual coach ID
         clientName: session.clients ? `${session.clients.first_name || ''} ${session.clients.last_name || ''}`.trim() : 'Unknown Client',
         clientEmail: session.clients?.email || 'N/A',
         coachName: session.coaches ? `${session.coaches.first_name || ''} ${session.coaches.last_name || ''}`.trim() : 'Unknown Coach',
@@ -1808,6 +1821,437 @@ router.get('/health', async (req, res) => {
       error: error.message,
       timestamp: new Date().toISOString()
     });
+  }
+});
+
+// Create or get conversation endpoint
+router.post('/conversations', async (req: AuthRequest, res: Response) => {
+  try {
+    const { partnerId, partnerRole } = req.body;
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    if (!partnerId || !partnerRole) {
+      return res.status(400).json({ error: 'Partner ID and role are required' });
+    }
+
+    console.log('Admin conversation creation:', { adminId, partnerId, partnerRole });
+
+    // Check if conversation already exists
+    const { data: existingMessages } = await supabase
+      .from('messages')
+      .select('id')
+      .or(`and(sender_id.eq.${adminId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${adminId})`)
+      .limit(1);
+
+    if (existingMessages && existingMessages.length > 0) {
+      // Conversation already exists
+      return res.json({
+        success: true,
+        message: 'Conversation already exists',
+        conversationExists: true
+      });
+    }
+
+    // Get partner information to validate they exist
+    let partnerInfo = null;
+    if (partnerRole === 'client') {
+      const { data: client } = await supabase
+        .from('clients')
+        .select('id, first_name, last_name, email')
+        .eq('id', partnerId)
+        .single();
+      partnerInfo = client;
+    } else if (partnerRole === 'coach') {
+      const { data: coach } = await supabase
+        .from('coaches')
+        .select('id, first_name, last_name, email')
+        .eq('id', partnerId)
+        .single();
+      partnerInfo = coach;
+    }
+
+    if (!partnerInfo) {
+      return res.status(404).json({ error: 'Partner not found' });
+    }
+
+    // Just return success - conversation will be created when first message is sent
+    res.json({
+      success: true,
+      message: 'Conversation ready to be created',
+      conversationExists: false,
+      partnerInfo: {
+        id: partnerInfo.id,
+        name: `${partnerInfo.first_name} ${partnerInfo.last_name}`,
+        email: partnerInfo.email,
+        role: partnerRole
+      }
+    });
+  } catch (error) {
+    console.error('Create conversation error:', error);
+    res.status(500).json({ error: 'Failed to create conversation' });
+  }
+});
+
+// Admin messaging endpoints
+router.get('/conversations', async (req: AuthRequest, res: Response) => {
+  try {
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+    
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    
+    console.log('Admin conversations request from user:', adminId);
+    
+    // Get all messages where admin is involved
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('id, sender_id, recipient_id, body, created_at, read_at')
+      .or(`sender_id.eq.${adminId},recipient_id.eq.${adminId}`)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Messages fetch error:', error);
+      return res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
+    }
+
+    // Group messages by conversation partners
+    const conversationMap = new Map();
+    
+    for (const message of messages || []) {
+      let partnerId: string;
+      let partnerName: string = 'Unknown User';
+      let partnerRole: 'client' | 'coach' = 'client';
+
+      // Determine conversation partner
+      if (message.sender_id === adminId) {
+        partnerId = message.recipient_id;
+      } else {
+        partnerId = message.sender_id;
+      }
+
+      // Get partner info from clients table first
+      const { data: clientData } = await supabase
+        .from('clients')
+        .select('first_name, last_name, email')
+        .eq('id', partnerId)
+        .single();
+      
+      if (clientData) {
+        partnerName = `${clientData.first_name || ''} ${clientData.last_name || ''}`.trim() || 'Unknown Client';
+        partnerRole = 'client';
+      } else {
+        // Try coaches table
+        const { data: coachData } = await supabase
+          .from('coaches')
+          .select('first_name, last_name, email')
+          .eq('id', partnerId)
+          .single();
+        
+        if (coachData) {
+          partnerName = `${coachData.first_name || ''} ${coachData.last_name || ''}`.trim() || 'Unknown Coach';
+          partnerRole = 'coach';
+        }
+      }
+
+      const conversationKey = partnerId;
+      
+      if (!conversationMap.has(conversationKey)) {
+        conversationMap.set(conversationKey, {
+          partnerId,
+          partnerName,
+          partnerRole,
+          lastBody: message.body || '',
+          lastAt: message.created_at,
+          unreadCount: 0,
+          totalMessages: 1
+        });
+      } else {
+        const conversation = conversationMap.get(conversationKey);
+        conversation.totalMessages++;
+        
+        // Update if this message is more recent
+        if (new Date(message.created_at) > new Date(conversation.lastAt)) {
+          conversation.lastBody = message.body || '';
+          conversation.lastAt = message.created_at;
+        }
+      }
+
+      // Count unread messages (messages to admin that haven't been read)
+      if (message.recipient_id === adminId && !message.read_at) {
+        const conversation = conversationMap.get(conversationKey);
+        conversation.unreadCount++;
+      }
+    }
+
+    const conversations = Array.from(conversationMap.values())
+      .sort((a, b) => new Date(b.lastAt).getTime() - new Date(a.lastAt).getTime());
+
+    res.json({ success: true, data: conversations });
+  } catch (error) {
+    console.error('Admin conversations error:', error);
+    res.status(500).json({ error: 'Failed to fetch conversations' });
+  }
+});
+
+router.get('/messages', async (req: AuthRequest, res: Response) => {
+  try {
+    const { conversation_with } = req.query;
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    if (!conversation_with) {
+      return res.status(400).json({ error: 'conversation_with parameter is required' });
+    }
+
+    console.log('Admin messages request:', { adminId, conversation_with });
+
+    // Get messages between admin and the specified user
+    const { data: messages, error } = await supabase
+      .from('messages')
+      .select('*')
+      .or(`and(sender_id.eq.${adminId},recipient_id.eq.${conversation_with}),and(sender_id.eq.${conversation_with},recipient_id.eq.${adminId})`)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('Messages fetch error:', error);
+      return res.status(500).json({ error: 'Failed to fetch messages', details: error.message });
+    }
+
+    res.json({ success: true, data: messages || [] });
+  } catch (error) {
+    console.error('Admin messages error:', error);
+    res.status(500).json({ error: 'Failed to fetch messages' });
+  }
+});
+
+router.put('/messages/:messageId/read', async (req: AuthRequest, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    // Mark message as read
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ read_at: new Date().toISOString() })
+      .eq('id', messageId)
+      .eq('recipient_id', adminId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Mark read error:', error);
+      throw error;
+    }
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Admin mark read error:', error);
+    res.status(500).json({ error: 'Failed to mark message as read' });
+  }
+});
+
+router.delete('/messages/:messageId/everyone', async (req: AuthRequest, res: Response) => {
+  try {
+    const { messageId } = req.params;
+
+    // Admin can delete any message for everyone
+    const { data, error } = await supabase
+      .from('messages')
+      .update({
+        deleted_for_everyone: true,
+        deleted_at: new Date().toISOString(),
+        body: 'This message was deleted'
+      })
+      .eq('id', messageId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Delete message error:', error);
+      throw error;
+    }
+
+    // Emit socket event for real-time update
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('message:deleted_everyone', {
+        messageId,
+        deletedBy: req.user?.id
+      });
+    }
+
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Admin delete message error:', error);
+    res.status(500).json({ error: 'Failed to delete message' });
+  }
+});
+
+router.put('/messages/:messageId/hide', async (req: AuthRequest, res: Response) => {
+  try {
+    const { messageId } = req.params;
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    console.log('Hide message request:', { messageId, adminId });
+
+    // Get current message
+    const { data: message, error: fetchError } = await supabase
+      .from('messages')
+      .select('id, hidden_for_users')
+      .eq('id', messageId)
+      .single();
+
+    if (fetchError) {
+      console.error('Fetch message error:', fetchError);
+      return res.status(404).json({ error: 'Message not found', details: fetchError.message });
+    }
+
+    if (!message) {
+      return res.status(404).json({ error: 'Message not found' });
+    }
+
+    // Add admin to hidden_for_users array
+    const hiddenUsers = Array.isArray(message.hidden_for_users) ? message.hidden_for_users : [];
+    if (!hiddenUsers.includes(adminId)) {
+      hiddenUsers.push(adminId);
+    }
+
+    console.log('Updating hidden_for_users:', { messageId, hiddenUsers });
+
+    const { data, error } = await supabase
+      .from('messages')
+      .update({ hidden_for_users: hiddenUsers })
+      .eq('id', messageId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Hide message update error:', error);
+      return res.status(500).json({ error: 'Failed to update message', details: error.message });
+    }
+
+    console.log('Message hidden successfully:', data);
+    res.json({ success: true, data });
+  } catch (error) {
+    console.error('Admin hide message error:', error);
+    res.status(500).json({ error: 'Failed to hide message', details: error.message });
+  }
+});
+
+router.delete('/conversations/:partnerId', async (req: AuthRequest, res: Response) => {
+  try {
+    const { partnerId } = req.params;
+    // Try both id and userId fields from JWT payload
+    const adminId = req.user?.id || req.user?.userId;
+
+    if (!adminId) {
+      console.error('Admin ID not found in request. User object:', req.user);
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    // Delete all messages between admin and partner
+    const { error } = await supabase
+      .from('messages')
+      .delete()
+      .or(`and(sender_id.eq.${adminId},recipient_id.eq.${partnerId}),and(sender_id.eq.${partnerId},recipient_id.eq.${adminId})`);
+
+    if (error) {
+      console.error('Delete conversation error:', error);
+      throw error;
+    }
+
+    res.json({ success: true, message: 'Conversation deleted successfully' });
+  } catch (error) {
+    console.error('Admin delete conversation error:', error);
+    res.status(500).json({ error: 'Failed to delete conversation' });
+  }
+});
+
+router.post('/upload-attachment', async (req: AuthRequest, res: Response) => {
+  try {
+    // Use the same upload logic as client/coach
+    const multer = require('multer');
+    const path = require('path');
+    
+    // Configure multer for file upload
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, 'uploads/');
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, 'attachment-' + uniqueSuffix + path.extname(file.originalname));
+      }
+    });
+
+    const upload = multer({
+      storage,
+      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+      fileFilter: (req, file, cb) => {
+        // Allow common file types
+        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|csv|mp3|mp4|zip/;
+        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mimetype = allowedTypes.test(file.mimetype);
+        
+        if (mimetype && extname) {
+          return cb(null, true);
+        } else {
+          cb(new Error('Invalid file type'));
+        }
+      }
+    }).single('attachment');
+
+    upload(req, res, (err) => {
+      if (err) {
+        console.error('Upload error:', err);
+        return res.status(400).json({ error: err.message });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ error: 'No file uploaded' });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      
+      res.json({
+        success: true,
+        data: {
+          url: fileUrl,
+          name: req.file.originalname,
+          size: req.file.size,
+          type: req.file.mimetype
+        }
+      });
+    });
+  } catch (error) {
+    console.error('Admin upload error:', error);
+    res.status(500).json({ error: 'Failed to upload file' });
   }
 });
 

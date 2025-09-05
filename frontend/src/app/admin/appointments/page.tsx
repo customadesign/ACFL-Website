@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Search, 
-  Filter, 
+import {
+  Search,
+  Filter,
   Calendar,
   Clock,
   User,
@@ -14,8 +14,10 @@ import {
   Eye,
   MoreVertical,
   Video,
-  MapPin
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 import RescheduleModal from '@/components/RescheduleModal';
 import NotificationModal from '@/components/NotificationModal';
@@ -35,9 +37,12 @@ interface Appointment {
   notes?: string;
   created_at: string;
   sessionNotes?: string;
+  client_id?: string;
+  coach_id?: string;
 }
 
 export default function AppointmentManagement() {
+  const router = useRouter();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,6 +55,36 @@ export default function AppointmentManagement() {
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const { notification, hideNotification, showError, showConfirm } = useNotification();
+
+  const handleMessageClient = (appointment: Appointment) => {
+    if (!appointment.client_id) {
+      alert('Client ID not available for this appointment. Cannot send message.');
+      return;
+    }
+    
+    const params = new URLSearchParams({
+      conversation_with: appointment.client_id,
+      partner_name: encodeURIComponent(appointment.clientName),
+      partner_role: 'client'
+    });
+    router.push(`/admin/messages?${params.toString()}`);
+    setShowActionMenu(null);
+  };
+
+  const handleMessageCoach = (appointment: Appointment) => {
+    if (!appointment.coach_id) {
+      alert('Coach ID not available for this appointment. Cannot send message.');
+      return;
+    }
+    
+    const params = new URLSearchParams({
+      conversation_with: appointment.coach_id,
+      partner_name: encodeURIComponent(appointment.coachName),
+      partner_role: 'coach'
+    });
+    router.push(`/admin/messages?${params.toString()}`);
+    setShowActionMenu(null);
+  };
 
   useEffect(() => {
     fetchAppointments();
@@ -124,7 +159,9 @@ export default function AppointmentManagement() {
         type: apt.type || 'video',
         notes: apt.notes || '',
         created_at: apt.created_at || new Date().toISOString(),
-        sessionNotes: apt.sessionNotes || undefined
+        sessionNotes: apt.sessionNotes || undefined,
+        client_id: apt.client_id,
+        coach_id: apt.coach_id
       }));
       
       setAppointments(transformedAppointments);
@@ -521,6 +558,25 @@ export default function AppointmentManagement() {
                                 View Details
                               </button>
                               
+                              {/* Message Actions */}
+                              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                              
+                              <button
+                                onClick={() => handleMessageClient(appointment)}
+                                className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                              >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Message Client
+                              </button>
+                              
+                              <button
+                                onClick={() => handleMessageCoach(appointment)}
+                                className="flex items-center px-4 py-2 text-sm text-purple-700 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full text-left"
+                              >
+                                <MessageSquare className="h-4 w-4 mr-2" />
+                                Message Coach
+                              </button>
+                              
                               {/* Status Actions */}
                               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                               
@@ -687,13 +743,29 @@ export default function AppointmentManagement() {
               </div>
             </div>
             
-            <div className="flex justify-end space-x-3 mt-6">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-3 sm:space-y-0 sm:space-x-3 mt-6 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                <button
+                  onClick={() => handleMessageClient(selectedAppointment)}
+                  className="px-4 py-2 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-600 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center space-x-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Message Client</span>
+                </button>
+                <button
+                  onClick={() => handleMessageCoach(selectedAppointment)}
+                  className="px-4 py-2 text-purple-600 dark:text-purple-400 border border-purple-300 dark:border-purple-600 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center justify-center space-x-2"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  <span>Message Coach</span>
+                </button>
+              </div>
               <button
                 onClick={() => {
                   setShowAppointmentModal(false);
                   setSelectedAppointment(null);
                 }}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 w-full sm:w-auto"
               >
                 Close
               </button>

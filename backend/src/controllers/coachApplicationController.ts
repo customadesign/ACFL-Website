@@ -349,6 +349,30 @@ export const getCoachApplications = async (req: Request, res: Response) => {
       throw error;
     }
 
+    // For each application, try to find the corresponding coach user ID
+    const applicationsWithCoachId = await Promise.all(
+      (applications || []).map(async (app) => {
+        // If application is approved, try to find the coach user ID
+        if (app.status === 'approved') {
+          const { data: coach } = await supabase
+            .from('coaches')
+            .select('id')
+            .ilike('email', app.email)
+            .single();
+          
+          return {
+            ...app,
+            coach_id: coach?.id || null
+          };
+        }
+        
+        return {
+          ...app,
+          coach_id: null
+        };
+      })
+    );
+
     // Get total count for pagination
     let countQuery = supabase
       .from('coach_applications')
@@ -366,7 +390,7 @@ export const getCoachApplications = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      applications: applications || [],
+      applications: applicationsWithCoachId,
       pagination: {
         page: pageNum,
         limit: limitNum,

@@ -130,6 +130,7 @@ export const registerClient = async (req: Request, res: Response) => {
     // Step 7: Generate JWT token
     console.log('\n🔑 Step 7: Generating JWT token...');
     const token = generateToken({
+      id: profile.id,
       userId: profile.id, // Use the client profile ID
       email: email,
       role: 'client'
@@ -408,6 +409,7 @@ export const registerCoach = async (req: Request, res: Response) => {
     // Step 7: Generate JWT token
     console.log('\n🔑 Step 7: Generating JWT token...');
     const token = generateToken({
+      id: authData.user.id,
       userId: authData.user.id,
       email: authData.user.email || email,
       role: 'coach'
@@ -629,6 +631,7 @@ export const login = async (req: Request, res: Response) => {
 
     console.log('\n🔑 Step 3: Generating JWT token...');
     const token = generateToken({
+      id: profile.id,
       userId: profile.id,
       email: email,
       role: role
@@ -860,6 +863,7 @@ export const createAdmin = async (req: Request, res: Response) => {
     // Generate JWT token
     console.log('\n🔑 Generating JWT token...');
     const token = generateToken({
+      id: admin.id,
       userId: admin.id,
       email: email,
       role: 'admin'
@@ -925,17 +929,17 @@ export const logout = async (req: Request & { user?: JWTPayload }, res: Response
           await supabase
             .from('admins')
             .update({ last_logout: now })
-            .eq('id', req.user.userId);
+            .eq('id', req.user.id);
         } else if (req.user.role === 'client') {
           await supabase
             .from('clients')
             .update({ last_logout: now })
-            .eq('id', req.user.userId);
+            .eq('id', req.user.id);
         } else if (req.user.role === 'coach') {
           await supabase
             .from('coaches')
             .update({ last_logout: now })
-            .eq('id', req.user.userId);
+            .eq('id', req.user.id);
         }
         
         console.log('✅ Logout activity recorded');

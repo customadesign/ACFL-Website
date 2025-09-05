@@ -42,6 +42,7 @@ export interface AuthRequest extends Request {
 }
 
 export interface JWTPayload {
+  id: string;
   userId: string;
   email: string;
   role: 'client' | 'coach' | 'admin';

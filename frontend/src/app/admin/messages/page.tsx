@@ -1,20 +1,20 @@
+
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import ProtectedRoute from '@/components/ProtectedRoute'
-import Link from 'next/link'
 import MessagesSkeleton from '@/components/MessagesSkeleton'
 import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send } from 'lucide-react'
+import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send, Search, Filter, Users, MessageCircle } from 'lucide-react'
 import { io } from 'socket.io-client'
 
 type Conversation = {
 	partnerId: string
 	partnerName: string
+	partnerRole: 'client' | 'coach'
 	lastBody: string
 	lastAt: string
 	unreadCount: number
@@ -35,13 +35,16 @@ type Message = {
 	deleted_for_everyone?: boolean
 	deleted_at?: string | null
 	hidden_for_users?: string[]
+	sender_role?: 'client' | 'coach' | 'admin'
+	recipient_role?: 'client' | 'coach' | 'admin'
 }
 
-function MessagesContent() {
+function AdminMessagesContent() {
 	const API_URL = getApiUrl()
-const { user, logout } = useAuth()
+	const { user, logout } = useAuth()
 	const searchParams = useSearchParams()
 	const [conversations, setConversations] = useState<Conversation[]>([])
+	const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([])
 	const [activePartnerId, setActivePartnerId] = useState<string | null>(null)
 	const [messages, setMessages] = useState<Message[]>([])
 	const [loading, setLoading] = useState(true)
@@ -51,180 +54,275 @@ const { user, logout } = useAuth()
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 	const [uploading, setUploading] = useState(false)
 	const [showMobileChat, setShowMobileChat] = useState(false)
+	const [searchTerm, setSearchTerm] = useState('')
+	const [roleFilter, setRoleFilter] = useState<'all' | 'client' | 'coach'>('all')
+	const [showUnreadOnly, setShowUnreadOnly] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
-const scrollerRef = useRef<HTMLDivElement>(null)
+	const scrollerRef = useRef<HTMLDivElement>(null)
 
-	const loadConversations = async () => {
-		const res = await fetch(`${API_URL}/api/client/conversations`, {
-			headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-		})
-		const data = await res.json()
-		if (data.success) {
-			setConversations(data.data)
-			if (!activePartnerId && data.data.length > 0) setActivePartnerId(data.data[0].partnerId)
-			if (initialLoad) {
-				setInitialLoad(false)
+	const loadConversations = async (preserveManualConversations = false) => {
+		try {
+			const res = await fetch(`${API_URL}/api/admin/conversations`, {
+				headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+			})
+			const data = await res.json()
+			if (data.success) {
+				if (preserveManualConversations) {
+					// Merge backend conversations with existing manual ones
+					setConversations(prev => {
+						const backendConversations = data.data || []
+						const manualConversations = prev.filter(c =>
+							!backendConversations.some((bc: Conversation) => bc.partnerId === c.partnerId)
+						)
+						return [...manualConversations, ...backendConversations]
+					})
+				} else {
+					setConversations(data.data)
+				}
+				if (!activePartnerId && data.data.length > 0) setActivePartnerId(data.data[0].partnerId)
+				if (initialLoad) {
+					setInitialLoad(false)
+				}
 			}
+		} catch (error) {
+			console.error('Error loading conversations:', error)
 		}
 	}
 
 	const loadMessages = async (partnerId: string) => {
-		const params = new URLSearchParams({ conversation_with: partnerId })
-		const res = await fetch(`${API_URL}/api/client/messages?${params.toString()}`, {
-			headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-		})
-		const data = await res.json()
-		if (data.success) {
-			setMessages(data.data)
-			// Mark any unread incoming messages as read
-			const unread = (data.data as Message[]).filter(m => m.recipient_id === (user?.id || '') && !m.read_at)
-			if (unread.length > 0) {
-				await Promise.all(
-					unread.map(m => fetch(`${API_URL}/api/client/messages/${m.id}/read`, {
-						method: 'PUT',
-						headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-					}))
-				)
-				// Refresh conversations to drop unread badges
-				loadConversations()
+		try {
+			const params = new URLSearchParams({ conversation_with: partnerId })
+			const res = await fetch(`${API_URL}/api/admin/messages?${params.toString()}`, {
+				headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+			})
+			const data = await res.json()
+			if (data.success) {
+				// Filter out messages that are hidden for this admin user
+				const adminId = user?.id
+				const filteredMessages = (data.data as Message[]).filter(m => {
+					// Show message if it's not hidden for this admin
+					return !adminId || !m.hidden_for_users || !m.hidden_for_users.includes(adminId)
+				})
+				
+				setMessages(filteredMessages)
+				console.log('Loaded messages:', filteredMessages.length, 'Total from backend:', data.data.length)
+				
+				// Mark any unread incoming messages as read
+				const unread = filteredMessages.filter(m => m.recipient_id === adminId && !m.read_at)
+				if (unread.length > 0) {
+					await Promise.all(
+						unread.map(m => fetch(`${API_URL}/api/admin/messages/${m.id}/read`, {
+							method: 'PUT',
+							headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+						}))
+					)
+					// Refresh conversations to drop unread badges
+					loadConversations(true) // Preserve manual conversations
+				}
 			}
+		} catch (error) {
+			console.error('Error loading messages:', error)
 		}
 	}
 
-	// Function to initiate conversation with a specific coach
-	const initiateConversationWith = async (coachId: string, coachName?: string) => {
+	// Function to initiate conversation with a specific user
+	const initiateConversationWith = async (userId: string, userName?: string, userRole?: 'client' | 'coach') => {
 		try {
-			// First, check if conversation already exists
-			const existingConversation = conversations.find(c => c.partnerId === coachId)
+			console.log('Initiating conversation with:', { userId, userName, userRole })
+			
+			// First, check if conversation already exists in current state
+			const existingConversation = conversations.find(c => c.partnerId === userId)
 			if (existingConversation) {
-				setActivePartnerId(coachId)
+				console.log('Conversation already exists, activating it')
+				setActivePartnerId(userId)
+				setShowMobileChat(true) // Show the chat on mobile
 				return
 			}
 
-			// Create placeholder conversation with provided name immediately
-			if (coachName) {
-				const placeholderConversation: Conversation = {
-					partnerId: coachId,
-					partnerName: coachName,
+			// Set active partner immediately for better UX
+			setActivePartnerId(userId)
+			setShowMobileChat(true) // Show the chat on mobile
+			setMessages([])
+
+			// Create conversation in backend and state
+			if (userName && userRole) {
+				// Create persistent conversation entry immediately
+				const newConversation: Conversation = {
+					partnerId: userId,
+					partnerName: userName,
+					partnerRole: userRole,
 					lastBody: '',
 					lastAt: new Date().toISOString(),
 					unreadCount: 0,
 					totalMessages: 0
 				}
 				
-				// Add to conversations list if not already there
+				console.log('Adding new conversation to state and activating:', newConversation)
+				
+				// Add to conversations list immediately and persistently
 				setConversations(prev => {
-					const exists = prev.find(c => c.partnerId === coachId)
+					const exists = prev.find(c => c.partnerId === userId)
 					if (!exists) {
-						return [placeholderConversation, ...prev]
+						console.log('Adding conversation to list')
+						return [newConversation, ...prev]
 					}
+					console.log('Conversation already exists in state')
 					return prev
 				})
-			}
-			
-			setActivePartnerId(coachId)
-			setMessages([])
 
-			// The conversation will be created in the backend when the first message is sent
-			// For now, the placeholder conversation allows immediate messaging
-			
-			// Also reload conversations to get any existing ones
-			await loadConversations()
+				// Try to create conversation in backend (optional)
+				try {
+					const response = await fetch(`${API_URL}/api/admin/conversations`, {
+						method: 'POST',
+						headers: {
+							'Authorization': `Bearer ${localStorage.getItem('token')}`,
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							partnerId: userId,
+							partnerRole: userRole
+						})
+					})
+
+					const result = await response.json()
+					console.log('Backend conversation result:', result)
+				} catch (error) {
+					console.error('Error creating conversation in backend:', error)
+					// Continue anyway since we have the conversation in state
+				}
+			}
 			
 		} catch (error) {
 			console.error('Error initiating conversation:', error)
 		}
 	}
 
+	// Filter conversations based on search and filters
+	useEffect(() => {
+		let filtered = conversations
+
+		// Apply search filter
+		if (searchTerm) {
+			filtered = filtered.filter(c => 
+				c.partnerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				c.lastBody.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		}
+
+		// Apply role filter
+		if (roleFilter !== 'all') {
+			filtered = filtered.filter(c => c.partnerRole === roleFilter)
+		}
+
+		// Apply unread filter
+		if (showUnreadOnly) {
+			filtered = filtered.filter(c => c.unreadCount > 0)
+		}
+
+		setFilteredConversations(filtered)
+	}, [conversations, searchTerm, roleFilter, showUnreadOnly])
+
 	useEffect(() => {
 		;(async () => {
 			setLoading(true)
-			await loadConversations()
+			
+			// Check if we have URL parameters for conversation initiation
+			const conversationWith = searchParams.get('conversation_with')
+			const partnerName = searchParams.get('partner_name')
+			const partnerRole = searchParams.get('partner_role') as 'client' | 'coach'
+			
+			if (conversationWith && partnerName && partnerRole) {
+				// If we have URL parameters, create the conversation first
+				console.log('Creating conversation from URL params:', { conversationWith, partnerName, partnerRole })
+				await initiateConversationWith(
+					conversationWith,
+					decodeURIComponent(partnerName),
+					partnerRole
+				)
+				// Then load conversations with preservation
+				await loadConversations(true)
+				
+				// Activate the conversation and show mobile chat
+				setActivePartnerId(conversationWith)
+				setShowMobileChat(true)
+				console.log('Activated conversation for:', conversationWith)
+			} else {
+				// Normal load without URL parameters
+				await loadConversations()
+			}
+			
 			setLoading(false)
 		})()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [])
 
-
-useEffect(() => {
-	if (activePartnerId) {
-		loadMessages(activePartnerId)
-	}
-	// eslint-disable-next-line react-hooks/exhaustive-deps
-}, [activePartnerId])
-
-	// Handle conversation_with URL parameter
 	useEffect(() => {
-		const conversationWith = searchParams.get('conversation_with')
-		const partnerName = searchParams.get('partner_name')
-		if (conversationWith && !loading) {
-			initiateConversationWith(conversationWith, partnerName ? decodeURIComponent(partnerName) : undefined)
+		if (activePartnerId) {
+			loadMessages(activePartnerId)
 		}
-	}, [searchParams, loading])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [activePartnerId])
 
 	// Refresh when window regains focus
 	useEffect(() => {
 		const onFocus = () => {
-			loadConversations()
+			loadConversations(true) // Preserve manual conversations
 			if (activePartnerId) loadMessages(activePartnerId)
 		}
 		window.addEventListener('focus', onFocus)
 		return () => window.removeEventListener('focus', onFocus)
 	}, [activePartnerId])
 
-  // Socket.IO Realtime
-  const socketRef = useRef<ReturnType<typeof io> | null>(null)
+	// Socket.IO Realtime
+	const socketRef = useRef<ReturnType<typeof io> | null>(null)
 
-  useEffect(() => {
-    if (!user?.id) return
-    const socket = io(API_URL, {
-      transports: ['websocket'],
-      auth: { token: `Bearer ${localStorage.getItem('token')}` }
-    })
-    socketRef.current = socket
+	useEffect(() => {
+		if (!user?.id) return
+		const socket = io(API_URL, {
+			transports: ['websocket'],
+			auth: { token: `Bearer ${localStorage.getItem('token')}` }
+		})
+		socketRef.current = socket
 
-    socket.on('connect', () => {
-      // Connected
-    })
+		socket.on('connect', () => {
+			// Connected
+		})
 
-    socket.on('message:new', async (msg: Message) => {
-      const partnerId = activePartnerId
-      const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
-      
-      if (involvesActive) {
-        setMessages(prev => [...prev, msg])
-        if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
-          socket.emit('message:read', { messageIds: [msg.id] })
-        }
-        loadConversations()
-        setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
-      } else {
-        loadConversations()
-      }
-    })
+		socket.on('message:new', async (msg: Message) => {
+			const partnerId = activePartnerId
+			const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
+			
+			if (involvesActive) {
+				setMessages(prev => [...prev, msg])
+				if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
+					socket.emit('message:read', { messageIds: [msg.id] })
+				}
+				loadConversations(true) // Preserve manual conversations
+				setTimeout(() => scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' }), 0)
+			} else {
+				loadConversations(true) // Preserve manual conversations
+			}
+		})
 
-    socket.on('message:read', ({ id, read_at }: { id: string; read_at: string }) => {
-      setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at } as Message : m))
-    })
+		socket.on('message:read', ({ id, read_at }: { id: string; read_at: string }) => {
+			setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at } as Message : m))
+		})
 
-    // Removed conversation:deleted listener - conversations are now soft-deleted per-user
-    // The conversation list will be filtered server-side to exclude hidden conversations
+		socket.on('message:deleted_everyone', ({ messageId, deletedBy }: { messageId: string; deletedBy: string }) => {
+			// Update the message to show it was deleted
+			setMessages(prev => prev.map(m => 
+				m.id === messageId 
+					? { ...m, body: 'This message was deleted', deleted_for_everyone: true, deleted_at: new Date().toISOString() }
+					: m
+			))
+		})
 
-    socket.on('message:deleted_everyone', ({ messageId, deletedBy }: { messageId: string; deletedBy: string }) => {
-      // Update the message to show it was deleted
-      setMessages(prev => prev.map(m => 
-        m.id === messageId 
-          ? { ...m, body: 'This message was deleted', deleted_for_everyone: true, deleted_at: new Date().toISOString() }
-          : m
-      ))
-    })
-
-    return () => {
-      socketRef.current?.close()
-      socketRef.current = null
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.id, activePartnerId])
+		return () => {
+			socketRef.current?.close()
+			socketRef.current = null
+		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [user?.id, activePartnerId])
 
 	useEffect(() => {
 		scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
@@ -239,6 +337,7 @@ useEffect(() => {
 		return {
 			partnerId: activePartnerId,
 			partnerName: 'Loading...',
+			partnerRole: 'client' as const,
 			lastBody: '',
 			lastAt: new Date().toISOString(),
 			unreadCount: 0,
@@ -262,7 +361,7 @@ useEffect(() => {
 		const formData = new FormData()
 		formData.append('attachment', file)
 
-		const response = await fetch(`${API_URL}/api/client/upload-attachment`, {
+		const response = await fetch(`${API_URL}/api/admin/upload-attachment`, {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -284,7 +383,7 @@ useEffect(() => {
 		}
 
 		try {
-			const response = await fetch(`${API_URL}/api/client/conversations/${partnerId}`, {
+			const response = await fetch(`${API_URL}/api/admin/conversations/${partnerId}`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -314,7 +413,7 @@ useEffect(() => {
 		}
 
 		try {
-			const response = await fetch(`${API_URL}/api/client/messages/${messageId}/everyone`, {
+			const response = await fetch(`${API_URL}/api/admin/messages/${messageId}/everyone`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -333,27 +432,48 @@ useEffect(() => {
 
 	const hideMessageForMe = async (messageId: string) => {
 		try {
-			const response = await fetch(`${API_URL}/api/client/messages/${messageId}/hide`, {
+			console.log('Hiding message:', messageId)
+			
+			const response = await fetch(`${API_URL}/api/admin/messages/${messageId}/hide`, {
 				method: 'PUT',
 				headers: {
-					'Authorization': `Bearer ${localStorage.getItem('token')}`
+					'Authorization': `Bearer ${localStorage.getItem('token')}`,
+					'Content-Type': 'application/json'
 				}
 			})
 
+			console.log('Hide message response status:', response.status)
+			
+			if (!response.ok) {
+				const errorText = await response.text()
+				console.error('Hide message HTTP error:', response.status, errorText)
+				alert(`Failed to hide message: ${response.status} ${errorText}`)
+				return
+			}
+
 			const result = await response.json()
+			console.log('Hide message result:', result)
+			
 			if (result.success) {
-				// Remove message from local state
-				setMessages(prev => prev.filter(m => m.id !== messageId))
+				// Remove message from local state immediately
+				setMessages(prev => {
+					const filtered = prev.filter(m => m.id !== messageId)
+					console.log('Messages after hiding:', filtered.length)
+					return filtered
+				})
+				// Also refresh conversations to update last message if needed
+				loadConversations(true)
 			} else {
-				alert(result.message || 'Failed to hide message')
+				console.error('Hide message failed:', result)
+				alert(result.error || result.message || 'Failed to hide message')
 			}
 		} catch (error) {
 			console.error('Hide message error:', error)
-			alert('Failed to hide message')
+			alert('Failed to hide message: ' + (error as Error).message)
 		}
 	}
 
-  const handleSend = async () => {
+	const handleSend = async () => {
 		if (!activePartnerId || (!text.trim() && !selectedFile)) return
 		
 		try {
@@ -388,21 +508,62 @@ useEffect(() => {
 
 			// Refresh conversations after sending to ensure conversation appears
 			setTimeout(() => {
-				loadConversations()
+				loadConversations(true) // Preserve manual conversations
 			}, 1000)
 		} finally {
 			setSending(false)
 		}
 	}
 
-
 	return (
 		<div className="flex flex-col h-screen sm:max-w-7xl sm:mx-auto sm:px-4 sm:px-6 lg:px-8 sm:pt-8 sm:pb-16 sm:h-auto">
 			{/* Page Header - Hidden on mobile when in chat view */}
 			<div className={`mb-4 sm:mb-8 px-4 pt-4 sm:px-0 sm:pt-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
-				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">My Messages</h1>
-				<p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400">Send and receive messages with your coach</p>
+				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Admin Messages</h1>
+				<p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400">Monitor and manage all platform communications</p>
 			</div>
+
+			{/* Filters and Search */}
+			<div className={`mb-4 px-4 sm:px-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
+				<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+					{/* Search */}
+					<div className="relative flex-1">
+						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+						<Input
+							placeholder="Search conversations..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="pl-10"
+						/>
+					</div>
+					
+					{/* Role Filter */}
+					<select
+						value={roleFilter}
+						onChange={(e) => setRoleFilter(e.target.value as 'all' | 'client' | 'coach')}
+						className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+					>
+						<option value="all">All Users</option>
+						<option value="client">Clients</option>
+						<option value="coach">Coaches</option>
+					</select>
+
+					{/* Unread Filter */}
+					<Button
+						variant={showUnreadOnly ? "default" : "outline"}
+						onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+						className={`flex items-center gap-2 ${
+							showUnreadOnly 
+								? 'dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700' 
+								: 'dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
+						}`}
+					>
+						<MessageCircle className="w-4 h-4" />
+						Unread Only
+					</Button>
+				</div>
+			</div>
+
 			{/* Main Content */}
 			{initialLoad ? (
 				<MessagesSkeleton />
@@ -410,9 +571,12 @@ useEffect(() => {
 			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
 					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
 					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col`}>
-						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">Conversations</div>
+						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+							<span>Conversations ({filteredConversations.length})</span>
+							<Users className="w-4 h-4 text-gray-500" />
+						</div>
 						<div className="flex-1 overflow-y-auto">
-							{conversations.map(c => (
+							{filteredConversations.map(c => (
 								<div key={c.partnerId} className="relative group">
 									<button
 										onClick={() => {
@@ -422,11 +586,20 @@ useEffect(() => {
 										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
 									>
 										<div className="min-w-0 flex-1">
-											<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
+											<div className="flex items-center gap-2 mb-1">
+												<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
+												<span className={`text-xs px-2 py-0.5 rounded-full ${
+													c.partnerRole === 'client' 
+														? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+														: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+												}`}>
+													{c.partnerRole}
+												</span>
+											</div>
 											<div className="text-xs sm:text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages yet'}</div>
 										</div>
 										{c.unreadCount > 0 && (
-											<span className="ml-2 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
+											<span className="ml-2 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
 										)}
 									</button>
 									<button
@@ -441,6 +614,15 @@ useEffect(() => {
 									</button>
 								</div>
 							))}
+							{filteredConversations.length === 0 && (
+								<div className="p-8 text-center text-gray-500 dark:text-gray-400">
+									<MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+									<p>No conversations found</p>
+									{(searchTerm || roleFilter !== 'all' || showUnreadOnly) && (
+										<p className="text-sm mt-1">Try adjusting your filters</p>
+									)}
+								</div>
+							)}
 						</div>
 					</div>
 
@@ -454,12 +636,29 @@ useEffect(() => {
 						>
 							<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
 						</button>
-						<div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
+						<div className="flex items-center gap-2">
+							<div className="font-semibold text-gray-900 dark:text-white">
+								{activePartner?.partnerName || 'Select a conversation'}
+							</div>
+							{activePartner && (
+								<span className={`text-xs px-2 py-0.5 rounded-full ${
+									activePartner.partnerRole === 'client' 
+										? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+										: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+								}`}>
+									{activePartner.partnerRole}
+								</span>
+							)}
+						</div>
 					</div>
 						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900 min-h-0">
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-								<p>Select a conversation to start messaging</p>
+								<div className="text-center">
+									<MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+									<p className="text-lg font-medium mb-2">Select a conversation</p>
+									<p className="text-sm">Choose a conversation from the list to start messaging</p>
+								</div>
 							</div>
 						)}
 						{activePartnerId && messages.map(m => {
@@ -516,15 +715,13 @@ useEffect(() => {
 														<MoreVertical size={14} />
 													</button>
 													<div className="hidden absolute right-0 top-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
-														{isMine && (
-															<button
-																onClick={() => deleteMessageForEveryone(m.id)}
-																className="w-full text-left px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
-															>
-																<Trash2 size={12} />
-																Delete for everyone
-															</button>
-														)}
+														<button
+															onClick={() => deleteMessageForEveryone(m.id)}
+															className="w-full text-left px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
+														>
+															<Trash2 size={12} />
+															Delete for everyone
+														</button>
 														<button
 															onClick={() => hideMessageForMe(m.id)}
 															className="w-full text-left px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
@@ -590,7 +787,7 @@ useEffect(() => {
 									value={text}
 									onChange={e => setText(e.target.value)}
 									placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-									className="flex-1 dark:text-white text-base sm:text-sm py-3 sm:py-2"
+									className="flex-1 dark:text-white dark:placeholder-gray-400 text-base sm:text-sm py-3 sm:py-2"
 									disabled={!activePartnerId}
 									onKeyDown={e => {
 										if (e.key === 'Enter' && !e.shiftKey) {
@@ -599,9 +796,9 @@ useEffect(() => {
 										}
 									}}
 								/>
-								<Button 
-									onClick={handleSend} 
-									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)} 
+								<Button
+									onClick={handleSend}
+									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)}
 									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white px-6 sm:px-4 py-3 sm:py-2 touch-manipulation"
 								>
 									<Send className="w-5 h-5 sm:hidden" />
@@ -616,12 +813,6 @@ useEffect(() => {
 	)
 }
 
-export default function MessagesPage() {
-	return (
-		<ProtectedRoute allowedRoles={['client']}>
-				<MessagesContent />
-		</ProtectedRoute>
-	)
+export default function AdminMessagesPage() {
+	return <AdminMessagesContent />
 }
-
-

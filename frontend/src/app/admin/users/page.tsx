@@ -2,12 +2,12 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Search, 
-  MoreVertical, 
-  Edit, 
-  Trash2, 
-  Ban, 
+import {
+  Search,
+  MoreVertical,
+  Edit,
+  Trash2,
+  Ban,
   CheckCircle,
   XCircle,
   Mail,
@@ -18,12 +18,14 @@ import {
   X,
   LogIn,
   User,
-  UserX, 
+  UserX,
   CircleUserRound,
   Copy,
   AlertTriangle,
-  Info
+  Info,
+  MessageSquare
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
 
 interface User {
@@ -77,6 +79,7 @@ interface UserFormData {
 }
 
 export default function UserManagement() {
+  const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,6 +115,17 @@ export default function UserManagement() {
     userType: 'client',
     status: 'active'
   });
+
+  const handleMessageUser = (user: User) => {
+    const userName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim();
+    const params = new URLSearchParams({
+      conversation_with: user.id,
+      partner_name: encodeURIComponent(userName),
+      partner_role: user.role
+    });
+    router.push(`/admin/messages?${params.toString()}`);
+    setShowActionMenu(null);
+  };
 
   useEffect(() => {
     fetchUsers();
@@ -938,6 +952,13 @@ export default function UserManagement() {
                             >
                               <Edit className="h-4 w-4 mr-2" />
                               Edit Profile
+                            </button>
+                            <button
+                              onClick={() => handleMessageUser(user)}
+                              className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                            >
+                              <MessageSquare className="h-4 w-4 mr-2" />
+                              Send Message
                             </button>
                             <button
                               onClick={() => {
