@@ -395,7 +395,7 @@ useEffect(() => {
 
 
 	return (
-		<div className="flex flex-col h-screen sm:max-w-7xl sm:mx-auto sm:px-4 sm:px-6 lg:px-8 sm:pt-8 sm:pb-16 sm:h-auto">
+		<div className="flex flex-col h-screen sm:max-w-7xl sm:mx-auto sm:px-4  lg:px-8 sm:pt-8 sm:pb-16 sm:h-auto">
 			{/* Page Header - Hidden on mobile when in chat view */}
 			<div className={`mb-4 sm:mb-8 px-4 pt-4 sm:px-0 sm:pt-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">My Messages</h1>

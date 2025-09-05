@@ -325,7 +325,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 
                 {/* Notification Dropdown */}
                 {showNotificationDropdown && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-50 border border-gray-200 dark:border-gray-600">
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-md shadow-lg z-[55] border border-gray-200 dark:border-gray-600">
                     <div className="p-4">
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Notifications</h3>
                       
@@ -436,7 +436,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 </button>
                 
                 {showDropdown && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-600">
+                  <div className="hidden sm:block absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-600">
                     <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {user?.first_name || 'Admin'} {user?.last_name || ''}
@@ -476,10 +476,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {/* Mobile user menu button */}
             <div className="sm:hidden flex items-center space-x-2">
               {/* Mobile Notification Bell */}
-              <div className="relative">
+              <div className="relative" ref={notificationRef}>
                 <button
                   onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label="Notifications"
                 >
                   <Bell className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -491,12 +491,121 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     />
                   )}
                 </button>
+                
+                {/* Mobile Notification Dropdown */}
+                {showNotificationDropdown && (
+                  <>
+                    {/* Mobile backdrop */}
+                    <div
+                      className="sm:hidden fixed inset-0 bg-black/20 z-[55]"
+                      onClick={() => setShowNotificationDropdown(false)}
+                    />
+                    <div className="sm:hidden fixed right-4 top-16 left-4 bg-white dark:bg-gray-800 rounded-md shadow-xl z-[65] border border-gray-200 dark:border-gray-600 max-h-[70vh] overflow-y-auto">
+                      <div className="p-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">Notifications</h3>
+                        
+                        {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) === 0 ? (
+                          <div className="text-center py-8">
+                            <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                            <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            {displayNewUsersCount > 0 && (
+                              <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">New Users</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewUsersCount} new registrations</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    router.push('/admin/users');
+                                    setShowNotificationDropdown(false);
+                                  }}
+                                  className="text-blue-600 dark:text-blue-400 hover:text-blue-700 text-sm font-medium px-3 py-1 rounded"
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
+
+                            {displayNewCoachApplicationsCount > 0 && (
+                              <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">Coach Applications</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewCoachApplicationsCount} new applications</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    router.push('/admin/coach-applications');
+                                    setShowNotificationDropdown(false);
+                                  }}
+                                  className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm font-medium px-3 py-1 rounded"
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
+                            
+                            {displayNewAppointmentsCount > 0 && (
+                              <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">New Appointments</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewAppointmentsCount} new bookings</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    router.push('/admin/appointments');
+                                    setShowNotificationDropdown(false);
+                                  }}
+                                  className="text-green-600 dark:text-green-400 hover:text-green-700 text-sm font-medium px-3 py-1 rounded"
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
+                            
+                            {displayNewMessagesCount > 0 && (
+                              <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                                <div className="flex items-center space-x-3">
+                                  <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                  <div>
+                                    <p className="font-medium text-gray-900 dark:text-white">System Messages</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewMessagesCount} new messages</p>
+                                  </div>
+                                </div>
+                                <button
+                                  onClick={() => {
+                                    router.push('/admin/messages');
+                                    setShowNotificationDropdown(false);
+                                  }}
+                                  className="text-orange-600 dark:text-orange-400 hover:text-orange-700 text-sm font-medium px-3 py-1 rounded"
+                                >
+                                  View
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               
-              <div className="relative">
+              <div className="relative" ref={mobileDropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                   aria-label="User menu"
                 >
                   <CircleUserRound className="w-6 h-6 text-gray-600 dark:text-gray-400" />
@@ -512,10 +621,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <>
           {/* Backdrop for mobile dropdown */}
           <div
-            className="sm:hidden fixed inset-0 bg-black/20 z-40"
+            className="sm:hidden fixed inset-0 bg-black/20 z-[60]"
             onClick={() => setShowDropdown(false)}
           />
-          <div ref={mobileDropdownRef} className="sm:hidden absolute right-4 top-16 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-50 border border-gray-200 dark:border-gray-600">
+          <div className="sm:hidden fixed right-4 top-16 w-48 bg-white dark:bg-gray-800 rounded-md shadow-xl py-1 z-[70] border border-gray-200 dark:border-gray-600">
             <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.first_name || 'Admin'} {user?.last_name || ''}
