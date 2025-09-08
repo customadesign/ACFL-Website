@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeetingContainer from '@/components/MeetingContainer';
+import MeetingBlocker from '@/components/MeetingBlocker';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -301,7 +302,12 @@ function AppointmentsContent() {
   // Remove the loading screen - we'll show skeleton in the main render
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <MeetingBlocker
+      blockMessage="You are currently in a meeting session. Please end your current meeting before managing other appointments."
+      allowSameMeetingAccess={true}
+      currentMeetingId={meetingAppointment?.meeting_id}
+    >
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
         <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
@@ -537,7 +543,8 @@ function AppointmentsContent() {
           }}
         />
       )}
-    </div>
+      </div>
+    </MeetingBlocker>
   );
 }
 

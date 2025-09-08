@@ -40,6 +40,8 @@ export async function createVideoSDKMeeting(): Promise<CreateMeetingResponse> {
   try {
     const token = generateVideoSDKToken(['allow_join', 'allow_mod'])
     
+    console.log('Creating VideoSDK meeting with token:', token.substring(0, 50) + '...')
+    
     const response = await axios.post(
       `${VIDEOSDK_API_ENDPOINT}/rooms`,
       {},
@@ -47,17 +49,30 @@ export async function createVideoSDKMeeting(): Promise<CreateMeetingResponse> {
         headers: {
           'Authorization': token,
           'Content-Type': 'application/json'
-        }
+        },
+        timeout: 10000
       }
     )
+
+    console.log('VideoSDK meeting created successfully:', response.data)
 
     return {
       meetingId: response.data.roomId,
       roomId: response.data.roomId
     }
   } catch (error: any) {
-    console.error('Error creating VideoSDK meeting:', error.response?.data || error.message)
-    throw new Error('Failed to create VideoSDK meeting')
+    console.error('Error creating VideoSDK meeting:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+      config: {
+        url: error.config?.url,
+        method: error.config?.method,
+        headers: error.config?.headers
+      }
+    })
+    throw new Error(`Failed to create VideoSDK meeting: ${error.response?.status || error.message}`)
   }
 }
 

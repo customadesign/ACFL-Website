@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import MeetingBlocker from '@/components/MeetingBlocker';
 import { Calendar, Clock, User, ChevronLeft, ChevronRight, CheckCircle, MapPin, Phone } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
 
@@ -276,7 +277,8 @@ export default function BookSessionPage() {
   // Coach selection screen
   if (!selectedCoach) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+      <MeetingBlocker blockMessage="You are currently in a meeting. Please end your current session before booking new appointments.">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <div className="text-center mb-12">
             <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
@@ -325,13 +327,15 @@ export default function BookSessionPage() {
             </div>
           )}
         </div>
-      </div>
+        </div>
+      </MeetingBlocker>
     );
   }
 
   // GHL-style calendar booking interface
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <MeetingBlocker blockMessage="You are currently in a meeting. Please end your current session before booking new appointments.">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-6 py-4">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
@@ -611,6 +615,7 @@ export default function BookSessionPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </MeetingBlocker>
   );
 }

@@ -24,6 +24,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ProviderCard } from "@/components/ProviderCard";
+import MeetingBlocker from "@/components/MeetingBlocker";
 import ProtectedRoute from "@/components/ProtectedRoute";
 import { useAuth } from "@/contexts/AuthContext";
 import { 
@@ -678,7 +679,8 @@ function SearchCoachesContent() {
   }, [searchQuery, priceRange, selectedFilters, watchedExperience]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <MeetingBlocker blockMessage="You are currently in a meeting. Please end your current session before searching for coaches.">
+      <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
         {/* Page Header */}
         <div className="text-center mb-6 sm:mb-8">
@@ -1549,7 +1551,8 @@ function SearchCoachesContent() {
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </MeetingBlocker>
   );
 }
 

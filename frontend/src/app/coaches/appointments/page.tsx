@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import MeetingContainer from '@/components/MeetingContainer';
+import MeetingBlocker from '@/components/MeetingBlocker';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -324,7 +325,12 @@ export default function AppointmentsPage() {
   // Remove the loading screen - we'll show skeleton in the main render
 
   return (
-    <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">      
+    <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
+      <MeetingBlocker
+        blockMessage="You are currently in a meeting session. Please end your current meeting before managing other appointments."
+        allowSameMeetingAccess={true}
+        currentMeetingId={meetingAppointment?.meeting_id}
+      >      
 
       {error && (
         <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-md">
@@ -626,6 +632,7 @@ export default function AppointmentsPage() {
           onSuccess={handleRescheduleSuccess}
         />
       )}
+      </MeetingBlocker>
     </CoachPageWrapper>
   );
 }

@@ -47,10 +47,17 @@ export default function MeetingContainer({
   useEffect(() => {
     const checkMeetingAccess = async () => {
       try {
+        // First check if user can even attempt to join a meeting
+        if (isInMeeting && currentMeetingId) {
+          console.log('❌ User already in meeting - blocking access immediately')
+          setStage('blocked')
+          return
+        }
+
         const { meetingId } = await createOrGetMeeting(appointmentId, isHost)
         setMeetingIdToCheck(meetingId)
         
-        // Check if user can join this meeting
+        // Double-check after getting meeting ID
         if (!canJoinMeeting(meetingId)) {
           console.log('❌ Cannot join meeting - user already in another meeting')
           setStage('blocked')
@@ -61,8 +68,16 @@ export default function MeetingContainer({
         console.log('🔒 Reserving meeting access:', meetingId)
         setMeetingState(true, meetingId)
         
-      } catch (error) {
+      } catch (error: any) {
         console.error('Failed to check meeting access:', error)
+        
+        // Check if this is a backend conflict error
+        if (error.status === 409 && error.conflictType === 'ALREADY_IN_MEETING') {
+          console.log('❌ Backend detected user already in meeting')
+          setStage('blocked')
+          return
+        }
+        
         setError('Failed to check meeting access')
       }
     }
@@ -77,7 +92,7 @@ export default function MeetingContainer({
         setMeetingState(false, null)
       }
     }
-  }, [appointmentId, isHost, canJoinMeeting, setMeetingState])
+  }, [appointmentId, isHost, canJoinMeeting, setMeetingState, isInMeeting, currentMeetingId])
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {
     // Prevent double-clicking and multiple join attempts
