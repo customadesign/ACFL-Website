@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { validationResult } from 'express-validator';
 import { supabase } from '../lib/supabase';
+import { coachService } from '../services/coachService';
 import emailService from '../services/emailService';
 import bcrypt from 'bcrypt';
 
@@ -559,7 +560,7 @@ const createCoachProfileFromApplication = async (application: any) => {
       // Core Profile Fields
       bio: application.coaching_philosophy,
       years_experience: parseExperienceYears(application.coaching_experience_years),
-      hourly_rate_usd: 75, // Default rate, can be updated later
+      // hourly_rate_usd removed - rates now managed in coach_rates table
       specialties: application.coaching_expertise,
       languages: application.languages_fluent,
       
@@ -607,6 +608,15 @@ const createCoachProfileFromApplication = async (application: any) => {
 
     if (createError) {
       throw createError;
+    }
+
+    // Create default rate for new coach (75 USD per hour)
+    try {
+      await coachService.setDefaultRate(newCoach.id, 75);
+      console.log('✅ Default rate created for approved coach');
+    } catch (rateError) {
+      console.error('⚠️ Failed to create default rate for approved coach:', rateError);
+      // Non-critical error, continue with approval
     }
 
     // Create coach demographics record

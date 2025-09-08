@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase';
+import { coachService } from '../services/coachService';
 import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
@@ -681,7 +682,7 @@ router.get('/client/coaches', [
         specialties: coach.specialties || [],
         languages: coach.languages || [],
         bio: coach.bio || '',
-        sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : 'Rate not specified',
+        sessionRate: 'Rate not specified', // Will be fetched from coach_rates table
         experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
         rating: 0, // Will be calculated dynamically from reviews
         matchScore: 50, // Default score for all coaches
@@ -902,7 +903,7 @@ router.post('/client/search-coaches', [
         specialties: coach.specialties || [],
         languages: coach.languages || [],
         bio: coach.bio || '',
-        sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : 'Rate not specified',
+        sessionRate: 'Rate not specified', // Will be fetched from coach_rates table
         experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
         rating: 0,
         matchScore: normalized,

@@ -23,6 +23,17 @@ export default function MeetingBlocker({
 }: MeetingBlockerProps) {
   const { isInMeeting, currentMeetingId: contextMeetingId } = useMeeting()
 
+  // Debug logging in development
+  if (process.env.NODE_ENV === 'development' && isInMeeting) {
+    console.log('🔍 MeetingBlocker Debug:', {
+      isInMeeting,
+      contextMeetingId,
+      propCurrentMeetingId: currentMeetingId,
+      allowSameMeetingAccess,
+      idsMatch: contextMeetingId === currentMeetingId
+    });
+  }
+
   // If user is not in a meeting, show content normally
   if (!isInMeeting) {
     return <>{children}</>
@@ -30,6 +41,14 @@ export default function MeetingBlocker({
 
   // If same meeting access is allowed and the IDs match, show content
   if (allowSameMeetingAccess && currentMeetingId && contextMeetingId === currentMeetingId) {
+    console.log('✅ Allowing same meeting access');
+    return <>{children}</>
+  }
+
+  // Special case: For appointment pages, allow access even if meeting IDs don't match
+  // This is because the appointment page should show the current meeting
+  if (allowSameMeetingAccess && !currentMeetingId) {
+    console.log('✅ Allowing appointment page access without specific meeting ID');
     return <>{children}</>
   }
 

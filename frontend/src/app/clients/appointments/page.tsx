@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeetingContainer from '@/components/MeetingContainer';
+import MockMeetingContainer from '@/components/MockMeetingContainer';
 import MeetingBlocker from '@/components/MeetingBlocker';
+import MeetingStatusDebug from '@/components/MeetingStatusDebug';
+import TestInstructions from '@/components/TestInstructions';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -48,6 +51,7 @@ function AppointmentsContent() {
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [showMeeting, setShowMeeting] = useState(false);
+  const [showMockMeeting, setShowMockMeeting] = useState(false);
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -302,15 +306,70 @@ function AppointmentsContent() {
   // Remove the loading screen - we'll show skeleton in the main render
 
   return (
-    <MeetingBlocker
-      blockMessage="You are currently in a meeting session. Please end your current meeting before managing other appointments."
-      allowSameMeetingAccess={true}
-      currentMeetingId={meetingAppointment?.meeting_id}
-    >
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    // No MeetingBlocker on appointments page - users should always be able to access their appointments
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
-        <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
+          </div>
+          {/* Test Button - Remove in production */}
+          <Button
+            onClick={async () => {
+              try {
+                // Generate proper UUIDs for test data
+                const generateUUID = () => {
+                  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                  });
+                };
+
+                // Create a test appointment that starts now
+                const now = new Date();
+                const endTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour later
+                
+                const testAppointment: Appointment = {
+                  id: generateUUID(),
+                  coach_id: generateUUID(),
+                  starts_at: now.toISOString(),
+                  ends_at: endTime.toISOString(),
+                  status: 'confirmed',
+                  notes: 'Test appointment for meeting restrictions',
+                  meeting_id: `meeting_${Date.now()}_test`,
+                  created_at: now.toISOString(),
+                  coaches: {
+                    first_name: 'Test',
+                    last_name: 'Coach',
+                    email: 'test@coach.com',
+                    users: {
+                      email: 'test@coach.com'
+                    }
+                  }
+                };
+                
+                // Add to appointments list (frontend only - no backend call)
+                setAppointments(prev => [testAppointment, ...prev]);
+                
+                console.log('✅ Test appointment created (frontend only):', testAppointment.id);
+                
+                // Optionally, immediately open the mock meeting
+                if (confirm('Open test meeting now? (Note: This will test frontend restrictions only)')) {
+                  setMeetingAppointment(testAppointment);
+                  setShowMockMeeting(true);
+                }
+              } catch (error) {
+                console.error('Error creating test appointment:', error);
+              }
+            }}
+            className="bg-purple-600 hover:bg-purple-700 text-white"
+          >
+            <Video className="mr-2 h-4 w-4" />
+            Book Test Meeting (Dev Only)
+          </Button>
+        </div>
       </div>
 
       {error && (
@@ -484,9 +543,16 @@ function AppointmentsContent() {
                               {isInMeeting && currentMeetingId === appointment.meeting_id ? 'Rejoin Session' : 'Join Session'}
                             </Button>
                             {isInMeeting && currentMeetingId !== appointment.meeting_id && (
-                              <span className="text-[10px] text-amber-600 dark:text-amber-400 text-center">
-                                📞 Already in meeting: {currentMeetingId?.substring(0, 8)}...
-                              </span>
+                              <div className="mt-2 p-2 bg-amber-50 dark:bg-amber-900/20 rounded-lg border border-amber-200 dark:border-amber-800">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-amber-600 dark:text-amber-400">🔒</span>
+                                  <div className="text-[11px] text-amber-700 dark:text-amber-300">
+                                    <div className="font-medium">Cannot join - already in meeting</div>
+                                    <div>Active: {currentMeetingId?.substring(0, 12)}...</div>
+                                    <div className="text-amber-600 dark:text-amber-400">End current meeting to join this one</div>
+                                  </div>
+                                </div>
+                              </div>
                             )}
                           </div>
                         )}
@@ -543,8 +609,28 @@ function AppointmentsContent() {
           }}
         />
       )}
-      </div>
-    </MeetingBlocker>
+
+      {/* Mock Meeting Container for Testing */}
+      {showMockMeeting && meetingAppointment && (
+        <MockMeetingContainer
+          appointmentId={meetingAppointment.id}
+          appointmentData={{
+            coach_name: `${meetingAppointment.coaches?.first_name} ${meetingAppointment.coaches?.last_name}`,
+            starts_at: meetingAppointment.starts_at,
+            ends_at: meetingAppointment.ends_at
+          }}
+          isHost={false}
+          onClose={() => {
+            setShowMockMeeting(false);
+            setMeetingAppointment(null);
+          }}
+        />
+      )}
+      
+      {/* Debug Components - Remove in production */}
+      <MeetingStatusDebug />
+      <TestInstructions />
+    </div>
   );
 }
 

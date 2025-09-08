@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { getCoachById } from '../controllers/coachController';
 import { supabase } from '../lib/supabase';
+import { coachService } from '../services/coachService';
 import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
@@ -185,7 +186,7 @@ router.put('/coach/profile', [
     if (languages) coachUpdates.languages = languages;
     if (qualifications !== undefined) coachUpdates.qualifications = qualifications;
     if (experience !== undefined) coachUpdates.years_experience = experience;
-    if (hourlyRate !== undefined) coachUpdates.hourly_rate_usd = hourlyRate;
+    // hourlyRate is now handled separately through coach_rates table
     if (isAvailable !== undefined) coachUpdates.is_available = isAvailable;
 
     // Get coach profile by email first
@@ -213,6 +214,16 @@ router.put('/coach/profile', [
 
     if (coachError) {
       throw coachError;
+    }
+
+    // Handle hourly rate update through coach_rates table
+    if (hourlyRate !== undefined) {
+      try {
+        await coachService.setDefaultRate(coachId, hourlyRate);
+      } catch (rateError) {
+        console.error('Failed to update coach rate:', rateError);
+        // Continue with the rest of the update even if rate update fails
+      }
     }
 
     // Update or insert coach demographics if video availability, time availability, location, or gender is provided

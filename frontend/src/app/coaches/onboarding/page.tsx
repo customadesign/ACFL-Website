@@ -22,6 +22,7 @@ export default function CoachOnboarding() {
   const [steps, setSteps] = useState<OnboardingStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [coachProfile, setCoachProfile] = useState<any>(null);
+  const [coachRates, setCoachRates] = useState<any[]>([]);
   const { user } = useAuth();
   const router = useRouter();
 
@@ -37,17 +38,38 @@ export default function CoachOnboarding() {
   const fetchCoachProfile = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${getApiUrl()}/api/coaches/${user?.id}`, {
+      
+      // Fetch coach profile
+      const profileResponse = await fetch(`${getApiUrl()}/api/coaches/${user?.id}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (profileResponse.ok) {
+        const data = await profileResponse.json();
         setCoachProfile(data.coach);
-        updateOnboardingSteps(data.coach);
+        
+        // Fetch coach rates
+        try {
+          const ratesResponse = await fetch(`${getApiUrl()}/api/payments/public/coaches/${user?.id}/rates`, {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+          
+          if (ratesResponse.ok) {
+            const ratesData = await ratesResponse.json();
+            setCoachRates(ratesData);
+            updateOnboardingSteps(data.coach, ratesData);
+          } else {
+            updateOnboardingSteps(data.coach, []);
+          }
+        } catch (ratesError) {
+          console.error('Error fetching coach rates:', ratesError);
+          updateOnboardingSteps(data.coach, []);
+        }
       }
     } catch (error) {
       console.error('Error fetching coach profile:', error);
@@ -56,7 +78,7 @@ export default function CoachOnboarding() {
     }
   };
 
-  const updateOnboardingSteps = (profile: any) => {
+  const updateOnboardingSteps = (profile: any, rates: any[] = []) => {
     const onboardingSteps: OnboardingStep[] = [
       {
         id: 'profile_completion',
@@ -80,7 +102,7 @@ export default function CoachOnboarding() {
         id: 'set_rates',
         title: 'Set Your Rates',
         description: 'Configure your hourly rates and payment preferences',
-        completed: !!(profile?.hourly_rate_usd && profile?.hourly_rate_usd > 0),
+        completed: rates.length > 0 && rates.some(r => r.is_active),
         required: true,
         icon: DollarSign,
         href: '/coaches/profile'

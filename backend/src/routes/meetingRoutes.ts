@@ -103,6 +103,15 @@ router.post('/create-or-get', authenticate, async (req: AuthRequest, res: Respon
       }
     }
 
+    // Debug: Log the query parameters
+    console.log('DEBUG: Meeting access check parameters:', {
+      appointmentId,
+      userId,
+      userRole: req.user?.role,
+      isHost,
+      query: `client_id.eq.${userId},coach_id.eq.${userId}`
+    })
+
     // Verify user has access to this appointment
     const { data: appointment, error: appointmentError } = await supabase
       .from('sessions')
@@ -111,10 +120,42 @@ router.post('/create-or-get', authenticate, async (req: AuthRequest, res: Respon
       .or(`client_id.eq.${userId},coach_id.eq.${userId}`)
       .single()
 
-    console.log('Appointment query result:', { 
-      appointment: appointment ? { id: appointment.id, client_id: appointment.client_id, coach_id: appointment.coach_id, meeting_id: appointment.meeting_id } : null, 
-      appointmentError 
+    console.log('DEBUG: Appointment query result:', { 
+      appointment: appointment ? { 
+        id: appointment.id, 
+        client_id: appointment.client_id, 
+        coach_id: appointment.coach_id, 
+        meeting_id: appointment.meeting_id,
+        status: appointment.status,
+        starts_at: appointment.starts_at,
+        ends_at: appointment.ends_at
+      } : null, 
+      appointmentError,
+      errorDetails: appointmentError?.details,
+      errorHint: appointmentError?.hint,
+      errorMessage: appointmentError?.message
     })
+
+    // If appointment not found, let's try a broader query to see if the appointment exists at all
+    if (appointmentError || !appointment) {
+      console.log('DEBUG: Appointment not found with user access, checking if appointment exists at all...')
+      const { data: anyAppointment, error: anyError } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', appointmentId)
+        .single()
+
+      console.log('DEBUG: Any appointment with this ID:', {
+        exists: !!anyAppointment,
+        appointment: anyAppointment ? {
+          id: anyAppointment.id,
+          client_id: anyAppointment.client_id,
+          coach_id: anyAppointment.coach_id,
+          status: anyAppointment.status
+        } : null,
+        error: anyError?.message
+      })
+    }
 
     if (appointmentError || !appointment) {
       console.error('Access denied - appointment not found or no access:', { appointmentError, userId, appointmentId })

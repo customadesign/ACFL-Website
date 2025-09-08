@@ -10,6 +10,8 @@ import meetingRoutes from './routes/meetingRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import calendarRoutes from './routes/calendarRoutes';
 import coachApplicationRoutes from './routes/coachApplicationRoutes';
+import paymentRoutes from './routes/paymentRoutes';
+import stripeTestRoutes from './routes/stripeTestRoutes';
 import { supabase } from './lib/supabase';
 
 // Load environment variables
@@ -60,6 +62,8 @@ app.use('/api/meetings', meetingRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/coach-applications', coachApplicationRoutes);
+app.use('/api/payments', paymentRoutes);
+app.use('/api/stripe-test', stripeTestRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);

@@ -45,19 +45,36 @@ export default function MeetingContainer({
 
   // Check meeting access on mount and immediately reserve this meeting
   useEffect(() => {
+    let hasRun = false; // Prevent multiple executions
+    
     const checkMeetingAccess = async () => {
+      if (hasRun) return; // Only run once
+      hasRun = true;
+      
       try {
-        // First check if user can even attempt to join a meeting
-        if (isInMeeting && currentMeetingId) {
+        console.log('🔍 DEBUG: MeetingContainer attempting to join:', {
+          appointmentId,
+          isHost,
+          user: user?.email,
+          currentMeetingId,
+          isInMeeting
+        })
+
+        // First check if user can even attempt to join a meeting (with current state)
+        const currentIsInMeeting = isInMeeting;
+        const currentMeetingIdState = currentMeetingId;
+        
+        if (currentIsInMeeting && currentMeetingIdState) {
           console.log('❌ User already in meeting - blocking access immediately')
           setStage('blocked')
           return
         }
 
+        console.log('🔍 DEBUG: Calling createOrGetMeeting with appointmentId:', appointmentId)
         const { meetingId } = await createOrGetMeeting(appointmentId, isHost)
         setMeetingIdToCheck(meetingId)
         
-        // Double-check after getting meeting ID
+        // Double-check with fresh meeting ID
         if (!canJoinMeeting(meetingId)) {
           console.log('❌ Cannot join meeting - user already in another meeting')
           setStage('blocked')
@@ -87,13 +104,17 @@ export default function MeetingContainer({
     // Cleanup function to release meeting when component unmounts
     return () => {
       // Only release if we actually joined the meeting
-      if (meetingIdToCheck && isInMeeting && currentMeetingId === meetingIdToCheck) {
-        console.log('🔓 Releasing meeting access on unmount:', meetingIdToCheck)
-        leaveMeeting(meetingIdToCheck).catch(console.error)
-        setMeetingState(false, null)
+      if (meetingIdToCheck) {
+        const currentIsInMeeting = isInMeeting;
+        const currentMeetingIdState = currentMeetingId;
+        if (currentIsInMeeting && currentMeetingIdState === meetingIdToCheck) {
+          console.log('🔓 Releasing meeting access on unmount:', meetingIdToCheck)
+          leaveMeeting(meetingIdToCheck).catch(console.error)
+          setMeetingState(false, null)
+        }
       }
     }
-  }, [appointmentId, isHost, canJoinMeeting, setMeetingState, isInMeeting, currentMeetingId])
+  }, [appointmentId, isHost]) // Removed meeting state dependencies to prevent re-runs
 
   const handleJoinMeeting = async (config: { mic: boolean; camera: boolean }) => {
     // Prevent double-clicking and multiple join attempts

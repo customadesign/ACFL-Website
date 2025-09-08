@@ -16,6 +16,7 @@ export const authenticate = async (
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
+      console.log('DEBUG: No authentication token provided');
       throw new Error();
     }
 
@@ -24,9 +25,16 @@ export const authenticate = async (
       process.env.JWT_SECRET || 'your-secret-key'
     ) as JWTPayload;
 
+    console.log('DEBUG: JWT decoded successfully:', { 
+      userId: decoded.userId, 
+      role: decoded.role,
+      email: decoded.email 
+    });
+
     req.user = decoded;
     next();
   } catch (error) {
+    console.log('DEBUG: Authentication failed:', error.message);
     res.status(401).json({ error: 'Please authenticate' });
   }
 };

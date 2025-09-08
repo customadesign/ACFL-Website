@@ -6,7 +6,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 import MeetingContainer from '@/components/MeetingContainer';
+import MockMeetingContainer from '@/components/MockMeetingContainer';
 import MeetingBlocker from '@/components/MeetingBlocker';
+import MeetingStatusDebug from '@/components/MeetingStatusDebug';
+import TestInstructions from '@/components/TestInstructions';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -50,6 +53,7 @@ export default function AppointmentsPage() {
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [showMeeting, setShowMeeting] = useState(false);
+  const [showMockMeeting, setShowMockMeeting] = useState(false);
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [selectedAppointmentForReschedule, setSelectedAppointmentForReschedule] = useState<Appointment | null>(null);
@@ -165,6 +169,16 @@ export default function AppointmentsPage() {
   };
 
   const handleJoinMeeting = (appointment: Appointment) => {
+    console.log('🔍 DEBUG: handleJoinMeeting called with appointment:', {
+      id: appointment.id,
+      meeting_id: appointment.meeting_id,
+      coach_id: appointment.coach_id,
+      client_id: appointment.client_id,
+      status: appointment.status,
+      starts_at: appointment.starts_at,
+      ends_at: appointment.ends_at
+    });
+
     const meetingId = appointment.meeting_id;
     if (!meetingId) return;
     
@@ -175,6 +189,7 @@ export default function AppointmentsPage() {
     }
     
     console.log('✅ Opening meeting container for:', meetingId);
+    console.log('🔍 DEBUG: Setting meetingAppointment to:', appointment.id);
     setMeetingAppointment(appointment);
     setShowMeeting(true);
   };
@@ -194,6 +209,14 @@ export default function AppointmentsPage() {
       const response = await apiGet(`${API_URL}/api/coach/appointments?filter=all`);
 
       if (response.data.success) {
+        console.log('🔍 DEBUG: Loaded appointments:', response.data.data.map((apt: Appointment) => ({
+          id: apt.id,
+          meeting_id: apt.meeting_id,
+          status: apt.status,
+          starts_at: apt.starts_at,
+          coach_id: apt.coach_id,
+          client_id: apt.client_id
+        })));
         setAppointments(response.data.data);
       }
     } catch (error) {
@@ -326,11 +349,66 @@ export default function AppointmentsPage() {
 
   return (
     <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
-      <MeetingBlocker
-        blockMessage="You are currently in a meeting session. Please end your current meeting before managing other appointments."
-        allowSameMeetingAccess={true}
-        currentMeetingId={meetingAppointment?.meeting_id}
-      >      
+      {/* No MeetingBlocker on appointments page - users should always be able to access their appointments */}
+
+      {/* Test Button - Remove in production */}
+      <div className="mb-6 flex justify-end">
+        <Button
+          onClick={async () => {
+            try {
+              // Generate proper UUIDs for test data
+              const generateUUID = () => {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                  const r = Math.random() * 16 | 0;
+                  const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                  return v.toString(16);
+                });
+              };
+
+              // Create a test appointment that starts now
+              const now = new Date();
+              const endTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour later
+              
+              const testAppointment: Appointment = {
+                id: generateUUID(),
+                client_id: generateUUID(),
+                coach_id: user?.id || generateUUID(),
+                starts_at: now.toISOString(),
+                ends_at: endTime.toISOString(),
+                status: 'confirmed',
+                notes: 'Test appointment for meeting restrictions',
+                meeting_id: `meeting_${Date.now()}_test`,
+                created_at: now.toISOString(),
+                clients: {
+                  first_name: 'Test',
+                  last_name: 'Client',
+                  email: 'test@client.com',
+                  users: {
+                    email: 'test@client.com'
+                  }
+                }
+              };
+              
+              // Add to appointments list (frontend only - no backend call)
+              setAppointments(prev => [testAppointment, ...prev]);
+              
+              console.log('✅ Test appointment created (frontend only):', testAppointment.id);
+              
+              // Optionally, immediately open the mock meeting
+              if (confirm('Open test meeting now? (Note: This will test frontend restrictions only)')) {
+                setMeetingAppointment(testAppointment);
+                setShowMockMeeting(true);
+              }
+            } catch (error) {
+              console.error('Error creating test appointment:', error);
+            }
+          }}
+          className="bg-purple-600 hover:bg-purple-700 text-white"
+        >
+          <Video className="mr-2 h-4 w-4" />
+          Book Test Meeting (Dev Only)
+        </Button>
+      </div>
 
       {error && (
         <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-md">
@@ -623,6 +701,23 @@ export default function AppointmentsPage() {
         />
       )}
 
+      {/* Mock Meeting Container for Testing */}
+      {showMockMeeting && meetingAppointment && (
+        <MockMeetingContainer
+          appointmentId={meetingAppointment.id}
+          appointmentData={{
+            client_name: `${meetingAppointment.clients?.first_name} ${meetingAppointment.clients?.last_name}`,
+            starts_at: meetingAppointment.starts_at,
+            ends_at: meetingAppointment.ends_at
+          }}
+          isHost={true}
+          onClose={() => {
+            setShowMockMeeting(false);
+            setMeetingAppointment(null);
+          }}
+        />
+      )}
+
       {/* Reschedule Modal */}
       {showRescheduleModal && selectedAppointmentForReschedule && (
         <RescheduleModal
@@ -632,7 +727,10 @@ export default function AppointmentsPage() {
           onSuccess={handleRescheduleSuccess}
         />
       )}
-      </MeetingBlocker>
+      
+      {/* Debug Components - Remove in production */}
+      <MeetingStatusDebug />
+      <TestInstructions />
     </CoachPageWrapper>
   );
 }

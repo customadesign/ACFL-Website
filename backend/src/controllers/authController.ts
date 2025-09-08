@@ -4,6 +4,7 @@ import * as jwt from 'jsonwebtoken';
 import { SignOptions } from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { supabase } from '../lib/supabase';
+import { coachService } from '../services/coachService';
 import { 
   RegisterClientDto, 
   RegisterCoachDto, 
@@ -345,7 +346,7 @@ export const registerCoach = async (req: Request, res: Response) => {
       is_available: true,
       bio: 'Professional ACT coach ready to help you achieve your goals',
       years_experience: 1,
-      hourly_rate_usd: 75,
+      // hourly_rate_usd removed - rates now managed in coach_rates table
       qualifications: ['Certified Life Coach'],
       specialties: [],
       languages: ['English'],
@@ -392,6 +393,26 @@ export const registerCoach = async (req: Request, res: Response) => {
       .from('coaches')
       .update({ password_hash: hashedPassword })
       .eq('email', email);
+    
+    // Create default rate for new coach (75 USD per hour)
+    if (!updateError && profileData) {
+      try {
+        // Get the coach ID
+        const { data: coach } = await supabase
+          .from('coaches')
+          .select('id')
+          .eq('email', email)
+          .single();
+        
+        if (coach) {
+          await coachService.setDefaultRate(coach.id, 75);
+          console.log('✅ Default rate created for coach');
+        }
+      } catch (rateError) {
+        console.error('⚠️ Failed to create default rate:', rateError);
+        // Non-critical error, continue with registration
+      }
+    }
     
     if (updateError) {
       console.error('❌ Failed to update coach password:', updateError);

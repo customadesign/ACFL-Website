@@ -29,7 +29,8 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.2",
     "resend": "^6.0.1",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "stripe": "^18.5.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

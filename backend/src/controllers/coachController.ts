@@ -285,7 +285,7 @@ export const getCoachById = async (req: Request, res: Response) => {
       education: '', // Not stored in current schema
       certifications,
       insuranceAccepted: demographics.accepts_insurance ? ['Insurance accepted'] : [],
-      sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : '',
+      sessionRate: '', // Will be populated from coach_rates table
       virtualAvailable: demographics.meta?.video_available || true,
       inPersonAvailable: demographics.meta?.in_person_available || false,
       profilePhoto: coach.profile_photo || '',

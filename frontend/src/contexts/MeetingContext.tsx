@@ -24,7 +24,10 @@ export function MeetingProvider({ children }: { children: ReactNode }) {
   const canJoinMeeting = (meetingId: string) => {
     // Simple logic: Allow joining if not in any meeting, or if trying to rejoin the same meeting
     const canJoin = !isInMeeting || currentMeetingId === meetingId;
-    console.log('🔍 Can join meeting check:', { meetingId, currentMeetingId, isInMeeting, canJoin });
+    // Only log for real meeting IDs, not test ones
+    if (meetingId !== 'test-meeting') {
+      console.log('🔍 Can join meeting check:', { meetingId, currentMeetingId, isInMeeting, canJoin });
+    }
     return canJoin;
   };
 
