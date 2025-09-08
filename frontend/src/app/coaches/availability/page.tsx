@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Calendar, Clock, Plus, X, Edit3, Trash2, Save, CalendarDays } from 'lucide-react';
 import CalendarSkeleton from '@/components/CalendarSkeleton';
+import { getApiUrl } from '@/lib/api';
 
 interface AvailabilitySlot {
   id: string;
@@ -77,10 +78,11 @@ export default function CoachAvailabilityPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       // Load availability slots
       const availabilityResponse = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/availability`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/availability`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -105,7 +107,7 @@ export default function CoachAvailabilityPage() {
 
       // Load blocked slots
       const blockedResponse = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/blocked`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/blocked`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -126,9 +128,10 @@ export default function CoachAvailabilityPage() {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/availability`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/availability`,
         {
           method: 'POST',
           headers: {
@@ -181,9 +184,10 @@ export default function CoachAvailabilityPage() {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/availability/${editingSlot.id}`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/availability/${editingSlot.id}`,
         {
           method: 'PUT',
           headers: {
@@ -223,9 +227,10 @@ export default function CoachAvailabilityPage() {
     
     try {
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/availability/${slotId}`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/availability/${slotId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }
@@ -244,9 +249,10 @@ export default function CoachAvailabilityPage() {
     try {
       setSaving(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/blocked`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/blocked`,
         {
           method: 'POST',
           headers: {
@@ -284,9 +290,10 @@ export default function CoachAvailabilityPage() {
     
     try {
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${user?.id}/blocked/${blockedId}`,
+        `${API_BASE_URL}/api/calendar/coach/${user?.id}/blocked/${blockedId}`,
         {
           method: 'DELETE',
           headers: { Authorization: `Bearer ${token}` }

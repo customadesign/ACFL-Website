@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, Calendar, Clock, CheckCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface Appointment {
   id: string;
@@ -55,8 +56,9 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${appointment.coach_id}/available-slots/${selectedDate}`,
+        `${API_BASE_URL}/api/calendar/coach/${appointment.coach_id}/available-slots/${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -79,8 +81,9 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
     setRescheduling(true);
     try {
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       const response = await fetch(
-        `http://localhost:3001/api/calendar/appointment/${appointment.id}/reschedule`,
+        `${API_BASE_URL}/api/calendar/appointment/${appointment.id}/reschedule`,
         {
           method: 'PUT',
           headers: {

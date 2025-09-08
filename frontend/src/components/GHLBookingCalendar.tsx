@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Clock, ChevronLeft, ChevronRight, CheckCircle, User } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface Coach {
   id: string;
@@ -64,8 +65,9 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${coach.id}/available-slots/${selectedDate}`,
+        `${API_BASE_URL}/api/calendar/coach/${coach.id}/available-slots/${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -88,6 +90,7 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
     try {
       setBooking(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       // Calculate the actual end time based on selected duration
       const startTime = new Date(selectedSlot.slot_start);
@@ -95,7 +98,7 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
       const endTime = new Date(startTime.getTime() + actualDuration * 60000);
       
       const response = await fetch(
-        'http://localhost:3001/api/calendar/book-appointment',
+        `${API_BASE_URL}/api/calendar/book-appointment`,
         {
           method: 'POST',
           headers: {

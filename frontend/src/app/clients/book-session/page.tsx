@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { Calendar, Clock, User, ChevronLeft, ChevronRight, CheckCircle, MapPin, Phone } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface Coach {
   id: string;
@@ -56,7 +57,8 @@ export default function BookSessionPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3001/api/coaches', {
+      const API_BASE_URL = getApiUrl();
+      const response = await fetch(`${API_BASE_URL}/api/coaches`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -77,8 +79,9 @@ export default function BookSessionPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       const response = await fetch(
-        `http://localhost:3001/api/calendar/coach/${selectedCoach.id}/available-slots/${selectedDate}`,
+        `${API_BASE_URL}/api/calendar/coach/${selectedCoach.id}/available-slots/${selectedDate}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -101,9 +104,10 @@ export default function BookSessionPage() {
     try {
       setBooking(true);
       const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
       
       const response = await fetch(
-        'http://localhost:3001/api/calendar/book-appointment',
+        `${API_BASE_URL}/api/calendar/book-appointment`,
         {
           method: 'POST',
           headers: {
