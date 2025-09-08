@@ -61,7 +61,7 @@ export default function DebugAppointments() {
       ends_at: endTime.toISOString(),
       status: 'confirmed',
       notes: 'Debug test appointment',
-      meeting_id: `meeting_${Math.random().toString(36).substring(2, 15)}`,
+      meeting_id: null, // Will be created by VideoSDK when meeting starts
       session_type: 'session',
       duration: 60,
       created_at: new Date().toISOString(),

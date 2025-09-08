@@ -64,9 +64,9 @@ export default function MeetingContainer({
           return
         }
         
-        // Immediately mark as in meeting to prevent other meetings from starting
-        console.log('🔒 Reserving meeting access:', meetingId)
-        setMeetingState(true, meetingId)
+        // Store the meeting ID but don't mark as in meeting yet
+        // We'll do that when the user actually clicks join
+        console.log('✅ Meeting ready to join:', meetingId)
         
       } catch (error: any) {
         console.error('Failed to check meeting access:', error)
@@ -86,7 +86,8 @@ export default function MeetingContainer({
     
     // Cleanup function to release meeting when component unmounts
     return () => {
-      if (meetingIdToCheck) {
+      // Only release if we actually joined the meeting
+      if (meetingIdToCheck && isInMeeting && currentMeetingId === meetingIdToCheck) {
         console.log('🔓 Releasing meeting access on unmount:', meetingIdToCheck)
         leaveMeeting(meetingIdToCheck).catch(console.error)
         setMeetingState(false, null)
@@ -108,7 +109,9 @@ export default function MeetingContainer({
       // Create or get VideoSDK meeting
       const { meetingId, token } = await createOrGetMeeting(appointmentId, isHost)
       
-      // Since we already reserved this meeting, we can proceed directly
+      // Now that user is actually joining, mark them as in meeting
+      console.log('🔒 User joining meeting:', meetingId)
+      setMeetingState(true, meetingId)
       
       setMeetingConfig({
         meetingId,
@@ -120,6 +123,9 @@ export default function MeetingContainer({
       setStage('meeting')
     } catch (error: any) {
       console.error('Failed to join meeting:', error)
+      
+      // Release meeting state if we failed to join
+      setMeetingState(false, null)
       
       // Check if this is a conflict error (user already in another meeting)
       if (error.status === 409 && error.conflictType === 'ALREADY_IN_MEETING') {

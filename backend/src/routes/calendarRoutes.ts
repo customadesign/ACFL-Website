@@ -493,8 +493,8 @@ router.post('/book-appointment', async (req, res) => {
       });
     }
 
-    // Generate a unique meeting ID (you can replace this with actual VideoSDK room creation)
-    const meetingId = `meeting_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Don't generate meeting ID at booking time - VideoSDK will create it when meeting starts
+    // This allows proper VideoSDK room creation with the correct format (e.g., aqqw-dhxp-0io7)
     
     // Create the appointment
     const { data: newAppointment, error } = await supabase
@@ -506,11 +506,11 @@ router.post('/book-appointment', async (req, res) => {
         ends_at: endTime,
         status: 'scheduled',
         notes: notes || null,
-        meeting_id: meetingId,
+        meeting_id: null, // Will be set when VideoSDK room is created
         session_type: 'video',
         timezone: timezone,
         booking_confirmed_at: new Date().toISOString(),
-        meeting_url: `https://meet.example.com/${meetingId}` // Placeholder URL
+        meeting_url: null // Will be set when VideoSDK room is created
       })
       .select(`
         *,
