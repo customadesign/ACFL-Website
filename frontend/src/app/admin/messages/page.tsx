@@ -15,6 +15,7 @@ type Conversation = {
 	partnerId: string
 	partnerName: string
 	partnerRole: 'client' | 'coach'
+	partnerPhoto?: string | null
 	lastBody: string
 	lastAt: string
 	unreadCount: number
@@ -133,7 +134,7 @@ function AdminMessagesContent() {
 			// First, check if conversation already exists in current state
 			const existingConversation = conversations.find(c => c.partnerId === userId)
 			if (existingConversation) {
-				console.log('Conversation already exists, activating it')
+				console.log('Conversation already exists in state, activating it')
 				setActivePartnerId(userId)
 				setShowMobileChat(true) // Show the chat on mobile
 				return
@@ -144,34 +145,10 @@ function AdminMessagesContent() {
 			setShowMobileChat(true) // Show the chat on mobile
 			setMessages([])
 
-			// Create conversation in backend and state
+			// Check backend first to see if conversation already exists
 			if (userName && userRole) {
-				// Create persistent conversation entry immediately
-				const newConversation: Conversation = {
-					partnerId: userId,
-					partnerName: userName,
-					partnerRole: userRole,
-					lastBody: '',
-					lastAt: new Date().toISOString(),
-					unreadCount: 0,
-					totalMessages: 0
-				}
-				
-				console.log('Adding new conversation to state and activating:', newConversation)
-				
-				// Add to conversations list immediately and persistently
-				setConversations(prev => {
-					const exists = prev.find(c => c.partnerId === userId)
-					if (!exists) {
-						console.log('Adding conversation to list')
-						return [newConversation, ...prev]
-					}
-					console.log('Conversation already exists in state')
-					return prev
-				})
-
-				// Try to create conversation in backend (optional)
 				try {
+					console.log('Checking if conversation exists in backend...')
 					const response = await fetch(`${API_URL}/api/admin/conversations`, {
 						method: 'POST',
 						headers: {
@@ -184,17 +161,67 @@ function AdminMessagesContent() {
 						})
 					})
 
+					if (!response.ok) {
+						console.error('Backend conversation check failed:', response.status, response.statusText)
+						throw new Error(`HTTP ${response.status}`)
+					}
+
 					const result = await response.json()
 					console.log('Backend conversation result:', result)
+
+					if (result.success) {
+						// If conversation exists in backend, reload conversations to get it
+						if (result.conversationExists) {
+							console.log('Conversation exists in backend, reloading conversations...')
+							await loadConversations(true) // Preserve manual conversations
+							// After reloading, the conversation should be in the list
+							console.log('Conversation exists in backend, should be loaded now')
+							setActivePartnerId(userId)
+							setShowMobileChat(true)
+						} else {
+							// Conversation doesn't exist, create it in state
+							console.log('Conversation does not exist in backend, creating in state')
+							createConversationInState(userId, userName, userRole)
+						}
+					}
 				} catch (error) {
-					console.error('Error creating conversation in backend:', error)
-					// Continue anyway since we have the conversation in state
+					console.error('Error checking conversation in backend:', error)
+					// If backend check fails, create conversation in state anyway
+					console.log('Backend check failed, creating conversation in state')
+					createConversationInState(userId, userName, userRole)
 				}
 			}
 			
 		} catch (error) {
 			console.error('Error initiating conversation:', error)
 		}
+	}
+
+	// Helper function to create conversation in state
+	const createConversationInState = (userId: string, userName: string, userRole: 'client' | 'coach') => {
+		const newConversation: Conversation = {
+			partnerId: userId,
+			partnerName: userName,
+			partnerRole: userRole,
+			partnerPhoto: null,
+			lastBody: '',
+			lastAt: new Date().toISOString(),
+			unreadCount: 0,
+			totalMessages: 0
+		}
+		
+		console.log('Adding new conversation to state:', newConversation)
+		
+		// Add to conversations list immediately and persistently
+		setConversations(prev => {
+			const exists = prev.find(c => c.partnerId === userId)
+			if (!exists) {
+				console.log('Adding conversation to list')
+				return [newConversation, ...prev]
+			}
+			console.log('Conversation already exists in state')
+			return prev
+		})
 	}
 
 	// Filter conversations based on search and filters
@@ -338,6 +365,7 @@ function AdminMessagesContent() {
 			partnerId: activePartnerId,
 			partnerName: 'Loading...',
 			partnerRole: 'client' as const,
+			partnerPhoto: null,
 			lastBody: '',
 			lastAt: new Date().toISOString(),
 			unreadCount: 0,
@@ -570,7 +598,7 @@ function AdminMessagesContent() {
 			) : (
 			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
 					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
-					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col`}>
+					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col sm:h-[500px]`}>
 						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
 							<span>Conversations ({filteredConversations.length})</span>
 							<Users className="w-4 h-4 text-gray-500" />
@@ -583,8 +611,24 @@ function AdminMessagesContent() {
 											setActivePartnerId(c.partnerId)
 											setShowMobileChat(true)
 										}}
-										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
 									>
+										{/* Profile Photo */}
+										<div className="flex-shrink-0">
+											{c.partnerPhoto ? (
+												<img
+													src={c.partnerPhoto}
+													alt={c.partnerName}
+													className="w-10 h-10 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
+												/>
+											) : (
+												<div className="w-10 h-10 sm:w-8 sm:h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
+													<User className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400" />
+												</div>
+											)}
+										</div>
+										
+										{/* Content */}
 										<div className="min-w-0 flex-1">
 											<div className="flex items-center gap-2 mb-1">
 												<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
@@ -598,8 +642,10 @@ function AdminMessagesContent() {
 											</div>
 											<div className="text-xs sm:text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages yet'}</div>
 										</div>
+										
+										{/* Unread Badge */}
 										{c.unreadCount > 0 && (
-											<span className="ml-2 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
+											<span className="flex-shrink-0 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
 										)}
 									</button>
 									<button

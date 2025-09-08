@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from "react";
-import { ChevronDown, ChevronUp, Heart } from "lucide-react";
+import { ChevronDown, ChevronUp, Heart, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getApiUrl } from "@/lib/api";
 import Link from 'next/link';
@@ -25,6 +25,7 @@ export interface ProviderCardProps {
   rating: number;
   virtualAvailable: boolean;
   email?: string;
+  profilePhoto?: string;
   isBestMatch?: boolean;
   onSaveChange?: () => void;
   initialIsSaved?: boolean; // Pass saved state from parent
@@ -43,6 +44,7 @@ export const ProviderCard = ({
   rating,
   virtualAvailable,
   email,
+  profilePhoto,
   isBestMatch,
   onSaveChange,
   initialIsSaved = false
@@ -195,6 +197,44 @@ export const ProviderCard = ({
       "flex flex-col md:flex-row md:items-start md:space-x-6 md:space-y-0 space-y-4",
       isBestMatch && "ring-2 ring-blue-500 dark:ring-blue-400 ring-opacity-50 bg-gradient-to-br from-blue-50 dark:from-blue-900/20 to-white dark:to-gray-800"
     )}>
+      {/* Profile Photo for mobile - shows at top on small screens */}
+      <div className="flex md:hidden items-center space-x-4 mb-4">
+        {profilePhoto ? (
+          <img
+            src={profilePhoto}
+            alt={`${name} profile`}
+            className="w-16 h-16 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600"
+          />
+        ) : (
+          <div className="w-16 h-16 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <User className="w-8 h-8 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
+        <div className="flex-1">
+          <Link href={`/clients/coach-profile/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">{name}</h3>
+          </Link>
+          <div className="bg-gradient-to-r from-green-500 to-green-600 text-white px-2 py-0.5 rounded-lg inline-block mt-1">
+            <span className="text-xs font-semibold">{matchScore}% Match</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Profile Photo for desktop - shows on left side */}
+      <div className="hidden md:flex md:flex-col md:items-center md:mr-4">
+        {profilePhoto ? (
+          <img
+            src={profilePhoto}
+            alt={`${name} profile`}
+            className="w-20 h-20 lg:w-24 lg:h-24 rounded-full object-cover border-3 border-gray-200 dark:border-gray-600"
+          />
+        ) : (
+          <div className="w-20 h-20 lg:w-24 lg:h-24 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+            <User className="w-10 h-10 lg:w-12 lg:h-12 text-gray-400 dark:text-gray-500" />
+          </div>
+        )}
+      </div>
+
       {/* Left side - Main info (takes more space on large screens) */}
       <div className="flex-1 md:flex-[2]">
         {isBestMatch && (
@@ -203,7 +243,7 @@ export const ProviderCard = ({
           </div>
         )}
         
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4">
+        <div className="hidden md:flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4">
           <div className="flex-1">
             <Link href={`/clients/coach-profile/${id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')}`}>
               <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2 hover:text-blue-600 dark:hover:text-blue-400 cursor-pointer transition-colors">{name}</h3>

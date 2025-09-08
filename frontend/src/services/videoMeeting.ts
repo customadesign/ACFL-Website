@@ -69,7 +69,14 @@ export async function createOrGetMeeting(appointmentId: string, isHost: boolean)
     })
 
     if (!response.ok) {
-      throw new Error('Failed to create/get meeting')
+      const errorData = await response.json().catch(() => ({ message: 'Failed to create/get meeting' }))
+      const error = new Error(errorData.message || 'Failed to create/get meeting')
+      // Add additional error data for better handling
+      ;(error as any).status = response.status
+      ;(error as any).conflictType = errorData.conflictType
+      ;(error as any).currentMeetingId = errorData.currentMeetingId
+      ;(error as any).currentAppointmentId = errorData.currentAppointmentId
+      throw error
     }
 
     const data = await response.json()
@@ -148,5 +155,25 @@ export async function updateParticipantStatus(
     })
   } catch (error) {
     console.error('Error updating participant status:', error)
+  }
+}
+
+/**
+ * Leave meeting and clean up tracking
+ */
+export async function leaveMeeting(meetingId?: string): Promise<void> {
+  try {
+    await fetch(`${API_URL}/api/meetings/leave`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ 
+        meetingId 
+      })
+    })
+  } catch (error) {
+    console.error('Error leaving meeting:', error)
   }
 }

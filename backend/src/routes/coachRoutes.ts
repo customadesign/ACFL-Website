@@ -97,6 +97,7 @@ router.put('/coach/profile', [
   body('therapy_modalities').optional().isArray(),
   body('qualifications').optional().isArray(),
   body('genderIdentity').optional().isString(),
+  body('profilePhoto').optional().isString(),
   body('experience').optional().isInt({ min: 0 }),
   body('hourlyRate').optional().isFloat({ min: 0 }),
   body('isAvailable').optional().isBoolean(),
@@ -154,6 +155,7 @@ router.put('/coach/profile', [
       lastName,
       phone,
       bio,
+      profilePhoto,
       specialties,
       languages,
       therapy_modalities,
@@ -178,6 +180,7 @@ router.put('/coach/profile', [
     if (lastName) coachUpdates.last_name = lastName;
     if (phone !== undefined) coachUpdates.phone = phone;
     if (bio !== undefined) coachUpdates.bio = bio;
+    if (profilePhoto !== undefined) coachUpdates.profile_photo = profilePhoto;
     if (specialties) coachUpdates.specialties = specialties;
     if (languages) coachUpdates.languages = languages;
     if (qualifications !== undefined) coachUpdates.qualifications = qualifications;
@@ -1151,6 +1154,48 @@ router.get('/coach/profile/stats', authenticate, async (req: Request & { user?: 
     res.status(500).json({ 
       success: false, 
       message: 'Failed to get profile stats' 
+    });
+  }
+});
+
+// Get coach application data for profile
+router.get('/coach/application-data', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    // Get coach application data by email
+    const { data: applicationData, error: applicationError } = await supabase
+      .from('coach_applications')
+      .select('*')
+      .ilike('email', req.user.email)
+      .eq('status', 'approved')
+      .single();
+
+    if (applicationError) {
+      if (applicationError.code === 'PGRST116') {
+        return res.json({
+          success: true,
+          data: null,
+          message: 'No application data found'
+        });
+      }
+      throw applicationError;
+    }
+
+    res.json({
+      success: true,
+      data: applicationData
+    });
+  } catch (error) {
+    console.error('Get coach application data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get application data'
     });
   }
 });

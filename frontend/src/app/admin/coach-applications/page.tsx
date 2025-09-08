@@ -94,13 +94,16 @@ export default function CoachApplicationsPage() {
     const userName = `${application.first_name} ${application.last_name}`;
     
     // Use coach_id if available (for approved applications), otherwise use application.id
+    // This ensures we use the actual coach user ID for messaging when possible
     const conversationId = application.coach_id || application.id;
     
-    // If no coach_id and application is not approved, show warning
-    if (!application.coach_id && application.status === 'approved') {
-      alert('Coach user ID not found. This may be an approved application without a coach profile.');
-      return;
-    }
+    console.log('Messaging applicant:', {
+      applicationId: application.id,
+      coachId: application.coach_id,
+      status: application.status,
+      conversationId,
+      note: application.coach_id ? 'Using coach_id for existing coach' : 'Using application.id for pending application'
+    });
     
     const params = new URLSearchParams({
       conversation_with: conversationId,
@@ -425,7 +428,9 @@ const ApplicationDetailsModal = ({
 }) => {
   const router = useRouter();
   const [rejectionReason, setRejectionReason] = useState('');
+  const [approvalNotes, setApprovalNotes] = useState('');
   const [showRejectionForm, setShowRejectionForm] = useState(false);
+  const [showApprovalForm, setShowApprovalForm] = useState(false);
   const [validationError, setValidationError] = useState('');
   const [isVisible, setIsVisible] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -435,13 +440,16 @@ const ApplicationDetailsModal = ({
     const userName = `${application.first_name} ${application.last_name}`;
     
     // Use coach_id if available (for approved applications), otherwise use application.id
+    // This ensures we use the actual coach user ID for messaging when possible
     const conversationId = application.coach_id || application.id;
     
-    // If no coach_id and application is approved, show warning
-    if (!application.coach_id && application.status === 'approved') {
-      alert('Coach user ID not found. This may be an approved application without a coach profile.');
-      return;
-    }
+    console.log('Messaging applicant from modal:', {
+      applicationId: application.id,
+      coachId: application.coach_id,
+      status: application.status,
+      conversationId,
+      note: application.coach_id ? 'Using coach_id for existing coach' : 'Using application.id for pending application'
+    });
     
     const params = new URLSearchParams({
       conversation_with: conversationId,
@@ -450,6 +458,16 @@ const ApplicationDetailsModal = ({
     });
     router.push(`/admin/messages?${params.toString()}`);
     onClose();
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
   };
 
   useEffect(() => {
@@ -496,7 +514,7 @@ const ApplicationDetailsModal = ({
   };
 
   const handleApprove = () => {
-    onStatusUpdate(application.id, 'approved');
+    onStatusUpdate(application.id, 'approved', approvalNotes.trim() || 'Application approved by admin');
   };
 
   const handleReject = () => {
@@ -772,6 +790,37 @@ const ApplicationDetailsModal = ({
             </div>
           </section>
 
+          {/* Review History & Notes */}
+          {(application.reviewed_at || application.rejection_reason) && (
+            <section className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20 rounded-xl p-4 sm:p-6 border border-gray-200 dark:border-gray-800">
+              <div className="flex items-center space-x-2 mb-4 sm:mb-6">
+                <div className="p-2 bg-gray-100 dark:bg-gray-900/30 rounded-full">
+                  <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400" />
+                </div>
+                <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Review History</h3>
+              </div>
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-6 border border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 text-sm">
+                  <div className="space-y-3">
+                    <p className="text-gray-900 dark:text-white"><strong>Status:</strong> {getStatusBadge(application.status)}</p>
+                    {application.reviewed_at && (
+                      <p className="text-gray-900 dark:text-white"><strong>Reviewed:</strong> {formatDate(application.reviewed_at)}</p>
+                    )}
+                    {application.reviewed_by && (
+                      <p className="text-gray-900 dark:text-white"><strong>Reviewed By:</strong> {application.reviewed_by}</p>
+                    )}
+                  </div>
+                  {application.rejection_reason && (
+                    <div className="bg-red-50 dark:bg-red-900/20 p-3 rounded-lg border border-red-200 dark:border-red-800">
+                      <p className="font-medium text-red-800 dark:text-red-300 mb-2">Rejection Reason:</p>
+                      <p className="text-red-700 dark:text-red-400 break-words">{application.rejection_reason}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          )}
+
           {/* Action Buttons */}
           <div className="border-t border-gray-200 dark:border-gray-700 pt-4 sm:pt-6 bg-gray-50 dark:bg-gray-800/50 -mx-4 sm:-mx-6 px-4 sm:px-6 pb-4 sm:pb-6 rounded-b-xl">
             <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0 mb-4">
@@ -802,33 +851,74 @@ const ApplicationDetailsModal = ({
                       className="w-full sm:w-auto border-red-300 text-red-700 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-900/20 transition-all duration-200 min-h-[44px] focus-ring"
                     >
                       <X className="w-4 h-4 mr-2" />
-                      Reject
+                      Reject with Notes
                     </Button>
                     
                     <Button
-                      onClick={handleApprove}
+                      onClick={() => setShowApprovalForm(true)}
                       disabled={loading}
                       className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-[44px] focus-ring"
                     >
-                      {loading ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                          <span className="hidden sm:inline">Processing...</span>
-                          <span className="sm:hidden">Processing...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Check className="w-4 h-4 mr-2" />
-                          <span className="hidden sm:inline">Approve Application</span>
-                          <span className="sm:hidden">Approve</span>
-                        </>
-                      )}
+                      <Check className="w-4 h-4 mr-2" />
+                      <span className="hidden sm:inline">Approve with Notes</span>
+                      <span className="sm:hidden">Approve</span>
                     </Button>
                   </>
                 )}
               </div>
             </div>
               
+              {/* Approval Form */}
+              {showApprovalForm && (
+                <div className="mt-4 p-4 sm:p-6 border border-green-200 dark:border-green-800 rounded-xl bg-green-50 dark:bg-green-900/20 animate-in slide-in-from-top duration-300">
+                  <div className="flex items-center space-x-2 mb-4">
+                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
+                      <Check className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+                    </div>
+                    <h4 className="font-semibold text-green-800 dark:text-green-300 text-sm sm:text-base">Approval Notes</h4>
+                  </div>
+                  <textarea
+                    value={approvalNotes}
+                    onChange={(e) => setApprovalNotes(e.target.value)}
+                    className="w-full px-3 sm:px-4 py-3 border border-green-300 dark:border-green-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 transition-colors text-sm sm:text-base min-h-[120px] focus-ring-inset"
+                    rows={4}
+                    placeholder="Add any notes about the approval (optional). These notes will be saved for internal review purposes..."
+                  />
+                  <div className="flex flex-col space-y-3 sm:flex-row sm:justify-end sm:space-y-0 sm:space-x-3 mt-4">
+                    <Button
+                      onClick={() => {
+                        setShowApprovalForm(false);
+                        setApprovalNotes('');
+                      }}
+                      variant="outline"
+                      className="w-full sm:w-auto transition-all duration-200 min-h-[44px] order-2 sm:order-1 focus-ring"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={handleApprove}
+                      disabled={loading}
+                      className="w-full sm:w-auto bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white transition-all duration-200 hover:scale-105 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 min-h-[44px] order-1 sm:order-2 focus-ring"
+                    >
+                      {loading ? (
+                        <>
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                          <span className="hidden sm:inline">Approving...</span>
+                          <span className="sm:hidden">Approving...</span>
+                        </>
+                      ) : (
+                        <>
+                          <Check className="w-4 h-4 mr-2" />
+                          <span className="hidden sm:inline">Confirm Approval</span>
+                          <span className="sm:hidden">Approve</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Rejection Form */}
               {showRejectionForm && (
                 <div className="mt-4 p-4 sm:p-6 border border-red-200 dark:border-red-800 rounded-xl bg-red-50 dark:bg-red-900/20 animate-in slide-in-from-top duration-300">
                   <div className="flex items-center space-x-2 mb-4">

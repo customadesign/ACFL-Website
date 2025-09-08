@@ -60,6 +60,7 @@ interface Coach {
   sessionRate?: string
   virtualAvailable?: boolean
   inPersonAvailable?: boolean
+  profilePhoto?: string
   
   // Coach Verification Questionnaire Fields
   
@@ -338,8 +339,18 @@ function CoachProfileContent() {
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between text-white">
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-6 mb-6">
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto sm:mx-0">
-                  <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                <div className="w-20 h-20 sm:w-24 sm:h-24 mx-auto sm:mx-0">
+                  {coach.profilePhoto ? (
+                    <img
+                      src={coach.profilePhoto}
+                      alt={`${coach.name} profile`}
+                      className="w-full h-full rounded-full object-cover border-4 border-white/30 shadow-lg"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                    </div>
+                  )}
                 </div>
                 <div className="text-center sm:text-left">
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{coach.name}</h1>

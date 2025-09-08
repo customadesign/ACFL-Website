@@ -39,6 +39,8 @@ interface Appointment {
   sessionNotes?: string;
   client_id?: string;
   coach_id?: string;
+  clientPhoto?: string;
+  coachPhoto?: string;
 }
 
 export default function AppointmentManagement() {
@@ -150,8 +152,10 @@ export default function AppointmentManagement() {
         id: apt.id,
         clientName: apt.clientName || 'Unknown Client',
         clientEmail: apt.clientEmail || 'N/A',
+        clientPhoto: apt.clientPhoto || '',
         coachName: apt.coachName || 'Unknown Coach',
         coachEmail: apt.coachEmail || 'N/A',
+        coachPhoto: apt.coachPhoto || '',
         date: apt.date || new Date().toISOString().split('T')[0],
         time: apt.time || '00:00',
         duration: apt.duration || 60,
@@ -490,9 +494,17 @@ export default function AppointmentManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
-                            <User className="h-4 w-4 text-white" />
-                          </div>
+                          {appointment.clientPhoto ? (
+                            <img
+                              src={appointment.clientPhoto}
+                              alt={`${appointment.clientName} profile`}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center">
+                              <User className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.clientName}</div>
@@ -503,9 +515,17 @@ export default function AppointmentManagement() {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="flex-shrink-0 h-8 w-8">
-                          <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
-                            <UserCheck className="h-4 w-4 text-white" />
-                          </div>
+                          {appointment.coachPhoto ? (
+                            <img
+                              src={appointment.coachPhoto}
+                              alt={`${appointment.coachName} profile`}
+                              className="h-8 w-8 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
+                              <UserCheck className="h-4 w-4 text-white" />
+                            </div>
+                          )}
                         </div>
                         <div className="ml-3">
                           <div className="text-sm font-medium text-gray-900 dark:text-white">{appointment.coachName}</div>

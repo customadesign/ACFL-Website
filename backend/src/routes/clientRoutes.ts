@@ -56,6 +56,7 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
         availability: clientProfile.availability_options || [],
         therapistGender: clientProfile.preferred_coach_gender,
         bio: clientProfile.bio,
+        profilePhoto: clientProfile.profile_photo || '',
         // Keep legacy format for compatibility
         preferences: {
           location: clientProfile.location_state,
@@ -95,6 +96,7 @@ router.put('/client/profile', [
   body('availability_options').optional().isArray(),
   body('therapistGender').optional().isString(),
   body('bio').optional().isString(),
+  body('profilePhoto').optional().isString(),
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
@@ -147,6 +149,7 @@ router.put('/client/profile', [
           if (req.body.availability_options !== undefined) updateData.availability_options = req.body.availability_options
     if (req.body.therapistGender !== undefined) updateData.preferred_coach_gender = req.body.therapistGender
     if (req.body.bio !== undefined) updateData.bio = req.body.bio
+    if (req.body.profilePhoto !== undefined) updateData.profile_photo = req.body.profilePhoto
 
     // Only update if there are fields to update
     if (Object.keys(updateData).length > 0) {
@@ -633,7 +636,8 @@ router.get('/client/coaches', [
         rating,
         is_available,
         created_at,
-        email
+        email,
+        profile_photo
       `)
       .eq('is_available', true);
 
@@ -683,7 +687,8 @@ router.get('/client/coaches', [
         matchScore: 50, // Default score for all coaches
         virtualAvailable: coachDemo?.meta?.video_available || false,
         inPersonAvailable: coachDemo?.meta?.in_person_available || false,
-        email: coach.email
+        email: coach.email,
+        profilePhoto: coach.profile_photo || ''
       };
     }) || [];
 
@@ -746,6 +751,7 @@ router.post('/client/search-coaches', [
         is_available,
         created_at,
         email,
+        profile_photo,
         coach_demographics (
           gender_identity,
           ethnic_identity,
@@ -901,7 +907,8 @@ router.post('/client/search-coaches', [
         rating: 0,
         matchScore: normalized,
         virtualAvailable: coach.coach_demographics?.meta?.video_available || false,
-        email: coach.email
+        email: coach.email,
+        profilePhoto: coach.profile_photo || ''
       };
     });
 

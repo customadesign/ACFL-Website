@@ -1451,6 +1451,7 @@ function SearchCoachesContent() {
                   rating={coach.rating || 0}
                   virtualAvailable={coach.virtualAvailable || false}
                   email={coach.email || ''}
+                  profilePhoto={(coach as any).profilePhoto || ''}
                   isBestMatch={(coach.matchScore || 0) >= 90}
                   initialIsSaved={savedCoaches.some(sc => sc.id === coach.id)}
                   onSaveChange={refreshSavedCoaches}

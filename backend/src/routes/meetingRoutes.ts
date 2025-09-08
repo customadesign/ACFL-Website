@@ -75,11 +75,32 @@ router.post('/create-or-get', authenticate, async (req: AuthRequest, res: Respon
 
     console.log('Meeting join request:', { appointmentId, isHost, userId, userRole: req.user?.role })
 
-    if (!appointmentId) {
+    if (!appointmentId || !userId) {
       return res.status(400).json({
         success: false,
-        message: 'Appointment ID is required'
+        message: 'Appointment ID and user ID are required'
       })
+    }
+
+    // Check if user is already in an active meeting
+    const existingMeeting = activeMeetings.get(userId)
+    if (existingMeeting) {
+      // Clean up stale entries (older than 4 hours)
+      const fourHoursAgo = Date.now() - (4 * 60 * 60 * 1000)
+      if (existingMeeting.timestamp < fourHoursAgo) {
+        console.log(`Cleaning up stale meeting entry for user ${userId}`)
+        activeMeetings.delete(userId)
+      } else if (existingMeeting.appointmentId !== appointmentId) {
+        // User is trying to join a different meeting while already in one
+        console.log(`User ${userId} already in meeting ${existingMeeting.meetingId} (appointment ${existingMeeting.appointmentId}), denying join to appointment ${appointmentId}`)
+        return res.status(409).json({
+          success: false,
+          message: 'You are already in another meeting. Please leave your current meeting before joining a new one.',
+          conflictType: 'ALREADY_IN_MEETING',
+          currentMeetingId: existingMeeting.meetingId,
+          currentAppointmentId: existingMeeting.appointmentId
+        })
+      }
     }
 
     // Verify user has access to this appointment
@@ -135,6 +156,15 @@ router.post('/create-or-get', authenticate, async (req: AuthRequest, res: Respon
       ['allow_join'],
       userIsHost ? 'host' : 'participant'
     )
+
+    // Track this user as being in this meeting
+    activeMeetings.set(userId, {
+      meetingId,
+      appointmentId,
+      timestamp: Date.now()
+    })
+
+    console.log(`User ${userId} joined meeting ${meetingId} for appointment ${appointmentId}`)
 
     res.json({
       success: true,
@@ -212,6 +242,9 @@ router.post('/end/:meetingId', authenticate, async (req: AuthRequest, res: Respo
 // In-memory store to track participant status and prevent duplicates
 const participantStatusCache = new Map<string, { userId: string; status: string; timestamp: number }>()
 
+// In-memory store to track active meetings per user
+const activeMeetings = new Map<string, { meetingId: string; appointmentId: string; timestamp: number }>()
+
 /**
  * Update participant status
  */
@@ -249,6 +282,15 @@ router.post('/participant-status', authenticate, async (req: AuthRequest, res: R
       timestamp: now
     })
 
+    // Handle leaving/ending meeting - remove from active meetings tracking
+    if (status === 'left') {
+      const activeMeeting = activeMeetings.get(userId)
+      if (activeMeeting && activeMeeting.meetingId === meetingId) {
+        activeMeetings.delete(userId)
+        console.log(`User ${userId} left meeting ${meetingId} - removed from active meetings tracking`)
+      }
+    }
+
     // Log participant status for monitoring (only if not duplicate)
     console.log(`User ${userId} ${status} meeting ${meetingId}`)
 
@@ -256,6 +298,13 @@ router.post('/participant-status', authenticate, async (req: AuthRequest, res: R
     for (const [key, value] of participantStatusCache.entries()) {
       if (now - value.timestamp > 3600000) { // 1 hour
         participantStatusCache.delete(key)
+      }
+    }
+
+    // Clean up old active meeting entries (older than 4 hours)
+    for (const [key, value] of activeMeetings.entries()) {
+      if (now - value.timestamp > 4 * 3600000) { // 4 hours
+        activeMeetings.delete(key)
       }
     }
 
@@ -270,6 +319,52 @@ router.post('/participant-status', authenticate, async (req: AuthRequest, res: R
     res.status(500).json({
       success: false,
       message: 'Failed to update status'
+    })
+  }
+})
+
+/**
+ * Leave meeting - clean up active meeting tracking
+ */
+router.post('/leave', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { meetingId } = req.body
+    const userId = req.user?.userId
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: 'User ID is required'
+      })
+    }
+
+    // Remove user from active meetings tracking
+    const activeMeeting = activeMeetings.get(userId)
+    if (activeMeeting) {
+      activeMeetings.delete(userId)
+      console.log(`User ${userId} manually left meeting ${activeMeeting.meetingId} - removed from tracking`)
+    }
+
+    // Update participant status
+    if (meetingId) {
+      const cacheKey = `${userId}-${meetingId}`
+      participantStatusCache.set(cacheKey, {
+        userId,
+        status: 'left',
+        timestamp: Date.now()
+      })
+      console.log(`User ${userId} left meeting ${meetingId}`)
+    }
+
+    res.json({
+      success: true,
+      message: 'Successfully left meeting'
+    })
+  } catch (error: any) {
+    console.error('Error leaving meeting:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to leave meeting'
     })
   }
 })

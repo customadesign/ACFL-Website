@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import PreCall from '@/components/PreCall'
 import VideoMeeting from '@/components/VideoMeeting'
-import { createOrGetMeeting } from '@/services/videoMeeting'
+import { createOrGetMeeting, leaveMeeting } from '@/services/videoMeeting'
 import { Loader2, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useMeeting } from '@/contexts/MeetingContext'
@@ -72,7 +72,8 @@ export default function MeetingContainer({
     // Cleanup function to release meeting when component unmounts
     return () => {
       if (meetingIdToCheck) {
-        console.log('🔓 Releasing meeting access:', meetingIdToCheck)
+        console.log('🔓 Releasing meeting access on unmount:', meetingIdToCheck)
+        leaveMeeting(meetingIdToCheck).catch(console.error)
         setMeetingState(false, null)
       }
     }
@@ -102,8 +103,17 @@ export default function MeetingContainer({
       })
       
       setStage('meeting')
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to join meeting:', error)
+      
+      // Check if this is a conflict error (user already in another meeting)
+      if (error.status === 409 && error.conflictType === 'ALREADY_IN_MEETING') {
+        console.log('User already in meeting, showing blocked state')
+        setStage('blocked')
+        setIsJoining(false)
+        return
+      }
+      
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       setError(`Failed to join meeting: ${errorMessage}`)
       setStage('precall')
@@ -114,6 +124,12 @@ export default function MeetingContainer({
 
   const handleMeetingEnd = () => {
     setStage('ended')
+    
+    // Call backend to clean up meeting tracking
+    if (meetingConfig?.meetingId) {
+      leaveMeeting(meetingConfig.meetingId).catch(console.error)
+    }
+    
     setMeetingConfig(null)
     
     // Release the meeting when it ends
@@ -177,6 +193,7 @@ export default function MeetingContainer({
             onClick={() => {
               if (meetingIdToCheck) {
                 console.log('🔓 User closed blocked meeting, releasing access:', meetingIdToCheck)
+                leaveMeeting(meetingIdToCheck).catch(console.error)
                 setMeetingState(false, null)
               }
               onClose()

@@ -11,7 +11,7 @@ import { useMeeting } from '@/contexts/MeetingContext';
 import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal } from 'lucide-react';
 
 export default function CoachLayout({
   children,
@@ -40,12 +40,17 @@ export default function CoachLayout({
   
   const [showDropdown, setShowDropdown] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showMobileMore, setShowMobileMore] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMoreRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setShowDropdown(false);
+      }
+      if (mobileMoreRef.current && !mobileMoreRef.current.contains(event.target as Node)) {
+        setShowMobileMore(false);
       }
     };
 
@@ -344,42 +349,102 @@ export default function CoachLayout({
         {/* Mobile Bottom Navigation - Hidden when in meeting */}
         {!isInMeeting && (
           <div className="sm:hidden fixed bottom-0 left-0 right-0 bg-card border-t border-border z-30">
-            <div className="grid grid-cols-5 gap-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  onClick={() => {
-                    if (item.href === '/coaches/messages') {
-                      markMessagesAsRead();
-                    } else if (item.href === '/coaches/appointments') {
-                      markAppointmentsAsRead();
-                    }
-                  }}
-                  className={`flex flex-col items-center justify-center py-2 px-1 relative ${
-                    pathname === item.href
+            <div className="grid grid-cols-4 gap-1">
+              {/* Show first 3 nav items */}
+              {navItems.slice(0, 3).map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.name}
+                    href={item.href}
+                    onClick={() => {
+                      if (item.href === '/coaches/messages') {
+                        markMessagesAsRead();
+                      } else if (item.href === '/coaches/appointments') {
+                        markAppointmentsAsRead();
+                      }
+                    }}
+                    className={`flex flex-col items-center justify-center py-2 px-1 relative ${
+                      pathname === item.href
+                        ? 'text-blue-600'
+                        : 'text-muted-foreground'
+                    }`}
+                  >
+                    <div className="relative">
+                      <Icon className="w-5 h-5" />
+                      {item.notificationCount !== undefined && item.notificationCount > 0 && (
+                        <span className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] font-medium rounded-full flex items-center justify-center ${
+                          item.href.includes('messages') 
+                            ? 'bg-blue-500 text-white' 
+                            : 'bg-red-500 text-white'
+                        }`}>
+                          {item.notificationCount > 9 ? '9+' : item.notificationCount}
+                        </span>
+                      )}
+                    </div>
+                    <span className="text-[10px] mt-1">{item.name.split(' ')[0]}</span>
+                  </Link>
+                );
+              })}
+              
+              {/* More menu button */}
+              <div className="relative" ref={mobileMoreRef}>
+                <button
+                  onClick={() => setShowMobileMore(!showMobileMore)}
+                  className={`flex flex-col items-center justify-center py-2 px-1 w-full relative ${
+                    navItems.slice(3).some(item => pathname === item.href)
                       ? 'text-blue-600'
                       : 'text-muted-foreground'
                   }`}
                 >
-                  <div className="relative">
-                    <Icon className="w-5 h-5" />
-                    {item.notificationCount !== undefined && item.notificationCount > 0 && (
-                      <span className={`absolute -top-1 -right-1 w-4 h-4 text-[10px] font-medium rounded-full flex items-center justify-center ${
-                        item.href.includes('messages') 
-                          ? 'bg-blue-500 text-white' 
-                          : 'bg-red-500 text-white'
-                      }`}>
-                        {item.notificationCount > 9 ? '9+' : item.notificationCount}
-                      </span>
-                    )}
+                  <MoreHorizontal className="w-5 h-5" />
+                  <span className="text-[10px] mt-1">More</span>
+                  {/* Show notification badge if any of the hidden items have notifications */}
+                  {navItems.slice(3).some(item => item.notificationCount && item.notificationCount > 0) && (
+                    <span className="absolute top-1 right-1/3 w-2 h-2 bg-red-500 rounded-full"></span>
+                  )}
+                </button>
+                
+                {/* More menu dropdown */}
+                {showMobileMore && (
+                  <div className="absolute bottom-full right-0 mb-2 w-48 bg-popover rounded-md shadow-lg py-1 border border-border">
+                    {navItems.slice(3).map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <Link
+                          key={item.name}
+                          href={item.href}
+                          onClick={() => {
+                            setShowMobileMore(false);
+                            if (item.href === '/coaches/messages') {
+                              markMessagesAsRead();
+                            } else if (item.href === '/coaches/appointments') {
+                              markAppointmentsAsRead();
+                            }
+                          }}
+                          className={`flex items-center space-x-3 px-4 py-2 text-sm transition-colors ${
+                            pathname === item.href
+                              ? 'bg-blue-50 text-blue-600 font-medium'
+                              : 'text-popover-foreground hover:bg-accent'
+                          }`}
+                        >
+                          <Icon className="w-4 h-4" />
+                          <span className="flex-1">{item.name}</span>
+                          {item.notificationCount !== undefined && item.notificationCount > 0 && (
+                            <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${
+                              item.href.includes('messages') 
+                                ? 'bg-blue-100 text-blue-600' 
+                                : 'bg-red-100 text-red-600'
+                            }`}>
+                              {item.notificationCount > 99 ? '99+' : item.notificationCount}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
                   </div>
-                  <span className="text-[10px] mt-1">{item.name.split(' ')[0]}</span>
-                </Link>
-              );
-            })}
+                )}
+              </div>
             </div>
           </div>
         )}

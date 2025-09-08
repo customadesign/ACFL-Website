@@ -71,28 +71,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log(`Checking authentication with token... (attempt ${retryCount + 1})`);
           console.log('API URL:', API_URL);
           
-          const response = await axios.get(`${API_URL}/api/auth/profile`, {
-            timeout: 10000, // 10 second timeout
+          // Use fetch instead of axios to avoid potential axios configuration issues
+          const response = await fetch(`${API_URL}/api/auth/profile`, {
+            method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
+            },
+            credentials: 'include' // Include credentials for CORS
+          });
+          
+          if (response.ok) {
+            const data = await response.json();
+            console.log('Auth check successful:', data.user);
+            setUser(data.user);
+            
+            // Update axios headers if successful
+            try {
+              axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            } catch (headerError) {
+              console.warn('Could not set axios default headers:', headerError);
             }
-          });
-          
-          console.log('Auth check successful:', response.data.user);
-          setUser(response.data.user);
-        } catch (error: any) {
-          console.error('Auth check failed:', error);
-          console.error('Error details:', {
-            message: error.message,
-            code: error.code,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data
-          });
-          
-          // Only remove token if it's a 401 or 404 error (not network issues)
-          if (error.response?.status === 401 || error.response?.status === 404) {
+          } else if (response.status === 401 || response.status === 404) {
             console.log('Removing invalid token due to auth error');
             localStorage.removeItem('token');
             try {
@@ -101,7 +101,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               console.warn('Could not delete axios default headers:', headerError);
             }
             setUser(null);
-          } else if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED' || !error.response) {
+          } else {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+        } catch (error: any) {
+          console.error('Auth check failed:', error);
+          console.error('Error details:', {
+            message: error.message,
+            name: error.name,
+            type: typeof error
+          });
+          
+          // Check for network-related errors
+          const isNetworkError = 
+            error.name === 'TypeError' ||  // Network errors in fetch
+            error.message?.includes('fetch') ||
+            error.message?.includes('network') ||
+            error.message?.includes('NetworkError') ||
+            error.message?.includes('Failed to fetch') ||
+            error.code === 'NETWORK_ERROR' ||
+            error.code === 'ECONNREFUSED';
+          
+          if (isNetworkError) {
             // Network error - retry with exponential backoff
             if (retryCount < 3) {
               const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
@@ -123,10 +144,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setAuthChecked(true);
     };
 
-    // Add a small delay to ensure the app is fully mounted
+    // Wait for the app to be fully mounted and backend to be ready
     const timer = setTimeout(() => {
       checkAuth();
-    }, 100);
+    }, 500); // Increased delay to 500ms to give backend more time
 
     return () => clearTimeout(timer);
   }, []);

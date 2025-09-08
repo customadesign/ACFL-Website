@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
 import { supabase } from '../lib/supabase';
 import { JWTPayload } from '../types/auth';
+import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -284,7 +285,7 @@ router.get('/users', async (req, res) => {
     try {
       const { data: clients, error: clientsError } = await supabase
         .from('clients')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status');
+        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo');
       
       if (clientsError) {
         console.error('Clients fetch error:', clientsError);
@@ -305,7 +306,7 @@ router.get('/users', async (req, res) => {
     try {
       const { data: coaches, error: coachesError } = await supabase
         .from('coaches')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status');
+        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo');
       
       if (coachesError) {
         console.error('Coaches fetch error:', coachesError);
@@ -1164,13 +1165,15 @@ router.get('/appointments', async (req, res) => {
           id,
           first_name,
           last_name,
-          email
+          email,
+          profile_photo
         ),
         coaches!sessions_coach_id_fkey (
           id,
           first_name,
           last_name,
-          email
+          email,
+          profile_photo
         )
       `)
       .order('starts_at', { ascending: false });
@@ -1200,23 +1203,49 @@ router.get('/appointments', async (req, res) => {
 
     if (error) {
       console.error('Sessions query error:', error);
-      // If there's a foreign key error, try simpler query
+      // If there's a foreign key error, try simpler query and manually fetch related data
       const { data: simpleSessions } = await supabase
         .from('sessions')
         .select('*')
         .order('starts_at', { ascending: false });
       
-      // Format simple sessions data
-      const formattedSimple = simpleSessions?.map((session: any) => {
+      // Manually fetch client and coach data for each session
+      const formattedSimple = [];
+      for (const session of simpleSessions || []) {
         const startDate = new Date(session.starts_at);
-        return {
+        
+        // Fetch client data
+        let clientData = null;
+        if (session.client_id) {
+          const { data: client } = await supabase
+            .from('clients')
+            .select('first_name, last_name, email, profile_photo')
+            .eq('id', session.client_id)
+            .single();
+          clientData = client;
+        }
+        
+        // Fetch coach data
+        let coachData = null;
+        if (session.coach_id) {
+          const { data: coach } = await supabase
+            .from('coaches')
+            .select('first_name, last_name, email, profile_photo')
+            .eq('id', session.coach_id)
+            .single();
+          coachData = coach;
+        }
+        
+        formattedSimple.push({
           id: session.id,
-          client_id: session.client_id, // Include the actual client ID
-          coach_id: session.coach_id,   // Include the actual coach ID
-          clientName: 'Unknown Client',
-          clientEmail: 'N/A',
-          coachName: 'Unknown Coach',
-          coachEmail: 'N/A',
+          client_id: session.client_id,
+          coach_id: session.coach_id,
+          clientName: clientData ? `${clientData.first_name || ''} ${clientData.last_name || ''}`.trim() : 'Unknown Client',
+          clientEmail: clientData?.email || 'N/A',
+          clientPhoto: clientData?.profile_photo || '',
+          coachName: coachData ? `${coachData.first_name || ''} ${coachData.last_name || ''}`.trim() : 'Unknown Coach',
+          coachEmail: coachData?.email || 'N/A',
+          coachPhoto: coachData?.profile_photo || '',
           date: startDate.toISOString().split('T')[0],
           time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
           duration: session.duration_minutes || 60,
@@ -1224,8 +1253,8 @@ router.get('/appointments', async (req, res) => {
           type: session.session_type || 'video',
           notes: session.notes || '',
           created_at: session.created_at
-        };
-      }) || [];
+        });
+      }
       
       res.json({ appointments: formattedSimple });
       return;
@@ -1240,8 +1269,10 @@ router.get('/appointments', async (req, res) => {
         coach_id: session.coach_id,   // Include the actual coach ID
         clientName: session.clients ? `${session.clients.first_name || ''} ${session.clients.last_name || ''}`.trim() : 'Unknown Client',
         clientEmail: session.clients?.email || 'N/A',
+        clientPhoto: session.clients?.profile_photo || '',
         coachName: session.coaches ? `${session.coaches.first_name || ''} ${session.coaches.last_name || ''}`.trim() : 'Unknown Coach',
         coachEmail: session.coaches?.email || 'N/A',
+        coachPhoto: session.coaches?.profile_photo || '',
         date: startDate.toISOString().split('T')[0],
         time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
         duration: session.duration_minutes || 60,
@@ -1938,27 +1969,31 @@ router.get('/conversations', async (req: AuthRequest, res: Response) => {
         partnerId = message.sender_id;
       }
 
+      let partnerPhoto: string | null = null;
+
       // Get partner info from clients table first
       const { data: clientData } = await supabase
         .from('clients')
-        .select('first_name, last_name, email')
+        .select('first_name, last_name, email, profile_photo')
         .eq('id', partnerId)
         .single();
       
       if (clientData) {
         partnerName = `${clientData.first_name || ''} ${clientData.last_name || ''}`.trim() || 'Unknown Client';
         partnerRole = 'client';
+        partnerPhoto = clientData.profile_photo;
       } else {
         // Try coaches table
         const { data: coachData } = await supabase
           .from('coaches')
-          .select('first_name, last_name, email')
+          .select('first_name, last_name, email, profile_photo')
           .eq('id', partnerId)
           .single();
         
         if (coachData) {
           partnerName = `${coachData.first_name || ''} ${coachData.last_name || ''}`.trim() || 'Unknown Coach';
           partnerRole = 'coach';
+          partnerPhoto = coachData.profile_photo;
         }
       }
 
@@ -1969,6 +2004,7 @@ router.get('/conversations', async (req: AuthRequest, res: Response) => {
           partnerId,
           partnerName,
           partnerRole,
+          partnerPhoto,
           lastBody: message.body || '',
           lastAt: message.created_at,
           unreadCount: 0,
@@ -2193,65 +2229,138 @@ router.delete('/conversations/:partnerId', async (req: AuthRequest, res: Respons
   }
 });
 
-router.post('/upload-attachment', async (req: AuthRequest, res: Response) => {
+router.post('/upload-attachment', uploadAttachment.single('attachment'), async (req: AuthRequest, res: Response) => {
   try {
-    // Use the same upload logic as client/coach
-    const multer = require('multer');
-    const path = require('path');
+    const adminId = req.user?.id || req.user?.userId;
     
-    // Configure multer for file upload
-    const storage = multer.diskStorage({
-      destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-      },
-      filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'attachment-' + uniqueSuffix + path.extname(file.originalname));
-      }
-    });
+    if (!adminId) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
 
-    const upload = multer({
-      storage,
-      limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
-      fileFilter: (req, file, cb) => {
-        // Allow common file types
-        const allowedTypes = /jpeg|jpg|png|gif|pdf|doc|docx|txt|csv|mp3|mp4|zip/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        
-        if (mimetype && extname) {
-          return cb(null, true);
-        } else {
-          cb(new Error('Invalid file type'));
-        }
-      }
-    }).single('attachment');
-
-    upload(req, res, (err) => {
-      if (err) {
-        console.error('Upload error:', err);
-        return res.status(400).json({ error: err.message });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({ error: 'No file uploaded' });
-      }
-
-      const fileUrl = `/uploads/${req.file.filename}`;
-      
-      res.json({
-        success: true,
-        data: {
-          url: fileUrl,
-          name: req.file.originalname,
-          size: req.file.size,
-          type: req.file.mimetype
-        }
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No file uploaded'
       });
+    }
+
+    // Upload file to Supabase Storage using admin ID
+    const uploadResult = await uploadToSupabase(req.file, adminId);
+
+    res.json({
+      success: true,
+      data: {
+        url: uploadResult.url,
+        name: req.file.originalname,
+        size: req.file.size,
+        type: req.file.mimetype,
+        path: uploadResult.path
+      }
     });
   } catch (error) {
     console.error('Admin upload error:', error);
-    res.status(500).json({ error: 'Failed to upload file' });
+    res.status(500).json({ 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Failed to upload attachment' 
+    });
+  }
+});
+
+// Admin Profile endpoints
+router.get('/profile', async (req: AuthRequest, res: Response) => {
+  try {
+    const adminId = req.user?.id || req.user?.userId;
+    
+    if (!adminId) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    // First try to get from admins table, if not found try users table
+    let { data: adminData, error: adminError } = await supabase
+      .from('admins')
+      .select('id, email, first_name, last_name, profile_photo')
+      .eq('id', adminId)
+      .single();
+
+    if (adminError && adminError.code === 'PGRST116') {
+      // Not found in admins table, try users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('id, email, first_name, last_name, profile_photo')
+        .eq('id', adminId)
+        .eq('role', 'admin')
+        .single();
+      
+      if (userError) {
+        console.error('Admin profile fetch error:', userError);
+        return res.status(404).json({ error: 'Admin profile not found' });
+      }
+      
+      adminData = userData;
+    } else if (adminError) {
+      console.error('Admin profile fetch error:', adminError);
+      return res.status(500).json({ error: 'Failed to fetch admin profile' });
+    }
+
+    res.json({ success: true, data: adminData });
+  } catch (error) {
+    console.error('Admin profile error:', error);
+    res.status(500).json({ error: 'Failed to fetch admin profile' });
+  }
+});
+
+router.put('/profile', async (req: AuthRequest, res: Response) => {
+  try {
+    const adminId = req.user?.id || req.user?.userId;
+    
+    if (!adminId) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+
+    const { first_name, last_name, profile_photo } = req.body;
+    const updateData: any = {};
+    
+    if (first_name !== undefined) updateData.first_name = first_name;
+    if (last_name !== undefined) updateData.last_name = last_name;
+    if (profile_photo !== undefined) updateData.profile_photo = profile_photo;
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'No valid fields provided for update' });
+    }
+
+    // Try to update admins table first
+    let { data, error } = await supabase
+      .from('admins')
+      .update(updateData)
+      .eq('id', adminId)
+      .select('id, email, first_name, last_name, profile_photo')
+      .single();
+
+    if (error && error.code === 'PGRST116') {
+      // Not found in admins table, try users table
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .update(updateData)
+        .eq('id', adminId)
+        .eq('role', 'admin')
+        .select('id, email, first_name, last_name, profile_photo')
+        .single();
+      
+      if (userError) {
+        console.error('Admin profile update error:', userError);
+        return res.status(404).json({ error: 'Admin profile not found' });
+      }
+      
+      data = userData;
+    } else if (error) {
+      console.error('Admin profile update error:', error);
+      return res.status(500).json({ error: 'Failed to update admin profile' });
+    }
+
+    res.json({ success: true, data, message: 'Profile updated successfully' });
+  } catch (error) {
+    console.error('Admin profile update error:', error);
+    res.status(500).json({ error: 'Failed to update admin profile' });
   }
 });
 

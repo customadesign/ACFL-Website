@@ -220,6 +220,18 @@ export const getCoachById = async (req: Request, res: Response) => {
       `)
       .eq('id', id)
       .single();
+
+    // Also fetch coach application data if available
+    let applicationData = null;
+    if (coach && coach.email) {
+      const { data: appData } = await supabase
+        .from('coach_applications')
+        .select('*')
+        .ilike('email', coach.email)
+        .eq('status', 'approved')
+        .single();
+      applicationData = appData;
+    }
     
     if (error) {
       console.error('Database error:', error);
@@ -275,7 +287,26 @@ export const getCoachById = async (req: Request, res: Response) => {
       insuranceAccepted: demographics.accepts_insurance ? ['Insurance accepted'] : [],
       sessionRate: coach.hourly_rate_usd ? `$${coach.hourly_rate_usd}/session` : '',
       virtualAvailable: demographics.meta?.video_available || true,
-      inPersonAvailable: demographics.meta?.in_person_available || false
+      inPersonAvailable: demographics.meta?.in_person_available || false,
+      profilePhoto: coach.profile_photo || '',
+      
+      // Application data fields
+      educationalBackground: applicationData?.educational_background || '',
+      coachingExperienceYears: applicationData?.coaching_experience_years || '',
+      professionalCertifications: applicationData?.professional_certifications || [],
+      coachingExpertise: applicationData?.coaching_expertise || [],
+      ageGroupsComfortable: applicationData?.age_groups_comfortable || [],
+      actTrainingLevel: applicationData?.act_training_level || '',
+      coachingPhilosophy: applicationData?.coaching_philosophy || '',
+      coachingTechniques: applicationData?.coaching_techniques || [],
+      sessionStructure: applicationData?.session_structure || '',
+      scopeHandlingApproach: applicationData?.scope_handling_approach || '',
+      boundaryMaintenanceApproach: applicationData?.boundary_maintenance_approach || '',
+      comfortableWithSuicidalThoughts: applicationData?.comfortable_with_suicidal_thoughts || '',
+      selfHarmProtocol: applicationData?.self_harm_protocol || '',
+      weeklyHoursAvailable: applicationData?.weekly_hours_available || '',
+      preferredSessionLength: applicationData?.preferred_session_length || '',
+      videoConferencingComfort: applicationData?.video_conferencing_comfort || ''
     };
     
     res.json(formattedCoach);

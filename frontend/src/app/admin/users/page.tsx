@@ -43,6 +43,7 @@ interface User {
   specialties?: string[];
   years_experience?: number;
   hourly_rate_usd?: number;
+  profile_photo?: string;
   // Client specific fields
   dob?: string;
   gender_identity?: string;
@@ -886,11 +887,19 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
-                          <span className="text-sm font-medium text-white">
-                            {user.name ? user.name.charAt(0).toUpperCase() : (user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U')}
-                          </span>
-                        </div>
+                        {user.profile_photo ? (
+                          <img
+                            src={user.profile_photo}
+                            alt={`${user.name || user.first_name || 'User'} profile`}
+                            className="h-10 w-10 rounded-full object-cover"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                            <span className="text-sm font-medium text-white">
+                              {user.name ? user.name.charAt(0).toUpperCase() : (user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U')}
+                            </span>
+                          </div>
+                        )}
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -1051,12 +1060,12 @@ export default function UserManagement() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 {isEditMode ? 'Edit User' : 'Create New User'}
               </h3>
               <button
                 onClick={resetForm}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -1066,26 +1075,26 @@ export default function UserManagement() {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     First Name
                   </label>
                   <input
                     type="text"
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Last Name
                   </label>
                   <input
                     type="text"
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
@@ -1093,39 +1102,39 @@ export default function UserManagement() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Email
                   </label>
                   <input
                     type="email"
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Phone
                   </label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     User Type
                   </label>
                   <select
                     value={formData.userType}
                     onChange={(e) => setFormData({ ...formData, userType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={isEditMode}
                   >
                     <option value="client">Client</option>
@@ -1134,13 +1143,13 @@ export default function UserManagement() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     Status
                   </label>
                   <select
                     value={formData.status}
                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="active">Active</option>
                     <option value="inactive">Inactive</option>
@@ -1159,54 +1168,54 @@ export default function UserManagement() {
               {/* Role-specific fields */}
               {formData.userType === 'client' && (
                 <div className="space-y-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-900">Client Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Client Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Date of Birth
                       </label>
                       <input
                         type="date"
                         value={formData.dob || ''}
                         onChange={(e) => setFormData({ ...formData, dob: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Gender Identity
                       </label>
                       <input
                         type="text"
                         value={formData.genderIdentity || ''}
                         onChange={(e) => setFormData({ ...formData, genderIdentity: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="e.g., Male, Female, Non-binary, etc."
                       />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Ethnic Identity
                       </label>
                       <input
                         type="text"
                         value={formData.ethnicIdentity || ''}
                         onChange={(e) => setFormData({ ...formData, ethnicIdentity: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Optional"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Religious Background
                       </label>
                       <input
                         type="text"
                         value={formData.religiousBackground || ''}
                         onChange={(e) => setFormData({ ...formData, religiousBackground: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         placeholder="Optional"
                       />
                     </div>
@@ -1216,40 +1225,40 @@ export default function UserManagement() {
 
               {formData.userType === 'coach' && (
                 <div className="space-y-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-900">Coach Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Coach Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Years of Experience
                       </label>
                       <input
                         type="number"
                         value={formData.yearsExperience || ''}
                         onChange={(e) => setFormData({ ...formData, yearsExperience: parseInt(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Hourly Rate (USD)
                       </label>
                       <input
                         type="number"
                         value={formData.hourlyRate || ''}
                         onChange={(e) => setFormData({ ...formData, hourlyRate: parseFloat(e.target.value) || 0 })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Bio
                     </label>
                     <textarea
                       value={formData.bio || ''}
                       onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                       rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1257,16 +1266,16 @@ export default function UserManagement() {
 
               {formData.userType === 'staff' && (
                 <div className="space-y-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-900">Staff Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Staff Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Department
                       </label>
                       <select
                         value={formData.department || ''}
                         onChange={(e) => setFormData({ ...formData, department: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="">Select Department</option>
                         <option value="Administration">Administration</option>
@@ -1278,13 +1287,13 @@ export default function UserManagement() {
                       </select>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Role Level
                       </label>
                       <select
                         value={formData.roleLevel || 'staff'}
                         onChange={(e) => setFormData({ ...formData, roleLevel: e.target.value })}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       >
                         <option value="staff">Staff</option>
                         <option value="supervisor">Supervisor</option>
@@ -1299,10 +1308,10 @@ export default function UserManagement() {
               {/* Advanced Profile Settings */}
               {isEditMode && (
                 <div className="space-y-4 border-t pt-4">
-                  <h4 className="font-medium text-gray-900">Advanced Settings</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">Advanced Settings</h4>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Last Login
                       </label>
                       <input
@@ -1313,7 +1322,7 @@ export default function UserManagement() {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Account Created
                       </label>
                       <input
@@ -1333,7 +1342,7 @@ export default function UserManagement() {
                         onChange={(e) => setFormData({ ...formData, emailVerified: e.target.checked })}
                         className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="text-sm text-gray-700">Email Verified</span>
+                      <span className="text-sm text-gray-700 dark:text-white">Email Verified</span>
                     </label>
                     
                     <label className="flex items-center">
@@ -1343,12 +1352,12 @@ export default function UserManagement() {
                         onChange={(e) => setFormData({ ...formData, profileComplete: e.target.checked })}
                         className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
-                      <span className="text-sm text-gray-700">Profile Complete</span>
+                      <span className="text-sm text-gray-700 dark:text-white">Profile Complete</span>
                     </label>
                   </div>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                       Admin Notes
                     </label>
                     <textarea
@@ -1356,7 +1365,7 @@ export default function UserManagement() {
                       onChange={(e) => setFormData({ ...formData, adminNotes: e.target.value })}
                       rows={3}
                       placeholder="Internal notes about this user (not visible to the user)"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
                 </div>
@@ -1367,7 +1376,7 @@ export default function UserManagement() {
                 <button
                   type="button"
                   onClick={resetForm}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                  className="px-4 py-2 text-gray-600 dark:text-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   Cancel
                 </button>
@@ -1404,7 +1413,7 @@ export default function UserManagement() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 {alertData.title}
               </h3>
-              <p className="text-sm text-gray-600 whitespace-pre-line">
+              <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
                 {alertData.message}
               </p>
             </div>

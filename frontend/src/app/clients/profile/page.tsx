@@ -15,7 +15,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import ProfileCardSkeleton from '@/components/ProfileCardSkeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart, RefreshCw } from 'lucide-react'
+import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload } from 'lucide-react'
 import { STATE_NAMES } from '@/constants/states'
 import { 
   concernOptions, 
@@ -44,6 +44,7 @@ const profileFormSchema = z.object({
   availability: z.array(z.string()).optional(),
   therapistGender: z.string().optional(),
   bio: z.string().optional(),
+  profilePhoto: z.string().optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileFormSchema>
@@ -82,6 +83,7 @@ function ProfileContent() {
       availability: [],
       therapistGender: '',
       bio: '',
+      profilePhoto: '',
     },
   })
 
@@ -116,6 +118,7 @@ function ProfileContent() {
           form.setValue('availability', userData.availability || userData.preferences?.availability || [])
           form.setValue('therapistGender', userData.therapistGender || userData.preferences?.therapistGender || '')
           form.setValue('bio', userData.bio || '')
+          form.setValue('profilePhoto', userData.profilePhoto || '')
           
           // Set member since date
           if (userData.created_at) {
@@ -192,6 +195,65 @@ function ProfileContent() {
     setSuccess(null)
     // Reset form to original values
     form.reset()
+  }
+
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file')
+      return
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be less than 5MB')
+      return
+    }
+
+    try {
+      const API_URL = getApiUrl()
+      const formData = new FormData()
+      formData.append('attachment', file)
+
+      const response = await fetch(`${API_URL}/api/client/upload-attachment`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        const photoUrl = data.data.url
+        form.setValue('profilePhoto', photoUrl)
+        
+        // Save the photo URL to the database
+        const updateResponse = await fetch(`${API_URL}/api/client/profile`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({ profilePhoto: photoUrl })
+        })
+
+        if (updateResponse.ok) {
+          setSuccess('Profile photo updated successfully!')
+          await loadProfileAndStats() // Reload profile to get updated data
+          setTimeout(() => setSuccess(''), 3000)
+        }
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to upload photo')
+      }
+    } catch (error) {
+      console.error('Error uploading photo:', error)
+      setError('Failed to upload photo. Please try again.')
+    }
   }
 
   // Remove full page loading - we now use skeleton loading
@@ -295,6 +357,54 @@ function ProfileContent() {
               </CardContent>
             </Card>
           </div>
+        )}
+
+        {/* Profile Photo Section */}
+        {initialLoad ? (
+          <ProfileCardSkeleton type="form" />
+        ) : (
+          <Card className="bg-card border-border mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Camera className="w-5 h-5" />
+                Profile Photo
+              </CardTitle>
+              <CardDescription>Upload a professional photo for your profile</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+                <div className="relative flex-shrink-0">
+                  {form.watch('profilePhoto') ? (
+                    <img
+                      src={form.watch('profilePhoto')}
+                      alt="Profile"
+                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-gray-200"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center">
+                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
+                    </div>
+                  )}
+                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation">
+                    <Upload className="w-4 h-4" />
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                <div className="text-center sm:text-left">
+                  <h3 className="text-lg font-semibold">{form.watch('firstName')} {form.watch('lastName')}</h3>
+                  <p className="text-gray-600 break-words">{form.watch('email')}</p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Click the upload button to change your profile photo
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Profile Form */}
