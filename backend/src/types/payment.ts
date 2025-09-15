@@ -26,8 +26,12 @@ export interface Payment {
   currency: string;
   platform_fee_cents: number;
   coach_earnings_cents: number;
-  status: 'pending' | 'succeeded' | 'failed' | 'canceled' | 'refunded' | 'partially_refunded';
+  status: 'pending' | 'authorized' | 'succeeded' | 'failed' | 'canceled' | 'requires_capture' | 'refunded' | 'partially_refunded';
   payment_method_type?: string;
+  payment_method?: string;
+  authorization_code?: string;
+  captured_at?: Date;
+  expires_at?: Date;
   description?: string;
   session_id?: string;
   metadata: Record<string, any>;
@@ -42,9 +46,14 @@ export interface Refund {
   stripe_refund_id: string;
   amount_cents: number;
   reason: 'duplicate' | 'fraudulent' | 'requested_by_customer' | 'admin_initiated' | 'coach_requested' | 'auto_cancellation';
-  status: 'pending' | 'succeeded' | 'failed' | 'canceled';
+  status: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'succeeded' | 'failed' | 'canceled';
   initiated_by_type: 'client' | 'coach' | 'admin' | 'system';
   initiated_by_id?: string;
+  requires_approval?: boolean;
+  approved_by?: string;
+  approved_at?: Date;
+  rejection_reason?: string;
+  auto_approval_policy?: string;
   coach_penalty_cents: number;
   platform_refund_cents: number;
   description?: string;
@@ -203,4 +212,78 @@ export interface PlatformFinancials {
   total_sessions: number;
   average_session_value_cents: number;
   refund_rate_percentage: number;
+}
+
+// New interfaces for authorization/capture flow
+export interface Session {
+  id: string;
+  coach_id: string;
+  client_id: string;
+  payment_id?: string;
+  session_date: Date;
+  duration_minutes: number;
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+  session_notes?: string;
+  completion_confirmed_by?: string;
+  completed_at?: Date;
+  cancellation_reason?: string;
+  cancelled_by?: string;
+  cancelled_at?: Date;
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface AutomaticRefundPolicy {
+  id: string;
+  name: string;
+  description?: string;
+  conditions: Record<string, any>;
+  refund_percentage: number;
+  applies_to_session_types: string[];
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+}
+
+// Authorization/Capture request types
+export interface CreatePaymentAuthorizationRequest {
+  coach_id: string;
+  coach_rate_id: string;
+  session_date?: string;
+  session_time?: string;
+  description?: string;
+  metadata?: Record<string, string>;
+}
+
+export interface CreatePaymentAuthorizationResponse {
+  payment_intent_id: string;
+  client_secret: string;
+  amount_cents: number;
+  payment_id: string;
+  expires_at: Date;
+}
+
+export interface CapturePaymentRequest {
+  payment_id: string;
+  session_id?: string;
+  amount_cents?: number; // Optional partial capture
+}
+
+export interface CapturePaymentResponse {
+  payment_id: string;
+  captured_amount_cents: number;
+  captured_at: Date;
+  status: string;
+}
+
+export interface RefundApprovalRequest {
+  refund_id: string;
+  approved: boolean;
+  rejection_reason?: string;
+}
+
+export interface SessionCompletionRequest {
+  session_id: string;
+  session_notes?: string;
+  auto_capture_payment?: boolean;
 }

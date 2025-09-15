@@ -1876,6 +1876,634 @@ router.get('/coaches/appointments', authenticate, async (req: Request & { user?:
   }
 });
 
+// Get session notes for a specific appointment
+router.get('/coach/session-notes/:appointmentId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { appointmentId } = req.params;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Get the appointment with session notes
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('sessions')
+      .select('id, coach_id, session_notes')
+      .eq('id', appointmentId)
+      .single();
+
+    if (appointmentError || !appointment || appointment.coach_id !== coachProfile.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found or access denied'
+      });
+    }
+
+    // Return session notes from the session_notes column
+    const notes = appointment.session_notes || {};
+    
+    res.json({
+      success: true,
+      data: notes.notes ? [notes] : [] // Return as array for compatibility
+    });
+  } catch (error) {
+    console.error('Get session notes error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get session notes' 
+    });
+  }
+});
+
+// Add or update session notes
+router.post('/coach/session-notes', [
+  authenticate,
+  body('appointment_id').isUUID(),
+  body('notes').optional().isString(),
+  body('goals_met').optional().isArray(),
+  body('next_steps').optional().isString()
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ 
+        success: false, 
+        errors: errors.array() 
+      });
+    }
+
+    const { appointment_id, notes, goals_met, next_steps } = req.body;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Verify the appointment belongs to this coach
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('sessions')
+      .select('id, coach_id, session_notes')
+      .eq('id', appointment_id)
+      .single();
+
+    if (appointmentError || !appointment || appointment.coach_id !== coachProfile.id) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found or access denied'
+      });
+    }
+
+    // Prepare session notes data
+    const sessionNotesData = {
+      notes: notes || '',
+      goals_met: goals_met || [],
+      next_steps: next_steps || '',
+      updated_at: new Date().toISOString(),
+      created_at: appointment.session_notes?.created_at || new Date().toISOString()
+    };
+
+    // Update the session with the new notes
+    const { data: updatedSession, error: updateError } = await supabase
+      .from('sessions')
+      .update({ session_notes: sessionNotesData })
+      .eq('id', appointment_id)
+      .select('id, session_notes')
+      .single();
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    res.json({
+      success: true,
+      message: 'Session notes saved successfully',
+      data: updatedSession.session_notes
+    });
+  } catch (error) {
+    console.error('Save session notes error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to save session notes' 
+    });
+  }
+});
+
+// Test route for debugging
+router.get('/coach/test-client-route', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  console.log('🔍 TEST ROUTE HIT');
+  
+  // Check if we can find the coach
+  try {
+    const { data: coaches, error } = await supabase
+      .from('coaches')
+      .select('id, email, first_name, last_name')
+      .ilike('email', req.user?.email || '');
+    
+    console.log('🔍 Coach search result:', { coaches, error, searchEmail: req.user?.email });
+    
+    res.json({ 
+      success: true, 
+      message: 'Test route working',
+      userEmail: req.user?.email,
+      coachData: coaches,
+      error: error?.message 
+    });
+  } catch (err) {
+    console.error('Test route error:', err);
+    res.json({ success: false, error: err });
+  }
+});
+
+// Debug route to check available data
+router.get('/coach/debug-data/:clientId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const { clientId } = req.params;
+    console.log('🔍 DEBUG DATA ROUTE - clientId:', clientId, 'user:', req.user?.email);
+
+    // Get coach profile
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id, email, first_name, last_name')
+      .ilike('email', req.user?.email || '')
+      .single();
+
+    // Get client profile 
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name, email')
+      .eq('id', clientId)
+      .single();
+
+    // Get sessions between them
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('id, client_id, coach_id, status')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachProfile?.id || '');
+
+    // Get all sessions for this client
+    const { data: allClientSessions, error: allSessionsError } = await supabase
+      .from('sessions')
+      .select('id, client_id, coach_id, status')
+      .eq('client_id', clientId);
+
+    res.json({
+      success: true,
+      debug: {
+        requestedClientId: clientId,
+        userEmail: req.user?.email,
+        coachProfile,
+        coachError: coachError?.message,
+        clientProfile,
+        clientError: clientError?.message,
+        sessions,
+        sessionsError: sessionsError?.message,
+        allClientSessions,
+        allSessionsError: allSessionsError?.message
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Get client profile for coach (using /client-profile/ to avoid conflicts)
+router.get('/coach/client-profile/:clientId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  console.log('🔍 CLIENT PROFILE ROUTE HIT - clientId:', req.params.clientId);
+  console.log('🔍 User:', req.user?.email, 'Role:', req.user?.role);
+  
+  try {
+    console.log('🔍 INSIDE TRY BLOCK');
+    if (!req.user || req.user.role !== 'coach') {
+      console.log('❌ AUTH CHECK FAILED');
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    console.log('✅ AUTH CHECK PASSED');
+    const { clientId } = req.params;
+    console.log('🔍 About to query coach profile for:', req.user.email);
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    console.log('🔍 Coach profile lookup:', { coachProfile, coachProfileError });
+
+    if (coachProfileError || !coachProfile) {
+      console.log('❌ Coach profile not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Check if client exists first
+    const { data: clientExists, error: clientExistsError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', clientId)
+      .single();
+
+    console.log('🔍 Client exists check:', { clientExists, clientExistsError, clientId });
+
+    if (clientExistsError || !clientExists) {
+      console.log('❌ Client not found in database');
+      return res.status(404).json({
+        success: false,
+        message: 'Client not found'
+      });
+    }
+
+    // Verify that the coach has sessions with this client (to ensure they're connected)
+    const { data: connectionCheck, error: connectionError } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachProfile.id)
+      .limit(1);
+
+    console.log('🔍 Connection check:', { connectionCheck, connectionError, clientId, coachId: coachProfile.id });
+
+    if (!connectionCheck || connectionCheck.length === 0) {
+      console.log('❌ No connection found between coach and client');
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have permission to view this client\'s profile. You must have scheduled sessions with this client to view their profile.'
+      });
+    }
+
+    // Get client profile data
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('id', clientId)
+      .single();
+
+    console.log('🔍 Client profile lookup:', { clientProfile, clientError });
+
+    if (clientError || !clientProfile) {
+      console.log('❌ Client profile not found');
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    // Get all sessions between this coach and client
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachProfile.id)
+      .order('starts_at', { ascending: false });
+
+    if (sessionsError) {
+      throw sessionsError;
+    }
+
+    // Map database fields to frontend expected fields
+    const mappedClientProfile = {
+      ...clientProfile,
+      // Map database field names to frontend expected names
+      location: clientProfile.location_state,
+      language: clientProfile.preferred_language,
+      area_of_concern: clientProfile.areas_of_concern || [],
+      therapist_gender: clientProfile.preferred_coach_gender
+    };
+
+    res.json({
+      success: true,
+      data: {
+        client: mappedClientProfile,
+        sessions: sessions || []
+      }
+    });
+  } catch (error) {
+    console.error('Get client profile error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get client profile' 
+    });
+  }
+});
+
+// Get client session history with notes
+router.get('/coach/clients/:clientId/sessions', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Coach role required.' 
+      });
+    }
+
+    const { clientId } = req.params;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Get all sessions for this client with this coach, including session_notes
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachProfile.id)
+      .order('starts_at', { ascending: false });
+
+    if (sessionsError) {
+      throw sessionsError;
+    }
+
+    // Transform the data to match the expected format
+    const sessionsWithNotes = sessions?.map(session => ({
+      ...session,
+      session_notes: session.session_notes ? [session.session_notes] : []
+    })) || [];
+
+    res.json({
+      success: true,
+      data: sessionsWithNotes
+    });
+  } catch (error) {
+    console.error('Get client session history error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to get session history' 
+    });
+  }
+});
+
+// Get coach revenue data
+router.get('/coach/revenue', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    const { period = 'month' } = req.query;
+
+    // Get coach profile by email first
+    const { data: coachProfile, error: coachProfileError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachProfileError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    const coachId = coachProfile.id;
+
+    // Calculate date range based on period
+    const now = new Date();
+    let startDate: Date;
+    let previousStartDate: Date;
+    let previousEndDate: Date;
+
+    switch (period) {
+      case 'week':
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+        previousStartDate = new Date(startDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+        previousEndDate = new Date(startDate.getTime() - 1);
+        break;
+      case 'quarter':
+        const currentQuarter = Math.floor(now.getMonth() / 3);
+        startDate = new Date(now.getFullYear(), currentQuarter * 3, 1);
+        previousStartDate = new Date(now.getFullYear(), (currentQuarter - 1) * 3, 1);
+        previousEndDate = new Date(startDate.getTime() - 1);
+        break;
+      case 'year':
+        startDate = new Date(now.getFullYear(), 0, 1);
+        previousStartDate = new Date(now.getFullYear() - 1, 0, 1);
+        previousEndDate = new Date(startDate.getTime() - 1);
+        break;
+      default: // month
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        previousStartDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        previousEndDate = new Date(startDate.getTime() - 1);
+    }
+
+    // Get sessions for current period
+    const { data: currentSessions, error: currentSessionsError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('coach_id', coachId)
+      .eq('status', 'completed')
+      .gte('starts_at', startDate.toISOString())
+      .lte('starts_at', now.toISOString());
+
+    // Get sessions for previous period (for trend calculation)
+    const { data: previousSessions, error: previousSessionsError } = await supabase
+      .from('sessions')
+      .select('*')
+      .eq('coach_id', coachId)
+      .eq('status', 'completed')
+      .gte('starts_at', previousStartDate.toISOString())
+      .lte('starts_at', previousEndDate.toISOString());
+
+    // Get coach hourly rate
+    const { data: coachRates, error: ratesError } = await supabase
+      .from('coach_rates')
+      .select('rate')
+      .eq('coach_id', coachId)
+      .eq('is_default', true)
+      .single();
+
+    const hourlyRate = coachRates?.rate || 100; // Default rate if not set
+
+    // Calculate current period stats
+    const currentSessionsCount = currentSessions?.length || 0;
+    const currentRevenue = currentSessionsCount * hourlyRate;
+    const currentHours = currentSessionsCount * 1; // Assuming 1 hour per session
+
+    // Calculate previous period stats for trends
+    const previousSessionsCount = previousSessions?.length || 0;
+    const previousRevenue = previousSessionsCount * hourlyRate;
+
+    // Calculate trends
+    const revenueChange = previousRevenue > 0
+      ? Math.round(((currentRevenue - previousRevenue) / previousRevenue) * 100)
+      : currentRevenue > 0 ? 100 : 0;
+
+    const sessionsChange = previousSessionsCount > 0
+      ? Math.round(((currentSessionsCount - previousSessionsCount) / previousSessionsCount) * 100)
+      : currentSessionsCount > 0 ? 100 : 0;
+
+    // Get unique clients for current period
+    const uniqueClientIds = [...new Set(currentSessions?.map(s => s.client_id) || [])];
+    const activeClients = uniqueClientIds.length;
+
+    // Get previous period clients for trend
+    const previousUniqueClientIds = [...new Set(previousSessions?.map(s => s.client_id) || [])];
+    const previousActiveClients = previousUniqueClientIds.length;
+
+    const clientsChange = previousActiveClients > 0
+      ? Math.round(((activeClients - previousActiveClients) / previousActiveClients) * 100)
+      : activeClients > 0 ? 100 : 0;
+
+    // Get all-time stats for ratings
+    const { data: reviews, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('coach_id', coachId);
+
+    let averageRating = 0;
+    let totalReviews = 0;
+    if (!reviewsError && reviews && reviews.length > 0) {
+      const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+      averageRating = Math.round((totalRating / reviews.length) * 10) / 10;
+      totalReviews = reviews.length;
+    }
+
+    // Get all sessions for completion rate
+    const { data: allSessions, error: allSessionsError } = await supabase
+      .from('sessions')
+      .select('status')
+      .eq('coach_id', coachId)
+      .gte('starts_at', startDate.toISOString());
+
+    const totalScheduled = allSessions?.length || 0;
+    const completedSessions = allSessions?.filter(s => s.status === 'completed').length || 0;
+    const completionRate = totalScheduled > 0 ? Math.round((completedSessions / totalScheduled) * 100) : 0;
+
+    // Calculate retention rate (clients who had more than one session)
+    const clientSessionCounts = new Map();
+    currentSessions?.forEach(session => {
+      const count = clientSessionCounts.get(session.client_id) || 0;
+      clientSessionCounts.set(session.client_id, count + 1);
+    });
+
+    const clientsWithMultipleSessions = Array.from(clientSessionCounts.values()).filter(count => count > 1).length;
+    const retentionRate = uniqueClientIds.length > 0 ? Math.round((clientsWithMultipleSessions / uniqueClientIds.length) * 100) : 0;
+
+    // Mock on-time performance (would need actual meeting start/end times)
+    const onTimeRate = 95; // Placeholder
+
+    // Recent activity (last 10 completed sessions)
+    const { data: recentSessions, error: activityError } = await supabase
+      .from('sessions')
+      .select('id, starts_at, client_id')
+      .eq('coach_id', coachId)
+      .eq('status', 'completed')
+      .order('starts_at', { ascending: false })
+      .limit(10);
+
+    // Get client details for recent sessions
+    const recentClientIds = [...new Set(recentSessions?.map(s => s.client_id) || [])];
+    const { data: recentClients } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name')
+      .in('id', recentClientIds);
+
+    const clientsMap = new Map();
+    recentClients?.forEach((client: any) => {
+      clientsMap.set(client.id, client);
+    });
+
+    const formattedActivity = recentSessions?.map((session: any) => {
+      const client = clientsMap.get(session.client_id);
+      return {
+        clientName: client ? `${client.first_name} ${client.last_name}` : 'Client',
+        date: session.starts_at,
+        amount: hourlyRate.toFixed(2),
+        duration: 60 // Assuming 60 minutes per session
+      };
+    }) || [];
+
+    // Goals (these could be configurable per coach)
+    const revenueGoal = 5000; // Monthly goal, could be stored in coach preferences
+    const avgSessionRevenue = hourlyRate;
+
+    res.json({
+      success: true,
+      data: {
+        stats: {
+          totalRevenue: currentRevenue.toFixed(2),
+          sessionsCompleted: currentSessionsCount,
+          averageRating: averageRating.toFixed(1),
+          activeClients,
+          completionRate,
+          retentionRate,
+          onTimeRate,
+          totalReviews,
+          revenueGoal,
+          avgSessionRevenue: avgSessionRevenue.toFixed(2),
+          totalHours: currentHours
+        },
+        trends: {
+          revenueChange,
+          sessionsChange,
+          clientsChange
+        },
+        recentActivity: formattedActivity
+      }
+    });
+  } catch (error) {
+    console.error('Get coach revenue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get revenue data'
+    });
+  }
+});
+
 // Get coach by ID (IMPORTANT: Keep this at the end - parameterized routes must come after specific ones)
 router.get('/coach/:id', getCoachById);
 

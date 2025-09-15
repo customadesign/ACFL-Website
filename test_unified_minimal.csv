@@ -1,0 +1,4 @@
+role,email,first_name,last_name
+client,test.client1@testdomain.com,John,Doe
+coach,test.coach1@testdomain.com,Sarah,Johnson
+staff,test.staff1@testdomain.com,Alice,Brown

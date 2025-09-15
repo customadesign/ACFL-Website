@@ -1,21 +1,76 @@
 "use client"
 
+import { useState, useEffect } from 'react';
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import Logo from "@/components/Logo"
-import { ArrowLeft, FileText } from "lucide-react"
+import { ArrowLeft, FileText, Calendar } from "lucide-react"
 import Footer from "@/components/Footer"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
+import { getApiUrl } from '@/lib/api';
+
+interface StaticContent {
+  id: string;
+  slug: string;
+  title: string;
+  content: string;
+  content_type: string;
+  meta_description?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export default function TermsPage() {
+  const [content, setContent] = useState<StaticContent | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/admin/content/public/content?slug=terms-of-service`);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setContent(data);
+      } else if (response.status === 404) {
+        // Use fallback content if CMS content not found
+        setError('CMS content not found, using default content');
+      } else {
+        setError('Failed to load content from CMS');
+      }
+    } catch (error) {
+      console.error('Error fetching content:', error);
+      setError('Failed to load content from CMS');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col min-h-screen bg-white">
+        <nav>
+          <NavbarLandingPage />
+        </nav>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-brand-teal"></div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
       <nav>
         <NavbarLandingPage />
       </nav>
-      
 
       {/* Content */}
       <section className="py-20">
@@ -25,105 +80,106 @@ export default function TermsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-           
-
             <div className="bg-white rounded-2xl shadow-lg p-8 md:p-12">
               <div className="flex items-center justify-center mb-8">
                 <FileText className="w-12 h-12 text-brand-teal" />
               </div>
               
               <h1 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4 text-center">
-                Terms of Service
+                {content?.title || "Terms of Service"}
               </h1>
               
-              <p className="text-gray-600 text-center mb-12">
-                Last updated: January 1, 2024
-              </p>
+              <div className="text-center mb-12">
+                {content?.updated_at && (
+                  <div className="flex items-center justify-center text-gray-600">
+                    <Calendar className="w-4 h-4 mr-2" />
+                    <span>
+                      Last updated: {new Date(content.updated_at).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </span>
+                  </div>
+                )}
+                {content?.meta_description && (
+                  <p className="text-gray-600 mt-2">
+                    {content.meta_description}
+                  </p>
+                )}
+              </div>
 
               <div className="prose prose-gray max-w-none">
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">1. Acceptance of Terms</h2>
-                <p className="text-gray-600 mb-6">
-                  By accessing and using ACT Coaching For Life ("the Service"), you agree to be bound by these 
-                  Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Service.
-                </p>
+                {content?.content ? (
+                  <div
+                    dangerouslySetInnerHTML={{ 
+                      __html: content.content.replace(/\n/g, '<br>') 
+                    }}
+                    className="whitespace-pre-wrap text-gray-600"
+                  />
+                ) : (
+                  // Fallback content if CMS is not available
+                  <>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">1. Acceptance of Terms</h2>
+                    <p className="text-gray-600 mb-6">
+                      By accessing and using ACT Coaching For Life ("the Service"), you agree to be bound by these 
+                      Terms of Service ("Terms"). If you do not agree to these Terms, please do not use our Service.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">2. Description of Service</h2>
-                <p className="text-gray-600 mb-6">
-                  ACT Coaching For Life provides online coaching services based on Acceptance and Commitment Therapy 
-                  (ACT) principles. Our platform connects users with qualified coaches to support mental health and 
-                  personal development goals.
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">2. Description of Service</h2>
+                    <p className="text-gray-600 mb-6">
+                      ACT Coaching For Life provides online coaching services based on Acceptance and Commitment Therapy 
+                      (ACT) principles. Our platform connects users with qualified coaches to support mental health and 
+                      personal development goals.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">3. User Eligibility</h2>
-                <p className="text-gray-600 mb-6">
-                  You must be at least 18 years old to use our Service. By using the Service, you represent and 
-                  warrant that you have the legal capacity to enter into these Terms.
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">3. User Eligibility</h2>
+                    <p className="text-gray-600 mb-6">
+                      You must be at least 18 years old to use our Service. By using the Service, you represent and 
+                      warrant that you have the legal capacity to enter into these Terms.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">4. Account Registration</h2>
-                <p className="text-gray-600 mb-6">
-                  To access certain features of our Service, you must create an account. You agree to:
-                </p>
-                <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
-                  <li>Provide accurate, current, and complete information</li>
-                  <li>Maintain the security of your password and account</li>
-                  <li>Promptly update your account information as needed</li>
-                  <li>Accept responsibility for all activities under your account</li>
-                </ul>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">4. Account Registration</h2>
+                    <p className="text-gray-600 mb-6">
+                      To access certain features of our Service, you must create an account. You agree to:
+                    </p>
+                    <ul className="list-disc list-inside text-gray-600 mb-6 space-y-2">
+                      <li>Provide accurate, current, and complete information</li>
+                      <li>Maintain the security of your password and account</li>
+                      <li>Promptly update your account information as needed</li>
+                      <li>Accept responsibility for all activities under your account</li>
+                    </ul>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">5. Coaching Services</h2>
-                <p className="text-gray-600 mb-6">
-                  Our coaching services are not a substitute for professional medical advice, diagnosis, or treatment. 
-                  Always seek the advice of your physician or other qualified health provider with any questions 
-                  regarding a medical condition.
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">5. Coaching Services</h2>
+                    <p className="text-gray-600 mb-6">
+                      Our coaching services are not a substitute for professional medical advice, diagnosis, or treatment. 
+                      Always seek the advice of your physician or other qualified health provider with any questions 
+                      regarding a medical condition.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">6. Privacy and Confidentiality</h2>
-                <p className="text-gray-600 mb-6">
-                  Your privacy is important to us. Please review our Privacy Policy to understand how we collect, 
-                  use, and protect your information. Coach-client communications are confidential, subject to 
-                  legal requirements and safety exceptions.
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">6. Privacy and Confidentiality</h2>
+                    <p className="text-gray-600 mb-6">
+                      Your privacy is important to us. Please review our Privacy Policy to understand how we collect, 
+                      use, and protect your information. Coach-client communications are confidential, subject to 
+                      legal requirements and safety exceptions.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">7. Payment Terms</h2>
-                <p className="text-gray-600 mb-6">
-                  Subscription fees are billed in advance on a monthly basis. All payments are non-refundable 
-                  except as required by law or as explicitly stated in these Terms.
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">7. Payment Terms</h2>
+                    <p className="text-gray-600 mb-6">
+                      Subscription fees are billed in advance on a monthly basis. All payments are non-refundable 
+                      except as required by law or as explicitly stated in these Terms.
+                    </p>
 
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">8. Cancellation Policy</h2>
-                <p className="text-gray-600 mb-6">
-                  You may cancel your subscription at any time. Cancellation will take effect at the end of your 
-                  current billing period. Sessions must be cancelled at least 24 hours in advance to avoid charges.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">9. Intellectual Property</h2>
-                <p className="text-gray-600 mb-6">
-                  All content on our platform, including text, graphics, logos, and software, is the property of 
-                  ACT Coaching For Life and is protected by intellectual property laws.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">10. Limitation of Liability</h2>
-                <p className="text-gray-600 mb-6">
-                  To the maximum extent permitted by law, ACT Coaching For Life shall not be liable for any 
-                  indirect, incidental, special, consequential, or punitive damages resulting from your use 
-                  of the Service.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">11. Changes to Terms</h2>
-                <p className="text-gray-600 mb-6">
-                  We reserve the right to modify these Terms at any time. We will notify users of material 
-                  changes via email or through the Service. Continued use after changes constitutes acceptance.
-                </p>
-
-                <h2 className="text-2xl font-semibold text-ink-dark mb-4">12. Contact Information</h2>
-                <p className="text-gray-600 mb-6">
-                  For questions about these Terms, please contact us at:
-                  <br />
-                  Email: legal@actcoachingforlife.com
-                  <br />
-                  Phone: 1-800-ACT-HELP
-                </p>
+                    <h2 className="text-2xl font-semibold text-ink-dark mb-4">8. Contact Information</h2>
+                    <p className="text-gray-600 mb-6">
+                      For questions about these Terms, please contact us at:
+                      <br />
+                      Email: legal@actcoachingforlife.com
+                      <br />
+                      Phone: 1-800-ACT-HELP
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="mt-12 text-center">

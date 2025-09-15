@@ -106,6 +106,11 @@ To create a seamless platform that connects individuals with relationship issues
 - Monitor messaging between coaches and clients
 - Generate platform analytics and reports
 
+### **Appointment & Client Note Management**
+
+- Can cancel any appointment on the platform if necessary (e.g., in response to a support request or emergency).
+- Can add and edit notes on client profiles, typically for administrative or support purposes.
+
 ---
 
 ## Current Development Status

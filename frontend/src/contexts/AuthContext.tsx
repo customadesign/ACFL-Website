@@ -8,7 +8,7 @@ import { getApiUrl } from '@/lib/api';
 interface User {
   id: string;
   email: string;
-  role: 'client' | 'coach' | 'admin';
+  role: 'client' | 'coach' | 'admin' | 'staff';
   first_name?: string;
   last_name?: string;
 }
@@ -208,6 +208,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 100);
         } else if (user.role === 'admin') {
           console.log('Redirecting admin to /admin');
+          setTimeout(() => {
+            router.replace('/admin');
+          }, 100);
+        } else if (user.role === 'staff') {
+          console.log('Redirecting staff to /admin');
           setTimeout(() => {
             router.replace('/admin');
           }, 100);
@@ -417,7 +422,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Check if we're in the admin section to redirect to login instead
       const currentPath = window.location.pathname;
       if (currentPath.startsWith('/admin')) {
-        console.log('🔄 Admin logout - redirecting to login page');
+        console.log('🔄 Admin/Staff logout - redirecting to login page');
         router.push('/login');
       } else {
         console.log('🏠 Regular logout - redirecting to home page');

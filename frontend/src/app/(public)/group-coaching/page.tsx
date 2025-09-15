@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -10,8 +11,18 @@ import SpotlightCard from "@/components/SpotlightCard"
 import CountUp from "@/components/CountUp"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 import Footer from "@/components/Footer"
+import { getApiUrl } from "@/lib/api"
 
-const groupTypes = [
+interface ContentData {
+  id: string
+  title: string
+  content: string
+  slug: string
+  meta_description?: string
+}
+
+// Default content - will be overridden by CMS if available
+const defaultGroupTypes = [
   {
     title: "Anxiety & Stress Management",
     description: "Learn ACT techniques to manage anxiety and build resilience in a supportive group environment",
@@ -46,7 +57,7 @@ const groupTypes = [
   }
 ]
 
-const benefits = [
+const defaultBenefits = [
   {
     icon: Users,
     title: "Peer Support",
@@ -69,7 +80,7 @@ const benefits = [
   }
 ]
 
-const upcomingGroups = [
+const defaultUpcomingGroups = [
   {
     title: "Anxiety & Stress Management",
     startDate: "February 12, 2024",
@@ -101,6 +112,100 @@ const upcomingGroups = [
 ]
 
 export default function GroupCoachingPage() {
+  const [groupContent, setGroupContent] = useState<ContentData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchGroupContent()
+  }, [])
+
+  const fetchGroupContent = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=group-coaching`)
+      console.log('Group coaching content response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Group coaching content data:', data)
+        setGroupContent(data)
+      } else {
+        console.log('Failed to fetch group coaching content, status:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching group coaching content:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Parse content from CMS if available
+  const parseContent = () => {
+    if (!groupContent?.content) return null
+
+    try {
+      const parsed = JSON.parse(groupContent.content)
+      console.log('Parsed group coaching content:', parsed)
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  const cmsContent = parseContent()
+
+  // Parse hero content
+  const getHeroContent = () => {
+    if (!cmsContent) return { title: null, description: null }
+    return {
+      title: cmsContent.hero?.title || null,
+      description: cmsContent.hero?.subtitle || null
+    }
+  }
+
+  const heroContent = getHeroContent()
+
+  // Smart title rendering that preserves styling
+  const renderTitle = () => {
+    if (heroContent.title) {
+      // If CMS has custom title, check if it contains "Group" or "Coaching" to apply gradient
+      const title = heroContent.title
+      if (title.toLowerCase().includes('coaching')) {
+        const parts = title.split(/coaching/i)
+        const match = title.match(/coaching/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      } else if (title.toLowerCase().includes('group')) {
+        const parts = title.split(/group/i)
+        const match = title.match(/group/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      }
+      // Return CMS title as-is if no special formatting needed
+      return title
+    }
+    // Fallback to default styled content
+    return <>Group <GradientText className="inline-block">Coaching</GradientText> Programs</>
+  }
+
+  // Get data from CMS or use defaults
+  const groupTypes = cmsContent?.programs?.types || defaultGroupTypes
+  const benefits = cmsContent?.benefits?.items || defaultBenefits
+  const upcomingGroups = cmsContent?.upcoming?.groups || defaultUpcomingGroups
+  const stats = cmsContent?.stats
+
   return (
     <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
@@ -120,11 +225,11 @@ export default function GroupCoachingPage() {
           >
            
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              Group <GradientText className="inline-block">Coaching</GradientText> Programs
+              {renderTitle()}
             </h1>
             <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Experience the power of ACT coaching in a supportive group setting. Connect with others, 
-              share experiences, and grow together on your journey to psychological flexibility.
+              {heroContent.description || groupContent?.meta_description ||
+                "Experience the power of ACT coaching in a supportive group setting. Connect with others, share experiences, and grow together on your journey to psychological flexibility."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg">
@@ -149,9 +254,9 @@ export default function GroupCoachingPage() {
               transition={{ duration: 0.6 }}
             >
               <div className="text-4xl font-bold text-brand-teal mb-2">
-                <CountUp to={200} duration={2} />+
+                <CountUp to={stats?.groupsCompleted || 200} duration={2} />+
               </div>
-              <div className="text-gray-600">Groups Completed</div>
+              <div className="text-gray-600">{stats?.groupsCompletedLabel || "Groups Completed"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -159,9 +264,9 @@ export default function GroupCoachingPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
             >
               <div className="text-4xl font-bold text-brand-orange mb-2">
-                <CountUp to={1800} duration={2.5} separator="," />+
+                <CountUp to={stats?.participants || 1800} duration={2.5} separator="," />+
               </div>
-              <div className="text-gray-600">Participants</div>
+              <div className="text-gray-600">{stats?.participantsLabel || "Participants"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -169,9 +274,9 @@ export default function GroupCoachingPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="text-4xl font-bold text-brand-leaf mb-2">
-                <CountUp to={92} duration={2.2} />%
+                <CountUp to={stats?.completionRate || 92} duration={2.2} />%
               </div>
-              <div className="text-gray-600">Completion Rate</div>
+              <div className="text-gray-600">{stats?.completionRateLabel || "Completion Rate"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -179,9 +284,9 @@ export default function GroupCoachingPage() {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <div className="text-4xl font-bold text-brand-coral mb-2">
-                <CountUp to={4.9} duration={2} />/<CountUp to={5} duration={1.5} />
+                <CountUp to={stats?.averageRating || 4.9} duration={2} />/<CountUp to={5} duration={1.5} />
               </div>
-              <div className="text-gray-600">Average Rating</div>
+              <div className="text-gray-600">{stats?.averageRatingLabel || "Average Rating"}</div>
             </motion.div>
           </div>
         </div>
@@ -197,27 +302,30 @@ export default function GroupCoachingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Why Choose Group Coaching?
+              {cmsContent?.benefits?.title || "Why Choose Group Coaching?"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover the unique advantages of learning and growing with others
+              {cmsContent?.benefits?.subtitle || "Discover the unique advantages of learning and growing with others"}
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <benefit.icon className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
-                <p className="text-gray-600 text-sm">{benefit.description}</p>
-              </motion.div>
-            ))}
+            {benefits.map((benefit, index) => {
+              const IconComponent = benefit.icon
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
+                  <p className="text-gray-600 text-sm">{benefit.description}</p>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -232,10 +340,10 @@ export default function GroupCoachingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Our Group Programs
+              {cmsContent?.programs?.title || "Our Group Programs"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Specialized groups designed for different needs and goals
+              {cmsContent?.programs?.subtitle || "Specialized groups designed for different needs and goals"}
             </p>
           </motion.div>
 
@@ -300,10 +408,10 @@ export default function GroupCoachingPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Upcoming Groups
+              {cmsContent?.upcoming?.title || "Upcoming Groups"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join one of our upcoming group coaching sessions
+              {cmsContent?.upcoming?.subtitle || "Join one of our upcoming group coaching sessions"}
             </p>
           </motion.div>
 
@@ -401,10 +509,10 @@ export default function GroupCoachingPage() {
             transition={{ duration: 0.8 }}
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Ready to Join a Supportive Community?
+              {cmsContent?.cta?.title || "Ready to Join a Supportive Community?"}
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Experience the power of group learning and support. Find your group and start your journey today.
+              {cmsContent?.cta?.subtitle || "Experience the power of group learning and support. Find your group and start your journey today."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg">

@@ -33,6 +33,8 @@ export default function ProtectedRoute({
           router.push('/coaches');
         } else if (user.role === 'admin') {
           router.push('/admin');
+        } else if (user.role === 'staff') {
+          router.push('/admin');
         } else {
           router.push('/');
         }

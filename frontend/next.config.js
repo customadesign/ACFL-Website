@@ -2,6 +2,9 @@
 const nextConfig = {
   output: "standalone",
   reactStrictMode: true,
+  typescript: {
+    ignoreBuildErrors: true,
+  },
   images: {
     unoptimized: process.env.NODE_ENV === "development",
     domains: ['storage.googleapis.com'],

@@ -197,6 +197,8 @@ const coaches = [
 
 export const getCoachById = async (req: Request, res: Response) => {
   const { id } = req.params;
+  console.log('🔍 getCoachById called with ID:', id);
+  console.log('🔍 Full URL path:', req.path);
   
   try {
     // Import supabase at the top of the function

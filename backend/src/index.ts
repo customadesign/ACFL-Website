@@ -12,6 +12,9 @@ import calendarRoutes from './routes/calendarRoutes';
 import coachApplicationRoutes from './routes/coachApplicationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
 import stripeTestRoutes from './routes/stripeTestRoutes';
+import contentRoutes from './routes/contentRoutes';
+import staffRoutes from './routes/staffRoutes';
+import csvImportRoutes from './routes/csvImportRoutes';
 import { supabase } from './lib/supabase';
 
 // Load environment variables
@@ -64,6 +67,8 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/coach-applications', coachApplicationRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/stripe-test', stripeTestRoutes);
+app.use('/api/content', contentRoutes);
+app.use('/api/csv-import', csvImportRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);
@@ -244,7 +249,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`Server running on port ${port} - Authorization updated`);
 });
 
 

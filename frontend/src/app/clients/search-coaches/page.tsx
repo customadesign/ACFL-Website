@@ -290,72 +290,97 @@ function SearchCoachesContent() {
     }
   };
 
-  // Quick search with focus on registration fields
-  const handleQuickSearch = () => {
+  // Quick search with focus on registration fields (uses normal search mode)
+  const handleQuickSearch = async () => {
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const filtered = allCoaches.filter(coach => 
-        // Basic info
-        coach.name.toLowerCase().includes(query) ||
-        coach.bio.toLowerCase().includes(query) ||
+      try {
+        setIsLoading(true);
+        setError(null);
         
-        // Professional Background
-        (coach.educationalBackground && coach.educationalBackground.toLowerCase().includes(query)) ||
-        (coach.coachingExperienceYears && coach.coachingExperienceYears.toLowerCase().includes(query)) ||
-        (coach.professionalCertifications && coach.professionalCertifications.some(cert => 
-          cert.toLowerCase().includes(query)
-        )) ||
+        // Create basic search data with normal mode
+        const searchData = {
+          coachingExpertise: [searchQuery], // Treat search query as expertise search
+          searchMode: 'normal' as const
+        };
         
-        // Specialization
-        (coach.coachingExpertise && coach.coachingExpertise.some(expertise => 
-          expertise.toLowerCase().includes(query)
-        )) ||
-        (coach.ageGroupsComfortable && coach.ageGroupsComfortable.some(ageGroup => 
-          ageGroup.toLowerCase().includes(query)
-        )) ||
-        (coach.actTrainingLevel && coach.actTrainingLevel.toLowerCase().includes(query)) ||
+        console.log('🔍 Using normal search mode for quick search');
         
-        // Approach & Methods
-        (coach.coachingPhilosophy && coach.coachingPhilosophy.toLowerCase().includes(query)) ||
-        (coach.coachingTechniques && coach.coachingTechniques.some(technique => 
-          technique.toLowerCase().includes(query)
-        )) ||
-        (coach.sessionStructure && coach.sessionStructure.toLowerCase().includes(query)) ||
+        // Use the findMatches API with normal mode
+        const result = await findMatches(searchData);
+        const incoming = (result && (result as any).matches) ? (result as any).matches : (result as any) || [];
+        const processed: Coach[] = Array.isArray(incoming) ? incoming : [];
         
-        // Ethics & Boundaries
-        (coach.scopeHandlingApproach && coach.scopeHandlingApproach.toLowerCase().includes(query)) ||
-        (coach.boundaryMaintenanceApproach && coach.boundaryMaintenanceApproach.toLowerCase().includes(query)) ||
-        
-        // Crisis Management
-        (coach.comfortableWithSuicidalThoughts && coach.comfortableWithSuicidalThoughts.toLowerCase().includes(query)) ||
-        (coach.selfHarmProtocol && coach.selfHarmProtocol.toLowerCase().includes(query)) ||
-        
-        // Availability
-        (coach.weeklyHoursAvailable && coach.weeklyHoursAvailable.toLowerCase().includes(query)) ||
-        (coach.preferredSessionLength && coach.preferredSessionLength.toLowerCase().includes(query)) ||
-        (coach.availabilityTimes && coach.availabilityTimes.some(time => 
-          time.toLowerCase().includes(query)
-        )) ||
-        
-        // Technology
-        (coach.videoConferencingComfort && coach.videoConferencingComfort.toLowerCase().includes(query)) ||
-        (coach.internetConnectionQuality && coach.internetConnectionQuality.toLowerCase().includes(query)) ||
-        
-        // Languages
-        (coach.languagesFluent && coach.languagesFluent.some(language => 
-          language.toLowerCase().includes(query)
-        )) ||
-        
-        // Legacy fields for backward compatibility
-        (coach.specialties && coach.specialties.some(specialty => 
-          specialty.toLowerCase().includes(query)
-        )) ||
-        (coach.languages && coach.languages.some(language => 
-          language.toLowerCase().includes(query)
-        ))
-      );
-      setFilteredCoaches(filtered);
-      setHasSearched(true);
+        setFilteredCoaches(processed);
+        setHasSearched(true);
+      } catch (error) {
+        console.error('Quick search error:', error);
+        // Fallback to local filtering
+        const query = searchQuery.toLowerCase();
+        const filtered = allCoaches.filter(coach => 
+          // Basic info
+          coach.name.toLowerCase().includes(query) ||
+          coach.bio.toLowerCase().includes(query) ||
+          
+          // Professional Background
+          (coach.educationalBackground && coach.educationalBackground.toLowerCase().includes(query)) ||
+          (coach.coachingExperienceYears && coach.coachingExperienceYears.toLowerCase().includes(query)) ||
+          (coach.professionalCertifications && coach.professionalCertifications.some(cert => 
+            cert.toLowerCase().includes(query)
+          )) ||
+          
+          // Specialization
+          (coach.coachingExpertise && coach.coachingExpertise.some(expertise => 
+            expertise.toLowerCase().includes(query)
+          )) ||
+          (coach.ageGroupsComfortable && coach.ageGroupsComfortable.some(ageGroup => 
+            ageGroup.toLowerCase().includes(query)
+          )) ||
+          (coach.actTrainingLevel && coach.actTrainingLevel.toLowerCase().includes(query)) ||
+          
+          // Approach & Methods
+          (coach.coachingPhilosophy && coach.coachingPhilosophy.toLowerCase().includes(query)) ||
+          (coach.coachingTechniques && coach.coachingTechniques.some(technique => 
+            technique.toLowerCase().includes(query)
+          )) ||
+          (coach.sessionStructure && coach.sessionStructure.toLowerCase().includes(query)) ||
+          
+          // Ethics & Boundaries
+          (coach.scopeHandlingApproach && coach.scopeHandlingApproach.toLowerCase().includes(query)) ||
+          (coach.boundaryMaintenanceApproach && coach.boundaryMaintenanceApproach.toLowerCase().includes(query)) ||
+          
+          // Crisis Management
+          (coach.comfortableWithSuicidalThoughts && coach.comfortableWithSuicidalThoughts.toLowerCase().includes(query)) ||
+          (coach.selfHarmProtocol && coach.selfHarmProtocol.toLowerCase().includes(query)) ||
+          
+          // Availability
+          (coach.weeklyHoursAvailable && coach.weeklyHoursAvailable.toLowerCase().includes(query)) ||
+          (coach.preferredSessionLength && coach.preferredSessionLength.toLowerCase().includes(query)) ||
+          (coach.availabilityTimes && coach.availabilityTimes.some(time => 
+            time.toLowerCase().includes(query)
+          )) ||
+          
+          // Technology
+          (coach.videoConferencingComfort && coach.videoConferencingComfort.toLowerCase().includes(query)) ||
+          (coach.internetConnectionQuality && coach.internetConnectionQuality.toLowerCase().includes(query)) ||
+          
+          // Languages
+          (coach.languagesFluent && coach.languagesFluent.some(language => 
+            language.toLowerCase().includes(query)
+          )) ||
+          
+          // Legacy fields for backward compatibility
+          (coach.specialties && coach.specialties.some(specialty => 
+            specialty.toLowerCase().includes(query)
+          )) ||
+          (coach.languages && coach.languages.some(language => 
+            language.toLowerCase().includes(query)
+          ))
+        );
+        setFilteredCoaches(filtered);
+        setHasSearched(true);
+      } finally {
+        setIsLoading(false);
+      }
     } else {
       setFilteredCoaches(allCoaches);
       setHasSearched(false);
@@ -367,19 +392,49 @@ function SearchCoachesContent() {
     setCurrentPage(newPage);
   };
 
+  // Determine if advanced search is being used
+  const isAdvancedSearch = (data: SearchFormData): boolean => {
+    const advancedFields = [
+      'educationalBackground',
+      'coachingTechniques',
+      'sessionStructure',
+      'ageGroupsComfortable',
+      'actTrainingLevel',
+      'comfortableWithSuicidalThoughts',
+      'weeklyHoursAvailable',
+      'preferredSessionLength',
+      'boundaryMaintenanceApproach',
+      'videoConferencingComfort'
+    ];
+
+    return advancedFields.some(field => {
+      const value = data[field as keyof SearchFormData];
+      if (Array.isArray(value)) {
+        return value.length > 0;
+      }
+      return value && value !== 'any' && value !== '';
+    });
+  };
+
   // Handle form submission
   const handleSubmit = async (data: SearchFormData) => {
     try {
       setIsLoading(true);
       setError(null);
       
-      // Use the findMatches API for advanced search
-      const result = await findMatches(data);
+      // Determine search mode based on form data
+      const searchMode = isAdvancedSearch(data) ? 'advanced' : 'normal';
+      const searchData = { ...data, searchMode };
+      
+      console.log(`🔍 Using ${searchMode} search mode`);
+      
+      // Use the findMatches API with search mode
+      const result = await findMatches(searchData);
       const incoming = (result && (result as any).matches) ? (result as any).matches : (result as any) || [];
-      let processed = incoming;
+      let processed: Coach[] = Array.isArray(incoming) ? incoming : [];
       if (data.coachingExperienceYears && data.coachingExperienceYears !== 'any') {
         // Filter based on coaching experience years directly matching the selection
-        processed = incoming.filter((coach: any) => {
+        processed = processed.filter((coach: Coach) => {
           return coach.coachingExperienceYears === data.coachingExperienceYears;
         });
       }
@@ -788,68 +843,189 @@ function SearchCoachesContent() {
                     <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Find coaches that match your preferences</p>
                   </div>
                 </div>
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                  className="flex items-center justify-center space-x-2 bg-white dark:text-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 touch-manipulation w-full sm:w-auto"
-                >
-                  {showAdvancedFilters ? <ChevronUp className="w-4 h-4 dark:text-white" /> : <ChevronDown className="w-4 h-4 dark:text-white" />}
-                  <span className="text-gray-900 dark:text-white">{showAdvancedFilters ? "Hide" : "Show"} Advanced</span>
-                </Button>
+                <div className="text-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                    className="flex items-center space-x-3 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-xl font-semibold touch-manipulation"
+                  >
+                    {showAdvancedFilters ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+                    <span>{showAdvancedFilters ? "Hide" : "Show"} Advanced Filters</span>
+                    <span className="text-sm text-gray-500 font-normal">(Optional)</span>
+                  </Button>
+                </div>
               </div>
 
-              {/* Quick Search Bar */}
-              <div className="mb-4 sm:mb-6">
+              {/* Enhanced Search Bar */}
+              <div className="mb-8 sm:mb-10">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
+                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 w-6 h-6" />
                   <Input
                     type="text"
-                    placeholder="Search by name, specialty, or description..."
+                    placeholder="Search by coach name, specialization, location, or any criteria..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 sm:pl-10 pr-10 sm:pr-4 py-2 sm:py-3 text-sm sm:text-lg border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-500 focus:ring-blue-500"
+                    className="pl-14 pr-16 py-6 text-xl font-medium border-3 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-600 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 rounded-2xl shadow-lg hover:shadow-xl transition-all"
                   />
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 touch-manipulation"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors touch-manipulation"
                     >
-                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <X className="w-6 h-6" />
                     </button>
                   )}
                 </div>
+                {/* Search action button */}
+                <div className="flex justify-center mt-6">
+                  <Button
+                    type="button"
+                    onClick={handleQuickSearch}
+                    size="lg"
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 touch-manipulation"
+                  >
+                    <Search className="w-5 h-5 mr-2" />
+                    Search Now
+                  </Button>
+                </div>
               </div>
 
-              {/* Quick Filter Chips removed per requirements */}
+              {/* Essential Filters Section */}
+              <div className="mb-8">
+                <div className="mb-6">
+                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center">
+                    <SlidersHorizontal className="w-5 h-5 mr-2 text-green-600" />
+                    Essential Search Filters
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Focus your search on the most important criteria</p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                  {/* Specialization */}
+                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-xl border border-purple-200 dark:border-purple-800">
+                    <Form {...form}>
+                      <FormField
+                        control={form.control}
+                        name="coachingExpertise"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2 font-semibold text-base mb-4">
+                              <Award className="w-5 h-5 text-purple-600" />
+                              <span>Specialization</span>
+                            </FormLabel>
+                            <FormControl>
+                              <div className="space-y-2 max-h-40 overflow-y-auto">
+                                {['Life transitions', 'Career development', 'Relationship coaching', 'Stress management', 'Anxiety & worry', 'Depression & mood', 'Self-esteem & confidence', 'Work-life balance'].map((expertise) => (
+                                  <div key={expertise} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={`main-${expertise}`}
+                                      checked={field.value?.includes(expertise)}
+                                      onCheckedChange={(checked) => {
+                                        const current = field.value || [];
+                                        if (checked) {
+                                          field.onChange([...current, expertise]);
+                                        } else {
+                                          field.onChange(current.filter((item) => item !== expertise));
+                                        }
+                                      }}
+                                      className="w-4 h-4"
+                                    />
+                                    <label htmlFor={`main-${expertise}`} className="text-sm font-medium text-gray-800 dark:text-gray-200 cursor-pointer leading-tight">
+                                      {expertise}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                          </FormItem>
+                        )}
+                      />
+                    </Form>
+                  </div>
 
-              {/* Price Range Slider */}
-              <div className="mb-4 sm:mb-6">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 sm:mb-3">
-                  Price Range: ${priceRange[0]} - ${priceRange[1]}
-                </label>
-                <div className="flex items-center space-x-3 sm:space-x-4">
-                  <Input
-                    type="number"
-                    placeholder="Min"
-                    value={priceRange[0]}
-                    onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                    className="w-20 sm:w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                  />
-                  <span className="text-gray-500 dark:text-gray-400 text-sm">to</span>
-                  <Input
-                    type="number"
-                    placeholder="Max"
-                    value={priceRange[1]}
-                    onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
-                    className="w-20 sm:w-24 bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                  />
+                  {/* Experience Level */}
+                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5 rounded-xl border border-blue-200 dark:border-blue-800">
+                    <Form {...form}>
+                      <FormField
+                        control={form.control}
+                        name="coachingExperienceYears"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="flex items-center space-x-2 font-semibold text-base mb-4">
+                              <Calendar className="w-5 h-5 text-blue-600" />
+                              <span>Experience Level</span>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                <SelectTrigger className="bg-white dark:bg-gray-700 border-2 border-blue-200 dark:border-blue-700 h-12">
+                                  <SelectValue placeholder="Any experience" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <SelectItem value="any">Any experience</SelectItem>
+                                <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
+                                <SelectItem value="1-2 years">1-2 years</SelectItem>
+                                <SelectItem value="3-5 years">3-5 years</SelectItem>
+                                <SelectItem value="6-10 years">6-10 years</SelectItem>
+                                <SelectItem value="More than 10 years">More than 10 years</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </FormItem>
+                        )}
+                      />
+                    </Form>
+                  </div>
+
+                  {/* Price Range */}
+                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-5 rounded-xl border border-green-200 dark:border-green-800">
+                    <label className="flex items-center space-x-2 font-semibold text-base mb-4">
+                      <DollarSign className="w-5 h-5 text-green-600" />
+                      <span>Price Range</span>
+                    </label>
+                    <div className="space-y-4">
+                      <div className="text-center p-3 bg-white dark:bg-gray-700 rounded-lg border">
+                        <div className="text-lg font-semibold text-green-600 dark:text-green-400">
+                          ${priceRange[0]} - ${priceRange[1]}
+                        </div>
+                        <div className="text-xs text-gray-600 dark:text-gray-400">per session</div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          placeholder="Min"
+                          value={priceRange[0]}
+                          onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                          className="bg-white dark:bg-gray-700 text-center border border-green-200 dark:border-green-700 h-10 text-sm"
+                        />
+                        <Input
+                          type="number"
+                          placeholder="Max"
+                          value={priceRange[1]}
+                          onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
+                          className="bg-white dark:bg-gray-700 text-center border border-green-200 dark:border-green-700 h-10 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
               <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
                   {/* Coach Registration Based Filters */}
-                  <div className="space-y-6">
+                  {/* Main Search Button */}
+                  <div className="text-center py-6 border-t border-gray-200 dark:border-gray-700">
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-12 py-4 text-xl font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 touch-manipulation"
+                    >
+                      <Search className="w-6 h-6 mr-3" />
+                      Find Perfect Matches
+                    </Button>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
+                      Search with your selected criteria above
+                    </p>
                   </div>
 
                   {/* Advanced Filters */}
@@ -1311,40 +1487,22 @@ function SearchCoachesContent() {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700 gap-4 sm:gap-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={handleQuickSearch}
-                        className="flex items-center justify-center space-x-2 w-full sm:w-auto touch-manipulation"
-                      >
-                        <Search className="w-4 h-4" />
-                        <span>Quick Search</span>
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          form.reset();
-                          setSearchQuery('');
-                          setPriceRange([0, 500]);
-                          setSelectedFilters(new Set());
-                          setFilteredCoaches(allCoaches);
-                        }}
-                        className="flex items-center justify-center space-x-2 w-full sm:w-auto touch-manipulation"
-                      >
-                        <RefreshCw className="w-4 h-4" />
-                        <span>Reset All</span>
-                      </Button>
-                    </div>
+                  {/* Advanced Filters Reset */}
+                  <div className="text-center pt-6 border-t border-gray-200 dark:border-gray-700">
                     <Button
-                      type="submit"
-                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-6 sm:px-8 py-3 w-full sm:w-auto touch-manipulation"
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        form.reset();
+                        setSearchQuery('');
+                        setPriceRange([0, 500]);
+                        setSelectedFilters(new Set());
+                        setFilteredCoaches(allCoaches);
+                      }}
+                      className="flex items-center space-x-2 px-6 py-2 border-2 rounded-lg touch-manipulation"
                     >
-                      <Search className="w-4 h-4 mr-2" />
-                      Find Matches
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Reset All Filters</span>
                     </Button>
                   </div>
                 </form>

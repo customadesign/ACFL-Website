@@ -1,8 +1,15 @@
 import { Router, Request, Response } from 'express';
 import { authenticate, authorize } from '../middleware/auth';
+import { requirePermission } from '../middleware/adminAuth';
 import { supabase } from '../lib/supabase';
 import { JWTPayload } from '../types/auth';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
+import smtpEmailService from '../services/smtpEmailService';
+import { generateSecurePassword } from '../utils/passwordGenerator';
+import contentRoutes from './contentRoutes';
+import financialRoutes from './financialRoutes';
+import staffRoutes from './staffRoutes';
+import { getStaffPermissions, updateStaffPermissions } from '../controllers/staffController';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -21,7 +28,7 @@ router.use((req: AuthRequest, res, next) => {
   console.log('After authentication - user:', req.user);
   next();
 });
-router.use(authorize('admin'));
+router.use(authorize('admin', 'staff'));
 
 // Notification counts endpoint
 router.get('/notification-counts', async (req, res) => {
@@ -307,7 +314,7 @@ router.get('/users', async (req, res) => {
       const { data: coaches, error: coachesError } = await supabase
         .from('coaches')
         .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo');
-      
+
       if (coachesError) {
         console.error('Coaches fetch error:', coachesError);
       } else if (coaches && coaches.length > 0) {
@@ -321,6 +328,29 @@ router.get('/users', async (req, res) => {
       }
     } catch (coachError) {
       console.error('Coach query error:', coachError);
+    }
+
+    // Get staff with error handling
+    try {
+      const { data: staff, error: staffError } = await supabase
+        .from('staff')
+        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, department, role_level');
+
+      if (staffError) {
+        console.error('Staff fetch error:', staffError);
+      } else if (staff && staff.length > 0) {
+        console.log(`Found ${staff.length} staff members`);
+        users.push(...staff.map(staffMember => ({
+          ...staffMember,
+          name: `${staffMember.first_name || ''} ${staffMember.last_name || ''}`.trim() || 'Unnamed Staff',
+          role: 'staff',
+          status: staffMember.status || 'active',
+          department: staffMember.department,
+          role_level: staffMember.role_level
+        })));
+      }
+    } catch (staffError) {
+      console.error('Staff query error:', staffError);
     }
 
     console.log(`Total users found: ${users.length}`);
@@ -345,8 +375,8 @@ router.get('/users', async (req, res) => {
   }
 });
 
-// Create new user (client, coach, or staff)
-router.post('/users', async (req, res) => {
+// Create new user (client, coach, or staff) - Admin only
+router.post('/users', authorize('admin'), async (req, res) => {
   try {
     const { userType, userData } = req.body;
     
@@ -361,13 +391,51 @@ router.post('/users', async (req, res) => {
       return res.status(400).json({ error: 'First name, last name, and email are required' });
     }
 
-    // Hash password if provided
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userData.email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    // Check if email already exists across ALL user tables (clients, coaches, staff)
+    console.log('Checking for existing email:', userData.email);
+
+    const [clientCheck, coachCheck, staffCheck] = await Promise.all([
+      supabase.from('clients').select('id, email').eq('email', userData.email).single(),
+      supabase.from('coaches').select('id, email').eq('email', userData.email).single(),
+      supabase.from('staff').select('id, email').eq('email', userData.email).single()
+    ]);
+
+    let existingUserType = null;
+    if (clientCheck.data) existingUserType = 'client';
+    else if (coachCheck.data) existingUserType = 'coach';
+    else if (staffCheck.data) existingUserType = 'staff';
+
+    if (existingUserType) {
+      console.log(`Email ${userData.email} already exists as ${existingUserType}`);
+      return res.status(409).json({
+        error: 'Email already exists',
+        message: `A ${existingUserType} with email "${userData.email}" already exists in the system. Please use a different email address.`,
+        existingUserType: existingUserType
+      });
+    }
+    
+    console.log('Email validation passed - email is unique across all user types');
+
+    // Generate password if not provided
+    let temporaryPassword = userData.password;
+    if (!temporaryPassword) {
+      temporaryPassword = generateSecurePassword();
+      console.log('Generated temporary password for user:', userData.email);
+    }
+
+    // Hash password
     let hashedPassword = null;
-    if (userData.password) {
+    if (temporaryPassword) {
       console.log('Hashing temporary password...');
       const bcrypt = require('bcryptjs');
       const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
-      hashedPassword = await bcrypt.hash(userData.password, saltRounds);
+      hashedPassword = await bcrypt.hash(temporaryPassword, saltRounds);
       console.log('Password hashed successfully');
     }
 
@@ -458,18 +526,18 @@ router.post('/users', async (req, res) => {
           last_name: userData.lastName,
           email: userData.email,
           phone: userData.phone || null,
-          role: 'staff',
           department: userData.department || null,
-          permissions: userData.permissions || [],
+          role_level: 'staff',
           status: userData.status || 'active',
           password_hash: hashedPassword,
+          is_verified: true,
           created_at: new Date().toISOString()
         };
-        
+
         console.log('Creating staff with data:', staffData);
-        
+
         const { data: newStaff, error: staffError } = await supabase
-          .from('users')
+          .from('staff')
           .insert([staffData])
           .select()
           .single();
@@ -492,10 +560,34 @@ router.post('/users', async (req, res) => {
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
+    // Send credentials via email
+    if (temporaryPassword) {
+      try {
+        console.log('Sending credentials email to:', userData.email);
+        const emailResult = await smtpEmailService.sendUserCredentials({
+          email: userData.email,
+          password: temporaryPassword,
+          firstName: userData.firstName,
+          lastName: userData.lastName,
+          role: userType
+        });
+        
+        if (emailResult.success) {
+          console.log('Credentials email sent successfully');
+        } else {
+          console.error('Failed to send credentials email:', emailResult.error);
+        }
+      } catch (emailError) {
+        console.error('Error sending credentials email:', emailError);
+        // Don't fail the user creation if email fails
+      }
+    }
+
     res.status(201).json({
       success: true,
-      message: `${userType} created successfully`,
-      user: result
+      message: `${userType} created successfully${temporaryPassword ? ' and credentials sent via email' : ''}`,
+      user: result,
+      emailSent: temporaryPassword ? true : false
     });
   } catch (error) {
     console.error('User creation error:', error);
@@ -540,14 +632,13 @@ router.get('/users/:id', async (req, res) => {
           user = { ...coach, role: 'coach' };
           userType = 'coach';
         } else {
-          // Try staff in users table
+          // Try staff in staff table
           const { data: staff } = await supabase
-            .from('users')
+            .from('staff')
             .select('*')
             .eq('id', id)
-            .eq('role', 'staff')
             .single();
-          
+
           if (staff) {
             user = { ...staff, role: 'staff' };
             userType = 'staff';
@@ -569,8 +660,8 @@ router.get('/users/:id', async (req, res) => {
           query = supabase.from(tableName).select('*').eq('id', id);
           break;
         case 'staff':
-          tableName = 'users';
-          query = supabase.from(tableName).select('*').eq('id', id).eq('role', 'staff');
+          tableName = 'staff';
+          query = supabase.from(tableName).select('*').eq('id', id);
           break;
         default:
           return res.status(400).json({ error: 'Invalid user type' });
@@ -592,8 +683,8 @@ router.get('/users/:id', async (req, res) => {
   }
 });
 
-// Update user
-router.put('/users/:id', async (req, res) => {
+// Update user - Admin only
+router.put('/users/:id', authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { userType, userData } = req.body;
@@ -668,13 +759,12 @@ router.put('/users/:id', async (req, res) => {
 
       case 'staff':
         const { data: updatedStaff, error: staffError } = await supabase
-          .from('users')
+          .from('staff')
           .update(updateData)
           .eq('id', id)
-          .eq('role', 'staff')
           .select()
           .single();
-        
+
         if (staffError) throw staffError;
         result = { ...updatedStaff, role: 'staff' };
         break;
@@ -694,8 +784,8 @@ router.put('/users/:id', async (req, res) => {
   }
 });
 
-// Delete user
-router.delete('/users/:id', async (req, res) => {
+// Delete user - Admin only
+router.delete('/users/:id', authorize('admin'), async (req, res) => {
   try {
     const { id } = req.params;
     const { userType } = req.query;
@@ -717,8 +807,8 @@ router.delete('/users/:id', async (req, res) => {
         query = supabase.from(tableName).select('*').eq('id', id);
         break;
       case 'staff':
-        tableName = 'users';
-        query = supabase.from(tableName).select('*').eq('id', id).eq('role', 'staff');
+        tableName = 'staff';
+        query = supabase.from(tableName).select('*').eq('id', id);
         break;
       default:
         return res.status(400).json({ error: 'Invalid user type' });
@@ -741,11 +831,7 @@ router.delete('/users/:id', async (req, res) => {
 
     // Delete the user
     let deleteQuery;
-    if (userType === 'staff') {
-      deleteQuery = supabase.from(tableName).delete().eq('id', id).eq('role', 'staff');
-    } else {
-      deleteQuery = supabase.from(tableName).delete().eq('id', id);
-    }
+    deleteQuery = supabase.from(tableName).delete().eq('id', id);
     
     const { error: deleteError } = await deleteQuery;
     if (deleteError) throw deleteError;
@@ -761,8 +847,8 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
-// User impersonation endpoint
-router.post('/users/:id/impersonate', async (req, res) => {
+// User impersonation endpoint - Admin or staff with permission
+router.post('/users/:id/impersonate', requirePermission('users.impersonate'), async (req, res) => {
   try {
     const { id } = req.params;
     const { userType } = req.body;
@@ -798,12 +884,11 @@ router.post('/users/:id/impersonate', async (req, res) => {
         userData = coach;
         break;
       case 'staff':
-        tableName = 'users';
+        tableName = 'staff';
         const { data: staff, error: staffError } = await supabase
-          .from('users')
+          .from('staff')
           .select('*')
           .eq('id', id)
-          .eq('role', 'staff')
           .single();
         if (staffError) throw staffError;
         userData = staff;
@@ -855,8 +940,138 @@ router.post('/users/:id/impersonate', async (req, res) => {
   }
 });
 
-// User status actions (activate, suspend, etc.)
-router.post('/users/:id/:action', async (req, res) => {
+// Reset user password (admin only) - must come before general action route
+router.post('/users/:id/reset-password', authorize('admin'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { userType } = req.body;
+
+    if (!userType) {
+      return res.status(400).json({ error: 'User type is required' });
+    }
+
+    // Generate new temporary password
+    const newPassword = generateSecurePassword();
+    console.log('Generated new password for user:', id);
+
+    // Hash the new password
+    const bcrypt = require('bcryptjs');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+    // Get current user data first
+    let userData = null;
+    let tableName = '';
+    
+    switch (userType) {
+      case 'client':
+        tableName = 'clients';
+        const { data: client } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('id', id)
+          .single();
+        userData = client;
+        break;
+      case 'coach':
+        tableName = 'coaches';
+        const { data: coach } = await supabase
+          .from('coaches')
+          .select('*')
+          .eq('id', id)
+          .single();
+        userData = coach;
+        break;
+      case 'staff':
+        tableName = 'staff';
+        const { data: staff } = await supabase
+          .from('staff')
+          .select('*')
+          .eq('id', id)
+          .single();
+        userData = staff;
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid user type' });
+    }
+
+    if (!userData) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Update password in the database
+    let updateQuery;
+    const updateData = {
+      password_hash: hashedPassword,
+      updated_at: new Date().toISOString()
+    };
+
+    switch (userType) {
+      case 'client':
+        updateQuery = supabase.from('clients').update(updateData).eq('id', id);
+        break;
+      case 'coach':
+        updateQuery = supabase.from('coaches').update(updateData).eq('id', id);
+        break;
+      case 'staff':
+        updateQuery = supabase.from('staff').update(updateData).eq('id', id);
+        break;
+    }
+
+    const { error: updateError } = await updateQuery;
+    if (updateError) {
+      console.error('Password update error:', updateError);
+      throw updateError;
+    }
+
+    // Send new credentials via email
+    try {
+      console.log('Sending password reset email to:', userData.email);
+      const emailResult = await smtpEmailService.sendUserCredentials({
+        email: userData.email,
+        password: newPassword,
+        firstName: userData.first_name,
+        lastName: userData.last_name,
+        role: userType
+      });
+      
+      if (emailResult.success) {
+        console.log('Password reset email sent successfully');
+        res.json({
+          success: true,
+          message: 'Password reset successfully and new credentials sent via email',
+          emailSent: true
+        });
+      } else {
+        console.error('Failed to send password reset email:', emailResult.error);
+        res.json({
+          success: true,
+          message: 'Password reset successfully but failed to send email',
+          emailSent: false,
+          emailError: emailResult.error
+        });
+      }
+    } catch (emailError) {
+      console.error('Error sending password reset email:', emailError);
+      res.json({
+        success: true,
+        message: 'Password reset successfully but failed to send email',
+        emailSent: false,
+        emailError: emailError instanceof Error ? emailError.message : 'Unknown email error'
+      });
+    }
+
+  } catch (error) {
+    console.error('Password reset error:', error);
+    res.status(500).json({ 
+      error: 'Failed to reset password',
+      details: error instanceof Error ? error.message : error
+    });
+  }
+});
+
+// User status actions (activate, suspend, etc.) - Admin only
+router.post('/users/:id/:action', authorize('admin'), async (req, res) => {
   try {
     const { id, action } = req.params;
     const { userType } = req.body;
@@ -908,10 +1123,10 @@ router.post('/users/:id/:action', async (req, res) => {
         query = supabase.from('coaches').update(updateData).eq('id', id).select().single();
         break;
       case 'staff':
-        query = supabase.from('users').update({
+        query = supabase.from('staff').update({
           status: statusValue,
           updated_at: new Date().toISOString()
-        }).eq('id', id).eq('role', 'staff').select().single();
+        }).eq('id', id).select().single();
         break;
       default:
         return res.status(400).json({ error: 'Invalid user type' });
@@ -930,6 +1145,7 @@ router.post('/users/:id/:action', async (req, res) => {
     res.status(500).json({ error: 'Failed to perform user action' });
   }
 });
+
 
 // Coach management endpoints
 router.get('/coaches', async (req, res) => {
@@ -1048,9 +1264,8 @@ router.get('/staff', async (req, res) => {
     const { status, department } = req.query;
 
     let query = supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'staff');
+      .from('staff')
+      .select('*');
 
     if (status && status !== 'all') {
       query = query.eq('status', status);
@@ -1160,6 +1375,8 @@ router.get('/appointments', async (req, res) => {
         status,
         session_type,
         notes,
+        admin_notes,
+        cancellation_reason,
         created_at,
         clients!sessions_client_id_fkey (
           id,
@@ -1252,6 +1469,8 @@ router.get('/appointments', async (req, res) => {
           status: session.status || 'scheduled',
           type: session.session_type || 'video',
           notes: session.notes || '',
+          adminNotes: session.admin_notes || '',
+          cancellationReason: session.cancellation_reason || '',
           created_at: session.created_at
         });
       }
@@ -1279,6 +1498,8 @@ router.get('/appointments', async (req, res) => {
         status: session.status || 'scheduled',
         type: session.session_type || 'video',
         notes: session.notes || '',
+        adminNotes: session.admin_notes || '',
+        cancellationReason: session.cancellation_reason || '',
         created_at: session.created_at
       };
     }) || [];
@@ -1337,8 +1558,11 @@ router.put('/appointments/:appointmentId/status', async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    if (reason) {
+    // Set cancellation reason if status is cancelled and reason is provided
+    if (status === 'cancelled' && reason) {
       updateData.cancellation_reason = reason;
+    } else if (status === 'cancelled') {
+      updateData.cancellation_reason = req.body.cancellationReason || '';
     }
 
     const { data: updatedAppointment, error: updateError } = await supabase
@@ -1389,6 +1613,60 @@ router.put('/appointments/:appointmentId/status', async (req, res) => {
   } catch (error) {
     console.error('Update appointment status error:', error);
     res.status(500).json({ error: 'Failed to update appointment status' });
+  }
+});
+
+// Admin notes endpoint for appointments
+router.put('/appointments/:appointmentId/notes', async (req, res) => {
+  try {
+    console.log('Admin appointment notes update called');
+    console.log('User:', (req as AuthRequest).user);
+    console.log('Appointment ID:', req.params.appointmentId);
+    console.log('Admin notes:', req.body.adminNotes);
+    
+    const { appointmentId } = req.params;
+    const { adminNotes } = req.body;
+
+    if (!appointmentId) {
+      return res.status(400).json({ error: 'Appointment ID is required' });
+    }
+
+    // Get current appointment to verify it exists
+    const { data: currentAppointment, error: fetchError } = await supabase
+      .from('sessions')
+      .select('id, admin_notes')
+      .eq('id', appointmentId)
+      .single();
+
+    if (fetchError || !currentAppointment) {
+      return res.status(404).json({ error: 'Appointment not found' });
+    }
+
+    // Update admin notes
+    const { data: updatedAppointment, error: updateError } = await supabase
+      .from('sessions')
+      .update({ 
+        admin_notes: adminNotes || '',
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', appointmentId)
+      .select()
+      .single();
+
+    if (updateError) {
+      console.error('Update admin notes error:', updateError);
+      throw updateError;
+    }
+
+    console.log('Admin notes updated successfully');
+    res.json({
+      success: true,
+      message: 'Admin notes updated successfully',
+      adminNotes: updatedAppointment.admin_notes
+    });
+  } catch (error) {
+    console.error('Update admin notes error:', error);
+    res.status(500).json({ error: 'Failed to update admin notes' });
   }
 });
 
@@ -1823,6 +2101,57 @@ router.get('/test-db', async (req, res) => {
   } catch (error) {
     console.error('Database test error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Test SMTP email configuration
+router.post('/test-email', async (req: AuthRequest, res: Response) => {
+  try {
+    const { testEmail } = req.body;
+    const adminId = req.user?.id || req.user?.userId;
+    
+    if (!adminId) {
+      return res.status(401).json({ error: 'Admin authentication required' });
+    }
+    
+    if (!testEmail) {
+      return res.status(400).json({ error: 'Test email address is required' });
+    }
+    
+    console.log('Testing SMTP email to:', testEmail);
+    
+    // Send test credentials email
+    const testCredentials = {
+      email: testEmail,
+      password: 'TestPassword123!',
+      firstName: 'Test',
+      lastName: 'User',
+      role: 'client'
+    };
+    
+    const result = await smtpEmailService.sendUserCredentials(testCredentials);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Test email sent successfully',
+        details: result
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to send test email',
+        error: result.error,
+        details: result.details
+      });
+    }
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to send test email',
+      details: error instanceof Error ? error.message : error
+    });
   }
 });
 
@@ -2363,5 +2692,19 @@ router.put('/profile', async (req: AuthRequest, res: Response) => {
     res.status(500).json({ error: 'Failed to update admin profile' });
   }
 });
+
+// Mount content management routes
+router.use('/content', contentRoutes);
+
+// Mount financial oversight routes
+router.use('/financial', financialRoutes);
+
+// Mount staff management routes
+router.use('/staff', staffRoutes);
+
+// Direct staff permissions routes (to avoid conflict with staff management routes)
+router.get('/staff-permissions', authorize('admin', 'staff'), getStaffPermissions);
+router.put('/staff-permissions', authorize('admin'), updateStaffPermissions);
+console.log('Staff permissions routes registered');
 
 export default router;

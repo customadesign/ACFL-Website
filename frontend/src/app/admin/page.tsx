@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
+import { PermissionGate } from '@/components/PermissionGate';
 import { 
   Users, 
   UserCheck, 
@@ -622,10 +624,11 @@ export default function AdminDashboard() {
           {expandedSections.actions && (
             <div className="border-t border-gray-100 dark:border-gray-700 p-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <button 
-                  onClick={() => window.location.href = '/admin/coach-applications'}
-                  className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group"
-                >
+                <PermissionGate permission={PERMISSIONS.USERS_VIEW}>
+                  <button
+                    onClick={() => window.location.href = '/admin/coach-applications'}
+                    className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/10 transition-all group"
+                  >
                   <div className="flex-shrink-0 p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-200 transition-colors mr-3">
                     <UserCheck className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                   </div>
@@ -637,12 +640,14 @@ export default function AdminDashboard() {
                       {stats.pendingApprovals} pending
                     </p>
                   </div>
-                </button>
-                
-                <button 
-                  onClick={() => window.location.href = '/admin/users'}
-                  className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group"
-                >
+                  </button>
+                </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.USERS_VIEW}>
+                  <button
+                    onClick={() => window.location.href = '/admin/users'}
+                    className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-green-300 hover:bg-green-50 dark:hover:bg-green-900/10 transition-all group"
+                  >
                   <div className="flex-shrink-0 p-2 rounded-lg bg-green-100 dark:bg-green-900/30 group-hover:bg-green-200 transition-colors mr-3">
                     <Users className="h-4 w-4 text-green-600 dark:text-green-400" />
                   </div>
@@ -654,10 +659,12 @@ export default function AdminDashboard() {
                       View all users
                     </p>
                   </div>
-                </button>
-                
-                <button 
-                  onClick={() => window.location.href = '/admin/appointments'}
+                  </button>
+                </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.APPOINTMENTS_VIEW}>
+                  <button
+                    onClick={() => window.location.href = '/admin/appointments'}
                   className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/10 transition-all group"
                 >
                   <div className="flex-shrink-0 p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-200 transition-colors mr-3">
@@ -671,10 +678,12 @@ export default function AdminDashboard() {
                       View schedule
                     </p>
                   </div>
-                </button>
-                
-                <button 
-                  onClick={() => window.location.href = '/admin/analytics'}
+                  </button>
+                </PermissionGate>
+
+                <PermissionGate permission={PERMISSIONS.ANALYTICS_VIEW}>
+                  <button
+                    onClick={() => window.location.href = '/admin/analytics'}
                   className="flex items-center p-3 rounded-lg border border-gray-200 hover:border-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/10 transition-all group"
                 >
                   <div className="flex-shrink-0 p-2 rounded-lg bg-orange-100 dark:bg-orange-900/30 group-hover:bg-orange-200 transition-colors mr-3">
@@ -688,7 +697,8 @@ export default function AdminDashboard() {
                       View metrics
                     </p>
                   </div>
-                </button>
+                  </button>
+                </PermissionGate>
               </div>
             </div>
           )}

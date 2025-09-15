@@ -11,7 +11,7 @@ import { useMeeting } from '@/contexts/MeetingContext';
 import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp } from 'lucide-react';
 
 export default function CoachLayout({
   children,
@@ -94,19 +94,20 @@ export default function CoachLayout({
   const navItems = [
     { name: 'Dashboard', href: '/coaches', icon: Home },
     { name: 'Calendar', href: '/coaches/availability', icon: Calendar },
-    { 
-      name: 'Appointments', 
+    {
+      name: 'Appointments',
       href: '/coaches/appointments',
       notificationCount: appointmentNotificationCount,
       icon: Calendar
     },
-    { 
-      name: 'Messages', 
+    {
+      name: 'Messages',
       href: '/coaches/messages',
       notificationCount: unreadMessageCount,
       icon: MessageSquare
     },
     { name: 'Clients', href: '/coaches/clients', icon: Users },
+    { name: 'Revenue & Performance', href: '/coaches/revenue', icon: TrendingUp },
     { name: 'Profile', href: '/coaches/profile', icon: User },
   ];
 

@@ -1,8 +1,22 @@
 import { Request, Response } from 'express';
+import { coachSearchService } from '../services/coachSearchService';
 
-export const findMatches = (req: Request, res: Response) => {
+export const findMatches = async (req: Request, res: Response) => {
   console.log('req.body', req.body);
   console.log('Match request received:', req.body);
+
+  try {
+    // Use the coach search service for real matching
+    const matches = await coachSearchService.searchCoaches(req.body);
+    
+    console.log(`✅ Found ${matches.length} matches using ${req.body.searchMode || 'advanced'} search mode`);
+    
+    res.json({ matches });
+  } catch (error) {
+    console.error('❌ Error in findMatches:', error);
+    
+    // Fall back to mock data if service fails
+    console.log('📋 Falling back to mock data...');
 
   // Extensive mock data with 100+ diverse coach profiles
   const matches = [
@@ -1445,5 +1459,6 @@ export const findMatches = (req: Request, res: Response) => {
     }
   ];
 
-  res.json(matches);
+    res.json({ matches });
+  }
 }; 

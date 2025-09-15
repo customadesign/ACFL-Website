@@ -11,12 +11,14 @@ import MeetingBlocker from '@/components/MeetingBlocker';
 import MeetingStatusDebug from '@/components/MeetingStatusDebug';
 import TestInstructions from '@/components/TestInstructions';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
+import SessionNotesModal from '@/components/SessionNotesModal';
+import ClientSessionHistory from '@/components/ClientSessionHistory';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMeeting } from '@/contexts/MeetingContext';
 import axios from 'axios';
 import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Calendar, Clock } from 'lucide-react';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Calendar, Clock, FileText, History, Users } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import RescheduleModal from '@/components/RescheduleModal';
 
@@ -57,6 +59,11 @@ export default function AppointmentsPage() {
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [selectedAppointmentForReschedule, setSelectedAppointmentForReschedule] = useState<Appointment | null>(null);
+  const [showNotesModal, setShowNotesModal] = useState(false);
+  const [selectedAppointmentForNotes, setSelectedAppointmentForNotes] = useState<Appointment | null>(null);
+  const [showSessionHistory, setShowSessionHistory] = useState(false);
+  const [selectedClientForHistory, setSelectedClientForHistory] = useState<{ id: string; name: string } | null>(null);
+  const [uniqueClients, setUniqueClients] = useState<Array<{ id: string; name: string; sessionCount: number }>>([]);
   const socketRef = useRef<Socket | null>(null);
 
   const API_URL = getApiUrl();
@@ -64,6 +71,24 @@ export default function AppointmentsPage() {
   useEffect(() => {
     loadAppointments();
   }, []); // Remove filter dependency since we always get all appointments
+
+  // Calculate unique clients when appointments change
+  useEffect(() => {
+    const clientMap = new Map();
+    appointments.forEach(apt => {
+      if (apt.client_id && apt.clients) {
+        if (!clientMap.has(apt.client_id)) {
+          clientMap.set(apt.client_id, {
+            id: apt.client_id,
+            name: `${apt.clients.first_name} ${apt.clients.last_name}`,
+            sessionCount: 0
+          });
+        }
+        clientMap.get(apt.client_id).sessionCount++;
+      }
+    });
+    setUniqueClients(Array.from(clientMap.values()));
+  }, [appointments]);
 
   // Tick every second to enable/disable Join and update countdown labels
   useEffect(() => {
@@ -532,11 +557,25 @@ export default function AppointmentsPage() {
                           {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                         </h3>
                         <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{appointment.clients?.email || appointment.clients?.users?.email}</p>
-                        <p className="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 cursor-pointer mt-1">
-                          <Link href={`/coaches/clients?view_client=${appointment.client_id}`} className="hover:underline">
-                            View client details →
+                        <div className="flex gap-2 mt-1">
+                          <button
+                            onClick={() => {
+                              setSelectedClientForHistory({
+                                id: appointment.client_id,
+                                name: `${appointment.clients?.first_name} ${appointment.clients?.last_name}`
+                              });
+                              setShowSessionHistory(true);
+                            }}
+                            className="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline"
+                          >
+                            <History className="w-3 h-3 inline mr-1" />
+                            View session history
+                          </button>
+                          <span className="text-gray-400">|</span>
+                          <Link href={`/coaches/client/${appointment.client_id}`} className="text-[11px] sm:text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 hover:underline">
+                            View client profile →
                           </Link>
-                        </p>
+                        </div>
                       </div>
                       <span className={`self-start px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
                         {getStatusDisplay(appointment).label}
@@ -585,6 +624,17 @@ export default function AppointmentsPage() {
                         >
                           Cancel
                         </Button>
+                        <Button
+                          onClick={() => {
+                            setSelectedAppointmentForNotes(appointment);
+                            setShowNotesModal(true);
+                          }}
+                          variant="outline"
+                          className="text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full sm:w-auto"
+                          size="sm"
+                        >
+                          <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Notes
+                        </Button>
                         <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`} className="w-full sm:w-auto">
                           <Button
                             variant="outline"
@@ -625,6 +675,17 @@ export default function AppointmentsPage() {
                           >
                             Mark Complete
                           </Button>
+                          <Button
+                            onClick={() => {
+                              setSelectedAppointmentForNotes(appointment);
+                              setShowNotesModal(true);
+                            }}
+                            variant="outline"
+                            className="text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full sm:w-auto"
+                            size="sm"
+                          >
+                            <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Notes
+                          </Button>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button
@@ -660,10 +721,24 @@ export default function AppointmentsPage() {
                       </div>
                     )}
 
-                    {/* Message button for appointments without status-specific buttons */}
+                    {/* Message and Notes buttons for completed/cancelled appointments */}
                     {appointment.status !== 'scheduled' && appointment.status !== 'confirmed' && (
-                      <div className="mt-4">
-                        <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`} className="block">
+                      <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                        {appointment.status === 'completed' && (
+                          <Button
+                            onClick={() => {
+                              setSelectedAppointmentForNotes(appointment);
+                              setShowNotesModal(true);
+                            }}
+                            variant="outline"
+                            className="text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full sm:w-auto"
+                            size="sm"
+                          >
+                            <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                            {appointment.status === 'completed' ? 'View/Edit Notes' : 'View Notes'}
+                          </Button>
+                        )}
+                        <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`} className="w-full sm:w-auto">
                           <Button
                             variant="outline"
                             className="text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full sm:w-auto"
@@ -682,6 +757,60 @@ export default function AppointmentsPage() {
           );
         })()}
       </div>
+
+      {/* Client List Summary */}
+      {uniqueClients.length > 0 && (
+        <div className="mt-8">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center">
+                <Users className="w-5 h-5 mr-2" />
+                Your Clients ({uniqueClients.length})
+              </CardTitle>
+              <CardDescription>
+                Quick access to client information and session history
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {uniqueClients.map(client => (
+                  <div
+                    key={client.id}
+                    className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                  >
+                    <div className="flex-1">
+                      <p className="font-medium text-sm text-gray-900 dark:text-white">{client.name}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{client.sessionCount} sessions</p>
+                    </div>
+                    <div className="flex gap-1">
+                      <Button
+                        onClick={() => {
+                          setSelectedClientForHistory(client);
+                          setShowSessionHistory(true);
+                        }}
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 px-2"
+                      >
+                        <History className="w-4 h-4" />
+                      </Button>
+                      <Link href={`/coaches/client/${client.id}`}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8 px-2"
+                        >
+                          <Users className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
       
       {/* Meeting Container with PreCall and VideoMeeting */}
       {showMeeting && meetingAppointment && (
@@ -725,6 +854,34 @@ export default function AppointmentsPage() {
           onClose={() => setShowRescheduleModal(false)}
           appointment={selectedAppointmentForReschedule}
           onSuccess={handleRescheduleSuccess}
+        />
+      )}
+
+      {/* Session Notes Modal */}
+      {showNotesModal && selectedAppointmentForNotes && (
+        <SessionNotesModal
+          appointmentId={selectedAppointmentForNotes.id}
+          clientName={`${selectedAppointmentForNotes.clients?.first_name} ${selectedAppointmentForNotes.clients?.last_name}`}
+          sessionDate={selectedAppointmentForNotes.starts_at}
+          isOpen={showNotesModal}
+          onClose={() => {
+            setShowNotesModal(false);
+            setSelectedAppointmentForNotes(null);
+          }}
+          readonly={selectedAppointmentForNotes.status !== 'completed'}
+        />
+      )}
+
+      {/* Client Session History Modal */}
+      {showSessionHistory && selectedClientForHistory && (
+        <ClientSessionHistory
+          clientId={selectedClientForHistory.id}
+          clientName={selectedClientForHistory.name}
+          isOpen={showSessionHistory}
+          onClose={() => {
+            setShowSessionHistory(false);
+            setSelectedClientForHistory(null);
+          }}
         />
       )}
       

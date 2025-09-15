@@ -2,6 +2,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
+import { PermissionGate } from '@/components/PermissionGate';
+import StaffInvitationModal from '@/components/admin/StaffInvitationModal';
+import StaffInvitationManager from '@/components/admin/StaffInvitationManager';
+import CSVImportModal from '@/components/admin/CSVImportModal';
 import {
   Search,
   MoreVertical,
@@ -23,7 +28,12 @@ import {
   Copy,
   AlertTriangle,
   Info,
-  MessageSquare
+  MessageSquare,
+  Key,
+  Users,
+  Send,
+  Upload,
+  FileText
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
@@ -81,6 +91,7 @@ interface UserFormData {
 
 export default function UserManagement() {
   const router = useRouter();
+  const { hasPermission, isAdmin } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -90,6 +101,9 @@ export default function UserManagement() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showCSVImportModal, setShowCSVImportModal] = useState(false);
+  const [showStaffInviteModal, setShowStaffInviteModal] = useState(false);
+  const [showStaffManagement, setShowStaffManagement] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [successData, setSuccessData] = useState<{
     email: string;
@@ -127,6 +141,14 @@ export default function UserManagement() {
     router.push(`/admin/messages?${params.toString()}`);
     setShowActionMenu(null);
   };
+
+  // Permission check
+  useEffect(() => {
+    if (!hasPermission(PERMISSIONS.USERS_VIEW)) {
+      router.push('/admin');
+      return;
+    }
+  }, [hasPermission, router]);
 
   useEffect(() => {
     fetchUsers();
@@ -320,8 +342,14 @@ export default function UserManagement() {
 
   const performLoginAsUser = async (userId: string, userType: string, userName: string) => {
       try {
+        // Check permission before attempting impersonation
+        if (!hasPermission(PERMISSIONS.USERS_IMPERSONATE)) {
+          showError('Access Denied', 'You do not have permission to impersonate users.');
+          return;
+        }
+
         const token = localStorage.getItem('token');
-        
+
         if (!token) {
           window.location.href = '/login';
           return;
@@ -418,6 +446,64 @@ export default function UserManagement() {
       }
   };
 
+  const handleResetPassword = async (userId: string, userType: string, userName: string) => {
+    showWarning(
+      'Reset Password',
+      `Are you sure you want to reset the password for ${userName}? A new temporary password will be generated and sent to their email address.`,
+      () => performResetPassword(userId, userType, userName),
+      () => {} // Do nothing on cancel
+    );
+  };
+
+  const performResetPassword = async (userId: string, userType: string, userName: string) => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/reset-password`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ userType })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to reset password');
+      }
+
+      setShowActionMenu(null);
+
+      if (result.emailSent) {
+        showInfo(
+          'Password Reset Successful', 
+          `Password has been reset for ${userName}. New credentials have been sent to their email address.`
+        );
+      } else {
+        showWarning(
+          'Password Reset Completed', 
+          `Password has been reset for ${userName}, but the email notification failed to send. Please contact the user directly with their new credentials.\n\nError: ${result.emailError || 'Unknown email error'}`
+        );
+      }
+      
+    } catch (error) {
+      console.error('Failed to reset password:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      showError(
+        'Password Reset Failed',
+        `Failed to reset password for ${userName}: ${errorMessage}. Please try again.`
+      );
+    }
+  };
+
   // Generate temporary password
   const generateTemporaryPassword = (): string => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';
@@ -479,10 +565,11 @@ export default function UserManagement() {
         // Handle specific error cases
         if (response.status === 409) {
           // Email already exists
-          showError(
-            'Email Already Exists',
-            result.message || 'A user with this email already exists in the system. Please use a different email address.'
-          );
+          const existingType = result.existingUserType || 'user';
+          const title = `Email Already in Use`;
+          const message = result.message || `A ${existingType} with this email already exists in the system. Please use a different email address or check if you need to modify the existing ${existingType} instead.`;
+          
+          showError(title, message);
           return;
         } else if (response.status === 400) {
           // Validation error
@@ -552,10 +639,11 @@ export default function UserManagement() {
         // Handle specific error cases
         if (response.status === 409) {
           // Email already exists
-          showError(
-            'Email Already Exists',
-            result.message || 'A user with this email already exists in the system. Please use a different email address.'
-          );
+          const existingType = result.existingUserType || 'user';
+          const title = `Email Already in Use`;
+          const message = result.message || `A ${existingType} with this email already exists in the system. Please use a different email address or check if you need to modify the existing ${existingType} instead.`;
+          
+          showError(title, message);
           return;
         } else if (response.status === 400) {
           // Validation error
@@ -784,13 +872,45 @@ export default function UserManagement() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">User Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage all platform users including clients, coaches, and staff</p>
           </div>
-          <button
-            onClick={openCreateModal}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 w-max"
-          >
-            <UserPlus className="h-4 w-4" />
-            <span>Add User</span>
-          </button>
+          <div className="flex items-center space-x-3">
+            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+              <button
+                onClick={openCreateModal}
+                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 w-max"
+              >
+                <UserPlus className="h-4 w-4" />
+                <span>Add User</span>
+              </button>
+            </PermissionGate>
+
+            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+              <button
+                onClick={() => setShowCSVImportModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 w-max"
+              >
+                <Upload className="h-4 w-4" />
+                <span>Import CSV</span>
+              </button>
+            </PermissionGate>
+
+            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+              <button
+                onClick={() => setShowStaffInviteModal(true)}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 w-max"
+              >
+                <Send className="h-4 w-4" />
+                <span>Invite Staff</span>
+              </button>
+            </PermissionGate>
+
+            <button
+              onClick={() => setShowStaffManagement(!showStaffManagement)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2 w-max"
+            >
+              <Users className="h-4 w-4" />
+              <span>{showStaffManagement ? 'Hide' : 'Manage'} Invitations</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -854,6 +974,17 @@ export default function UserManagement() {
           </select>
         </div>
       </div>
+
+      {/* Staff Management Section */}
+      {showStaffManagement && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <StaffInvitationManager
+            onError={showError}
+            onSuccess={showInfo}
+            onWarning={showWarning}
+          />
+        </div>
+      )}
 
       {/* Users Table */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
@@ -952,16 +1083,18 @@ export default function UserManagement() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </button>
-                            <button
-                              onClick={() => {
-                                openEditModal(user);
-                                setShowActionMenu(null);
-                              }}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
-                            >
-                              <Edit className="h-4 w-4 mr-2" />
-                              Edit Profile
-                            </button>
+                            <PermissionGate permission={PERMISSIONS.USERS_EDIT}>
+                              <button
+                                onClick={() => {
+                                  openEditModal(user);
+                                  setShowActionMenu(null);
+                                }}
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                              >
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Profile
+                              </button>
+                            </PermissionGate>
                             <button
                               onClick={() => handleMessageUser(user)}
                               className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
@@ -969,15 +1102,27 @@ export default function UserManagement() {
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Send Message
                             </button>
+                            <PermissionGate permission={PERMISSIONS.USERS_IMPERSONATE}>
+                              <button
+                                onClick={() => {
+                                  handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
+                                  setShowActionMenu(null);
+                                }}
+                                className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                              >
+                                <LogIn className="h-4 w-4 mr-2" />
+                                Login As User
+                              </button>
+                            </PermissionGate>
                             <button
                               onClick={() => {
-                                handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
+                                handleResetPassword(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                              className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
                             >
-                              <LogIn className="h-4 w-4 mr-2" />
-                              Login As User
+                              <Key className="h-4 w-4 mr-2" />
+                              Reset Password
                             </button>
                             {user.status === 'active' ? (
                               <>
@@ -988,13 +1133,15 @@ export default function UserManagement() {
                                   <UserX className="h-4 w-4 mr-2" />
                                   Deactivate User
                                 </button>
-                                <button
-                                  onClick={() => handleUserAction(user.id, 'suspend', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
-                                >
-                                  <Ban className="h-4 w-4 mr-2" />
-                                  Suspend User
-                                </button>
+                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                  <button
+                                    onClick={() => handleUserAction(user.id, 'suspend', user.role)}
+                                    className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                                  >
+                                    <Ban className="h-4 w-4 mr-2" />
+                                    Suspend User
+                                  </button>
+                                </PermissionGate>
                               </>
                             ) : user.status === 'inactive' ? (
                               <button
@@ -1030,13 +1177,15 @@ export default function UserManagement() {
                                 Approve Coach
                               </button>
                             )}
-                            <button
-                              onClick={() => handleDeleteUser(user.id, user.role)}
-                              className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
-                            >
-                              <Trash2 className="h-4 w-4 mr-2" />
-                              Delete User
-                            </button>
+                            <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
+                              <button
+                                onClick={() => handleDeleteUser(user.id, user.role)}
+                                className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete User
+                              </button>
+                            </PermissionGate>
                           </div>
                         </div>
                       )}
@@ -1544,6 +1693,30 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+
+      {/* CSV Import Modal */}
+      <CSVImportModal
+        isOpen={showCSVImportModal}
+        onClose={() => setShowCSVImportModal(false)}
+        onImportComplete={() => {
+          fetchUsers();
+          showInfo('Import Complete', 'Users have been successfully imported');
+        }}
+      />
+
+      {/* Staff Invitation Modal */}
+      <StaffInvitationModal
+        isOpen={showStaffInviteModal}
+        onClose={() => setShowStaffInviteModal(false)}
+        onSuccess={(message) => {
+          showInfo('Invitation Sent', message);
+          // Refresh staff management if it's open
+          if (showStaffManagement) {
+            // The StaffInvitationManager will refresh automatically via its useEffect
+          }
+        }}
+        onError={showError}
+      />
     </div>
   );
 }

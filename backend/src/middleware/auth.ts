@@ -13,10 +13,14 @@ export const authenticate = async (
   next: NextFunction
 ) => {
   try {
+    console.log('Auth middleware - headers:', req.headers.authorization ? 'Token present' : 'No token');
+    console.log('Auth middleware - path:', req.path);
+
     const token = req.headers.authorization?.replace('Bearer ', '');
 
     if (!token) {
       console.log('DEBUG: No authentication token provided');
+      console.log('DEBUG: All headers:', Object.keys(req.headers));
       throw new Error();
     }
 

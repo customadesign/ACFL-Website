@@ -3,7 +3,7 @@ import { Request } from 'express';
 export interface User {
   id: string;
   email: string;
-  role: 'client' | 'coach' | 'admin';
+  role: 'client' | 'coach' | 'admin' | 'staff';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -37,6 +37,22 @@ export interface Coach extends User {
   totalSessions?: number;
 }
 
+export interface Staff extends User {
+  role: 'staff';
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  department?: string;
+  role_level: 'staff' | 'supervisor' | 'manager' | 'admin';
+  employee_id?: string;
+  hire_date?: Date;
+  employment_type?: 'full-time' | 'part-time' | 'contract' | 'intern';
+  bio?: string;
+  supervisor_id?: string;
+  skills?: string[];
+  certifications?: string[];
+}
+
 export interface AuthRequest extends Request {
   user?: JWTPayload;
 }
@@ -45,7 +61,7 @@ export interface JWTPayload {
   id: string;
   userId: string;
   email: string;
-  role: 'client' | 'coach' | 'admin';
+  role: 'client' | 'coach' | 'admin' | 'staff';
 }
 
 export interface RegisterClientDto {
@@ -74,5 +90,5 @@ export interface AuthResponse {
   success: boolean;
   message: string;
   token?: string;
-  user?: Partial<User | Client | Coach>;
+  user?: Partial<User | Client | Coach | Staff>;
 }

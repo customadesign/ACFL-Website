@@ -3,6 +3,7 @@ import { validationResult } from 'express-validator';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
 import emailService from '../services/emailService';
+import smtpEmailService from '../services/smtpEmailService';
 import bcrypt from 'bcrypt';
 
 interface CoachApplicationData {
@@ -827,22 +828,34 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
       }
     }
 
-    // Send notification email
+    // Send notification email using SMTP
     try {
       if (status === 'approved') {
-        await emailService.sendCoachApprovalEmail({
+        const emailResult = await smtpEmailService.sendCoachApprovalEmail({
           email: updatedApp.email,
           first_name: updatedApp.first_name
         });
+        
+        if (emailResult.success) {
+          console.log('✅ Approval email sent successfully via SMTP');
+        } else {
+          console.log('⚠️ Warning: Approval email failed:', emailResult.error);
+        }
       } else if (status === 'rejected') {
-        await emailService.sendCoachRejectionEmail({
+        const emailResult = await smtpEmailService.sendCoachRejectionEmail({
           email: updatedApp.email,
           first_name: updatedApp.first_name,
           rejection_reason: reason || 'Application did not meet our current requirements'
         });
+        
+        if (emailResult.success) {
+          console.log('✅ Rejection email sent successfully via SMTP');
+        } else {
+          console.log('⚠️ Warning: Rejection email failed:', emailResult.error);
+        }
       }
     } catch (emailError) {
-      console.log('Warning: Notification email failed:', emailError);
+      console.log('Warning: SMTP notification email failed:', emailError);
     }
 
     res.json({
@@ -976,22 +989,30 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
           }
         }
 
-        // Send notification email
+        // Send notification email using SMTP
         try {
           if (status === 'approved') {
-            await emailService.sendCoachApprovalEmail({
+            const emailResult = await smtpEmailService.sendCoachApprovalEmail({
               email: updatedApp.email,
               first_name: updatedApp.first_name
             });
+            
+            if (!emailResult.success) {
+              console.log(`⚠️ Warning: Approval email failed for ${applicationId}:`, emailResult.error);
+            }
           } else if (status === 'rejected') {
-            await emailService.sendCoachRejectionEmail({
+            const emailResult = await smtpEmailService.sendCoachRejectionEmail({
               email: updatedApp.email,
               first_name: updatedApp.first_name,
               rejection_reason: reason || 'Application did not meet our current requirements'
             });
+            
+            if (!emailResult.success) {
+              console.log(`⚠️ Warning: Rejection email failed for ${applicationId}:`, emailResult.error);
+            }
           }
         } catch (emailError) {
-          console.log(`Warning: Email notification failed for ${applicationId}:`, emailError);
+          console.log(`Warning: SMTP email notification failed for ${applicationId}:`, emailError);
         }
 
         results.successful.push({

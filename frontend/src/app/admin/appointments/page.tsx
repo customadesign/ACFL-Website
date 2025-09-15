@@ -15,7 +15,10 @@ import {
   MoreVertical,
   Video,
   MapPin,
-  MessageSquare
+  MessageSquare,
+  Edit,
+  Save,
+  FileText
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
@@ -41,6 +44,8 @@ interface Appointment {
   coach_id?: string;
   clientPhoto?: string;
   coachPhoto?: string;
+  adminNotes?: string;
+  cancellationReason?: string;
 }
 
 export default function AppointmentManagement() {
@@ -56,6 +61,11 @@ export default function AppointmentManagement() {
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [showRescheduleModal, setShowRescheduleModal] = useState(false);
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [editingNotesText, setEditingNotesText] = useState('');
+  const [isSavingNotes, setIsSavingNotes] = useState(false);
+  const [cancellationReason, setCancellationReason] = useState('');
+  const [showCancellationModal, setShowCancellationModal] = useState(false);
   const { notification, hideNotification, showError, showConfirm } = useNotification();
 
   const handleMessageClient = (appointment: Appointment) => {
@@ -86,6 +96,42 @@ export default function AppointmentManagement() {
     });
     router.push(`/admin/messages?${params.toString()}`);
     setShowActionMenu(null);
+  };
+
+  const saveAdminNotes = async (appointmentId: string, notes: string) => {
+    setIsSavingNotes(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_URL = getApiUrl();
+      
+      const response = await fetch(`${API_URL}/api/admin/appointments/${appointmentId}/notes`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ adminNotes: notes })
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to save notes: ${errorText}`);
+      }
+
+      // Update the appointment in state
+      setAppointments(prev => prev.map(apt => 
+        apt.id === appointmentId ? { ...apt, adminNotes: notes } : apt
+      ));
+      
+      setIsEditingNotes(false);
+      setEditingNotesText('');
+      
+    } catch (error) {
+      console.error('Error saving admin notes:', error);
+      showError('Save Error', `Failed to save notes: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSavingNotes(false);
+    }
   };
 
   useEffect(() => {
@@ -165,7 +211,9 @@ export default function AppointmentManagement() {
         created_at: apt.created_at || new Date().toISOString(),
         sessionNotes: apt.sessionNotes || undefined,
         client_id: apt.client_id,
-        coach_id: apt.coach_id
+        coach_id: apt.coach_id,
+        adminNotes: apt.adminNotes || '',
+        cancellationReason: apt.cancellationReason || ''
       }));
       
       setAppointments(transformedAppointments);
@@ -240,7 +288,8 @@ export default function AppointmentManagement() {
         },
         body: JSON.stringify({
           status: newStatus,
-          reason: reason || ''
+          reason: reason || '',
+          cancellationReason: newStatus === 'cancelled' ? reason : undefined
         })
       });
 
@@ -249,8 +298,15 @@ export default function AppointmentManagement() {
         throw new Error(`Failed to update appointment: ${errorText}`);
       }
 
-      // Refresh appointments list
-      await fetchAppointments();
+      // Update the appointment in state
+      setAppointments(prev => prev.map(apt => 
+        apt.id === appointmentId ? { 
+          ...apt, 
+          status: newStatus as any,
+          cancellationReason: newStatus === 'cancelled' ? reason : apt.cancellationReason
+        } : apt
+      ));
+      
       setShowActionMenu(null);
       
     } catch (error) {
@@ -261,21 +317,18 @@ export default function AppointmentManagement() {
     }
   };
 
+  const handleCancelWithReason = (appointmentId: string) => {
+    setSelectedAppointment(appointments.find(apt => apt.id === appointmentId) || null);
+    setShowCancellationModal(true);
+    setShowActionMenu(null);
+  };
+
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     const confirmMessage = `Are you sure you want to mark this appointment as ${newStatus.toUpperCase()}?`;
     
     if (newStatus === 'cancelled') {
-      // For cancellations, we can add a textarea in the modal for reason
-      showConfirm(
-        'Cancel Appointment',
-        `${confirmMessage}\n\nThis action will notify both the client and coach about the cancellation.`,
-        async () => {
-          // For now, we'll use empty reason. Later this could be enhanced with a form
-          await updateAppointmentStatus(appointmentId, newStatus, '');
-        },
-        'Cancel Appointment',
-        'Keep Appointment'
-      );
+      // Use the special cancellation modal with reason
+      handleCancelWithReason(appointmentId);
     } else {
       showConfirm(
         'Update Status',
@@ -578,6 +631,20 @@ export default function AppointmentManagement() {
                                 View Details
                               </button>
                               
+                              <button
+                                onClick={() => {
+                                  setSelectedAppointment(appointment);
+                                  setEditingNotesText(appointment.adminNotes || '');
+                                  setIsEditingNotes(true);
+                                  setShowAppointmentModal(true);
+                                  setShowActionMenu(null);
+                                }}
+                                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                              >
+                                <FileText className="h-4 w-4 mr-2" />
+                                Edit Client Notes
+                              </button>
+                              
                               {/* Message Actions */}
                               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
                               
@@ -754,6 +821,70 @@ export default function AppointmentManagement() {
                   <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.sessionNotes}</p>
                 </div>
               )}
+
+              {/* Admin Notes Section */}
+              <div>
+                <div className="flex justify-between items-center mb-2">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Admin Notes</label>
+                  {!isEditingNotes && (
+                    <button
+                      onClick={() => {
+                        setEditingNotesText(selectedAppointment.adminNotes || '');
+                        setIsEditingNotes(true);
+                      }}
+                      className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 text-xs flex items-center"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Edit
+                    </button>
+                  )}
+                </div>
+                {isEditingNotes ? (
+                  <div className="space-y-2">
+                    <textarea
+                      value={editingNotesText}
+                      onChange={(e) => setEditingNotesText(e.target.value)}
+                      placeholder="Add administrative notes about this client or appointment..."
+                      rows={4}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        onClick={() => {
+                          setIsEditingNotes(false);
+                          setEditingNotesText('');
+                        }}
+                        className="px-3 py-1 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700 text-sm"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        onClick={() => saveAdminNotes(selectedAppointment.id, editingNotesText)}
+                        disabled={isSavingNotes}
+                        className="px-3 py-1 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 flex items-center text-sm"
+                      >
+                        {isSavingNotes && <div className="animate-spin h-3 w-3 border border-white border-t-transparent rounded-full mr-1"></div>}
+                        <Save className="h-3 w-3 mr-1" />
+                        Save
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-900 dark:text-white min-h-[1.5rem]">
+                    {selectedAppointment.adminNotes || (
+                      <span className="text-gray-400 dark:text-gray-500 italic">No admin notes yet</span>
+                    )}
+                  </p>
+                )}
+              </div>
+
+              {/* Cancellation Reason */}
+              {selectedAppointment.cancellationReason && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Cancellation Reason</label>
+                  <p className="text-sm text-gray-900 dark:text-white">{selectedAppointment.cancellationReason}</p>
+                </div>
+              )}
               
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">Created</label>
@@ -820,6 +951,74 @@ export default function AppointmentManagement() {
             fetchAppointments(); // Refresh the appointments list
           }}
         />
+      )}
+
+      {/* Cancellation Modal */}
+      {showCancellationModal && selectedAppointment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-900 rounded-lg p-6 w-full max-w-md border border-gray-200 dark:border-gray-700">
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Cancel Appointment</h3>
+              <button
+                onClick={() => {
+                  setShowCancellationModal(false);
+                  setSelectedAppointment(null);
+                  setCancellationReason('');
+                }}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              >
+                <XCircle className="h-6 w-6" />
+              </button>
+            </div>
+            
+            <div className="space-y-4">
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                Are you sure you want to cancel this appointment? This action will notify both the client and coach about the cancellation.
+              </p>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Reason for Cancellation (Optional)
+                </label>
+                <textarea
+                  value={cancellationReason}
+                  onChange={(e) => setCancellationReason(e.target.value)}
+                  placeholder="Please provide a reason for the cancellation..."
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <button
+                  onClick={() => {
+                    setShowCancellationModal(false);
+                    setSelectedAppointment(null);
+                    setCancellationReason('');
+                  }}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700"
+                >
+                  Keep Appointment
+                </button>
+                <button
+                  onClick={async () => {
+                    if (selectedAppointment) {
+                      await updateAppointmentStatus(selectedAppointment.id, 'cancelled', cancellationReason);
+                      setShowCancellationModal(false);
+                      setSelectedAppointment(null);
+                      setCancellationReason('');
+                    }
+                  }}
+                  disabled={isUpdatingStatus}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center"
+                >
+                  {isUpdatingStatus && <div className="animate-spin h-4 w-4 border border-white border-t-transparent rounded-full mr-2"></div>}
+                  Cancel Appointment
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
       
       {/* Notification Modal */}

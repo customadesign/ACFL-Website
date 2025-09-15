@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
+import { coachSearchService } from '../services/coachSearchService';
 import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
@@ -622,83 +623,25 @@ router.get('/client/coaches', [
       });
     }
 
-    // Get all available coaches (main query)
-    const { data: coaches, error: coachesError } = await supabase
-      .from('coaches')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        bio,
-        specialties,
-        languages,
-        hourly_rate_usd,
-        years_experience,
-        rating,
-        is_available,
-        created_at,
-        email,
-        profile_photo
-      `)
-      .eq('is_available', true);
+    console.log('📋 Loading all available coaches...');
+    
+    // Use the enhanced search service
+    const coaches = await coachSearchService.getAllCoaches();
 
-    if (coachesError) {
-      console.error('Coaches query error:', coachesError);
-      throw coachesError;
-    }
+    // Set a default match score for all coaches when not searching
+    const formattedCoaches = coaches.map(coach => ({
+      ...coach,
+      matchScore: 50 // Default score when browsing all coaches
+    }));
 
-    // Get coach demographics separately (if needed)
-    let demographics = [];
-    if (coaches && coaches.length > 0) {
-      const coachIds = coaches.map(c => c.id);
-      const { data: demoData } = await supabase
-        .from('coach_demographics')
-        .select(`
-          coach_id,
-          gender_identity,
-          ethnic_identity,
-          religious_background,
-          accepts_insurance,
-          accepts_sliding_scale,
-          timezone,
-          meta
-        `)
-        .in('coach_id', coachIds);
-      demographics = demoData || [];
-    }
-
-    // Create demographics lookup
-    const demographicsMap = new Map();
-    demographics.forEach(demo => {
-      demographicsMap.set(demo.coach_id, demo);
-    });
-
-    // Format response
-    const formattedCoaches = coaches?.map((coach: any) => {
-      const coachDemo = demographicsMap.get(coach.id);
-      return {
-        id: coach.id,
-        name: `${coach.first_name} ${coach.last_name}`,
-        specialties: coach.specialties || [],
-        languages: coach.languages || [],
-        bio: coach.bio || '',
-        sessionRate: 'Rate not specified', // Will be fetched from coach_rates table
-        experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
-        rating: 0, // Will be calculated dynamically from reviews
-        matchScore: 50, // Default score for all coaches
-        virtualAvailable: coachDemo?.meta?.video_available || false,
-        inPersonAvailable: coachDemo?.meta?.in_person_available || false,
-        email: coach.email,
-        profilePhoto: coach.profile_photo || ''
-      };
-    }) || [];
+    console.log(`✅ Returned ${formattedCoaches.length} coaches`);
 
     res.json({
       success: true,
       data: formattedCoaches
     });
   } catch (error) {
-    console.error('Get coaches error:', error);
+    console.error('❌ Get coaches error:', error);
     res.status(500).json({ 
       success: false, 
       message: 'Failed to get coaches' 
@@ -712,9 +655,8 @@ router.post('/client/search-coaches', [
   body('preferences').isObject().withMessage('Preferences object is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
-    console.log('Search coaches request received:', { 
-      user: req.user, 
-      body: req.body,
+    console.log('🔍 Search coaches request received:', { 
+      user: req.user?.email, 
       preferences: req.body.preferences 
     });
 
@@ -735,196 +677,44 @@ router.post('/client/search-coaches', [
 
     const { preferences } = req.body;
 
-    // Build query based on preferences
-    console.log('Building database query...');
-    let query = supabase
-      .from('coaches')
-      .select(`
-        id,
-        first_name,
-        last_name,
-        bio,
-        specialties,
-        languages,
-        hourly_rate_usd,
-        years_experience,
-        rating,
-        is_available,
-        created_at,
-        email,
-        profile_photo,
-        coach_demographics (
-          gender_identity,
-          ethnic_identity,
-          religious_background,
-          availability_options,
-          therapy_modalities,
-          location,
-          accepts_insurance,
-          accepts_sliding_scale,
-          timezone,
-          meta
-        )
-      `)
-      .eq('is_available', true);
-    
-    console.log('Base query built, applying filters...');
+    // Use the enhanced search service
+    const searchResults = await coachSearchService.searchCoaches(preferences);
 
-    // Apply filters based on preferences (soft-match only)
-    // We no longer hard-filter by specialties, language, or demographics
-    // to ensure we can return all available coaches with a match percentage.
-    // Only keep availability as a hard filter in the base query above.
-    
-    console.log('All filters applied, query ready for execution');
+    console.log(`✅ Search completed: ${searchResults.length} matches found`);
 
-    console.log('About to execute database query...');
-    const { data: coaches, error: coachesError } = await query;
-    console.log('Database query result:', { coaches: coaches?.length, error: coachesError });
+    // Store search history for analytics (optional)
+    try {
+      const { data: clientProfile } = await supabase
+        .from('clients')
+        .select('id')
+        .eq('id', req.user.userId)
+        .single();
 
-    if (coachesError) {
-      console.error('Database query error:', coachesError);
-      throw coachesError;
+      if (clientProfile) {
+        await supabase
+          .from('search_history')
+          .insert({
+            client_id: clientProfile.id,
+            query: JSON.stringify(preferences),
+            search_criteria: preferences,
+            results_count: searchResults.length
+          });
+      }
+    } catch (historyError) {
+      // Don't fail the search if we can't store history
+      console.log('⚠️ Could not store search history:', historyError);
     }
-
-    // Calculate normalized match scores and format response
-    const concernToSpecialtyMap: Record<string, string[]> = {
-      'Anxiety': ['Anxiety', 'Stress Management'],
-      'Depression': ['Depression', 'Grief Counseling'],
-      'Racial identity related issues': ['Family Therapy', 'Life Coaching'],
-      'Academic stress': ['Career Coaching', 'Teen Counseling', 'Stress Management'],
-      'Trauma-related stress': ['PTSD', 'Grief Counseling', 'Stress Management'],
-      'Work-related stress': ['Career Coaching', 'Stress Management'],
-      'Insomnia': ['Stress Management', 'Life Coaching']
-    };
-
-    const normalize = (s: string) => (s || '').toLowerCase().trim();
-
-    function scoreAreasOfConcern(selectedConcerns: string[] | undefined, coachSpecialties: string[] | undefined): { score: number; possible: number } {
-      if (!selectedConcerns || selectedConcerns.length === 0) return { score: 0, possible: 0 };
-      const specialties = (coachSpecialties || []).map(normalize);
-      let earned = 0;
-      let possible = selectedConcerns.length * 3; // max 3 points per concern
-
-      for (const concern of selectedConcerns) {
-        const c = normalize(concern);
-        const synonyms = (concernToSpecialtyMap[concern] || []).map(normalize);
-
-        let bestForConcern = 0;
-        for (const spec of specialties) {
-          if (spec === c) {
-            bestForConcern = Math.max(bestForConcern, 3); // exact
-            if (bestForConcern === 3) break;
-          } else if (synonyms.includes(spec)) {
-            bestForConcern = Math.max(bestForConcern, 2); // synonym
-          } else if (spec.includes(c) || c.includes(spec)) {
-            bestForConcern = Math.max(bestForConcern, 1); // fuzzy contains
-          }
-        }
-        earned += bestForConcern;
-      }
-
-      // Scale 0..(3*n) to 0..30
-      const scaled = possible > 0 ? (earned / possible) * 30 : 0;
-      return { score: scaled, possible: 30 };
-    }
-
-    const formattedCoaches = (coaches || []).map((coach: any) => {
-      let score = 0;
-      let possible = 0;
-
-      // 1) Areas of concern vs specialties (up to 30) using mapping + fuzzy scoring
-      const concernScore = scoreAreasOfConcern(preferences.areaOfConcern, coach.specialties);
-      score += concernScore.score;
-      possible += concernScore.possible;
-
-      // 2) Language (15)
-      if (preferences.language && preferences.language !== 'any') {
-        const languageFilter = preferences.language === 'Other' && preferences.languageOther 
-          ? preferences.languageOther 
-          : preferences.language;
-        possible += 15;
-        if ((coach.languages || []).includes(languageFilter)) {
-          score += 15;
-        }
-      }
-
-      // 3) Gender (10)
-      if (preferences.therapistGender && preferences.therapistGender !== 'any') {
-        const genderFilter = preferences.therapistGender === 'other' && preferences.therapistGenderOther
-          ? preferences.therapistGenderOther
-          : preferences.therapistGender;
-        possible += 10;
-        if (coach.coach_demographics?.gender_identity === genderFilter) {
-          score += 10;
-        }
-      }
-
-      // 4) Therapy modalities (15)
-      if (preferences.modalities && preferences.modalities.length > 0) {
-        const selected = preferences.modalities as string[];
-        const coachMods = (coach.coach_demographics?.therapy_modalities || []) as string[];
-        const overlap = selected.filter((m: string) => coachMods.includes(m)).length;
-        score += (overlap / selected.length) * 15;
-        possible += 15;
-      }
-
-      // 5) Availability (10)
-      if (preferences.availability_options && preferences.availability_options.length > 0) {
-        const selected = preferences.availability_options as string[];
-        const coachAvail = (coach.coach_demographics?.availability_options || []) as string[];
-        const overlap = selected.filter((a: string) => coachAvail.includes(a)).length;
-        score += (overlap / selected.length) * 10;
-        possible += 10;
-      }
-
-      // 6) Location (10)
-      if (preferences.location) {
-        possible += 10;
-        if (coach.coach_demographics?.location && coach.coach_demographics.location === preferences.location) {
-          score += 10;
-        }
-      }
-
-      // 7) Experience min threshold (10)
-      if (preferences.experience && preferences.experience !== 'any') {
-        possible += 10;
-        const minYears = parseInt(preferences.experience, 10) || 0;
-        const years = Number(coach.years_experience) || 0;
-        if (years >= minYears) {
-          score += 10;
-        }
-      }
-
-      const normalized = possible > 0 ? Math.round((score / possible) * 100) : 0;
-
-      return {
-        id: coach.id,
-        name: `${coach.first_name} ${coach.last_name}`,
-        specialties: coach.specialties || [],
-        languages: coach.languages || [],
-        bio: coach.bio || '',
-        sessionRate: 'Rate not specified', // Will be fetched from coach_rates table
-        experience: coach.years_experience ? `${coach.years_experience} years` : 'Experience not specified',
-        rating: 0,
-        matchScore: normalized,
-        virtualAvailable: coach.coach_demographics?.meta?.video_available || false,
-        email: coach.email,
-        profilePhoto: coach.profile_photo || ''
-      };
-    });
-
-    // Sort by match score
-    formattedCoaches.sort((a, b) => b.matchScore - a.matchScore);
 
     res.json({
       success: true,
-      data: formattedCoaches
+      data: searchResults
     });
   } catch (error) {
-    console.error('Search coaches error:', error);
+    console.error('❌ Search coaches error:', error);
     res.status(500).json({ 
       success: false, 
-      message: 'Failed to search coaches' 
+      message: 'Failed to search coaches',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

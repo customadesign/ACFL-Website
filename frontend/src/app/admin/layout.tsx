@@ -5,12 +5,14 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminNotifications } from '@/contexts/AdminNotificationContext';
+import { usePermissions, PERMISSIONS } from '@/hooks/usePermissions';
 import { getApiUrl } from '@/lib/api';
 import NotificationBadge from '@/components/NotificationBadge';
 import ThemeConsentModal from '@/components/ThemeConsentModal';
 import {
   Users,
   UserCheck,
+  User,
   Calendar,
   MessageSquare,
   Settings,
@@ -25,7 +27,9 @@ import {
   Moon,
   Sun,
   Bell,
-  MoreHorizontal
+  MoreHorizontal,
+  DollarSign,
+  Type
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -40,6 +44,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [showBottomNavMore, setShowBottomNavMore] = useState(false);
   const bottomNavMoreRef = useRef<HTMLDivElement>(null);
   const { user, loading: authLoading, logout } = useAuth();
+  const { hasPermission, isAdmin, isStaff } = usePermissions();
   const { 
     displayNewUsersCount,
     displayNewCoachApplicationsCount, 
@@ -223,8 +228,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         return;
       }
 
-      if (user.role !== 'admin') {
-        // Not an admin, redirect to appropriate dashboard
+      if (user.role !== 'admin' && user.role !== 'staff') {
+        // Not an admin or staff, redirect to appropriate dashboard
         if (user.role === 'client') {
           router.replace('/clients');
         } else if (user.role === 'coach') {
@@ -251,15 +256,37 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     }
   };
 
-  const navItems = [
-    { name: 'Dashboard', href: '/admin', icon: Home },
-    { name: 'Users', href: '/admin/users', icon: Users, notificationCount: displayNewUsersCount },
-    { name: 'Coach Applications', href: '/admin/coach-applications', icon: FileText, notificationCount: displayNewCoachApplicationsCount },
-    { name: 'Appointments', href: '/admin/appointments', icon: Calendar, notificationCount: displayNewAppointmentsCount },
-    { name: 'Messages', href: '/admin/messages', icon: MessageSquare, notificationCount: displayNewMessagesCount },
-    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3 },
-    { name: 'Settings', href: '/admin/settings', icon: Settings },
+  const allNavItems = [
+    { name: 'Dashboard', href: '/admin', icon: Home, permission: null }, // Always visible
+    { name: 'Users', href: '/admin/users', icon: Users, notificationCount: displayNewUsersCount, permission: PERMISSIONS.USERS_VIEW },
+    { name: 'Coach Applications', href: '/admin/coach-applications', icon: FileText, notificationCount: displayNewCoachApplicationsCount, permission: PERMISSIONS.USERS_VIEW },
+    { name: 'Appointments', href: '/admin/appointments', icon: Calendar, notificationCount: displayNewAppointmentsCount, permission: PERMISSIONS.APPOINTMENTS_VIEW },
+    { name: 'Messages', href: '/admin/messages', icon: MessageSquare, notificationCount: displayNewMessagesCount, permission: PERMISSIONS.MESSAGES_VIEW },
+    { name: 'Content', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
+    { name: 'Financials', href: '/admin/financials', icon: DollarSign, permission: PERMISSIONS.FINANCIAL_VIEW },
+    { name: 'Staff Capabilities', href: '/admin/staff-capabilities', icon: Shield, permission: null, adminOnly: true },
+    { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
+    { name: 'Profile', href: '/admin/profile', icon: User, permission: null, staffOnly: true }, // Staff profile - moved to last
+    { name: 'Settings', href: '/admin/settings', icon: Settings, permission: null, adminOnly: true },
   ];
+
+  // Filter navigation items based on permissions
+  const navItems = allNavItems.filter(item => {
+    // Admin-only items
+    if (item.adminOnly && !isAdmin) {
+      return false;
+    }
+    // Staff-only items
+    if (item.staffOnly && !isStaff) {
+      return false;
+    }
+    // Items with permission requirements
+    if (item.permission && !hasPermission(item.permission)) {
+      return false;
+    }
+    // Always show items with no permission requirement (like Dashboard)
+    return true;
+  });
 
   if (isLoading) {
     return (
@@ -297,7 +324,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 alt="ACFL Logo" 
                 className="h-8 sm:h-10 w-auto"
               />
-              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white hidden sm:block">ACT Coaching For Life - Admin</h1>
+              <h1 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white hidden sm:block">
+                ACT Coaching For Life - {user?.role === 'staff' ? 'Staff Portal' : 'Admin'}
+              </h1>
             </div>
             
             {/* Desktop user menu */}
@@ -441,7 +470,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       <p className="text-sm font-medium text-gray-900 dark:text-white">
                         {user?.first_name || 'Admin'} {user?.last_name || ''}
                       </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        {user?.role === 'staff' ? 'Staff Member' : 'Administrator'}
+                      </p>
                     </div>
                     <button
                       onClick={(e) => handleThemeToggle(e)}
@@ -629,7 +660,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               <p className="text-sm font-medium text-gray-900 dark:text-white">
                 {user?.first_name || 'Admin'} {user?.last_name || ''}
               </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400">Administrator</p>
+              <p className="text-xs text-gray-500 dark:text-gray-400">
+                {user?.role === 'staff' ? 'Staff Member' : 'Administrator'}
+              </p>
             </div>
             <button
               onClick={(e) => handleThemeToggle(e)}
@@ -707,7 +740,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     alt="ACFL Logo" 
                     className="h-8 w-auto"
                   />
-                  <span className="font-semibold text-sm text-gray-900 dark:text-white">Admin Panel</span>
+                  <span className="font-semibold text-sm text-gray-900 dark:text-white">
+                    {user?.role === 'staff' ? 'Staff Portal' : 'Admin Panel'}
+                  </span>
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}

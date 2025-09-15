@@ -530,45 +530,58 @@ export const login = async (req: Request, res: Response) => {
 
     console.log('\n🔍 Step 1: Looking up user profile...');
 
-    // Check if user has a profile (client, coach, or admin)
+    // Check if user has a profile (client, coach, admin, or staff)
     let profile = null;
-    let role: 'client' | 'coach' | 'admin' = 'client';
-    
+    let role: 'client' | 'coach' | 'admin' | 'staff' = 'client';
+
     // First check for admin profile (case-insensitive)
     const { data: adminProfile, error: adminError } = await supabase
       .from('admins')
       .select('*')
       .ilike('email', email)
       .single();
-    
+
     if (adminProfile) {
       profile = adminProfile;
       role = 'admin';
       console.log('✅ Found admin profile');
     } else {
-      // Look for client profile by email (case-insensitive)
-      const { data: clientProfile, error: clientError } = await supabase
-        .from('clients')
+      // Check for staff profile (case-insensitive)
+      const { data: staffProfile, error: staffError } = await supabase
+        .from('staff')
         .select('*')
         .ilike('email', email)
         .single();
-      
-      if (clientProfile) {
-        profile = clientProfile;
-        role = 'client';
-        console.log('✅ Found client profile');
+
+      if (staffProfile) {
+        profile = staffProfile;
+        role = 'staff';
+        console.log('✅ Found staff profile');
       } else {
-        // Check for coach profile if no client profile (case-insensitive)
-        const { data: coachProfile, error: coachError } = await supabase
-          .from('coaches')
+        // Look for client profile by email (case-insensitive)
+        const { data: clientProfile, error: clientError } = await supabase
+          .from('clients')
           .select('*')
           .ilike('email', email)
           .single();
-        
-        if (coachProfile) {
-          profile = coachProfile;
-          role = 'coach';
-          console.log('✅ Found coach profile');
+
+        if (clientProfile) {
+          profile = clientProfile;
+          role = 'client';
+          console.log('✅ Found client profile');
+        } else {
+          // Check for coach profile if no client profile (case-insensitive)
+          const { data: coachProfile, error: coachError } = await supabase
+            .from('coaches')
+            .select('*')
+            .ilike('email', email)
+            .single();
+
+          if (coachProfile) {
+            profile = coachProfile;
+            role = 'coach';
+            console.log('✅ Found coach profile');
+          }
         }
       }
     }
@@ -581,7 +594,7 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if user is suspended or deactivated (only for clients and coaches, not admins)
+    // Check if user is suspended or deactivated (only for clients, coaches, and staff - not admins)
     console.log(`👤 User status check for ${email}: ${profile.status || 'no status'} (role: ${role})`);
     if (profile.status && role !== 'admin') {
       if (profile.status === 'suspended') {
@@ -669,6 +682,11 @@ export const login = async (req: Request, res: Response) => {
           .from('admins')
           .update({ last_login: now })
           .eq('id', profile.id);
+      } else if (role === 'staff') {
+        await supabase
+          .from('staff')
+          .update({ last_login: now })
+          .eq('id', profile.id);
       } else if (role === 'client') {
         await supabase
           .from('clients')
@@ -738,20 +756,35 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
 
     // Get profile based on role (skip Supabase Auth)
     let profile = null;
-    let role: 'client' | 'coach' | 'admin' = req.user.role;
-    
+    let role: 'client' | 'coach' | 'admin' | 'staff' = req.user.role;
+
     if (req.user.role === 'admin') {
       const { data, error } = await supabase
         .from('admins')
         .select('*')
         .ilike('email', req.user.email)
         .single();
-      
+
       if (error) {
         console.error('Error fetching admin profile:', error);
         return res.status(404).json({
           success: false,
           message: 'Admin profile not found'
+        });
+      }
+      profile = data;
+    } else if (req.user.role === 'staff') {
+      const { data, error } = await supabase
+        .from('staff')
+        .select('*')
+        .ilike('email', req.user.email)
+        .single();
+
+      if (error) {
+        console.error('Error fetching staff profile:', error);
+        return res.status(404).json({
+          success: false,
+          message: 'Staff profile not found'
         });
       }
       profile = data;
@@ -761,7 +794,7 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
         .select('*')
         .ilike('email', req.user.email)
         .single();
-      
+
       if (error) {
         console.error('Error fetching client profile:', error);
         return res.status(404).json({
@@ -776,7 +809,7 @@ export const getProfile = async (req: Request & { user?: JWTPayload }, res: Resp
         .select('*')
         .ilike('email', req.user.email)
         .single();
-      
+
       if (error) {
         console.error('Error fetching coach profile:', error);
         return res.status(404).json({
@@ -949,6 +982,11 @@ export const logout = async (req: Request & { user?: JWTPayload }, res: Response
         if (req.user.role === 'admin') {
           await supabase
             .from('admins')
+            .update({ last_logout: now })
+            .eq('id', req.user.id);
+        } else if (req.user.role === 'staff') {
+          await supabase
+            .from('staff')
             .update({ last_logout: now })
             .eq('id', req.user.id);
         } else if (req.user.role === 'client') {

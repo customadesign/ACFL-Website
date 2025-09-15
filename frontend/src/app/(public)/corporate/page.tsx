@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
@@ -10,7 +11,17 @@ import SpotlightCard from "@/components/SpotlightCard"
 import CountUp from "@/components/CountUp"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 import Footer from "@/components/Footer"
-const benefits = [
+import { getApiUrl } from "@/lib/api"
+
+interface ContentData {
+  id: string
+  title: string
+  content: string
+  slug: string
+  meta_description?: string
+}
+// Default content - will be overridden by CMS if available
+const defaultBenefits = [
   {
     icon: TrendingUp,
     title: "Increased Productivity",
@@ -33,7 +44,7 @@ const benefits = [
   }
 ]
 
-const programs = [
+const defaultPrograms = [
   {
     title: "Leadership Development",
     description: "Develop psychologically flexible leaders who can adapt to change and inspire their teams",
@@ -61,6 +72,99 @@ const programs = [
 ]
 
 export default function CorporateProgramsPage() {
+  const [corporateContent, setCorporateContent] = useState<ContentData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCorporateContent()
+  }, [])
+
+  const fetchCorporateContent = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=corporate-coaching`)
+      console.log('Corporate coaching content response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Corporate coaching content data:', data)
+        setCorporateContent(data)
+      } else {
+        console.log('Failed to fetch corporate coaching content, status:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching corporate coaching content:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Parse content from CMS if available
+  const parseContent = () => {
+    if (!corporateContent?.content) return null
+
+    try {
+      const parsed = JSON.parse(corporateContent.content)
+      console.log('Parsed corporate coaching content:', parsed)
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  const cmsContent = parseContent()
+
+  // Parse hero content
+  const getHeroContent = () => {
+    if (!cmsContent) return { title: null, description: null }
+    return {
+      title: cmsContent.hero?.title || null,
+      description: cmsContent.hero?.subtitle || null
+    }
+  }
+
+  const heroContent = getHeroContent()
+
+  // Smart title rendering that preserves styling
+  const renderTitle = () => {
+    if (heroContent.title) {
+      // If CMS has custom title, check if it contains "Corporate" or "Wellness" to apply gradient
+      const title = heroContent.title
+      if (title.toLowerCase().includes('corporate')) {
+        const parts = title.split(/corporate/i)
+        const match = title.match(/corporate/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      } else if (title.toLowerCase().includes('wellness')) {
+        const parts = title.split(/wellness/i)
+        const match = title.match(/wellness/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      }
+      // Return CMS title as-is if no special formatting needed
+      return title
+    }
+    // Fallback to default styled content
+    return <>Corporate <GradientText className="inline-block">Wellness</GradientText> Programs</>
+  }
+
+  // Get data from CMS or use defaults
+  const benefits = cmsContent?.benefits?.items || defaultBenefits
+  const programs = cmsContent?.programs?.types || defaultPrograms
+  const stats = cmsContent?.stats
+
   return (
     <div className="flex flex-col min-h-screen bg-white ">
       {/* Navigation */}
@@ -79,11 +183,11 @@ export default function CorporateProgramsPage() {
           >
            
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              Corporate <GradientText className="inline-block">Wellness</GradientText> Programs
+              {renderTitle()}
             </h1>
             <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Transform your workplace culture with evidence-based ACT coaching programs designed to boost 
-              employee wellbeing, productivity, and organizational resilience.
+              {heroContent.description || corporateContent?.meta_description ||
+                "Transform your workplace culture with evidence-based ACT coaching programs designed to boost employee wellbeing, productivity, and organizational resilience."}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg">
@@ -108,9 +212,9 @@ export default function CorporateProgramsPage() {
               transition={{ duration: 0.6 }}
             >
               <div className="text-4xl font-bold text-brand-teal mb-2">
-                <CountUp to={150} duration={2} />+
+                <CountUp to={stats?.companiesServed || 150} duration={2} />+
               </div>
-              <div className="text-gray-600">Companies Served</div>
+              <div className="text-gray-600">{stats?.companiesServedLabel || "Companies Served"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -118,9 +222,9 @@ export default function CorporateProgramsPage() {
               transition={{ duration: 0.6, delay: 0.1 }}
             >
               <div className="text-4xl font-bold text-brand-orange mb-2">
-                <CountUp to={25000} duration={2.5} separator="," />+
+                <CountUp to={stats?.employeesImpacted || 25000} duration={2.5} separator="," />+
               </div>
-              <div className="text-gray-600">Employees Impacted</div>
+              <div className="text-gray-600">{stats?.employeesImpactedLabel || "Employees Impacted"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -128,9 +232,9 @@ export default function CorporateProgramsPage() {
               transition={{ duration: 0.6, delay: 0.2 }}
             >
               <div className="text-4xl font-bold text-brand-leaf mb-2">
-                <CountUp to={87} duration={2.2} />%
+                <CountUp to={stats?.satisfactionRate || 87} duration={2.2} />%
               </div>
-              <div className="text-gray-600">Satisfaction Rate</div>
+              <div className="text-gray-600">{stats?.satisfactionRateLabel || "Satisfaction Rate"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -138,9 +242,9 @@ export default function CorporateProgramsPage() {
               transition={{ duration: 0.6, delay: 0.3 }}
             >
               <div className="text-4xl font-bold text-brand-coral mb-2">
-                <CountUp to={35} duration={2} />%
+                <CountUp to={stats?.reducedTurnover || 35} duration={2} />%
               </div>
-              <div className="text-gray-600">Reduced Turnover</div>
+              <div className="text-gray-600">{stats?.reducedTurnoverLabel || "Reduced Turnover"}</div>
             </motion.div>
           </div>
         </div>
@@ -156,27 +260,30 @@ export default function CorporateProgramsPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Why Companies Choose ACT Coaching
+              {cmsContent?.benefits?.title || "Why Companies Choose ACT Coaching"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Proven results that impact your bottom line and employee satisfaction
+              {cmsContent?.benefits?.subtitle || "Proven results that impact your bottom line and employee satisfaction"}
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
-              >
-                <benefit.icon className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
-                <p className="text-gray-600 text-sm">{benefit.description}</p>
-              </motion.div>
-            ))}
+            {benefits.map((benefit, index) => {
+              const IconComponent = benefit.icon
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  className="text-center"
+                >
+                  <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                  <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
+                  <p className="text-gray-600 text-sm">{benefit.description}</p>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
@@ -191,10 +298,10 @@ export default function CorporateProgramsPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Our Corporate Programs
+              {cmsContent?.programs?.title || "Our Corporate Programs"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Tailored solutions for every organizational need
+              {cmsContent?.programs?.subtitle || "Tailored solutions for every organizational need"}
             </p>
           </motion.div>
 
@@ -240,10 +347,10 @@ export default function CorporateProgramsPage() {
             className="text-center mb-16"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Simple Implementation Process
+              {cmsContent?.process?.title || "Simple Implementation Process"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We make it easy to get started with your corporate wellness program
+              {cmsContent?.process?.subtitle || "We make it easy to get started with your corporate wellness program"}
             </p>
           </motion.div>
 
@@ -282,10 +389,10 @@ export default function CorporateProgramsPage() {
             className="text-center"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Ready to Transform Your Workplace?
+              {cmsContent?.cta?.title || "Ready to Transform Your Workplace?"}
             </h2>
             <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-              Let's discuss how ACT coaching can benefit your organization. Schedule a free consultation today.
+              {cmsContent?.cta?.subtitle || "Let's discuss how ACT coaching can benefit your organization. Schedule a free consultation today."}
             </p>
             
             <div className="grid md:grid-cols-3 gap-8 max-w-3xl mx-auto">

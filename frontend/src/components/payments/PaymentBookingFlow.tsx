@@ -87,13 +87,15 @@ const PaymentBookingFlow: React.FC<PaymentBookingFlowProps> = ({
       setSelectedRate(rate);
       setIsLoading(true);
 
-      // Create payment intent
-      const response = await fetch('/api/payments/create-payment-intent', {
+      // Create payment authorization (not immediate capture)
+      const response = await fetch('/api/payments/v2/authorize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           coach_id: coachId,
           coach_rate_id: rate.id,
+          session_date: selectedDate,
+          session_time: selectedTime,
           description: `${rate.title} with ${coach?.first_name} ${coach?.last_name}`,
           metadata: {
             selected_date: selectedDate,
@@ -122,20 +124,17 @@ const PaymentBookingFlow: React.FC<PaymentBookingFlowProps> = ({
   const handlePaymentSuccess = async () => {
     try {
       if (paymentIntentId) {
-        // Confirm payment on backend
-        const response = await fetch(`/api/payments/confirm-payment/${paymentIntentId}`, {
-          method: 'POST',
-        });
-
-        if (response.ok) {
-          const payment = await response.json();
-          setStep('success');
-          onBookingComplete?.(payment.id);
-        }
+        // Note: Payment is authorized but not captured yet
+        // In the authorization/capture flow, payment will be captured after session completion
+        setStep('success');
+        onBookingComplete?.(paymentIntentId);
+        
+        toast.success('Payment authorized! Your session is booked.');
+        toast.info('Payment will be processed after your session is completed.');
       }
     } catch (error) {
-      console.error('Error confirming payment:', error);
-      toast.error('Payment confirmation failed');
+      console.error('Error handling payment success:', error);
+      toast.error('Payment processing failed');
     }
   };
 
@@ -175,12 +174,21 @@ const PaymentBookingFlow: React.FC<PaymentBookingFlowProps> = ({
     return (
       <Card className="max-w-md mx-auto">
         <CardContent className="text-center py-8">
-          <div className="text-6xl mb-4">✅</div>
-          <h2 className="text-2xl font-bold text-green-600 mb-2">Payment Successful!</h2>
+          <div className="text-6xl mb-4">⏳</div>
+          <h2 className="text-2xl font-bold text-blue-600 mb-2">Session Booked!</h2>
           <p className="text-gray-600 mb-4">
-            Your session has been booked with {coach?.first_name} {coach?.last_name}.
-            You will receive a confirmation email shortly.
+            Your session with {coach?.first_name} {coach?.last_name} has been reserved.
+            Payment is authorized and will be processed after your session is completed.
           </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+            <h3 className="font-semibold text-blue-800 mb-2">What happens next?</h3>
+            <ul className="text-sm text-blue-700 text-left">
+              <li>• Your payment method is authorized but not charged yet</li>
+              <li>• You will be charged automatically after session completion</li>
+              <li>• If you need to cancel, contact your coach or support</li>
+              <li>• You'll receive email confirmations for all updates</li>
+            </ul>
+          </div>
           <Button onClick={() => window.location.href = '/clients/appointments'}>
             View Appointments
           </Button>

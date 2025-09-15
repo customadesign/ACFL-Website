@@ -1,5 +1,6 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { motion } from "framer-motion"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -11,9 +12,10 @@ import SpotlightCard from "@/components/SpotlightCard"
 import ShinyText from "@/components/ShinyText"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 import Footer from "@/components/Footer"
-import { 
-  Heart, 
-  Users, 
+import { getApiUrl } from "@/lib/api"
+import {
+  Heart,
+  Users,
   Target,
   Shield,
   Award,
@@ -27,9 +29,105 @@ import {
   Zap
 } from "lucide-react"
 
+interface ContentData {
+  id: string
+  title: string
+  content: string
+  slug: string
+  meta_description?: string
+}
+
 export default function AboutPage() {
+  const [aboutContent, setAboutContent] = useState<ContentData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchAboutContent()
+  }, [])
+
+  const fetchAboutContent = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=about`)
+      console.log('About content response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('About content data:', data)
+        setAboutContent(data)
+      } else {
+        console.log('Failed to fetch about content, status:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching about content:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Parse content from CMS if available
+  const parseContent = () => {
+    if (!aboutContent?.content) return null
+
+    try {
+      const parsed = JSON.parse(aboutContent.content)
+      console.log('Parsed about content:', parsed)
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  const cmsContent = parseContent()
+
+  // Parse hero content
+  const getHeroContent = () => {
+    if (!cmsContent) return { title: null, description: null }
+    return {
+      title: cmsContent.hero?.title || null,
+      description: cmsContent.hero?.subtitle || null
+    }
+  }
+
+  const heroContent = getHeroContent()
+
+  // Smart title rendering that preserves styling
+  const renderTitle = () => {
+    if (heroContent.title) {
+      // If CMS has custom title, check if it contains "ACT" or "Coaching" to apply gradient
+      const title = heroContent.title
+      if (title.toLowerCase().includes('act coaching')) {
+        const parts = title.split(/act coaching/i)
+        const match = title.match(/act coaching/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      } else if (title.toLowerCase().includes('act')) {
+        const parts = title.split(/act/i)
+        const match = title.match(/act/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      }
+      // Return CMS title as-is if no special formatting needed
+      return title
+    }
+    // Fallback to default styled content
+    return <>About <GradientText className="inline-block">ACT Coaching</GradientText> for Life</>
+  }
+
   return (
-    <div className="flex flex-col min-h-screen bg-white ">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Navigation */}
       <nav>
         <NavbarLandingPage />
@@ -44,13 +142,12 @@ export default function AboutPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-           
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              About <GradientText className="inline-block">ACT Coaching</GradientText> for Life
+              {renderTitle()}
             </h1>
             <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              We're transforming lives through evidence-based Acceptance and Commitment Therapy coaching, 
-              helping people create meaningful change and live authentically.
+              {heroContent.description || aboutContent?.meta_description ||
+                "We're transforming lives through evidence-based Acceptance and Commitment Therapy coaching, helping people create meaningful change and live authentically."}
             </p>
           </motion.div>
         </div>
@@ -66,21 +163,31 @@ export default function AboutPage() {
               transition={{ duration: 0.6 }}
             >
               <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-                Our Mission
+                {cmsContent?.mission?.title || "Our Mission"}
               </h2>
-              <p className="text-lg text-gray-600 mb-6 leading-relaxed">
-                At ACT Coaching for Life, we believe everyone deserves to live a life aligned with their values. 
-                Our mission is to make professional, evidence-based coaching accessible to anyone seeking 
-                meaningful change.
-              </p>
-              <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                Through our innovative matching platform, we connect you with qualified ACT coaches who 
-                understand your unique challenges and can guide you toward psychological flexibility, 
-                resilience, and authentic living.
-              </p>
+              <div className="prose prose-lg text-gray-600 mb-8">
+                {cmsContent?.mission?.content ? (
+                  <div dangerouslySetInnerHTML={{ __html: cmsContent.mission.content }} />
+                ) : (
+                  <>
+                    <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                      At ACT Coaching for Life, we believe everyone deserves to live a life aligned with their values.
+                      Our mission is to make professional, evidence-based coaching accessible to anyone seeking
+                      meaningful change.
+                    </p>
+                    <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                      Through our innovative matching platform, we connect you with qualified ACT coaches who
+                      understand your unique challenges and can guide you toward psychological flexibility,
+                      resilience, and authentic living.
+                    </p>
+                  </>
+                )}
+              </div>
               <div className="flex items-center space-x-4">
                 <Heart className="w-8 h-8 text-brand-coral" />
-                <span className="text-lg font-semibold text-ink-dark">Compassionate, evidence-based care</span>
+                <span className="text-lg font-semibold text-ink-dark">
+                  {cmsContent?.mission?.tagline || "Compassionate, evidence-based care"}
+                </span>
               </div>
             </motion.div>
 
@@ -93,27 +200,27 @@ export default function AboutPage() {
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-teal mb-2">
-                      <CountUp to={3000} duration={2.5} separator="," />+
+                      <CountUp to={cmsContent?.stats?.livesChanged || 3000} duration={2.5} separator="," />+
                     </div>
                     <div className="text-gray-600">Lives Changed</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-orange mb-2">
-                      <CountUp to={500} duration={2} />+
+                      <CountUp to={cmsContent?.stats?.certifiedCoaches || 150} duration={2.5} separator="," />+
                     </div>
-                    <div className="text-gray-600">Professional Coaches</div>
+                    <div className="text-gray-600">Certified Coaches</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-leaf mb-2">
-                      <CountUp to={4.8} duration={2.2} from={0} />/<CountUp to={5} duration={1.8} />
+                    <div className="text-3xl font-bold text-brand-purple mb-2">
+                      <CountUp to={cmsContent?.stats?.satisfaction || 98} duration={2.5} />%
                     </div>
-                    <div className="text-gray-600">Client Rating</div>
+                    <div className="text-gray-600">Satisfaction Rate</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-coral mb-2">
-                      <CountUp to={24} duration={1.5} />hr
+                      <CountUp to={cmsContent?.stats?.countries || 25} duration={2.5} />+
                     </div>
-                    <div className="text-gray-600">Match Guarantee</div>
+                    <div className="text-gray-600">Countries</div>
                   </div>
                 </div>
               </SpotlightCard>
@@ -122,245 +229,200 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* What is ACT Section */}
+      {/* Values Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+              {cmsContent?.values?.title || "Our Core Values"}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              {cmsContent?.values?.subtitle || "These principles guide everything we do"}
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {(cmsContent?.values?.items || [
+              {
+                icon: Brain,
+                title: "Evidence-Based",
+                description: "Rooted in psychological science and research"
+              },
+              {
+                icon: Heart,
+                title: "Compassionate",
+                description: "Creating a safe, non-judgmental space for growth"
+              },
+              {
+                icon: Users,
+                title: "Accessible",
+                description: "Making quality coaching available to everyone"
+              },
+              {
+                icon: Target,
+                title: "Action-Oriented",
+                description: "Focusing on practical steps toward your goals"
+              }
+            ]).map((value: any, index: number) => {
+              const iconMap: { [key: string]: any } = { Brain, Heart, Users, Target, Shield, Award, Lightbulb, Compass, Zap }
+              const IconComponent = value.iconName ?
+                iconMap[value.iconName] || Brain
+                : value.icon
+
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                >
+                  <Card className="h-full hover:shadow-lg transition-shadow">
+                    <CardContent className="p-6 text-center">
+                      <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-ink-dark mb-2">{value.title}</h3>
+                      <p className="text-gray-600">{value.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Story Section */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-16"
+            className="max-w-4xl mx-auto"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              What is <GradientText className="inline-block">ACT Coaching?</GradientText>
+            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-8 text-center">
+              {cmsContent?.story?.title || "Our Story"}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-              Acceptance and Commitment Therapy (ACT) is a proven therapeutic approach that helps you 
-              develop psychological flexibility and live according to your values.
+
+            <div className="prose prose-lg text-gray-600 mx-auto">
+              {cmsContent?.story?.content ? (
+                <div dangerouslySetInnerHTML={{ __html: cmsContent.story.content }} />
+              ) : (
+                <>
+                  <p className="mb-6">
+                    ACT Coaching for Life was founded with a simple yet powerful vision: to bridge the gap
+                    between those seeking personal growth and qualified ACT practitioners who could guide them.
+                  </p>
+                  <p className="mb-6">
+                    We recognized that while Acceptance and Commitment Therapy has helped millions worldwide,
+                    finding the right coach remained a challenge. Our platform was created to solve this problem
+                    by using intelligent matching technology to connect you with coaches who truly understand
+                    your unique needs.
+                  </p>
+                  <p>
+                    Today, we're proud to be the leading platform for ACT coaching, with a growing community
+                    of certified coaches and thousands of success stories from people who've transformed their
+                    lives through our service.
+                  </p>
+                </>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Team Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+              {cmsContent?.team?.title || "Meet Our Leadership"}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              {cmsContent?.team?.subtitle || "Dedicated professionals committed to your growth"}
             </p>
           </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <SpotlightCard className="h-full p-6 text-center">
-                <Brain className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-ink-dark mb-3">Psychological Flexibility</h3>
-                <p className="text-gray-600">
-                  Learn to adapt to challenges, stay present, and respond to situations with awareness rather than react automatically.
-                </p>
-              </SpotlightCard>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <SpotlightCard className="h-full p-6 text-center">
-                <Compass className="w-12 h-12 text-brand-orange mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-ink-dark mb-3">Values-Based Living</h3>
-                <p className="text-gray-600">
-                  Identify what truly matters to you and make choices that align with your deepest values and aspirations.
-                </p>
-              </SpotlightCard>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <SpotlightCard className="h-full p-6 text-center">
-                <Zap className="w-12 h-12 text-brand-leaf mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-ink-dark mb-3">Mindful Action</h3>
-                <p className="text-gray-600">
-                  Take committed action toward your goals while staying present and engaged with the process.
-                </p>
-              </SpotlightCard>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Choose Us Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              Why Choose ACT Coaching for Life?
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              We're not just another coaching platform. We're specialized in ACT approaches with proven results.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <Shield className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-ink-dark mb-3">Qualified Professionals</h3>
-              <p className="text-gray-600 text-sm">
-                Our coaches are carefully vetted professionals with specialized ACT training and experience.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-center"
-            >
-              <Target className="w-12 h-12 text-brand-orange mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-ink-dark mb-3">Personalized Matching</h3>
-              <p className="text-gray-600 text-sm">
-                Our algorithm matches you with coaches based on your specific needs and preferences.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center"
-            >
-              <Award className="w-12 h-12 text-brand-leaf mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-ink-dark mb-3">Evidence-Based</h3>
-              <p className="text-gray-600 text-sm">
-                ACT is backed by over 300 research studies showing its effectiveness.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              className="text-center"
-            >
-              <Lightbulb className="w-12 h-12 text-brand-coral mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-ink-dark mb-3">Flexible & Accessible</h3>
-              <p className="text-gray-600 text-sm">
-                Online sessions, flexible scheduling, and 24/7 messaging support.
-              </p>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Our Approach Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-                Our Approach
-              </h2>
-              <div className="space-y-6">
-                <div className="flex items-start">
-                  <CheckCircle className="w-6 h-6 text-brand-teal mr-4 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-ink-dark mb-2">Comprehensive Assessment</h4>
-                    <p className="text-gray-600">We start by understanding your unique situation, challenges, and goals.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="w-6 h-6 text-brand-orange mr-4 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-ink-dark mb-2">Perfect Coach Match</h4>
-                    <p className="text-gray-600">Our matching system finds the ideal coach based on your preferences and needs.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="w-6 h-6 text-brand-leaf mr-4 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-ink-dark mb-2">Ongoing Support</h4>
-                    <p className="text-gray-600">Regular sessions plus 24/7 messaging for continuous guidance and support.</p>
-                  </div>
-                </div>
-                <div className="flex items-start">
-                  <CheckCircle className="w-6 h-6 text-brand-coral mr-4 mt-1 flex-shrink-0" />
-                  <div>
-                    <h4 className="font-semibold text-ink-dark mb-2">Measurable Progress</h4>
-                    <p className="text-gray-600">Track your growth with our progress monitoring tools and regular check-ins.</p>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <SpotlightCard className="p-8">
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h3 className="text-2xl font-bold text-ink-dark mb-4">Our Promise</h3>
-                    <p className="text-gray-600 leading-relaxed">
-                      We're committed to helping you create lasting, meaningful change in your life. 
-                      If you're not satisfied with your coach match within the first two sessions, 
-                      we'll find you a new coach at no additional cost.
-                    </p>
-                  </div>
-                  <div className="text-center pt-4">
-                    <Star className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-500 italic">
-                      "The best investment I've made in myself. My coach helped me transform my life in ways I never thought possible."
-                    </p>
-                    <p className="text-sm text-gray-700 font-semibold mt-2">- Sarah M., Client</p>
-                  </div>
-                </div>
-              </SpotlightCard>
-            </motion.div>
+            {(cmsContent?.team?.members || [
+              {
+                name: "Dr. Sarah Chen",
+                role: "Founder & CEO",
+                description: "Clinical psychologist with 15+ years in ACT therapy"
+              },
+              {
+                name: "Michael Rodriguez",
+                role: "Head of Coaching",
+                description: "Certified ACT trainer and master coach"
+              },
+              {
+                name: "Emily Thompson",
+                role: "Chief Technology Officer",
+                description: "Building technology that connects and empowers"
+              }
+            ]).map((member: any, index: number) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <SpotlightCard className="p-6 text-center h-full">
+                  <div className="w-24 h-24 bg-gradient-to-br from-brand-teal to-brand-orange rounded-full mx-auto mb-4" />
+                  <h3 className="text-xl font-semibold text-ink-dark mb-1">{member.name}</h3>
+                  <p className="text-brand-teal font-medium mb-3">{member.role}</p>
+                  <p className="text-gray-600">{member.description}</p>
+                </SpotlightCard>
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-brand-teal to-brand-orange">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
               Ready to Start Your Journey?
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Take the first step toward meaningful change. Our quick assessment will help us find 
-              the perfect coach for your unique needs.
+            <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
+              Join thousands who've discovered a more meaningful life through ACT coaching.
             </p>
-            <div className="flex justify-center">
-              <a href="/#quick-assessment">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg font-semibold"
-                >
-                  Start Your Assessment
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Button>
-              </a>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button
+                size="lg"
+                className="bg-white text-brand-teal hover:bg-gray-50 text-lg px-8"
+              >
+                Find Your Coach
+                <ChevronRight className="w-5 h-5 ml-2" />
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white/10 text-lg px-8"
+              >
+                Become a Coach
+              </Button>
             </div>
           </motion.div>
         </div>
       </section>
+
       <Footer />
     </div>
   )

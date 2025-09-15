@@ -1,115 +1,184 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import Logo from "@/components/Logo"
-import { ArrowLeft, Download, BookOpen, Video, FileText, Headphones, Users, Calendar, ChevronRight } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { ArrowLeft, Download, BookOpen, Video, FileText, Headphones, Users, Calendar, ChevronRight, Search, Mail } from "lucide-react"
 import GradientText from "@/components/GradientText"
 import SpotlightCard from "@/components/SpotlightCard"
 import Footer from "@/components/Footer"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
+import { getApiUrl } from "@/lib/api"
 
-const resources = {
-  guides: [
-    {
-      title: "ACT Fundamentals Guide",
-      description: "A comprehensive introduction to Acceptance and Commitment Therapy principles",
-      pages: 45,
-      format: "PDF",
-      icon: BookOpen
-    },
-    {
-      title: "Values Clarification Workbook",
-      description: "Exercises to help identify and live by your core values",
-      pages: 28,
-      format: "PDF",
-      icon: FileText
-    },
-    {
-      title: "Mindfulness Exercises Collection",
-      description: "30+ guided mindfulness practices for daily use",
-      pages: 60,
-      format: "PDF",
-      icon: BookOpen
-    },
-    {
-      title: "Cognitive Defusion Techniques",
-      description: "Practical strategies for managing difficult thoughts",
-      pages: 35,
-      format: "PDF",
-      icon: FileText
-    }
-  ],
-  videos: [
-    {
-      title: "Introduction to ACT Coaching",
-      duration: "15 min",
-      instructor: "Dr. Sarah Mitchell"
-    },
-    {
-      title: "Mindfulness in Daily Life",
-      duration: "20 min",
-      instructor: "Michael Chen"
-    },
-    {
-      title: "Working with Difficult Emotions",
-      duration: "25 min",
-      instructor: "Dr. Emily Rodriguez"
-    },
-    {
-      title: "Building Psychological Flexibility",
-      duration: "30 min",
-      instructor: "James Thompson"
-    }
-  ],
-  podcasts: [
-    {
-      title: "Living ACT: Weekly Insights",
-      episodes: 52,
-      duration: "30-45 min"
-    },
-    {
-      title: "Mindful Conversations",
-      episodes: 24,
-      duration: "20-30 min"
-    },
-    {
-      title: "Success Stories",
-      episodes: 36,
-      duration: "25-35 min"
-    }
-  ],
-  workshops: [
-    {
-      title: "ACT Foundations Workshop",
-      date: "February 15, 2024",
-      duration: "2 hours",
-      type: "Live Online"
-    },
-    {
-      title: "Values & Committed Action",
-      date: "February 22, 2024",
-      duration: "90 min",
-      type: "Live Online"
-    },
-    {
-      title: "Mindfulness Intensive",
-      date: "March 1, 2024",
-      duration: "3 hours",
-      type: "Live Online"
-    }
-  ]
+interface ContentData {
+  id: string
+  title: string
+  content: string
+  slug: string
+  meta_description?: string
 }
 
 export default function ResourcesPage() {
+  const [resourcesContent, setResourcesContent] = useState<ContentData | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  // Default resources if CMS content is not available
+  const defaultCategories = [
+    {
+      title: "Guides & Workbooks",
+      description: "Comprehensive guides to help you understand and practice ACT principles",
+      icon: BookOpen,
+      iconName: "BookOpen",
+      resources: [
+        {
+          title: "ACT Fundamentals Guide",
+          description: "A comprehensive introduction to Acceptance and Commitment Therapy principles",
+          pages: 45,
+          format: "PDF",
+          downloadUrl: "#"
+        },
+        {
+          title: "Values Clarification Workbook",
+          description: "Exercises to help identify and live by your core values",
+          pages: 28,
+          format: "PDF",
+          downloadUrl: "#"
+        }
+      ]
+    },
+    {
+      title: "Video Content",
+      description: "Expert-led video sessions on key ACT concepts and techniques",
+      icon: Video,
+      iconName: "Video",
+      resources: [
+        {
+          title: "Introduction to ACT Coaching",
+          description: "Learn the basics of ACT coaching methodology",
+          duration: "15 min",
+          instructor: "Dr. Sarah Mitchell",
+          videoUrl: "#"
+        }
+      ]
+    },
+    {
+      title: "Audio Resources",
+      description: "Guided meditations and audio exercises for practice",
+      icon: Headphones,
+      iconName: "Headphones",
+      resources: [
+        {
+          title: "Mindfulness Audio Series",
+          description: "Guided mindfulness exercises for daily practice",
+          duration: "Various",
+          format: "MP3",
+          audioUrl: "#"
+        }
+      ]
+    }
+  ]
+
+  const defaultFeatured = [
+    {
+      title: "Complete ACT Starter Kit",
+      description: "Everything you need to begin your ACT journey",
+      type: "Bundle",
+      items: 5,
+      downloadUrl: "#"
+    },
+    {
+      title: "Weekly Mindfulness Challenge",
+      description: "7-day guided mindfulness program",
+      type: "Program",
+      duration: "7 days",
+      accessUrl: "#"
+    }
+  ]
+
+  useEffect(() => {
+    fetchResourcesContent()
+  }, [])
+
+  const fetchResourcesContent = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=resources`)
+      console.log('Resources content response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Resources content data:', data)
+        setResourcesContent(data)
+      } else {
+        console.log('Failed to fetch resources content, status:', response.status)
+      }
+    } catch (error) {
+      console.error('Error fetching resources content:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Parse content from CMS if available
+  const parseContent = () => {
+    if (!resourcesContent?.content) return null
+
+    try {
+      const parsed = JSON.parse(resourcesContent.content)
+      console.log('Parsed resources content:', parsed)
+      return parsed
+    } catch {
+      return null
+    }
+  }
+
+  const cmsContent = parseContent()
+
+  // Parse hero content
+  const getHeroContent = () => {
+    if (!cmsContent) return { title: null, description: null }
+    return {
+      title: cmsContent.hero?.title || null,
+      description: cmsContent.hero?.subtitle || null
+    }
+  }
+
+  const heroContent = getHeroContent()
+
+  // Smart title rendering that preserves styling
+  const renderTitle = () => {
+    if (heroContent.title) {
+      // If CMS has custom title, check if it contains "Resources" to apply gradient
+      const title = heroContent.title
+      if (title.toLowerCase().includes('resources')) {
+        const parts = title.split(/resources/i)
+        const match = title.match(/resources/i)
+        if (parts.length === 2 && match) {
+          return (
+            <>
+              {parts[0]}
+              <GradientText className="inline-block">{match[0]}</GradientText>
+              {parts[1]}
+            </>
+          )
+        }
+      }
+      // Return CMS title as-is if no special formatting needed
+      return title
+    }
+    // Fallback to default styled content
+    return <><GradientText className="inline-block">Resources</GradientText> Library</>
+  }
+
+  const resourceCategories = cmsContent?.categories?.categories || defaultCategories
+  const featuredResources = cmsContent?.featured?.resources || defaultFeatured
+
   return (
-    <div className="flex flex-col min-h-screen bg-white ">
+    <div className="flex flex-col min-h-screen bg-white">
       {/* Navigation */}
       <nav>
         <NavbarLandingPage />
       </nav>
-     
 
       {/* Hero Section */}
       <section className="py-20">
@@ -120,19 +189,38 @@ export default function ResourcesPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            
+            <Link
+              href="/"
+              className="inline-flex items-center text-brand-teal hover:text-brand-teal/80 mb-6 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Home
+            </Link>
             <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              ACT <GradientText className="inline-block">Resources</GradientText>
+              {renderTitle()}
             </h1>
             <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Free guides, videos, and tools to support your journey toward psychological flexibility and wellbeing.
+              {heroContent.description || resourcesContent?.meta_description ||
+                "Access our comprehensive collection of ACT resources, guides, and tools to support your personal growth journey."}
             </p>
+
+            {/* Search Bar */}
+            <div className="max-w-2xl mx-auto">
+              <div className="relative">
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                <Input
+                  type="search"
+                  placeholder="Search resources..."
+                  className="pl-12 pr-4 h-14 w-full text-lg border-gray-300 focus:border-brand-teal focus:ring-brand-teal"
+                />
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Downloadable Guides */}
-      <section className="py-16 bg-white">
+      {/* Featured Resources */}
+      <section className="py-12 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}
@@ -140,127 +228,39 @@ export default function ResourcesPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              Downloadable Guides
+            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
+              {cmsContent?.featured?.title || "Featured Resources"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Comprehensive resources to deepen your understanding of ACT
+              Hand-picked resources to get you started on your ACT journey
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 gap-6">
-            {resources.guides.map((guide, index) => (
+          <div className="grid md:grid-cols-2 gap-8">
+            {featuredResources.map((resource, index) => (
               <motion.div
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <SpotlightCard className="h-full p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex items-start space-x-4">
-                    <guide.icon className="w-10 h-10 text-brand-teal flex-shrink-0" />
+                <SpotlightCard className="p-8 h-full hover:shadow-lg transition-shadow">
+                  <div className="flex items-start justify-between mb-4">
                     <div className="flex-1">
-                      <h3 className="text-lg font-semibold text-ink-dark mb-2">{guide.title}</h3>
-                      <p className="text-gray-600 text-sm mb-3">{guide.description}</p>
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-gray-500">
-                          {guide.pages} pages • {guide.format}
+                      <h3 className="text-2xl font-semibold text-ink-dark mb-2">{resource.title}</h3>
+                      <p className="text-gray-600 mb-4">{resource.description}</p>
+                      <div className="flex items-center gap-4 text-sm text-gray-500 mb-6">
+                        <span className="px-3 py-1 bg-brand-teal/10 text-brand-teal rounded-full">
+                          {resource.type}
                         </span>
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="text-brand-teal hover:text-brand-teal/80"
-                        >
-                          <Download className="w-4 h-4 mr-1" />
-                          Download
-                        </Button>
+                        {resource.items && <span>{resource.items} items</span>}
+                        {resource.duration && <span>{resource.duration}</span>}
                       </div>
                     </div>
                   </div>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Video Library */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              Video Library
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Learn from our expert coaches through guided video sessions
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {resources.videos.map((video, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <div className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow overflow-hidden">
-                  <div className="aspect-video bg-gradient-to-br from-brand-teal to-brand-orange flex items-center justify-center">
-                    <Video className="w-12 h-12 text-white" />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-ink-dark mb-1">{video.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2">{video.instructor}</p>
-                    <p className="text-xs text-gray-500">{video.duration}</p>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Podcasts */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              Podcasts
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Listen and learn on the go with our curated podcast series
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {resources.podcasts.map((podcast, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="p-6 text-center hover:shadow-lg transition-shadow">
-                  <Headphones className="w-12 h-12 text-brand-orange mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-ink-dark mb-2">{podcast.title}</h3>
-                  <p className="text-gray-600 text-sm mb-4">
-                    {podcast.episodes} episodes • {podcast.duration} each
-                  </p>
-                  <Button 
-                    variant="outline" 
-                    className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white"
-                  >
-                    Listen Now
+                  <Button className="w-full bg-brand-teal hover:bg-brand-teal/90">
+                    <Download className="w-4 h-4 mr-2" />
+                    Access Resource
                   </Button>
                 </SpotlightCard>
               </motion.div>
@@ -269,7 +269,7 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      {/* Workshops */}
+      {/* Resource Categories */}
       <section className="py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -278,73 +278,96 @@ export default function ResourcesPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              Upcoming Workshops
+            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
+              {cmsContent?.categories?.title || "Browse by Category"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Join our live online workshops for deeper learning experiences
+              Explore our organized collection of resources by type and topic
             </p>
           </motion.div>
 
-          <div className="space-y-4 max-w-3xl mx-auto">
-            {resources.workshops.map((workshop, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="p-6 hover:shadow-lg transition-shadow">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="mb-4 md:mb-0">
-                      <h3 className="text-xl font-semibold text-ink-dark mb-2">{workshop.title}</h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {workshop.date}
-                        </span>
-                        <span className="flex items-center">
-                          <Users className="w-4 h-4 mr-1" />
-                          {workshop.type}
-                        </span>
-                        <span>{workshop.duration}</span>
-                      </div>
-                    </div>
-                    <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                      Register
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+          <div className="space-y-16">
+            {resourceCategories.map((category, categoryIndex) => {
+              const IconComponent = category.iconName ?
+                { BookOpen, Video, FileText, Headphones, Users, Calendar }[category.iconName] || BookOpen
+                : category.icon
+
+              return (
+                <motion.div
+                  key={categoryIndex}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: categoryIndex * 0.1 }}
+                >
+                  <div className="text-center mb-8">
+                    <IconComponent className="w-16 h-16 text-brand-teal mx-auto mb-4" />
+                    <h3 className="text-2xl font-bold text-ink-dark mb-2">{category.title}</h3>
+                    <p className="text-gray-600 max-w-2xl mx-auto">{category.description}</p>
                   </div>
-                </SpotlightCard>
-              </motion.div>
-            ))}
+
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {(category.resources || []).map((resource, resourceIndex) => (
+                      <SpotlightCard key={resourceIndex} className="p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-lg font-semibold text-ink-dark">{resource.title}</h4>
+                        </div>
+                        <p className="text-gray-600 text-sm mb-4">{resource.description}</p>
+
+                        <div className="flex items-center justify-between text-xs text-gray-500 mb-4">
+                          {resource.pages && <span>{resource.pages} pages</span>}
+                          {resource.duration && <span>{resource.duration}</span>}
+                          {resource.format && <span className="px-2 py-1 bg-gray-100 rounded">{resource.format}</span>}
+                        </div>
+
+                        {resource.instructor && (
+                          <p className="text-sm text-brand-teal mb-4">by {resource.instructor}</p>
+                        )}
+
+                        <Button size="sm" variant="outline" className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
+                          <Download className="w-4 h-4 mr-2" />
+                          Access
+                        </Button>
+                      </SpotlightCard>
+                    ))}
+                  </div>
+                </motion.div>
+              )
+            })}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-brand-teal">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* Newsletter Signup */}
+      <section className="py-20 bg-gradient-to-r from-brand-teal to-brand-orange">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            className="text-center"
           >
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Ready for Personalized Support?
+              {cmsContent?.newsletter?.title || "Stay Updated"}
             </h2>
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              While these resources are helpful, nothing beats working with a coach who understands your unique journey.
+              {cmsContent?.newsletter?.description ||
+                "Get notified when we add new resources and tools to help you on your journey."}
             </p>
-            <Link href="/#quick-assessment">
-              <Button className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg">
-                Find Your Coach
-                <ChevronRight className="ml-2 w-5 h-5" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+              <Input
+                type="email"
+                placeholder="Enter your email"
+                className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20"
+              />
+              <Button className="bg-white text-brand-teal hover:bg-gray-50 px-8">
+                <Mail className="w-4 h-4 mr-2" />
+                Subscribe
               </Button>
-            </Link>
+            </div>
           </motion.div>
         </div>
       </section>
+
       <Footer />
     </div>
   )

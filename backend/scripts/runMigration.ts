@@ -16,7 +16,7 @@ async function runMigration() {
 
   try {
     // Read the migration file
-    const migrationPath = path.join(__dirname, '..', 'database', 'migrations', '003_fix_coach_application_field_lengths.sql');
+    const migrationPath = path.join(__dirname, '..', 'database', 'migrations', 'create_staff_invitations_table.sql');
     const migrationSQL = fs.readFileSync(migrationPath, 'utf-8');
 
     console.log('📄 Migration file:', migrationPath);
