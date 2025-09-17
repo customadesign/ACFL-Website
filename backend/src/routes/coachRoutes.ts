@@ -2504,6 +2504,9 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
   }
 });
 
+// Get coach by ID (plural version for frontend compatibility)
+router.get('/coaches/:id', getCoachById);
+
 // Get coach by ID (IMPORTANT: Keep this at the end - parameterized routes must come after specific ones)
 router.get('/coach/:id', getCoachById);
 

@@ -20,7 +20,8 @@
       "Bash(node:*)",
       "Bash(netstat:*)",
       "Bash(npm run setup-admin:*)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(npm install)"
     ],
     "deny": [],
     "ask": []

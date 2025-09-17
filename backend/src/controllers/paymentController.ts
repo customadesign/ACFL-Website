@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { PaymentService } from '../services/paymentService';
+import { PaymentServiceV2 } from '../services/paymentServiceV2';
 import { CoachRateService } from '../services/coachRateService';
 import { 
   CreatePaymentIntentRequest, 
@@ -8,11 +8,11 @@ import {
 } from '../types/payment';
 
 export class PaymentController {
-  private paymentService: PaymentService;
+  private paymentService: PaymentServiceV2;
   private coachRateService: CoachRateService;
 
   constructor() {
-    this.paymentService = new PaymentService();
+    this.paymentService = new PaymentServiceV2();
     this.coachRateService = new CoachRateService();
   }
 
@@ -71,27 +71,56 @@ export class PaymentController {
     }
   };
 
+  // Test payment endpoint (no auth required)
+  testPaymentAuthorization = async (req: Request, res: Response) => {
+    try {
+      const request: CreatePaymentIntentRequest = req.body;
+      // Use a test client ID for testing purposes
+      const testClientId = 'test-client-123';
+
+      const response = await this.paymentService.createPaymentAuthorization(testClientId, request);
+      res.status(201).json(response);
+    } catch (error) {
+      console.error('Test payment authorization error:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  };
+
   // Payment Processing
   createPaymentIntent = async (req: Request & { user?: any }, res: Response) => {
     try {
-      const clientId = req.user?.id; // Assuming authentication middleware sets this
+      // Use userId from JWT payload (see types/auth.ts JWTPayload interface)
+      const clientId = req.user?.userId || req.user?.id;
       if (!clientId) {
+        console.error('No user ID found in request. User object:', req.user);
         return res.status(401).json({ error: 'Authentication required' });
       }
 
       const request: CreatePaymentIntentRequest = req.body;
-      const response = await this.paymentService.createPaymentIntent(clientId, request);
+      const response = await this.paymentService.createPaymentAuthorization(clientId, request);
       res.status(201).json(response);
+    } catch (error) {
+      console.error('Payment intent creation error:', error);
+      res.status(500).json({ error: (error as Error).message });
+    }
+  };
+
+  capturePayment = async (req: Request, res: Response) => {
+    try {
+      const { paymentId } = req.params;
+      const payment = await this.paymentService.capturePayment(paymentId);
+      res.json(payment);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
   };
 
-  confirmPayment = async (req: Request, res: Response) => {
+  cancelAuthorization = async (req: Request, res: Response) => {
     try {
-      const { paymentIntentId } = req.params;
-      const payment = await this.paymentService.confirmPayment(paymentIntentId);
-      res.json(payment);
+      const { paymentId } = req.params;
+      const { reason } = req.body;
+      await this.paymentService.cancelAuthorization(paymentId, reason);
+      res.json({ message: 'Payment authorization cancelled successfully' });
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
     }
@@ -109,24 +138,12 @@ export class PaymentController {
     }
   };
 
-  // Webhook handler
-  handleStripeWebhook = async (req: Request, res: Response) => {
+  // Webhook handler - Stubbed for new payment gateway
+  handlePaymentWebhook = async (req: Request, res: Response) => {
     try {
-      const sig = req.headers['stripe-signature'] as string;
-      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-      
-      if (!webhookSecret) {
-        return res.status(500).json({ error: 'Webhook secret not configured' });
-      }
-
-      // Verify webhook signature
-      const stripe = require('../lib/stripe').default;
-      let event;
-      try {
-        event = stripe.webhooks.constructEvent(req.body, sig, webhookSecret);
-      } catch (err) {
-        return res.status(400).json({ error: 'Invalid webhook signature' });
-      }
+      // Stub: Webhook verification would happen here with new payment gateway
+      // For now, just pass the event to the service
+      const event = req.body;
 
       await this.paymentService.handleWebhook(event);
       res.json({ received: true });

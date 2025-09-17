@@ -114,6 +114,7 @@ function CoachProfileContent() {
   const [loading, setLoading] = useState(true)
   const [isSaved, setIsSaved] = useState(false)
   const [showBookingCalendar, setShowBookingCalendar] = useState(false)
+  const [sessionType, setSessionType] = useState<'consultation' | 'session'>('consultation')
 
   useEffect(() => {
     // Fetch coach data based on ID
@@ -266,7 +267,8 @@ function CoachProfileContent() {
     fetchCoach()
   }, [params.id])
 
-  const handleBookSession = () => {
+  const handleBookSession = (type: 'consultation' | 'session' = 'consultation') => {
+    setSessionType(type)
     setShowBookingCalendar(true)
   }
 
@@ -395,21 +397,21 @@ function CoachProfileContent() {
 
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button 
+                <Button
                   size="lg"
                   className="bg-white text-blue-700 hover:bg-blue-50 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
-                  onClick={handleBookSession}
+                  onClick={() => handleBookSession('consultation')}
                 >
                   <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Book Session
+                  Free Consultation
                 </Button>
-                <Button 
+                <Button
                   size="lg"
-                  variant="outline"
-                  className="border-white/30 text-black dark:text-white hover:bg-white/10 transition-all w-full sm:w-auto"
+                  className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
+                  onClick={() => handleBookSession('session')}
                 >
-                  <MessageCircle className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Send Message
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                  Book Paid Session
                 </Button>
               </div>
             </div>
@@ -461,13 +463,24 @@ function CoachProfileContent() {
                     </div>
                   </div>
                 </div>
-                <Button 
-                  className="w-full mt-4 sm:mt-6 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
-                  onClick={handleBookSession}
-                >
-                  <Calendar className="w-4 h-4 mr-2" />
-                  Book Session
-                </Button>
+                <div className="flex gap-2 mt-4 sm:mt-6">
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
+                    onClick={() => handleBookSession('consultation')}
+                  >
+                    <Calendar className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Free Call</span>
+                    <span className="sm:hidden">Free</span>
+                  </Button>
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
+                    onClick={() => handleBookSession('session')}
+                  >
+                    <DollarSign className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Paid</span>
+                    <span className="sm:hidden">Pay</span>
+                  </Button>
+                </div>
               </CardContent>
             </Card>
 
@@ -1027,15 +1040,26 @@ function CoachProfileContent() {
                   </p>
                 </div>
                 <div className="space-y-2 sm:space-y-3">
-                  <Button
-                    size="lg"
-                    className="w-full bg-white text-blue-700 hover:bg-blue-50 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
-                    onClick={handleBookSession}
-                  >
-                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                    <span className="hidden xs:inline">Book Your Free Consultation</span>
-                    <span className="xs:hidden">Book Consultation</span>
-                  </Button>
+                  <div className="flex gap-2 w-full">
+                    <Button
+                      size="lg"
+                      className="flex-1 bg-white text-blue-700 hover:bg-blue-50 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
+                      onClick={() => handleBookSession('consultation')}
+                    >
+                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="hidden sm:inline">Free Consultation</span>
+                      <span className="sm:hidden">Free</span>
+                    </Button>
+                    <Button
+                      size="lg"
+                      className="flex-1 bg-green-500 text-white hover:bg-green-600 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
+                      onClick={() => handleBookSession('session')}
+                    >
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="hidden sm:inline">Paid Session</span>
+                      <span className="sm:hidden">Paid</span>
+                    </Button>
+                  </div>
                   <p className="text-xs sm:text-sm text-blue-100">
                     No commitment required • 15 minutes • Video call
                   </p>
@@ -1046,14 +1070,18 @@ function CoachProfileContent() {
         </div>
       </div>
 
-      {/* GHL Booking Calendar Modal */}
+      {/* Enhanced GHL Booking Calendar with Square Payment */}
       {showBookingCalendar && coach && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] p-2 sm:p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-5xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto">
             <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white pr-2">
-                <span className="hidden sm:inline">Book Session with {coach.name}</span>
-                <span className="sm:hidden">Book Session</span>
+                <span className="hidden sm:inline">
+                  Book {sessionType === 'consultation' ? 'Free Consultation' : 'Paid Session'} with {coach.name}
+                </span>
+                <span className="sm:hidden">
+                  Book {sessionType === 'consultation' ? 'Free' : 'Paid'} Session
+                </span>
               </h2>
               <button
                 onClick={() => setShowBookingCalendar(false)}
@@ -1072,6 +1100,8 @@ function CoachProfileContent() {
                   email: coach.email
                 }}
                 onBookingComplete={handleBookingComplete}
+                requirePayment={sessionType === 'session'} // Require payment for paid sessions
+                sessionType={sessionType}
               />
             </div>
           </div>

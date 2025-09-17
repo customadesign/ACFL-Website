@@ -1,27 +1,35 @@
 import { Router } from 'express';
 import { paymentController } from '../controllers/paymentController';
-// import { authenticateUser, requireRole } from '../middleware/auth'; // Uncomment when available
+import { authenticate } from '../middleware/auth';
 
 const router = Router();
 
-// Coach Rate Management Routes
-router.get('/coaches/:coachId/rates', paymentController.getCoachRates);
-router.post('/coaches/:coachId/rates', paymentController.createCoachRate);
-router.put('/rates/:rateId', paymentController.updateCoachRate);
-router.delete('/rates/:rateId', paymentController.deactivateCoachRate);
-router.post('/rates/:rateId/duplicate', paymentController.duplicateCoachRate);
-router.put('/coaches/:coachId/rates/bulk', paymentController.bulkUpdateCoachRates);
+// Coach Rate Management Routes (protected)
+router.get('/coaches/:coachId/rates', authenticate, paymentController.getCoachRates);
+router.post('/coaches/:coachId/rates', authenticate, paymentController.createCoachRate);
+router.put('/rates/:rateId', authenticate, paymentController.updateCoachRate);
+router.delete('/rates/:rateId', authenticate, paymentController.deactivateCoachRate);
+router.post('/rates/:rateId/duplicate', authenticate, paymentController.duplicateCoachRate);
+router.put('/coaches/:coachId/rates/bulk', authenticate, paymentController.bulkUpdateCoachRates);
 
 // Public Coach Rates (no authentication required)
 router.get('/public/coaches/:coachId/rates', paymentController.getPublicCoachRates);
 router.post('/public/calculate-package-discount', paymentController.calculatePackageDiscount);
 
-// Payment Processing Routes
-router.post('/create-payment-intent', paymentController.createPaymentIntent);
-router.post('/confirm-payment/:paymentIntentId', paymentController.confirmPayment);
-router.post('/refunds', paymentController.createRefund);
+// Test endpoint for Square payment (temporary - remove in production)
+router.post('/test-payment-authorization', paymentController.testPaymentAuthorization);
 
-// Stripe Webhook
-router.post('/webhook', paymentController.handleStripeWebhook);
+// Square Payment Processing Routes (protected)
+router.post('/create-payment-authorization', authenticate, paymentController.createPaymentIntent); // Creates authorization
+router.post('/capture-payment/:paymentId', authenticate, paymentController.capturePayment); // Captures after session
+router.post('/cancel-authorization/:paymentId', authenticate, paymentController.cancelAuthorization); // Cancels authorization
+router.post('/refunds', authenticate, paymentController.createRefund);
+
+// Square Payment Webhook (no auth - called by Square)
+router.post('/webhook/square', paymentController.handlePaymentWebhook);
+
+// Legacy routes for backward compatibility (protected)
+router.post('/create-payment-intent', authenticate, paymentController.createPaymentIntent);
+router.post('/confirm-payment/:paymentIntentId', authenticate, paymentController.capturePayment);
 
 export default router;

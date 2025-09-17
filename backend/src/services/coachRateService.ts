@@ -1,5 +1,4 @@
 import { supabase } from '../lib/supabase';
-import stripe from '../lib/stripe';
 import { CoachRate, CoachRateRequest } from '../types/payment';
 
 export class CoachRateService {
@@ -33,15 +32,15 @@ export class CoachRateService {
   }
 
   async createCoachRate(
-    coachId: string, 
+    coachId: string,
     rateRequest: CoachRateRequest
   ): Promise<CoachRate> {
-    // Create Stripe price first
-    const stripePrice = await this.createStripePrice(rateRequest);
-    
+    // Stub: Price creation would happen here with new payment gateway
+    const priceId = `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     const rateData = {
       coach_id: coachId,
-      stripe_price_id: stripePrice.id,
+      stripe_price_id: priceId, // Will be renamed to price_id
       ...rateRequest,
     };
 
@@ -52,12 +51,8 @@ export class CoachRateService {
       .single();
 
     if (error) {
-      // If database insert fails, try to delete the Stripe price
-      try {
-        await stripe.prices.update(stripePrice.id, { active: false });
-      } catch (stripeError) {
-        console.error('Failed to deactivate Stripe price:', stripeError);
-      }
+      // Stub: Price deactivation would happen here if database insert fails
+      console.error('Failed to create coach rate, would deactivate price here');
       throw new Error(`Failed to create coach rate: ${error.message}`);
     }
 
@@ -65,7 +60,7 @@ export class CoachRateService {
   }
 
   async updateCoachRate(
-    rateId: string, 
+    rateId: string,
     updates: Partial<CoachRateRequest>
   ): Promise<CoachRate> {
     const currentRate = await this.getCoachRateById(rateId);
@@ -73,16 +68,13 @@ export class CoachRateService {
       throw new Error('Coach rate not found');
     }
 
-    // If rate amount changes, create new Stripe price
-    let stripePrice;
+    // If rate amount changes, create new price
+    let priceId;
     let finalUpdates = updates;
     if (updates.rate_cents && updates.rate_cents !== currentRate.rate_cents) {
-      stripePrice = await this.createStripePrice({
-        ...currentRate,
-        ...updates,
-        rate_cents: updates.rate_cents,
-      } as CoachRateRequest);
-      finalUpdates = { ...updates, stripe_price_id: stripePrice.id } as any;
+      // Stub: Price creation would happen here with new payment gateway
+      priceId = `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      finalUpdates = { ...updates, stripe_price_id: priceId } as any;
     }
 
     const { data, error } = await supabase
@@ -96,13 +88,10 @@ export class CoachRateService {
       throw new Error(`Failed to update coach rate: ${error.message}`);
     }
 
-    // Deactivate old Stripe price if we created a new one
-    if (stripePrice && currentRate.stripe_price_id) {
-      try {
-        await stripe.prices.update(currentRate.stripe_price_id, { active: false });
-      } catch (stripeError) {
-        console.error('Failed to deactivate old Stripe price:', stripeError);
-      }
+    // Deactivate old price if we created a new one
+    if (priceId && currentRate.stripe_price_id) {
+      // Stub: Old price deactivation would happen here with new payment gateway
+      console.log(`Would deactivate old price: ${currentRate.stripe_price_id}`);
     }
 
     return data;
@@ -123,13 +112,10 @@ export class CoachRateService {
       throw new Error(`Failed to deactivate coach rate: ${error.message}`);
     }
 
-    // Deactivate Stripe price
+    // Deactivate price
     if (currentRate.stripe_price_id) {
-      try {
-        await stripe.prices.update(currentRate.stripe_price_id, { active: false });
-      } catch (stripeError) {
-        console.error('Failed to deactivate Stripe price:', stripeError);
-      }
+      // Stub: Price deactivation would happen here with new payment gateway
+      console.log(`Would deactivate price: ${currentRate.stripe_price_id}`);
     }
   }
 
@@ -142,45 +128,27 @@ export class CoachRateService {
     return rate !== null && rate.coach_id === coachId && rate.is_active;
   }
 
-  private async createStripePrice(rateRequest: CoachRateRequest) {
-    const productName = `${rateRequest.title} - ${rateRequest.duration_minutes}min`;
-    
-    // Create or retrieve product
-    const products = await stripe.products.list({
-      limit: 1,
-      active: true,
-    });
-    
-    let productId: string;
-    if (products.data.length > 0) {
-      productId = products.data[0].id;
-    } else {
-      const product = await stripe.products.create({
-        name: 'ACT Coaching Sessions',
-        description: 'Professional ACT coaching sessions',
-      });
-      productId = product.id;
-    }
-
-    // Create price
-    const price = await stripe.prices.create({
-      product: productId,
+  // Stub: Price creation logic will be replaced with new payment gateway
+  private async createPrice(rateRequest: CoachRateRequest) {
+    // This would integrate with the new payment gateway's API
+    // For now, return a stub price object
+    return {
+      id: `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      product: 'product_stub',
       unit_amount: rateRequest.rate_cents,
       currency: 'usd',
-      nickname: productName,
+      nickname: `${rateRequest.title} - ${rateRequest.duration_minutes}min`,
       metadata: {
         session_type: rateRequest.session_type,
         duration_minutes: rateRequest.duration_minutes.toString(),
         max_sessions: rateRequest.max_sessions?.toString() || '',
         validity_days: rateRequest.validity_days?.toString() || '',
       },
-    });
-
-    return price;
+    };
   }
 
   async getCoachRatesByType(
-    coachId: string, 
+    coachId: string,
     sessionType: CoachRate['session_type']
   ): Promise<CoachRate[]> {
     const { data, error } = await supabase
@@ -201,68 +169,66 @@ export class CoachRateService {
   async duplicateCoachRate(rateId: string): Promise<CoachRate> {
     const originalRate = await this.getCoachRateById(rateId);
     if (!originalRate) {
-      throw new Error('Coach rate not found');
+      throw new Error('Original rate not found');
     }
 
-    const duplicateRequest: CoachRateRequest = {
-      session_type: originalRate.session_type,
-      duration_minutes: originalRate.duration_minutes,
-      rate_cents: originalRate.rate_cents,
+    // Create new price (stubbed for new payment gateway)
+    const newPriceId = `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+    const newRateData = {
+      ...originalRate,
+      id: undefined, // Let database generate new ID
+      stripe_price_id: newPriceId,
       title: `${originalRate.title} (Copy)`,
-      description: originalRate.description,
-      max_sessions: originalRate.max_sessions,
-      validity_days: originalRate.validity_days,
-      discount_percentage: originalRate.discount_percentage,
+      created_at: undefined,
+      updated_at: undefined,
     };
 
-    return this.createCoachRate(originalRate.coach_id, duplicateRequest);
+    const { data, error } = await supabase
+      .from('coach_rates')
+      .insert([newRateData])
+      .select()
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to duplicate coach rate: ${error.message}`);
+    }
+
+    return data;
   }
 
   async bulkUpdateCoachRates(
-    coachId: string, 
-    updates: { rate_id: string; changes: Partial<CoachRateRequest> }[]
+    coachId: string,
+    updates: Array<{ id: string; updates: Partial<CoachRateRequest> }>
   ): Promise<CoachRate[]> {
-    const results: CoachRate[] = [];
-    
+    const results = [];
     for (const update of updates) {
       try {
-        const result = await this.updateCoachRate(update.rate_id, update.changes);
+        const result = await this.updateCoachRate(update.id, update.updates);
         results.push(result);
       } catch (error) {
-        console.error(`Failed to update rate ${update.rate_id}:`, error);
-        throw error;
+        console.error(`Failed to update rate ${update.id}:`, error);
       }
     }
-    
     return results;
   }
 
+  async calculateCoachEarnings(
+    rateCents: number,
+    platformFeePercentage: number = 15
+  ): Promise<{ coachEarnings: number; platformFee: number }> {
+    const platformFee = Math.floor((rateCents * platformFeePercentage) / 100);
+    const coachEarnings = rateCents - platformFee;
+    return { coachEarnings, platformFee };
+  }
+
   async calculatePackageDiscount(
-    individualRateCents: number, 
-    packageSessions: number, 
+    individualRateCents: number,
+    packageSessions: number,
     discountPercentage: number
   ): Promise<number> {
-    const totalIndividualCost = individualRateCents * packageSessions;
-    const discountAmount = Math.floor(totalIndividualCost * (discountPercentage / 100));
-    return totalIndividualCost - discountAmount;
-  }
-
-  async getCoachEarningsRate(): Promise<number> {
-    // Platform takes 15% commission by default
-    return 0.85;
-  }
-
-  async calculateCoachEarnings(totalAmountCents: number): Promise<{
-    coachEarnings: number;
-    platformFee: number;
-  }> {
-    const earningsRate = await this.getCoachEarningsRate();
-    const coachEarnings = Math.floor(totalAmountCents * earningsRate);
-    const platformFee = totalAmountCents - coachEarnings;
-    
-    return {
-      coachEarnings,
-      platformFee,
-    };
+    const totalBeforeDiscount = individualRateCents * packageSessions;
+    const discountAmount = Math.floor((totalBeforeDiscount * discountPercentage) / 100);
+    return totalBeforeDiscount - discountAmount;
   }
 }

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { Clock, ChevronLeft, ChevronRight, CheckCircle, User } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, CheckCircle, User, CreditCard } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
+import SquareBookingFlow from '@/components/payments/SquareBookingFlow';
 
 interface Coach {
   id: string;
@@ -26,6 +27,8 @@ interface AvailableSlot {
 interface GHLBookingCalendarProps {
   coach: Coach;
   onBookingComplete?: () => void;
+  requirePayment?: boolean;
+  sessionType?: 'consultation' | 'session';
 }
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -34,7 +37,7 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
-export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBookingCalendarProps) {
+export default function GHLBookingCalendar({ coach, onBookingComplete, requirePayment = false, sessionType = 'consultation' }: GHLBookingCalendarProps) {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [bookingComplete, setBookingComplete] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [showPaymentFlow, setShowPaymentFlow] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -131,6 +135,14 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
       alert('Failed to book appointment. Please try again.');
     } finally {
       setBooking(false);
+    }
+  };
+
+  const handlePaymentBookingComplete = (bookingResult: { paymentId: string; sessionId?: string; bookingId?: string }) => {
+    setBookingComplete(true);
+    setShowPaymentFlow(false);
+    if (onBookingComplete) {
+      onBookingComplete();
     }
   };
 
@@ -251,6 +263,19 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
               <p className="text-sm text-gray-600 dark:text-gray-300">
                 Choose your preferred date from the available options
               </p>
+              {requirePayment && (
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <CreditCard className="w-4 h-4 text-orange-600" />
+                    <p className="text-sm text-orange-800 font-medium">
+                      Payment Required
+                    </p>
+                  </div>
+                  <p className="text-xs text-orange-700 mt-1">
+                    This is a paid session. Payment will be processed securely through Square.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Calendar Header */}
@@ -448,11 +473,28 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
                             )}
                             
                             <button
-                              onClick={() => setShowBookingForm(true)}
+                              onClick={() => {
+                                if (requirePayment) {
+                                  setShowPaymentFlow(true);
+                                } else {
+                                  setShowBookingForm(true);
+                                }
+                              }}
                               disabled={slot.is_flexible_duration && !selectedDuration}
-                              className="mt-3 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              className={`mt-3 w-full px-4 py-2 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center space-x-2 ${
+                                requirePayment
+                                  ? 'bg-green-600 hover:bg-green-700'
+                                  : 'bg-blue-600 hover:bg-blue-700'
+                              }`}
                             >
-                              Book This Time
+                              {requirePayment ? (
+                                <>
+                                  <CreditCard className="w-4 h-4" />
+                                  <span>Book with Payment</span>
+                                </>
+                              ) : (
+                                <span>Book This Time</span>
+                              )}
                             </button>
                           </div>
                         </div>
@@ -562,6 +604,38 @@ export default function GHLBookingCalendar({ coach, onBookingComplete }: GHLBook
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Square Payment Flow Modal */}
+      {showPaymentFlow && selectedSlot && selectedDate && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">
+                Complete Payment for Session
+              </h3>
+              <button
+                onClick={() => setShowPaymentFlow(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="p-6">
+              <SquareBookingFlow
+                coachId={coach.id}
+                selectedDate={selectedDate}
+                selectedTime={formatTime(selectedSlot.slot_start)}
+                sessionType={sessionType}
+                notes={notes}
+                duration={selectedDuration || selectedSlot.duration_minutes}
+                onBookingComplete={handlePaymentBookingComplete}
+                onCancel={() => setShowPaymentFlow(false)}
+              />
             </div>
           </div>
         </div>

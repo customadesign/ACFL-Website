@@ -4,9 +4,10 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { X, Calendar, Clock, Video, MapPin } from 'lucide-react'
+import { X, Calendar, Clock, Video, MapPin, CreditCard } from 'lucide-react'
 import { concernOptions } from '@/constants/formOptions'
 import { getApiUrl } from '@/lib/api'
+import SquareBookingFlow from '@/components/payments/SquareBookingFlow'
 
 interface Coach {
   id: string
@@ -20,9 +21,10 @@ interface BookingModalProps {
   onClose: () => void
   coach: Coach
   sessionType: 'consultation' | 'session'
+  enablePayments?: boolean
 }
 
-export default function BookingModal({ isOpen, onClose, coach, sessionType }: BookingModalProps) {
+export default function BookingModal({ isOpen, onClose, coach, sessionType, enablePayments = sessionType === 'session' }: BookingModalProps) {
   const router = useRouter()
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
@@ -38,6 +40,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [showPaymentFlow, setShowPaymentFlow] = useState(false)
   const API_URL = getApiUrl()
 
   // Generate available time slots
@@ -119,6 +122,11 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
     setError(null)
 
     try {
+      // Block paid sessions from using free booking
+      if (sessionType === 'session') {
+        throw new Error('Paid sessions require payment. Please use the "Book Paid Session" button.')
+      }
+
       if (!selectedDate || !selectedTime) {
         throw new Error('Please select both date and time')
       }
@@ -171,10 +179,66 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
     }
   }
 
+  const handlePaymentBookingComplete = (bookingResult: { paymentId: string; sessionId?: string; bookingId?: string }) => {
+    setSuccess(true)
+    setTimeout(() => {
+      onClose()
+      // Reset form
+      setSelectedDate('')
+      setSelectedTime('')
+      setNotes('')
+      setAreaOfFocus('')
+      setSuccess(false)
+      setShowPaymentFlow(false)
+      // Navigate to appointments page
+      router.push('/clients/appointments')
+    }, 2000)
+  }
+
+  const handlePaymentBooking = () => {
+    if (!selectedDate || !selectedTime) {
+      setError('Please select both date and time')
+      return
+    }
+    setShowPaymentFlow(true)
+  }
+
   if (!isOpen) return null
 
   const availableDates = generateAvailableDates()
   const timeSlots = generateTimeSlots()
+
+  // Show Square payment flow if enabled and payment flow is active
+  if (showPaymentFlow && enablePayments) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+        <Card className="w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-xl font-semibold">
+              Book {sessionType === 'consultation' ? 'Free Consultation' : 'Paid Session'} with {coach.name}
+            </CardTitle>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowPaymentFlow(false)}
+              className="h-8 w-8 p-0"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </CardHeader>
+          <CardContent>
+            <SquareBookingFlow
+              coachId={coach.id}
+              selectedDate={selectedDate}
+              selectedTime={selectedTime}
+              onBookingComplete={handlePaymentBookingComplete}
+              onCancel={() => setShowPaymentFlow(false)}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
@@ -357,6 +421,22 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                 </div>
               </div>
 
+              {/* Payment Notice for Paid Sessions */}
+              {sessionType === 'session' && (
+                <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                  <div className="flex items-start gap-2">
+                    <CreditCard className="w-5 h-5 text-orange-600 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-orange-800 font-medium">Payment Required</p>
+                      <p className="text-sm text-orange-700">
+                        This is a paid session. You must complete payment to book this session.
+                        Payment is processed securely through Square.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Error Message */}
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
@@ -376,13 +456,27 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType }: Bo
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className="flex-1 bg-blue-600 hover:bg-blue-700"
-                  disabled={isLoading || !selectedDate || !selectedTime}
-                >
-                  {isLoading ? 'Booking...' : `Book ${sessionType === 'consultation' ? 'Consultation' : 'Session'}`}
-                </Button>
+
+                {/* Force payment for all paid sessions */}
+                {sessionType === 'session' ? (
+                  <Button
+                    type="button"
+                    onClick={handlePaymentBooking}
+                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    disabled={isLoading || !selectedDate || !selectedTime}
+                  >
+                    <CreditCard className="w-4 h-4 mr-2" />
+                    Book Paid Session
+                  </Button>
+                ) : (
+                  <Button
+                    type="submit"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700"
+                    disabled={isLoading || !selectedDate || !selectedTime}
+                  >
+                    {isLoading ? 'Booking...' : 'Book Free Consultation'}
+                  </Button>
+                )}
               </div>
             </form>
           )}

@@ -119,6 +119,7 @@ export interface PaymentSchedule {
 export interface CreatePaymentIntentRequest {
   coach_id: string;
   coach_rate_id: string;
+  sourceId?: string; // Square payment source (card nonce)
   description?: string;
   metadata?: Record<string, string>;
 }

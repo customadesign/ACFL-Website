@@ -22,9 +22,13 @@ const nextConfig = {
     const supabaseWs = supabaseUrl.replace('http://', 'ws://').replace('https://', 'wss://');
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
     const apiWs = apiUrl.replace('http://', 'ws://').replace('https://', 'wss://');
+
+    // Square domains for payments
+    const squareDomains = 'https://sandbox.web.squarecdn.com https://web.squarecdn.com https://connect.squareup.com https://connect.squareupsandbox.com';
+
     const connectSrc = isDevelopment
-      ? `'self' https: ws: http://localhost:* ws://localhost:* ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs}`
-      : `'self' https: wss: ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs}`;
+      ? `'self' https: ws: http://localhost:* ws://localhost:* ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs} ${squareDomains}`
+      : `'self' https: wss: ${supabaseUrl} ${supabaseWs} ${apiUrl} ${apiWs} ${squareDomains}`;
 
     return [
       {
@@ -32,7 +36,7 @@ const nextConfig = {
         headers: [
           {
             key: "Content-Security-Policy",
-            value: `default-src 'self'; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-eval' 'unsafe-inline' https:; img-src 'self' data: https:; connect-src ${connectSrc};`,
+            value: `default-src 'self' ${squareDomains}; font-src 'self' data: https:; style-src 'self' 'unsafe-inline' https:; script-src 'self' 'unsafe-eval' 'unsafe-inline' https: ${squareDomains}; img-src 'self' data: https:; connect-src ${connectSrc}; frame-src 'self' ${squareDomains}; child-src 'self' ${squareDomains};`,
           },
         ],
       },

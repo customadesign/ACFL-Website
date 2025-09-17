@@ -1,6 +1,9 @@
+import * as dotenv from 'dotenv';
+// Load environment variables FIRST before any other imports
+dotenv.config();
+
 import express = require('express');
 import cors = require('cors');
-import * as dotenv from 'dotenv';
 import matchRoutes from './routes/matchRoutes';
 import coachRoutes from './routes/coachRoutes';
 import clientRoutes from './routes/clientRoutes';
@@ -11,14 +14,11 @@ import notificationRoutes from './routes/notificationRoutes';
 import calendarRoutes from './routes/calendarRoutes';
 import coachApplicationRoutes from './routes/coachApplicationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
-import stripeTestRoutes from './routes/stripeTestRoutes';
+import bookingRoutes from './routes/bookingRoutes';
 import contentRoutes from './routes/contentRoutes';
 import staffRoutes from './routes/staffRoutes';
 import csvImportRoutes from './routes/csvImportRoutes';
 import { supabase } from './lib/supabase';
-
-// Load environment variables
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -66,7 +66,7 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/calendar', calendarRoutes);
 app.use('/api/coach-applications', coachApplicationRoutes);
 app.use('/api/payments', paymentRoutes);
-app.use('/api/stripe-test', stripeTestRoutes);
+app.use('/api/bookings', bookingRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/csv-import', csvImportRoutes);
 app.use('/api', matchRoutes);
