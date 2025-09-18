@@ -92,7 +92,7 @@ interface UserFormData {
 
 export default function UserManagement() {
   const router = useRouter();
-  const { hasPermission, isAdmin } = usePermissions();
+  const { hasPermission, isAdmin, isStaff } = usePermissions();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -274,7 +274,6 @@ export default function UserManagement() {
         }
       });
 
-      console.log('Response status:', response.status);
 
       if (!response.ok) {
         if (response.status === 401) {
@@ -341,6 +340,29 @@ export default function UserManagement() {
   };
 
   const handleUserAction = async (userId: string, action: string, userType: string) => {
+
+    // Check permissions for staff members
+    if (!isAdmin && isStaff) {
+      const permissionRequired = {
+        deactivate: PERMISSIONS.USERS_STATUS,
+        activate: PERMISSIONS.USERS_STATUS,
+        suspend: PERMISSIONS.USERS_STATUS,
+        approve: PERMISSIONS.USERS_STATUS,
+        reject: PERMISSIONS.USERS_STATUS,
+        delete: PERMISSIONS.USERS_DELETE
+      };
+
+      const permission = permissionRequired[action as keyof typeof permissionRequired];
+      if (permission && !hasPermission(permission)) {
+        showError(
+          'Permission Required',
+          `You don't have permission to ${action} users. Please contact an administrator if you need this access.`
+        );
+        setShowActionMenu(null);
+        return;
+      }
+    }
+
     // Add confirmation for destructive actions
     const destructiveActions = ['deactivate', 'suspend', 'reject'];
     if (destructiveActions.includes(action)) {
@@ -349,7 +371,7 @@ export default function UserManagement() {
         suspend: 'This will suspend the user account. The user will not be able to log in until reactivated.',
         reject: 'This will reject the user application. This action can be reversed later.'
       };
-      
+
       setShowActionMenu(null);
       showWarning(
         `${action.charAt(0).toUpperCase() + action.slice(1)} User`,
@@ -359,7 +381,7 @@ export default function UserManagement() {
       );
       return;
     }
-    
+
     // For non-destructive actions, proceed directly
     await performUserAction(userId, action, userType);
   };
@@ -384,8 +406,12 @@ export default function UserManagement() {
         body: JSON.stringify({ userType })
       });
 
+
       if (!response.ok) {
-        throw new Error(`Failed to ${action} user`);
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        console.error('Response status:', response.status);
+        throw new Error(`Failed to ${action} user: ${response.status} - ${errorText}`);
       }
 
       const result = await response.json();
@@ -420,14 +446,25 @@ export default function UserManagement() {
       
     } catch (error) {
       console.error(`Failed to ${action} user:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       showError(
         'Action Failed',
-        `Failed to ${action} user. Please check your connection and try again.`
+        errorMessage
       );
     }
   };
 
   const handleLoginAsUser = async (userId: string, userType: string, userName: string) => {
+    // Check permission first
+    if (!hasPermission(PERMISSIONS.USERS_IMPERSONATE)) {
+      showError(
+        'Permission Required',
+        'You do not have permission to impersonate users. This feature is restricted to administrators for security reasons.'
+      );
+      setShowActionMenu(null);
+      return;
+    }
+
     showWarning(
       'Login as User',
       `Are you sure you want to login as ${userName}? This will redirect you to their dashboard and you will be impersonating this user.`,
@@ -438,11 +475,6 @@ export default function UserManagement() {
 
   const performLoginAsUser = async (userId: string, userType: string, userName: string) => {
       try {
-        // Check permission before attempting impersonation
-        if (!hasPermission(PERMISSIONS.USERS_IMPERSONATE)) {
-          showError('Access Denied', 'You do not have permission to impersonate users.');
-          return;
-        }
 
         const token = localStorage.getItem('token');
 
@@ -500,6 +532,16 @@ export default function UserManagement() {
   };
 
   const handleDeleteUser = async (userId: string, userType: string) => {
+    // Check permission first
+    if (!hasPermission(PERMISSIONS.USERS_DELETE)) {
+      showError(
+        'Permission Required',
+        'You do not have permission to delete users. Please contact an administrator if you believe this user needs to be removed.'
+      );
+      setShowActionMenu(null);
+      return;
+    }
+
     showWarning(
       'Delete User',
       'Are you sure you want to delete this user? This action cannot be undone and will permanently remove all user data.',
@@ -543,6 +585,16 @@ export default function UserManagement() {
   };
 
   const handleResetPassword = async (userId: string, userType: string, userName: string) => {
+    // Check permission first for staff members
+    if (!isAdmin && isStaff && !hasPermission(PERMISSIONS.USERS_RESET_PASSWORD)) {
+      showError(
+        'Permission Required',
+        'You do not have permission to reset user passwords. Please contact an administrator if a user needs their password reset.'
+      );
+      setShowActionMenu(null);
+      return;
+    }
+
     showWarning(
       'Reset Password',
       `Are you sure you want to reset the password for ${userName}? A new temporary password will be generated and sent to their email address.`,
@@ -846,6 +898,10 @@ export default function UserManagement() {
 
   const showInfo = (title: string, message: string) => {
     showAlert({ type: 'info', title, message, confirmText: 'OK' });
+  };
+
+  const showSuccess = (title: string, message: string) => {
+    showAlert({ type: 'success', title, message, confirmText: 'OK' });
   };
 
   const openCreateModal = () => {
@@ -1594,14 +1650,25 @@ export default function UserManagement() {
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <div className="relative">
                       <button
+                        data-action-menu
                         onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
                         className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
                       >
                         <MoreVertical className="h-5 w-5" />
                       </button>
-                      
+
                       {showActionMenu === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg z-10 border border-gray-200 dark:border-gray-700">
+                        <div
+                          data-action-menu
+                          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700"
+                          style={{
+                            zIndex: 9999,
+                            backgroundColor: 'white',
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            boxShadow: '0 10px 15px rgba(0, 0, 0, 0.3)'
+                          }}>
                           <div className="py-1">
                             <button
                               onClick={() => {
@@ -1613,7 +1680,7 @@ export default function UserManagement() {
                               <Eye className="h-4 w-4 mr-2" />
                               View Details
                             </button>
-                            <PermissionGate permission={PERMISSIONS.USERS_EDIT}>
+                            {/* <PermissionGate permission={PERMISSIONS.USERS_EDIT}> */}
                               <button
                                 onClick={() => {
                                   openEditModal(user);
@@ -1624,7 +1691,7 @@ export default function UserManagement() {
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Profile
                               </button>
-                            </PermissionGate>
+                            {/* </PermissionGate> */}
                             <button
                               onClick={() => handleMessageUser(user)}
                               className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
@@ -1632,7 +1699,7 @@ export default function UserManagement() {
                               <MessageSquare className="h-4 w-4 mr-2" />
                               Send Message
                             </button>
-                            <PermissionGate permission={PERMISSIONS.USERS_IMPERSONATE}>
+                            {/* <PermissionGate permission={PERMISSIONS.USERS_IMPERSONATE}> */}
                               <button
                                 onClick={() => {
                                   handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
@@ -1643,7 +1710,7 @@ export default function UserManagement() {
                                 <LogIn className="h-4 w-4 mr-2" />
                                 Login As User
                               </button>
-                            </PermissionGate>
+                            {/* </PermissionGate> */}
                             <button
                               onClick={() => {
                                 handleResetPassword(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
@@ -1663,7 +1730,7 @@ export default function UserManagement() {
                                   <UserX className="h-4 w-4 mr-2" />
                                   Deactivate User
                                 </button>
-                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                {/* <PermissionGate permission={PERMISSIONS.USERS_STATUS}> */}
                                   <button
                                     onClick={() => handleUserAction(user.id, 'suspend', user.role)}
                                     className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
@@ -1671,7 +1738,7 @@ export default function UserManagement() {
                                     <Ban className="h-4 w-4 mr-2" />
                                     Suspend User
                                   </button>
-                                </PermissionGate>
+                                {/* </PermissionGate> */}
                               </>
                             ) : user.status === 'inactive' ? (
                               <button
@@ -1707,7 +1774,7 @@ export default function UserManagement() {
                                 Approve Coach
                               </button>
                             )}
-                            <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
+                            {/* <PermissionGate permission={PERMISSIONS.USERS_DELETE}> */}
                               <button
                                 onClick={() => handleDeleteUser(user.id, user.role)}
                                 className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
@@ -1715,7 +1782,7 @@ export default function UserManagement() {
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete User
                               </button>
-                            </PermissionGate>
+                            {/* </PermissionGate> */}
                           </div>
                         </div>
                       )}

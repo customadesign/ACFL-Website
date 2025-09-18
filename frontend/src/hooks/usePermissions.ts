@@ -80,7 +80,23 @@ export const usePermissions = (): PermissionCheck => {
         return true;
       }
 
-      // For edit/write/delete/create actions, check explicit permissions
+      // Grant staff default permissions for basic user management actions
+      const defaultStaffPermissions = [
+        'users.edit',
+        'users.create',
+        'users.reset_password',
+        'users.status',
+        'appointments.edit',
+        'appointments.status',
+        'appointments.reschedule',
+        'messages.send'
+      ];
+
+      if (defaultStaffPermissions.includes(permission)) {
+        return true;
+      }
+
+      // For other edit/write/delete/create actions, check explicit permissions
       return permissions[permission] === true;
     }
 

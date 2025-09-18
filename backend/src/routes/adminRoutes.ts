@@ -828,7 +828,7 @@ router.get('/users/:id', async (req, res) => {
 });
 
 // Update user - Admin only
-router.put('/users/:id', authorize('admin'), async (req, res) => {
+router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
   try {
     const { id } = req.params;
     const { userType, userData } = req.body;
@@ -1085,7 +1085,7 @@ router.post('/users/:id/impersonate', requirePermission('users.impersonate'), as
 });
 
 // Reset user password (admin only) - must come before general action route
-router.post('/users/:id/reset-password', authorize('admin'), async (req, res) => {
+router.post('/users/:id/reset-password', authorize('admin', 'staff'), async (req, res) => {
   try {
     const { id } = req.params;
     const { userType } = req.body;
@@ -1215,7 +1215,7 @@ router.post('/users/:id/reset-password', authorize('admin'), async (req, res) =>
 });
 
 // User status actions (activate, suspend, etc.) - Admin only
-router.post('/users/:id/:action', authorize('admin'), async (req, res) => {
+router.post('/users/:id/:action', authorize('admin', 'staff'), async (req, res) => {
   try {
     const { id, action } = req.params;
     const { userType } = req.body;
