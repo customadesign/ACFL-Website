@@ -33,7 +33,8 @@ import {
   Users,
   Send,
   Upload,
-  FileText
+  FileText,
+  Download
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
@@ -142,6 +143,77 @@ export default function UserManagement() {
     setShowActionMenu(null);
   };
 
+  const handleExportCSV = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        console.log('No token found, redirecting to login');
+        window.location.href = '/login';
+        return;
+      }
+
+      const API_URL = getApiUrl();
+
+      // Apply current filters to export
+      let queryParams = new URLSearchParams();
+      if (activeTab !== 'all') {
+        queryParams.append('role', activeTab);
+      }
+      if (statusFilter !== 'all') {
+        queryParams.append('status', statusFilter);
+      }
+      if (searchTerm) {
+        queryParams.append('search', searchTerm);
+      }
+
+      const response = await fetch(`${API_URL}/api/admin/users/export?${queryParams.toString()}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        }
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Unauthorized, removing token and redirecting');
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+          return;
+        }
+        throw new Error(`HTTP ${response.status}: Failed to export users`);
+      }
+
+      // Get the filename from the Content-Disposition header or use a default
+      const contentDisposition = response.headers.get('content-disposition');
+      let filename = 'users_export.csv';
+      if (contentDisposition) {
+        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
+        if (filenameMatch) {
+          filename = filenameMatch[1];
+        }
+      }
+
+      // Create a blob from the response and download it
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+
+      showInfo('Export Complete', 'User data has been exported successfully');
+    } catch (error) {
+      console.error('Failed to export users:', error);
+      showError(
+        'Export Failed',
+        'Unable to export user data. Please check your internet connection and try again.'
+      );
+    }
+  };
+
   // Permission check
   useEffect(() => {
     if (!hasPermission(PERMISSIONS.USERS_VIEW)) {
@@ -149,6 +221,30 @@ export default function UserManagement() {
       return;
     }
   }, [hasPermission, router]);
+
+  // Keyboard navigation for action menus
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && showActionMenu) {
+        setShowActionMenu(null);
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showActionMenu]);
+
+  // Click outside to close action menus
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showActionMenu && !(event.target as Element).closest('[data-action-menu]')) {
+        setShowActionMenu(null);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showActionMenu]);
 
   useEffect(() => {
     fetchUsers();
@@ -803,9 +899,9 @@ export default function UserManagement() {
 
   const getRoleBadge = (role: string) => {
     const roleColors = {
-      client: 'bg-blue-100 text-blue-800',
-      coach: 'bg-purple-100 text-purple-800',
-      staff: 'bg-orange-100 text-orange-800'
+      client: 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400',
+      coach: 'bg-purple-100 text-purple-800 dark:bg-purple-900/20 dark:text-purple-400',
+      staff: 'bg-orange-100 text-orange-800 dark:bg-orange-900/20 dark:text-orange-400'
     };
 
     return (
@@ -815,165 +911,599 @@ export default function UserManagement() {
     );
   };
 
+  // User Action Menu Component for better organization and reusability
+  const UserActionMenu = ({ user, onClose, onViewEdit, onMessage, onLoginAs, onResetPassword, onUserAction, onDelete, isMobile = false }: {
+    user: User;
+    onClose: () => void;
+    onViewEdit: (user: User) => void;
+    onMessage: (user: User) => void;
+    onLoginAs: (userId: string, userType: string, userName: string) => void;
+    onResetPassword: (userId: string, userType: string, userName: string) => void;
+    onUserAction: (userId: string, action: string, userType: string) => void;
+    onDelete: (userId: string, userType: string) => void;
+    isMobile?: boolean;
+  }) => {
+    const userName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim();
+
+    const menuClass = isMobile
+      ? "grid grid-cols-2 gap-2"
+      : "absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-20 border border-gray-200 dark:border-gray-700 py-1";
+
+    const buttonClass = isMobile
+      ? "flex items-center justify-center px-3 py-2 text-xs font-medium rounded-lg border transition-colors"
+      : "flex items-center px-4 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left transition-colors";
+
+    return (
+      <div className={menuClass}>
+        <button
+          onClick={() => onViewEdit(user)}
+          className={`${buttonClass} ${
+            isMobile
+              ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+              : 'text-gray-700 dark:text-gray-300'
+          }`}
+        >
+          <Eye className="h-4 w-4 mr-2" />
+          {isMobile ? 'View' : 'View Details'}
+        </button>
+
+        <PermissionGate permission={PERMISSIONS.USERS_EDIT}>
+          <button
+            onClick={() => onViewEdit(user)}
+            className={`${buttonClass} ${
+              isMobile
+                ? 'border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                : 'text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <Edit className="h-4 w-4 mr-2" />
+            {isMobile ? 'Edit' : 'Edit Profile'}
+          </button>
+        </PermissionGate>
+
+        <button
+          onClick={() => onMessage(user)}
+          className={`${buttonClass} ${
+            isMobile
+              ? 'border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+              : 'text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+          }`}
+        >
+          <MessageSquare className="h-4 w-4 mr-2" />
+          {isMobile ? 'Message' : 'Send Message'}
+        </button>
+
+        <PermissionGate permission={PERMISSIONS.USERS_IMPERSONATE}>
+          <button
+            onClick={() => onLoginAs(user.id, user.role, userName)}
+            className={`${buttonClass} ${
+              isMobile
+                ? 'border-blue-300 dark:border-blue-600 text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+                : 'text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20'
+            }`}
+          >
+            <LogIn className="h-4 w-4 mr-2" />
+            {isMobile ? 'Login As' : 'Login As User'}
+          </button>
+        </PermissionGate>
+
+        <button
+          onClick={() => onResetPassword(user.id, user.role, userName)}
+          className={`${buttonClass} ${
+            isMobile
+              ? 'border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+              : 'text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+          }`}
+        >
+          <Key className="h-4 w-4 mr-2" />
+          {isMobile ? 'Reset PWD' : 'Reset Password'}
+        </button>
+
+        {user.status === 'active' ? (
+          <>
+            <button
+              onClick={() => onUserAction(user.id, 'deactivate', user.role)}
+              className={`${buttonClass} ${
+                isMobile
+                  ? 'border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                  : 'text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+              }`}
+            >
+              <UserX className="h-4 w-4 mr-2" />
+              {isMobile ? 'Deactivate' : 'Deactivate User'}
+            </button>
+            <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+              <button
+                onClick={() => onUserAction(user.id, 'suspend', user.role)}
+                className={`${buttonClass} ${
+                  isMobile
+                    ? 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                    : 'text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+                }`}
+              >
+                <Ban className="h-4 w-4 mr-2" />
+                {isMobile ? 'Suspend' : 'Suspend User'}
+              </button>
+            </PermissionGate>
+          </>
+        ) : (
+          <button
+            onClick={() => onUserAction(user.id, 'activate', user.role)}
+            className={`${buttonClass} ${
+              isMobile
+                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+            }`}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {isMobile ? 'Activate' : user.status === 'suspended' ? 'Reactivate User' : 'Activate User'}
+          </button>
+        )}
+
+        {user.role === 'coach' && user.status === 'pending' && (
+          <button
+            onClick={() => onUserAction(user.id, 'approve', user.role)}
+            className={`${buttonClass} ${
+              isMobile
+                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+            }`}
+          >
+            <CheckCircle className="h-4 w-4 mr-2" />
+            {isMobile ? 'Approve' : 'Approve Coach'}
+          </button>
+        )}
+
+        <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
+          <button
+            onClick={() => onDelete(user.id, user.role)}
+            className={`${buttonClass} ${
+              isMobile
+                ? 'border-red-300 dark:border-red-600 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 col-span-2'
+                : 'text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20'
+            }`}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            {isMobile ? 'Delete User' : 'Delete User'}
+          </button>
+        </PermissionGate>
+      </div>
+    );
+  };
+
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-        {/* Header Skeleton */}
-        <div className="mb-8">
-          <div className="h-9 bg-gray-200 rounded w-1/3 animate-pulse mb-3"></div>
-          <div className="h-5 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-        </div>
-        
-        {/* Tabs Skeleton */}
-        <div className="mb-6">
-          <div className="border-b border-gray-200">
-            <div className="flex space-x-8">
-              {[...Array(4)].map((_, i) => (
-                <div key={i} className="py-2 px-1 animate-pulse">
-                  <div className="h-5 bg-gray-200 rounded w-20"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+          {/* Enhanced Header Skeleton */}
+          <div className="mb-6 lg:mb-8">
+            <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-start lg:justify-between">
+              <div className="flex-1">
+                <div className="h-8 sm:h-10 lg:h-12 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3 animate-pulse mb-3"></div>
+                <div className="h-4 sm:h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse mb-2"></div>
+                <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 lg:gap-3">
+                {[...Array(5)].map((_, i) => (
+                  <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-24 animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Tabs Skeleton */}
+          <div className="mb-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1">
+              <div className="flex space-x-1">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex-1 py-2.5 px-3 animate-pulse">
+                    <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Filter Skeleton */}
+          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1 max-w-md h-11 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+              <div className="w-full sm:w-40 h-11 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            </div>
+          </div>
+
+          {/* Enhanced Table/Cards Skeleton */}
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+            {/* Desktop skeleton */}
+            <div className="hidden lg:block">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="grid grid-cols-6 gap-4">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="h-4 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                  ))}
+                </div>
+              </div>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 animate-pulse">
+                  <div className="grid grid-cols-6 gap-4 items-center">
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                      </div>
+                    </div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                    <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded-full w-16"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-20"></div>
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                    <div className="h-5 w-5 bg-gray-200 dark:bg-gray-700 rounded ml-auto"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Mobile skeleton */}
+            <div className="lg:hidden">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="p-4 border-b border-gray-200 dark:border-gray-700 animate-pulse">
+                  <div className="flex items-start space-x-3">
+                    <div className="h-12 w-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32 mb-2"></div>
+                          <div className="flex space-x-2">
+                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                            <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-16"></div>
+                          </div>
+                        </div>
+                        <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-48"></div>
+                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Filter Skeleton */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="flex gap-4">
-            <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
-            <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
-          </div>
-        </div>
-
-        {/* Table Skeleton */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          {[...Array(5)].map((_, i) => (
-            <div key={i} className="p-4 border-b animate-pulse">
-              <div className="flex items-center space-x-4">
-                <div className="h-10 w-10 bg-gray-200 rounded-full"></div>
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 bg-gray-200 rounded w-1/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/3"></div>
-                </div>
-              </div>
-            </div>
-          ))}
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">User Management</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage all platform users including clients, coaches, and staff</p>
-          </div>
-          <div className="flex items-center space-x-3">
-            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
-              <button
-                onClick={openCreateModal}
-                className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2 w-max"
-              >
-                <UserPlus className="h-4 w-4" />
-                <span>Add User</span>
-              </button>
-            </PermissionGate>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        {/* Header */}
+        <div className="mb-6 lg:mb-8">
+          <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+                User Management
+              </h1>
+              <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-2xl">
+                Manage all platform users including clients, coaches, and staff members. Add new users, update profiles, and control access permissions.
+              </p>
+              <div className="mt-3 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                <Users className="h-4 w-4 mr-1.5" />
+                <span>{users.length} total users</span>
+              </div>
+            </div>
 
-            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
-              <button
-                onClick={() => setShowCSVImportModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 w-max"
-              >
-                <Upload className="h-4 w-4" />
-                <span>Import CSV</span>
-              </button>
-            </PermissionGate>
+            {/* Action Buttons - Mobile First Design */}
+            <div className="flex-shrink-0 w-full lg:w-auto">
+              {/* Mobile: Stack buttons vertically, Desktop: Horizontal layout */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:gap-3">
+                {/* Primary Actions */}
+                <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+                  <button
+                    onClick={openCreateModal}
+                    className="inline-flex items-center justify-center px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors shadow-sm"
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    <span>Add User</span>
+                  </button>
+                </PermissionGate>
 
-            <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
-              <button
-                onClick={() => setShowStaffInviteModal(true)}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2 w-max"
-              >
-                <Send className="h-4 w-4" />
-                <span>Invite Staff</span>
-              </button>
-            </PermissionGate>
+                {/* Secondary Actions Group */}
+                <div className="flex gap-2 lg:contents">
+                  <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+                    <button
+                      onClick={() => setShowCSVImportModal(true)}
+                      className="flex-1 lg:flex-none inline-flex items-center justify-center px-3 lg:px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors shadow-sm"
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Import</span>
+                      <span className="sm:hidden">CSV</span>
+                    </button>
+                  </PermissionGate>
 
-            <button
-              onClick={() => setShowStaffManagement(!showStaffManagement)}
-              className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors flex items-center space-x-2 w-max"
-            >
-              <Users className="h-4 w-4" />
-              <span>{showStaffManagement ? 'Hide' : 'Manage'} Invitations</span>
-            </button>
-          </div>
-        </div>
-      </div>
+                  <PermissionGate permission={PERMISSIONS.USERS_VIEW}>
+                    <button
+                      onClick={handleExportCSV}
+                      className="flex-1 lg:flex-none inline-flex items-center justify-center px-3 lg:px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors shadow-sm"
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Export</span>
+                      <span className="sm:hidden">CSV</span>
+                    </button>
+                  </PermissionGate>
+                </div>
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200 dark:border-gray-700">
-          <nav className="-mb-px flex space-x-2 sm:space-x-8 overflow-x-auto">
-            {[
-              { key: 'all', label: 'All Users', count: users.length},
-              { key: 'client', label: 'Clients', count: users.filter(u => u.role === 'client').length },
-              { key: 'coach', label: 'Coaches', count: users.filter(u => u.role === 'coach').length},
-              { key: 'staff', label: 'Staff', count: users.filter(u => u.role === 'staff').length}
-            ].map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key as any)}
-                className={`py-2 px-1 sm:px-2 border-b-2 font-medium text-xs sm:text-sm whitespace-nowrap ${
-                  activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                    : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                }`}
-              >
-                <span>{tab.label}</span>
-                <span className="ml-1 sm:ml-2 text-[10px] sm:text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 py-0.5 sm:py-1 px-1 sm:px-2 rounded-full">
-                  {tab.count}
-                </span>
-              </button>
-            ))}
-          </nav>
-        </div>
-      </div>
+                {/* Staff Management Actions */}
+                <div className="flex gap-2 lg:contents">
+                  <PermissionGate permission={PERMISSIONS.USERS_CREATE}>
+                    <button
+                      onClick={() => setShowStaffInviteModal(true)}
+                      className="flex-1 lg:flex-none inline-flex items-center justify-center px-3 lg:px-4 py-2.5 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors shadow-sm"
+                    >
+                      <Send className="h-4 w-4 mr-2" />
+                      <span className="hidden sm:inline">Invite</span>
+                      <span className="sm:hidden">Staff</span>
+                    </button>
+                  </PermissionGate>
 
-      {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 lg:max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search users..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+                  <button
+                    onClick={() => setShowStaffManagement(!showStaffManagement)}
+                    className="flex-1 lg:flex-none inline-flex items-center justify-center px-3 lg:px-4 py-2.5 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900 transition-colors shadow-sm"
+                  >
+                    <Users className="h-4 w-4 mr-2" />
+                    <span className="hidden lg:inline">{showStaffManagement ? 'Hide' : 'Manage'} Invitations</span>
+                    <span className="lg:hidden">Invites</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
-          >
-            <option value="all">All Status</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
-            <option value="suspended">Suspended</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-          </select>
         </div>
-      </div>
+
+        {/* Responsive Tabs with horizontal scroll and fade indicators */}
+        <div className="mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-1 relative">
+            {/* Fade indicators for scrollable content */}
+            <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-white dark:from-gray-800 to-transparent pointer-events-none z-10 rounded-l-xl opacity-0 transition-opacity duration-200" id="scroll-fade-left"></div>
+            <div className="absolute right-0 top-0 bottom-0 w-6 bg-gradient-to-l from-white dark:from-gray-800 to-transparent pointer-events-none z-10 rounded-r-xl opacity-0 transition-opacity duration-200" id="scroll-fade-right"></div>
+
+            {/* Desktop: Grid layout, Mobile: Horizontal scroll */}
+            <nav
+              className="flex lg:grid lg:grid-cols-4 lg:gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory lg:snap-none lg:overflow-visible scroll-smooth"
+              role="tablist"
+              aria-label="User type filters"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              onScroll={(e) => {
+                const container = e.target as HTMLElement;
+                const fadeLeft = document.getElementById('scroll-fade-left');
+                const fadeRight = document.getElementById('scroll-fade-right');
+
+                if (fadeLeft && fadeRight) {
+                  // Show/hide fade indicators based on scroll position
+                  const canScrollLeft = container.scrollLeft > 10; // Small threshold to prevent flickering
+                  const canScrollRight = container.scrollLeft < container.scrollWidth - container.clientWidth - 10;
+
+                  // Only show fade indicators on mobile/tablet screens
+                  const isMobile = window.innerWidth < 1024; // lg breakpoint
+
+                  fadeLeft.style.opacity = (canScrollLeft && isMobile) ? '1' : '0';
+                  fadeRight.style.opacity = (canScrollRight && isMobile) ? '1' : '0';
+                }
+              }}
+              ref={(nav) => {
+                // Initialize fade indicators on mount
+                if (nav) {
+                  const fadeLeft = document.getElementById('scroll-fade-left');
+                  const fadeRight = document.getElementById('scroll-fade-right');
+
+                  if (fadeLeft && fadeRight) {
+                    const isMobile = window.innerWidth < 1024;
+                    const canScrollRight = nav.scrollWidth > nav.clientWidth;
+
+                    fadeLeft.style.opacity = '0';
+                    fadeRight.style.opacity = (canScrollRight && isMobile) ? '1' : '0';
+                  }
+                }
+              }}
+            >
+              {[
+                { key: 'all', label: 'All Users', count: users.length, icon: Users },
+                { key: 'client', label: 'Clients', count: users.filter(u => u.role === 'client').length, icon: User },
+                { key: 'coach', label: 'Coaches', count: users.filter(u => u.role === 'coach').length, icon: CircleUserRound },
+                { key: 'staff', label: 'Staff', count: users.filter(u => u.role === 'staff').length, icon: Users }
+              ].map((tab, index) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key as any)}
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`tabpanel-${tab.key}`}
+                    className={`
+                      flex-shrink-0 lg:flex-shrink lg:w-auto
+                      min-w-[140px] sm:min-w-[160px] lg:min-w-0
+                      flex items-center justify-center space-x-2
+                      py-2.5 px-3 lg:px-4
+                      rounded-lg font-medium text-sm
+                      transition-all duration-200
+                      focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
+                      dark:focus:ring-offset-gray-800
+                      snap-center lg:snap-none
+                      touch-manipulation
+                      ${isActive
+                        ? 'bg-blue-600 text-white shadow-md'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                      }
+                      ${index === 0 ? 'ml-1 lg:ml-0' : ''}
+                      ${index === 3 ? 'mr-1 lg:mr-0' : ''}
+                    `}
+                  >
+                    <Icon className={`h-4 w-4 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+
+                    {/* Responsive text display */}
+                    <span className="hidden sm:inline lg:hidden xl:inline truncate">
+                      {tab.label}
+                    </span>
+                    <span className="sm:hidden lg:inline xl:hidden truncate">
+                      {tab.key === 'all' ? 'All' : tab.key.charAt(0).toUpperCase() + tab.key.slice(1)}
+                    </span>
+
+                    {/* Count badge */}
+                    <span className={`
+                      inline-flex items-center justify-center
+                      min-w-[1.25rem] h-5
+                      text-xs font-medium rounded-full px-1.5
+                      flex-shrink-0
+                      ${isActive
+                        ? 'bg-blue-500 text-white'
+                        : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                      }
+                    `}>
+                      {tab.count}
+                    </span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Alternative: Two-row layout for very small screens (xs breakpoint) - currently hidden */}
+            <div className="hidden">
+              <div className="grid grid-cols-2 gap-1">
+                {[
+                  { key: 'all', label: 'All Users', count: users.length, icon: Users },
+                  { key: 'client', label: 'Clients', count: users.filter(u => u.role === 'client').length, icon: User },
+                  { key: 'coach', label: 'Coaches', count: users.filter(u => u.role === 'coach').length, icon: CircleUserRound },
+                  { key: 'staff', label: 'Staff', count: users.filter(u => u.role === 'staff').length, icon: Users }
+                ].map((tab) => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.key;
+                  return (
+                    <button
+                      key={`alt-${tab.key}`}
+                      onClick={() => setActiveTab(tab.key as any)}
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls={`tabpanel-${tab.key}`}
+                      className={`
+                        flex items-center justify-center space-x-1.5
+                        py-2 px-2
+                        rounded-lg font-medium text-xs
+                        transition-all duration-200
+                        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1
+                        ${isActive
+                          ? 'bg-blue-600 text-white shadow-md'
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700'
+                        }
+                      `}
+                    >
+                      <Icon className={`h-3.5 w-3.5 flex-shrink-0 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                      <span className="truncate text-xs">
+                        {tab.key === 'all' ? 'All' : tab.key.charAt(0).toUpperCase() + tab.key.slice(1)}
+                      </span>
+                      <span className={`
+                        inline-flex items-center justify-center
+                        min-w-[1rem] h-4
+                        text-xs font-medium rounded-full px-1
+                        flex-shrink-0
+                        ${isActive
+                          ? 'bg-blue-500 text-white'
+                          : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300'
+                        }
+                      `}>
+                        {tab.count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Alternative: Dropdown for very small screens (optional) */}
+            <div className="hidden">
+              <select
+                value={activeTab}
+                onChange={(e) => setActiveTab(e.target.value as any)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                aria-label="Select user type filter"
+              >
+                <option value="all">All Users ({users.length})</option>
+                <option value="client">Clients ({users.filter(u => u.role === 'client').length})</option>
+                <option value="coach">Coaches ({users.filter(u => u.role === 'coach').length})</option>
+                <option value="staff">Staff ({users.filter(u => u.role === 'staff').length})</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Filters Section */}
+        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search Input */}
+            <div className="flex-1 max-w-md">
+              <label htmlFor="user-search" className="sr-only">Search users</label>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                <input
+                  id="user-search"
+                  type="text"
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="flex-shrink-0">
+              <label htmlFor="status-filter" className="sr-only">Filter by status</label>
+              <select
+                id="status-filter"
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[140px]"
+              >
+                <option value="all">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+                <option value="suspended">Suspended</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Results Summary */}
+            {(searchTerm || statusFilter !== 'all') && (
+              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+                <span>Showing {filteredUsers.length} of {users.length} users</span>
+                {(searchTerm || statusFilter !== 'all') && (
+                  <button
+                    onClick={() => {
+                      setSearchTerm('');
+                      setStatusFilter('all');
+                    }}
+                    className="ml-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
+                  >
+                    Clear filters
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
       {/* Staff Management Section */}
       {showStaffManagement && (
@@ -1204,115 +1734,156 @@ export default function UserManagement() {
         </div>
       </div>
 
-      {/* Enhanced User Modal */}
-      {showUserModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {isEditMode ? 'Edit User' : 'Create New User'}
-              </h3>
-              <button
-                onClick={resetForm}
-                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            <form className="space-y-4">
-              {/* Basic Information */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Enhanced User Modal with Better Mobile Support */}
+        {showUserModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col">
+              {/* Modal Header - Fixed */}
+              <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    First Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">
+                    {isEditMode ? 'Edit User Profile' : 'Create New User'}
+                  </h3>
+                  <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">
+                    {isEditMode ? 'Update user information and settings' : 'Add a new user to the platform'}
+                  </p>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Last Name
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
+                <button
+                  onClick={resetForm}
+                  className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  aria-label="Close modal"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Email
-                  </label>
-                  <input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Phone
-                  </label>
-                  <input
-                    type="tel"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
-              </div>
+              {/* Modal Body - Scrollable */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6">
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    User Type
-                  </label>
-                  <select
-                    value={formData.userType}
-                    onChange={(e) => setFormData({ ...formData, userType: e.target.value as any })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    disabled={isEditMode}
-                  >
-                    <option value="client">Client</option>
-                    <option value="coach">Coach</option>
-                    <option value="staff">Staff</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Status
-                  </label>
-                  <select
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  >
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="suspended">Suspended</option>
-                    {formData.userType === 'coach' && (
-                      <>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </>
-                    )}
-                  </select>
-                </div>
-              </div>
+                <form className="space-y-6" onSubmit={(e) => {
+                  e.preventDefault();
+                  isEditMode ? handleUpdateUser() : handleCreateUser();
+                }}>
+                  {/* Basic Information Section */}
+                  <div className="space-y-4">
+                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                      <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Basic Information</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">Personal details and contact information</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          First Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="firstName"
+                          type="text"
+                          value={formData.firstName}
+                          onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          required
+                          placeholder="Enter first name"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Last Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="lastName"
+                          type="text"
+                          value={formData.lastName}
+                          onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          required
+                          placeholder="Enter last name"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          required
+                          placeholder="user@example.com"
+                        />
+                      </div>
+                      <div>
+                        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Phone Number
+                        </label>
+                        <input
+                          id="phone"
+                          type="tel"
+                          value={formData.phone}
+                          onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                          placeholder="+1 (555) 123-4567"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Account Settings Section */}
+                  <div className="space-y-4">
+                    <div className="border-b border-gray-200 dark:border-gray-700 pb-4">
+                      <h4 className="text-base font-semibold text-gray-900 dark:text-white mb-1">Account Settings</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">User role and account status configuration</p>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label htmlFor="userType" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          User Type <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="userType"
+                          value={formData.userType}
+                          onChange={(e) => setFormData({ ...formData, userType: e.target.value as any })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors disabled:bg-gray-100 dark:disabled:bg-gray-600 disabled:cursor-not-allowed"
+                          disabled={isEditMode}
+                        >
+                          <option value="client">Client</option>
+                          <option value="coach">Coach</option>
+                          <option value="staff">Staff</option>
+                        </select>
+                        {isEditMode && (
+                          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">User type cannot be changed after creation</p>
+                        )}
+                      </div>
+                      <div>
+                        <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                          Account Status <span className="text-red-500">*</span>
+                        </label>
+                        <select
+                          id="status"
+                          value={formData.status}
+                          onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                          className="w-full px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                        >
+                          <option value="active">Active</option>
+                          <option value="inactive">Inactive</option>
+                          <option value="suspended">Suspended</option>
+                          {formData.userType === 'coach' && (
+                            <>
+                              <option value="pending">Pending Approval</option>
+                              <option value="approved">Approved</option>
+                              <option value="rejected">Rejected</option>
+                            </>
+                          )}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
 
               {/* Role-specific fields */}
               {formData.userType === 'client' && (
@@ -1520,203 +2091,210 @@ export default function UserManagement() {
                 </div>
               )}
 
-              {/* Form Actions */}
-              <div className="flex justify-end space-x-3 pt-6 border-t">
-                <button
-                  type="button"
-                  onClick={resetForm}
-                  className="px-4 py-2 text-gray-600 dark:text-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={isEditMode ? handleUpdateUser : handleCreateUser}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                >
-                  <Save className="h-4 w-4" />
-                  <span>{isEditMode ? 'Update User' : 'Create User'}</span>
-                </button>
+                </form>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
 
-      {/* Alert Modal */}
-      {showAlertModal && alertData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
-                alertData.type === 'error' ? 'bg-red-100' :
-                alertData.type === 'warning' ? 'bg-yellow-100' :
-                alertData.type === 'success' ? 'bg-green-100' :
-                'bg-blue-100'
-              }`}>
-                {alertData.type === 'error' && <XCircle className="h-6 w-6 text-red-600" />}
-                {alertData.type === 'warning' && <AlertTriangle className="h-6 w-6 text-yellow-600" />}
-                {alertData.type === 'success' && <CheckCircle className="h-6 w-6 text-green-600" />}
-                {alertData.type === 'info' && <Info className="h-6 w-6 text-blue-600" />}
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {alertData.title}
-              </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line">
-                {alertData.message}
-              </p>
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              {alertData.showCancel && (
-                <button
-                  onClick={() => {
-                    alertData.onCancel?.();
-                    closeAlertModal();
-                  }}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  {alertData.cancelText || 'Cancel'}
-                </button>
-              )}
-              <button
-                onClick={() => {
-                  alertData.onConfirm?.();
-                  closeAlertModal();
-                }}
-                className={`px-4 py-2 rounded-lg transition-colors ${
-                  alertData.type === 'error' ? 'bg-red-600 hover:bg-red-700 text-white' :
-                  alertData.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 text-white' :
-                  alertData.type === 'success' ? 'bg-green-600 hover:bg-green-700 text-white' :
-                  'bg-blue-600 hover:bg-blue-700 text-white'
-                }`}
-              >
-                {alertData.confirmText || 'OK'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Success Modal for User Creation */}
-      {showSuccessModal && successData && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <div className="text-center mb-6">
-              <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {successData.userType.charAt(0).toUpperCase() + successData.userType.slice(1)} Created Successfully!
-              </h3>
-              <p className="text-sm text-gray-600">
-                The new {successData.userType} account has been created. Please share these credentials securely.
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={successData.email}
-                    readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700"
-                  />
+              {/* Modal Footer - Fixed */}
+              <div className="flex-shrink-0 px-4 py-4 sm:px-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 rounded-b-xl">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3">
                   <button
-                    onClick={() => copyToClipboard(successData.email)}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Copy email"
+                    type="button"
+                    onClick={resetForm}
+                    className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors font-medium"
                   >
-                    <Copy className="h-4 w-4" />
+                    Cancel
                   </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Temporary Password
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="text"
-                    value={successData.password}
-                    readOnly
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-700 font-mono text-sm"
-                  />
                   <button
-                    onClick={() => copyToClipboard(successData.password)}
-                    className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-                    title="Copy password"
+                    type="submit"
+                    onClick={isEditMode ? handleUpdateUser : handleCreateUser}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors flex items-center justify-center space-x-2 font-medium"
                   >
-                    <Copy className="h-4 w-4" />
+                    <Save className="h-4 w-4" />
+                    <span>{isEditMode ? 'Update User' : 'Create User'}</span>
                   </button>
                 </div>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-blue-800">
-                    <strong>Important:</strong> The user should change their password upon first login for security.
+        {/* Enhanced Alert Modal */}
+        {showAlertModal && alertData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className={`mx-auto flex items-center justify-center h-12 w-12 rounded-full mb-4 ${
+                    alertData.type === 'error' ? 'bg-red-100 dark:bg-red-900/20' :
+                    alertData.type === 'warning' ? 'bg-yellow-100 dark:bg-yellow-900/20' :
+                    alertData.type === 'success' ? 'bg-green-100 dark:bg-green-900/20' :
+                    'bg-blue-100 dark:bg-blue-900/20'
+                  }`}>
+                    {alertData.type === 'error' && <XCircle className="h-6 w-6 text-red-600 dark:text-red-400" />}
+                    {alertData.type === 'warning' && <AlertTriangle className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />}
+                    {alertData.type === 'success' && <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />}
+                    {alertData.type === 'info' && <Info className="h-6 w-6 text-blue-600 dark:text-blue-400" />}
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {alertData.title}
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-line leading-relaxed">
+                    {alertData.message}
                   </p>
                 </div>
+
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3">
+                  {alertData.showCancel && (
+                    <button
+                      onClick={() => {
+                        alertData.onCancel?.();
+                        closeAlertModal();
+                      }}
+                      className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors font-medium"
+                    >
+                      {alertData.cancelText || 'Cancel'}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      alertData.onConfirm?.();
+                      closeAlertModal();
+                    }}
+                    className={`w-full sm:w-auto px-4 py-2.5 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors ${
+                      alertData.type === 'error' ? 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500' :
+                      alertData.type === 'warning' ? 'bg-yellow-600 hover:bg-yellow-700 text-white focus:ring-yellow-500' :
+                      alertData.type === 'success' ? 'bg-green-600 hover:bg-green-700 text-white focus:ring-green-500' :
+                      'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500'
+                    }`}
+                  >
+                    {alertData.confirmText || 'OK'}
+                  </button>
+                </div>
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  copyToClipboard(`Email: ${successData.email}\nPassword: ${successData.password}`);
-                }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors flex items-center space-x-2"
-              >
-                <Copy className="h-4 w-4" />
-                <span>Copy Both</span>
-              </button>
-              <button
-                onClick={closeSuccessModal}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Done
-              </button>
+        {/* Enhanced Success Modal for User Creation */}
+        {showSuccessModal && successData && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="text-center mb-6">
+                  <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/20 mb-4">
+                    <CheckCircle className="h-6 w-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                    {successData.userType.charAt(0).toUpperCase() + successData.userType.slice(1)} Created Successfully!
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
+                    The new {successData.userType} account has been created. Please share these credentials securely with the user.
+                  </p>
+                </div>
+
+                <div className="space-y-4 mb-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Email Address
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={successData.email}
+                        readOnly
+                        className="flex-1 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(successData.email)}
+                        className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        title="Copy email"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Temporary Password
+                    </label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="text"
+                        value={successData.password}
+                        readOnly
+                        className="flex-1 px-3 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-700 dark:text-gray-300 font-mono text-sm"
+                      />
+                      <button
+                        onClick={() => copyToClipboard(successData.password)}
+                        className="p-2.5 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors"
+                        title="Copy password"
+                      >
+                        <Copy className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+                  <div className="flex">
+                    <div className="flex-shrink-0">
+                      <Info className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                    </div>
+                    <div className="ml-3">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Important:</strong> The user should change their password upon first login for security. Make sure to share these credentials through a secure channel.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end space-y-2 space-y-reverse sm:space-y-0 sm:space-x-3">
+                  <button
+                    onClick={() => {
+                      copyToClipboard(`Email: ${successData.email}\nPassword: ${successData.password}`);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors flex items-center justify-center space-x-2 font-medium"
+                  >
+                    <Copy className="h-4 w-4" />
+                    <span>Copy Both</span>
+                  </button>
+                  <button
+                    onClick={closeSuccessModal}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 transition-colors font-medium"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* CSV Import Modal */}
-      <CSVImportModal
-        isOpen={showCSVImportModal}
-        onClose={() => setShowCSVImportModal(false)}
-        onImportComplete={() => {
-          fetchUsers();
-          showInfo('Import Complete', 'Users have been successfully imported');
-        }}
-      />
+        {/* CSV Import Modal */}
+        <CSVImportModal
+          isOpen={showCSVImportModal}
+          onClose={() => setShowCSVImportModal(false)}
+          onImportComplete={() => {
+            fetchUsers();
+            showInfo('Import Complete', 'Users have been successfully imported');
+          }}
+        />
 
-      {/* Staff Invitation Modal */}
-      <StaffInvitationModal
-        isOpen={showStaffInviteModal}
-        onClose={() => setShowStaffInviteModal(false)}
-        onSuccess={(message) => {
-          showInfo('Invitation Sent', message);
-          // Refresh staff management if it's open
-          if (showStaffManagement) {
-            // The StaffInvitationManager will refresh automatically via its useEffect
-          }
-        }}
-        onError={showError}
-      />
+        {/* Staff Invitation Modal */}
+        <StaffInvitationModal
+          isOpen={showStaffInviteModal}
+          onClose={() => setShowStaffInviteModal(false)}
+          onSuccess={(message) => {
+            showInfo('Invitation Sent', message);
+            // Refresh staff management if it's open
+            if (showStaffManagement) {
+              // The StaffInvitationManager will refresh automatically via its useEffect
+            }
+          }}
+          onError={showError}
+        />
+      </div>
     </div>
   );
 }

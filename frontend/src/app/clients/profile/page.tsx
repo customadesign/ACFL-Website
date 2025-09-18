@@ -15,7 +15,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import ProfileCardSkeleton from '@/components/ProfileCardSkeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload } from 'lucide-react'
+import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload, Bell, BellOff, Volume2, VolumeX, MessageCircle } from 'lucide-react'
 import { STATE_NAMES } from '@/constants/states'
 import { 
   concernOptions, 
@@ -45,6 +45,15 @@ const profileFormSchema = z.object({
   therapistGender: z.string().optional(),
   bio: z.string().optional(),
   profilePhoto: z.string().optional(),
+  // Notification preferences
+  emailNotifications: z.boolean().optional(),
+  smsNotifications: z.boolean().optional(),
+  pushNotifications: z.boolean().optional(),
+  soundNotifications: z.boolean().optional(),
+  messageNotifications: z.boolean().optional(),
+  appointmentNotifications: z.boolean().optional(),
+  appointmentReminders: z.boolean().optional(),
+  marketingEmails: z.boolean().optional(),
 })
 
 type ProfileFormData = z.infer<typeof profileFormSchema>
@@ -53,7 +62,9 @@ function ProfileContent() {
   const { user, logout } = useAuth()
   const router = useRouter()
   const [isEditing, setIsEditing] = useState(false)
+  const [isEditingNotifications, setIsEditingNotifications] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false)
   const [loadingProfile, setLoadingProfile] = useState(true)
   const [initialLoad, setInitialLoad] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -84,6 +95,15 @@ function ProfileContent() {
       therapistGender: '',
       bio: '',
       profilePhoto: '',
+      // Notification preferences defaults
+      emailNotifications: true,
+      smsNotifications: false,
+      pushNotifications: true,
+      soundNotifications: true,
+      messageNotifications: true,
+      appointmentNotifications: true,
+      appointmentReminders: true,
+      marketingEmails: false,
     },
   })
 
@@ -119,6 +139,17 @@ function ProfileContent() {
           form.setValue('therapistGender', userData.therapistGender || userData.preferences?.therapistGender || '')
           form.setValue('bio', userData.bio || '')
           form.setValue('profilePhoto', userData.profilePhoto || '')
+
+          // Load notification preferences (with defaults if not set)
+          const notificationPrefs = userData.notificationPreferences || {}
+          form.setValue('emailNotifications', notificationPrefs.emailNotifications ?? true)
+          form.setValue('smsNotifications', notificationPrefs.smsNotifications ?? false)
+          form.setValue('pushNotifications', notificationPrefs.pushNotifications ?? true)
+          form.setValue('soundNotifications', notificationPrefs.soundNotifications ?? true)
+          form.setValue('messageNotifications', notificationPrefs.messageNotifications ?? true)
+          form.setValue('appointmentNotifications', notificationPrefs.appointmentNotifications ?? true)
+          form.setValue('appointmentReminders', notificationPrefs.appointmentReminders ?? true)
+          form.setValue('marketingEmails', notificationPrefs.marketingEmails ?? false)
           
           // Set member since date
           if (userData.created_at) {
@@ -195,6 +226,59 @@ function ProfileContent() {
     setSuccess(null)
     // Reset form to original values
     form.reset()
+  }
+
+  const handleNotificationSubmit = async () => {
+    setIsLoadingNotifications(true)
+    setError(null)
+    setSuccess(null)
+
+    try {
+      const API_URL = getApiUrl()
+
+      // Extract only notification preferences from form
+      const notificationData = {
+        emailNotifications: form.getValues('emailNotifications'),
+        smsNotifications: form.getValues('smsNotifications'),
+        pushNotifications: form.getValues('pushNotifications'),
+        soundNotifications: form.getValues('soundNotifications'),
+        messageNotifications: form.getValues('messageNotifications'),
+        appointmentNotifications: form.getValues('appointmentNotifications'),
+        appointmentReminders: form.getValues('appointmentReminders'),
+        marketingEmails: form.getValues('marketingEmails'),
+      }
+
+      const response = await fetch(`${API_URL}/api/client/profile`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify(notificationData)
+      })
+
+      if (response.ok) {
+        setSuccess('Notification preferences updated successfully!')
+        setIsEditingNotifications(false)
+        setTimeout(() => setSuccess(null), 3000)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to update notification preferences')
+      }
+    } catch (error) {
+      console.error('Error updating notification preferences:', error)
+      setError('Failed to update notification preferences')
+    } finally {
+      setIsLoadingNotifications(false)
+    }
+  }
+
+  const handleNotificationCancel = () => {
+    setIsEditingNotifications(false)
+    setError(null)
+    setSuccess(null)
+    // Reload profile to reset notification preferences
+    loadProfileAndStats()
   }
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -469,7 +553,7 @@ function ProfileContent() {
                         type="text"
                         value={form.watch('firstName')}
                         onChange={(e) => form.setValue('firstName', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -479,7 +563,7 @@ function ProfileContent() {
                         type="text"
                         value={form.watch('lastName')}
                         onChange={(e) => form.setValue('lastName', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -498,7 +582,7 @@ function ProfileContent() {
                         type="tel"
                         value={form.watch('phone')}
                         onChange={(e) => form.setValue('phone', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -521,7 +605,7 @@ function ProfileContent() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={openLocation}
-                          disabled={!isEditing}
+                          disabled={!isEditingNotifications}
                           className="w-full justify-between bg-white dark:bg-gray-800"
                         >
                           {form.watch('location') ? (STATE_NAMES as any)[form.watch('location')] || 'Select your state' : 'Select your state'}
@@ -594,7 +678,7 @@ function ProfileContent() {
                     <textarea
                       value={form.watch('bio') || ''}
                       onChange={(e) => form.setValue('bio', e.target.value)}
-                      disabled={!isEditing}
+                      disabled={!isEditingNotifications}
                       placeholder="Tell coaches about yourself, your goals, or what you're looking for in coaching..."
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100  bg-white dark:bg-background text-gray-900 dark:text-white"
@@ -612,7 +696,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('language')}
                         onChange={(e) => form.setValue('language', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select preferred language</option>
@@ -629,7 +713,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('genderIdentity')}
                         onChange={(e) => form.setValue('genderIdentity', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select gender identity</option>
@@ -646,7 +730,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('ethnicIdentity')}
                         onChange={(e) => form.setValue('ethnicIdentity', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select ethnic identity</option>
@@ -663,7 +747,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('religiousBackground')}
                         onChange={(e) => form.setValue('religiousBackground', e.target.value)}
-                        disabled={!isEditing}
+                        disabled={!isEditingNotifications}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select religious background</option>
@@ -738,6 +822,262 @@ function ProfileContent() {
             </Form>
           </CardContent>
         </Card>
+        )}
+
+        {/* Notification Preferences */}
+        {initialLoad ? (
+          <ProfileCardSkeleton type="form" />
+        ) : (
+          <Card className="bg-card border-border mt-6">
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Bell className="w-5 h-5" />
+                    Notification Preferences
+                  </CardTitle>
+                  <CardDescription className="dark:text-gray-300">
+                    Choose how and when you want to receive notifications
+                  </CardDescription>
+                </div>
+                {!isEditingNotifications ? (
+                  <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
+                    <Settings className="w-4 h-4 mr-2" />
+                    Edit Settings
+                  </Button>
+                ) : (
+                  <div className="flex space-x-2">
+                    <Button
+                      onClick={handleNotificationSubmit}
+                      disabled={isLoadingNotifications}
+                      className="bg-green-600 hover:bg-green-700 dark:text-white"
+                    >
+                      {isLoadingNotifications ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                    <Button
+                      onClick={handleNotificationCancel}
+                      variant="outline"
+                      disabled={isLoadingNotifications}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* General Notification Methods */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Methods</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Email Notifications</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications via email</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('emailNotifications')}
+                      onCheckedChange={(checked) => form.setValue('emailNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Phone className="w-5 h-5 text-green-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">SMS Notifications</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications via text message</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('smsNotifications')}
+                      onCheckedChange={(checked) => form.setValue('smsNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Bell className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Push Notifications</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications in your browser</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('pushNotifications')}
+                      onCheckedChange={(checked) => form.setValue('pushNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      {form.watch('soundNotifications') ? (
+                        <Volume2 className="w-5 h-5 text-orange-600" />
+                      ) : (
+                        <VolumeX className="w-5 h-5 text-gray-400" />
+                      )}
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Sound Notifications</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Play sound with notifications</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('soundNotifications')}
+                      onCheckedChange={(checked) => form.setValue('soundNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Notification Types */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Types</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <MessageCircle className="w-5 h-5 text-blue-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">New Messages</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Get notified when you receive new messages</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('messageNotifications')}
+                      onCheckedChange={(checked) => form.setValue('messageNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Calendar className="w-5 h-5 text-green-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Appointment Updates</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Get notified about appointment changes, confirmations, and cancellations</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('appointmentNotifications')}
+                      onCheckedChange={(checked) => form.setValue('appointmentNotifications', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Clock className="w-5 h-5 text-orange-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Appointment Reminders</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Get reminder notifications before your appointments</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('appointmentReminders')}
+                      onCheckedChange={(checked) => form.setValue('appointmentReminders', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-orange-600 data-[state=checked]:border-orange-600"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="w-5 h-5 text-purple-600" />
+                      <div>
+                        <label className="text-sm font-medium text-gray-900 dark:text-white">Marketing Emails</label>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive updates about new features and promotions</p>
+                      </div>
+                    </div>
+                    <Checkbox
+                      checked={form.watch('marketingEmails')}
+                      onCheckedChange={(checked) => form.setValue('marketingEmails', !!checked)}
+                      disabled={!isEditingNotifications}
+                      className="data-[state=checked]:bg-purple-600 data-[state=checked]:border-purple-600"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Read-only view when not editing */}
+              {!isEditingNotifications && (
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Current Settings</h3>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Notification Methods</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Email Notifications</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('emailNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('emailNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">SMS Notifications</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('smsNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('smsNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Push Notifications</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('pushNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('pushNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Sound Notifications</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('soundNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('soundNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <h4 className="font-medium text-gray-900 dark:text-white mb-3">Notification Types</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">New Messages</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('messageNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('messageNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Appointment Updates</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('appointmentNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('appointmentNotifications') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Appointment Reminders</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('appointmentReminders') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('appointmentReminders') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-700 dark:text-gray-300">Marketing Emails</span>
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('marketingEmails') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
+                          {form.watch('marketingEmails') ? 'Enabled' : 'Disabled'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>

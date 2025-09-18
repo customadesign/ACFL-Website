@@ -2368,14 +2368,36 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
 
     const hourlyRate = coachRates?.rate || 100; // Default rate if not set
 
-    // Calculate current period stats
+    // Get actual payment data for current period
+    const { data: currentPayments, error: paymentsError } = await supabase
+      .from('payments')
+      .select('amount_cents, status, created_at')
+      .eq('coach_id', coachId)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', now.toISOString());
+
+    // Get actual payment data for previous period
+    const { data: previousPayments } = await supabase
+      .from('payments')
+      .select('amount_cents, status, created_at')
+      .eq('coach_id', coachId)
+      .gte('created_at', previousStartDate.toISOString())
+      .lte('created_at', previousEndDate.toISOString());
+
+    // Calculate current period revenue from actual payments
     const currentSessionsCount = currentSessions?.length || 0;
-    const currentRevenue = currentSessionsCount * hourlyRate;
+    const currentRevenue = (currentPayments || [])
+      .filter(payment => payment.status === 'succeeded')
+      .reduce((total, payment) => total + (payment.amount_cents / 100), 0);
+
+    // Calculate previous period revenue
+    const previousRevenue = (previousPayments || [])
+      .filter(payment => payment.status === 'succeeded')
+      .reduce((total, payment) => total + (payment.amount_cents / 100), 0);
     const currentHours = currentSessionsCount * 1; // Assuming 1 hour per session
 
     // Calculate previous period stats for trends
     const previousSessionsCount = previousSessions?.length || 0;
-    const previousRevenue = previousSessionsCount * hourlyRate;
 
     // Calculate trends
     const revenueChange = previousRevenue > 0
@@ -2436,34 +2458,27 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
     // Mock on-time performance (would need actual meeting start/end times)
     const onTimeRate = 95; // Placeholder
 
-    // Recent activity (last 10 completed sessions)
-    const { data: recentSessions, error: activityError } = await supabase
-      .from('sessions')
-      .select('id, starts_at, client_id')
+    // Recent activity (last 10 payment transactions)
+    const { data: recentPayments, error: activityError } = await supabase
+      .from('payments')
+      .select(`
+        amount_cents,
+        created_at,
+        status,
+        client_id,
+        clients(first_name, last_name)
+      `)
       .eq('coach_id', coachId)
-      .eq('status', 'completed')
-      .order('starts_at', { ascending: false })
+      .eq('status', 'succeeded')
+      .order('created_at', { ascending: false })
       .limit(10);
 
-    // Get client details for recent sessions
-    const recentClientIds = [...new Set(recentSessions?.map(s => s.client_id) || [])];
-    const { data: recentClients } = await supabase
-      .from('clients')
-      .select('id, first_name, last_name')
-      .in('id', recentClientIds);
-
-    const clientsMap = new Map();
-    recentClients?.forEach((client: any) => {
-      clientsMap.set(client.id, client);
-    });
-
-    const formattedActivity = recentSessions?.map((session: any) => {
-      const client = clientsMap.get(session.client_id);
+    const formattedActivity = recentPayments?.map((payment: any) => {
       return {
-        clientName: client ? `${client.first_name} ${client.last_name}` : 'Client',
-        date: session.starts_at,
-        amount: hourlyRate.toFixed(2),
-        duration: 60 // Assuming 60 minutes per session
+        clientName: payment.clients ? `${payment.clients.first_name} ${payment.clients.last_name}` : 'Client',
+        date: payment.created_at,
+        amount: (payment.amount_cents / 100).toFixed(2),
+        duration: 60 // This could be pulled from session data if needed
       };
     }) || [];
 

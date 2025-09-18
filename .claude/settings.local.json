@@ -21,7 +21,13 @@
       "Bash(netstat:*)",
       "Bash(npm run setup-admin:*)",
       "Bash(npm run:*)",
-      "Bash(npm install)"
+      "Bash(npm install)",
+      "Bash(timeout:*)",
+      "mcp__playwright__browser_snapshot",
+      "mcp__playwright__browser_press_key",
+      "mcp__playwright__browser_type",
+      "mcp__playwright__browser_close",
+      "Bash(cd:*)"
     ],
     "deny": [],
     "ask": []

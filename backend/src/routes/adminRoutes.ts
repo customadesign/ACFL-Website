@@ -375,6 +375,150 @@ router.get('/users', async (req, res) => {
   }
 });
 
+// Export users as CSV
+router.get('/users/export', async (req, res) => {
+  try {
+    const { status, role, search } = req.query;
+    console.log('Admin users export endpoint called with query:', { status, role, search });
+
+    let users = [];
+
+    // Get clients
+    const { data: clients, error: clientsError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, dob, gender_identity, ethnic_identity, religious_background');
+
+    if (!clientsError && clients) {
+      users.push(...clients.map(client => ({
+        ...client,
+        role: 'client',
+        name: `${client.first_name || ''} ${client.last_name || ''}`.trim(),
+        status: client.status || 'active'
+      })));
+    }
+
+    // Get coaches
+    const { data: coaches, error: coachesError } = await supabase
+      .from('coaches')
+      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, specialties, years_experience, hourly_rate_usd, bio, qualifications');
+
+    if (!coachesError && coaches) {
+      users.push(...coaches.map(coach => ({
+        ...coach,
+        role: 'coach',
+        name: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
+        status: coach.status || 'active'
+      })));
+    }
+
+    // Get staff
+    const { data: staff, error: staffError } = await supabase
+      .from('staff')
+      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, department, role_level');
+
+    if (!staffError && staff) {
+      users.push(...staff.map(staffMember => ({
+        ...staffMember,
+        role: 'staff',
+        name: `${staffMember.first_name || ''} ${staffMember.last_name || ''}`.trim(),
+        status: staffMember.status || 'active'
+      })));
+    }
+
+    // Apply filters
+    let filteredUsers = users;
+
+    if (role && role !== 'all') {
+      filteredUsers = filteredUsers.filter(user => user.role === role);
+    }
+
+    if (status && status !== 'all') {
+      filteredUsers = filteredUsers.filter(user => user.status === status);
+    }
+
+    if (search) {
+      const searchLower = search.toString().toLowerCase();
+      filteredUsers = filteredUsers.filter(user =>
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Create CSV content
+    const csvRows = [];
+
+    // Add header row
+    csvRows.push([
+      'ID',
+      'Role',
+      'First Name',
+      'Last Name',
+      'Email',
+      'Phone',
+      'Status',
+      'Created At',
+      'Last Login',
+      'Department',
+      'Role Level',
+      'Specialties',
+      'Years Experience',
+      'Hourly Rate (USD)',
+      'Date of Birth',
+      'Gender Identity',
+      'Ethnic Identity',
+      'Religious Background'
+    ].join(','));
+
+    // Add data rows
+    filteredUsers.forEach(user => {
+      const row = [
+        user.id || '',
+        user.role || '',
+        user.first_name || '',
+        user.last_name || '',
+        user.email || '',
+        user.phone || '',
+        user.status || '',
+        user.created_at || '',
+        user.last_login || '',
+        user.department || '',
+        user.role_level || '',
+        Array.isArray(user.specialties) ? user.specialties.join(';') : '',
+        user.years_experience || '',
+        user.hourly_rate_usd || '',
+        user.dob || '',
+        user.gender_identity || '',
+        user.ethnic_identity || '',
+        user.religious_background || ''
+      ].map(field => {
+        // Escape fields that contain commas, quotes, or newlines
+        const stringField = String(field);
+        if (stringField.includes(',') || stringField.includes('"') || stringField.includes('\n')) {
+          return `"${stringField.replace(/"/g, '""')}"`;
+        }
+        return stringField;
+      }).join(',');
+
+      csvRows.push(row);
+    });
+
+    const csvContent = csvRows.join('\n');
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+    const filename = `users_export_${timestamp}.csv`;
+
+    // Set response headers for CSV download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+
+    res.send(csvContent);
+  } catch (error) {
+    console.error('Users export error:', error);
+    res.status(500).json({ error: 'Failed to export users' });
+  }
+});
+
 // Create new user (client, coach, or staff) - Admin only
 router.post('/users', authorize('admin'), async (req, res) => {
   try {

@@ -143,13 +143,14 @@ export class PaymentServiceV2 {
 
       const captureStatus = captureResult.payment?.status === 'COMPLETED' ? 'succeeded' : 'failed';
 
-      // Update payment status
+      // Update payment status with additional fields
       const { data: updatedPayment, error: updateError } = await supabase
         .from('payments')
         .update({
           status: 'succeeded',
           paid_at: new Date(),
           captured_at: new Date(),
+          payment_method_type: captureResult.payment?.sourceType?.toLowerCase() || 'card',
         })
         .eq('id', paymentId)
         .select()

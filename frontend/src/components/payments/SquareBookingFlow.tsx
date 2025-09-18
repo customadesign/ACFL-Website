@@ -222,6 +222,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
           notes: `Paid session: ${selectedRate?.title}`,
           areaOfFocus: selectedRate?.title,
           paymentId: result.paymentId,
+          isInstantBooking: isInstantBooking,
           createVideoMeeting: true
         })
       });

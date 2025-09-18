@@ -7,6 +7,7 @@ import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 import { createVideoSDKMeeting } from '../services/videoSDKService';
+import { PaymentServiceV2 } from '../services/paymentServiceV2';
 import path from 'path';
 
 const router = Router();
@@ -59,6 +60,8 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
         therapistGender: clientProfile.preferred_coach_gender,
         bio: clientProfile.bio,
         profilePhoto: clientProfile.profile_photo || '',
+        // Notification preferences
+        notificationPreferences: clientProfile.notification_preferences || {},
         // Keep legacy format for compatibility
         preferences: {
           location: clientProfile.location_state,
@@ -99,6 +102,15 @@ router.put('/client/profile', [
   body('therapistGender').optional().isString(),
   body('bio').optional().isString(),
   body('profilePhoto').optional().isString(),
+  // Notification preferences
+  body('emailNotifications').optional().isBoolean(),
+  body('smsNotifications').optional().isBoolean(),
+  body('pushNotifications').optional().isBoolean(),
+  body('soundNotifications').optional().isBoolean(),
+  body('messageNotifications').optional().isBoolean(),
+  body('appointmentNotifications').optional().isBoolean(),
+  body('appointmentReminders').optional().isBoolean(),
+  body('marketingEmails').optional().isBoolean(),
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
@@ -152,6 +164,49 @@ router.put('/client/profile', [
     if (req.body.therapistGender !== undefined) updateData.preferred_coach_gender = req.body.therapistGender
     if (req.body.bio !== undefined) updateData.bio = req.body.bio
     if (req.body.profilePhoto !== undefined) updateData.profile_photo = req.body.profilePhoto
+
+    // Notification preferences - store as JSON object
+    const notificationPrefs: any = {}
+    let hasNotificationPrefs = false
+
+    if (req.body.emailNotifications !== undefined) {
+      notificationPrefs.emailNotifications = req.body.emailNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.smsNotifications !== undefined) {
+      notificationPrefs.smsNotifications = req.body.smsNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.pushNotifications !== undefined) {
+      notificationPrefs.pushNotifications = req.body.pushNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.soundNotifications !== undefined) {
+      notificationPrefs.soundNotifications = req.body.soundNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.messageNotifications !== undefined) {
+      notificationPrefs.messageNotifications = req.body.messageNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.appointmentNotifications !== undefined) {
+      notificationPrefs.appointmentNotifications = req.body.appointmentNotifications
+      hasNotificationPrefs = true
+    }
+    if (req.body.appointmentReminders !== undefined) {
+      notificationPrefs.appointmentReminders = req.body.appointmentReminders
+      hasNotificationPrefs = true
+    }
+    if (req.body.marketingEmails !== undefined) {
+      notificationPrefs.marketingEmails = req.body.marketingEmails
+      hasNotificationPrefs = true
+    }
+
+    // If notification preferences are being updated, merge with existing preferences
+    if (hasNotificationPrefs) {
+      const existingPrefs = clientProfile.notification_preferences || {}
+      updateData.notification_preferences = { ...existingPrefs, ...notificationPrefs }
+    }
 
     // Only update if there are fields to update
     if (Object.keys(updateData).length > 0) {
@@ -726,7 +781,9 @@ router.post('/client/book-appointment', [
   body('scheduledAt').isISO8601().withMessage('Valid scheduled date/time is required'),
   body('sessionType').isIn(['consultation', 'session']).withMessage('Session type must be consultation or session'),
   body('notes').optional().isLength({ max: 500 }).withMessage('Notes must be less than 500 characters'),
-  body('areaOfFocus').optional().isString()
+  body('areaOfFocus').optional().isString(),
+  body('paymentId').optional().isString().withMessage('Payment ID must be a string'),
+  body('isInstantBooking').optional().isBoolean().withMessage('Is instant booking must be a boolean')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
@@ -744,7 +801,7 @@ router.post('/client/book-appointment', [
       });
     }
 
-    const { coachId, scheduledAt, sessionType, notes, areaOfFocus } = req.body;
+    const { coachId, scheduledAt, sessionType, notes, areaOfFocus, paymentId, isInstantBooking } = req.body;
 
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
@@ -845,6 +902,38 @@ router.post('/client/book-appointment', [
 
     if (sessionError) {
       throw sessionError;
+    }
+
+    // Handle payment if paymentId is provided
+    if (paymentId) {
+      try {
+        const paymentService = new PaymentServiceV2();
+
+        // Update payment record with session_id
+        const { error: paymentUpdateError } = await supabase
+          .from('payments')
+          .update({ session_id: session.id })
+          .eq('id', paymentId);
+
+        if (paymentUpdateError) {
+          console.error('Failed to update payment with session_id:', paymentUpdateError);
+        }
+
+        // For instant bookings, capture the payment immediately
+        // For scheduled bookings, payment will be captured after session completion
+        if (isInstantBooking) {
+          try {
+            await paymentService.capturePayment(paymentId);
+            console.log('Payment captured for instant booking:', paymentId);
+          } catch (captureError) {
+            console.error('Failed to capture payment for instant booking:', captureError);
+            // Don't fail the booking if payment capture fails
+          }
+        }
+      } catch (error) {
+        console.error('Payment handling error:', error);
+        // Don't fail the booking if payment handling fails
+      }
     }
 
     // Emit WebSocket event for new appointment

@@ -789,16 +789,7 @@ function SearchCoachesContent() {
             </button>
           </div>
           {/* Refresh button for saved coaches */}
-          {activeTab === 'saved' && (
-            <Button
-              onClick={refreshSavedCoaches}
-              variant="outline"
-              className="flex items-center gap-2 dark:text-white w-full sm:w-auto touch-manipulation"
-            >
-              <RefreshCw className="w-4 h-4" />
-              Refresh
-            </Button>
-          )}
+         
         </div>
 
         {/* Loading State */}

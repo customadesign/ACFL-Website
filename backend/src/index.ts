@@ -18,6 +18,7 @@ import bookingRoutes from './routes/bookingRoutes';
 import contentRoutes from './routes/contentRoutes';
 import staffRoutes from './routes/staffRoutes';
 import csvImportRoutes from './routes/csvImportRoutes';
+import financialRoutes from './routes/financialRoutes';
 import { supabase } from './lib/supabase';
 
 const app = express();
@@ -69,6 +70,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/csv-import', csvImportRoutes);
+app.use('/api/admin/financial', financialRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);

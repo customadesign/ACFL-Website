@@ -21,12 +21,11 @@ export const financialController = {
       } = req.query;
       
       let query = supabase
-        .from('payment_transactions')
+        .from('payments')
         .select(`
           *,
           client:clients(first_name, last_name, email),
-          coach:coaches(first_name, last_name, email),
-          session:sessions(scheduled_at, duration_minutes)
+          coach:coaches(first_name, last_name, email)
         `, { count: 'exact' });
       
       if (status) {
@@ -78,8 +77,8 @@ export const financialController = {
       
       // Base query for transactions
       let query = supabase
-        .from('payment_transactions')
-        .select('amount, status, created_at');
+        .from('payments')
+        .select('amount_cents, status, created_at');
       
       if (start_date) {
         query = query.gte('created_at', start_date);
@@ -107,26 +106,27 @@ export const financialController = {
       };
       
       transactions?.forEach(transaction => {
-        const amount = Number(transaction.amount);
-        
+        const amountCents = Number(transaction.amount_cents);
+        const amountDollars = amountCents / 100; // Convert cents to dollars
+
         // Count by status
-        stats.transactionsByStatus[transaction.status] = 
+        stats.transactionsByStatus[transaction.status] =
           (stats.transactionsByStatus[transaction.status] || 0) + 1;
-        
+
         // Calculate totals
-        if (transaction.status === 'completed') {
-          stats.totalRevenue += amount;
+        if (transaction.status === 'succeeded') {
+          stats.totalRevenue += amountDollars;
           stats.successfulTransactions++;
-          
+
           // Group by day
           const day = new Date(transaction.created_at).toISOString().split('T')[0];
-          stats.revenueByDay[day] = (stats.revenueByDay[day] || 0) + amount;
+          stats.revenueByDay[day] = (stats.revenueByDay[day] || 0) + amountDollars;
         } else if (transaction.status === 'failed') {
           stats.failedTransactions++;
         } else if (transaction.status === 'pending') {
           stats.pendingTransactions++;
         } else if (transaction.status === 'refunded') {
-          stats.refundedAmount += amount;
+          stats.refundedAmount += amountDollars;
         }
       });
       
