@@ -18,6 +18,7 @@ import {
 import SquareProvider from '@/components/payments/SquareProvider';
 import SquarePaymentForm from '@/components/payments/SquarePaymentForm';
 import { toast } from 'react-toastify';
+import { getApiUrl } from '@/lib/api';
 
 interface BookingRequest {
   id: string;
@@ -60,7 +61,8 @@ const BookingPaymentInterface: React.FC = () => {
 
   const fetchBookingRequests = async () => {
     try {
-      const response = await fetch('/api/bookings/client/requests', {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/bookings/client/requests`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

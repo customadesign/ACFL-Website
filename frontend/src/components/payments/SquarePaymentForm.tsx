@@ -7,6 +7,7 @@ import { Loader2, CreditCard, Shield, CheckCircle } from 'lucide-react';
 import { useSquare } from './SquareProvider';
 import { handleSquareError } from '@/lib/square';
 import { toast } from 'react-toastify';
+import { getApiUrl } from '@/lib/api';
 
 interface SquarePaymentFormProps {
   amount: number;
@@ -90,11 +91,12 @@ const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
       // Tokenize the card
       const { token } = await tokenize();
 
+      const API_URL = getApiUrl();
       let endpoint, requestBody;
 
       if (immediatePayment && bookingRequestId) {
         // Process immediate payment for booking request
-        endpoint = `/api/bookings/client/requests/${bookingRequestId}/pay`;
+        endpoint = `${API_URL}/api/bookings/client/requests/${bookingRequestId}/pay`;
         requestBody = {
           source_id: token,
           billing_details: {
@@ -104,7 +106,7 @@ const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
         };
       } else {
         // Process authorization (existing flow)
-        endpoint = '/api/payments/create-payment-authorization';
+        endpoint = `${API_URL}/api/payments/create-payment-authorization`;
         requestBody = {
           sourceId: token,
           coach_id: coachId,
@@ -132,7 +134,13 @@ const SquarePaymentForm: React.FC<SquarePaymentFormProps> = ({
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Payment processing failed');
+        console.error('Payment API error:', {
+          status: response.status,
+          statusText: response.statusText,
+          url: endpoint,
+          data: data
+        });
+        throw new Error(data.error || data.message || 'Payment processing failed');
       }
 
       // Payment successful

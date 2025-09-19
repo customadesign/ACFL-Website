@@ -8,6 +8,7 @@ import { CalendarDays, Clock, User, CreditCard, CheckCircle, AlertCircle } from 
 import SquareProvider from './SquareProvider';
 import SquarePaymentForm from './SquarePaymentForm';
 import { toast } from 'react-toastify';
+import { getApiUrl } from '@/lib/api';
 
 interface CoachRate {
   id: string;
@@ -73,11 +74,12 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
   const fetchCoachAndRates = async () => {
     try {
       setIsLoading(true);
+      const API_URL = getApiUrl();
 
       // Fetch coach info and rates in parallel
       const [coachResponse, ratesResponse] = await Promise.all([
-        fetch(`/api/coaches/${coachId}`),
-        fetch(`/api/payments/public/coaches/${coachId}/rates`)
+        fetch(`${API_URL}/api/coaches/${coachId}`),
+        fetch(`${API_URL}/api/payments/public/coaches/${coachId}/rates`)
       ]);
 
       if (coachResponse.ok) {
@@ -208,7 +210,8 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
       endsAt = new Date(scheduledAt.getTime() + durationMs);
 
       // Create the actual booking/session with the authorized payment
-      const bookingResponse = await fetch('/api/client/book-appointment', {
+      const API_URL = getApiUrl();
+      const bookingResponse = await fetch(`${API_URL}/api/client/book-appointment`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -240,7 +243,13 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
         onBookingComplete?.(bookingResult);
       } else {
         const errorData = await bookingResponse.json();
-        throw new Error(errorData.message || 'Failed to create booking');
+        console.error('Booking API error:', {
+          status: bookingResponse.status,
+          statusText: bookingResponse.statusText,
+          url: `${API_URL}/api/client/book-appointment`,
+          data: errorData
+        });
+        throw new Error(errorData.message || errorData.error || 'Failed to create booking');
       }
     } catch (error) {
       console.error('Error creating booking:', error);

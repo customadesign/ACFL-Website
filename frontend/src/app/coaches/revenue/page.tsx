@@ -68,7 +68,7 @@ export default function CoachRevenuePage() {
     <CoachPageWrapper title="Revenue & Performance" description="Track your earnings and performance metrics">
       {/* Period Selector */}
       <div className="flex items-center justify-between mb-6">
-        <div className="flex space-x-2">
+        <div className="flex space-x-2 dark:text-white">
           {[
             { key: 'week', label: 'This Week' },
             { key: 'month', label: 'This Month' },
@@ -85,15 +85,7 @@ export default function CoachRevenuePage() {
             </Button>
           ))}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={loadRevenueData}
-          disabled={isLoading}
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-          Refresh
-        </Button>
+        
       </div>
 
       {/* Revenue Stats Cards */}

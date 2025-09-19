@@ -277,6 +277,35 @@ export interface Database {
           updated_at?: string
         }
       }
+      reviews: {
+        Row: {
+          id: string
+          session_id: string
+          client_id: string
+          coach_id: string
+          rating: number
+          comment: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          session_id: string
+          client_id: string
+          coach_id: string
+          rating: number
+          comment?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          session_id?: string
+          client_id?: string
+          coach_id?: string
+          rating?: number
+          comment?: string | null
+          created_at?: string
+        }
+      }
     }
     Views: {
       coach_search_results: {

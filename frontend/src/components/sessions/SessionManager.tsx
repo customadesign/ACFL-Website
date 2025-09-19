@@ -6,8 +6,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CalendarDays, Clock, User, CreditCard, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { CalendarDays, Clock, User, CreditCard, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
 import { toast } from 'react-toastify';
+import CoachRating from '@/components/coach/CoachRating';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 interface Session {
   id: string;
@@ -37,6 +45,9 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
   const [isLoading, setIsLoading] = useState(true);
   const [sessionNotes, setSessionNotes] = useState<Record<string, string>>({});
   const [completingSession, setCompletingSession] = useState<string | null>(null);
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [sessionToRate, setSessionToRate] = useState<Session | null>(null);
+  const [hasRated, setHasRated] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     fetchSessions();
@@ -103,14 +114,32 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
         const updatedSession = await response.json();
         setSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
         toast.success('Session completed! Payment has been processed.');
+
+        // Show rating modal for clients after session completion
+        if (userRole === 'client') {
+          const session = sessions.find(s => s.id === sessionId);
+          if (session) {
+            setSessionToRate(session);
+            setShowRatingModal(true);
+          }
+        }
       } else if (response.status === 501) {
         // Service not implemented yet, simulate completion
-        setSessions(prev => prev.map(s => 
-          s.id === sessionId 
+        setSessions(prev => prev.map(s =>
+          s.id === sessionId
             ? { ...s, status: 'completed' as const, completed_at: new Date().toISOString() }
             : s
         ));
         toast.success('Session completed! (Demo mode - payment would be captured in production)');
+
+        // Show rating modal for clients after session completion (demo mode)
+        if (userRole === 'client') {
+          const session = sessions.find(s => s.id === sessionId);
+          if (session) {
+            setSessionToRate(session);
+            setShowRatingModal(true);
+          }
+        }
       } else {
         const error = await response.json();
         toast.error(error.error || 'Failed to complete session');
@@ -169,7 +198,7 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
       in_progress: { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle, label: 'In Progress' },
       completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Completed' },
       cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
-      no_show: { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: 'No Show' },
+      'no-show': { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: 'No Show' },
     };
 
     const config = statusConfig[status];
@@ -333,13 +362,29 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
                       <span className="font-medium text-green-800">Session Completed</span>
                     </div>
                     <p className="text-sm text-green-700">
-                      Payment has been captured and processed. 
+                      Payment has been captured and processed.
                       {session.completed_at && ` Completed on ${formatDate(session.completed_at)}`}
                     </p>
                     {session.session_notes && (
                       <div className="mt-3">
                         <p className="text-sm font-medium text-green-800">Session Notes:</p>
                         <p className="text-sm text-green-700">{session.session_notes}</p>
+                      </div>
+                    )}
+                    {userRole === 'client' && (
+                      <div className="mt-3">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setSessionToRate(session);
+                            setShowRatingModal(true);
+                          }}
+                          className="text-yellow-600 hover:text-yellow-800"
+                        >
+                          <Star className="w-4 h-4 mr-2" />
+                          {hasRated[session.id] ? 'Update Rating' : 'Rate Coach'}
+                        </Button>
                       </div>
                     )}
                   </div>
@@ -367,6 +412,30 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
           ))}
         </div>
       )}
+
+      {/* Rating Modal */}
+      <Dialog open={showRatingModal} onOpenChange={setShowRatingModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Rate Your Coach</DialogTitle>
+            <DialogDescription>
+              Please share your experience with this session to help other clients and improve our service.
+            </DialogDescription>
+          </DialogHeader>
+          {sessionToRate && (
+            <CoachRating
+              coachId={sessionToRate.coach_id}
+              clientId={sessionToRate.client_id}
+              sessionId={sessionToRate.id}
+              onRatingSubmit={(rating, comment) => {
+                setHasRated(prev => ({ ...prev, [sessionToRate.id]: true }));
+                setShowRatingModal(false);
+                toast.success('Thank you for your feedback!');
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

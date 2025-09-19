@@ -1402,6 +1402,196 @@ router.put('/coaches/:id/:action', async (req, res) => {
   }
 });
 
+// Coach rating endpoints
+router.post('/coaches/:coachId/ratings', async (req, res) => {
+  try {
+    const { coachId } = req.params;
+    const { clientId, sessionId, rating, comment } = req.body;
+
+    // Validate rating value
+    if (!rating || rating < 1 || rating > 5) {
+      return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+
+    // Check if a review already exists for this client-coach pair
+    const { data: existingReview, error: checkError } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .single();
+
+    let reviewData;
+
+    if (existingReview) {
+      // Update existing review
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({
+          session_id: sessionId,
+          rating,
+          comment,
+          created_at: new Date().toISOString()
+        })
+        .eq('id', existingReview.id)
+        .select()
+        .single();
+
+      if (error) throw error;
+      reviewData = data;
+    } else {
+      // Create new review
+      const { data, error } = await supabase
+        .from('reviews')
+        .insert([{
+          session_id: sessionId,
+          client_id: clientId,
+          coach_id: coachId,
+          rating,
+          comment
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      reviewData = data;
+    }
+
+    // The database trigger will automatically update the coach's average rating
+
+    // Fetch updated coach rating
+    const { data: coach, error: coachError } = await supabase
+      .from('coaches')
+      .select('rating')
+      .eq('id', coachId)
+      .single();
+
+    if (coachError) throw coachError;
+
+    res.json({
+      success: true,
+      review: reviewData,
+      averageRating: coach.rating
+    });
+  } catch (error) {
+    console.error('Rating creation error:', error);
+    res.status(500).json({ error: 'Failed to create/update rating' });
+  }
+});
+
+// Get coach ratings
+router.get('/coaches/:coachId/ratings', async (req, res) => {
+  try {
+    const { coachId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const offset = (Number(page) - 1) * Number(limit);
+
+    // Get total count
+    const { count } = await supabase
+      .from('reviews')
+      .select('*', { count: 'exact', head: true })
+      .eq('coach_id', coachId);
+
+    // Get paginated reviews with client info
+    const { data: reviews, error } = await supabase
+      .from('reviews')
+      .select(`
+        *,
+        clients:client_id (
+          id,
+          first_name,
+          last_name
+        )
+      `)
+      .eq('coach_id', coachId)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + Number(limit) - 1);
+
+    if (error) throw error;
+
+    // Get average rating
+    const { data: coach, error: coachError } = await supabase
+      .from('coaches')
+      .select('rating')
+      .eq('id', coachId)
+      .single();
+
+    if (coachError) throw coachError;
+
+    res.json({
+      reviews: reviews || [],
+      averageRating: coach?.rating || 0,
+      totalReviews: count || 0,
+      page: Number(page),
+      totalPages: Math.ceil((count || 0) / Number(limit))
+    });
+  } catch (error) {
+    console.error('Fetch ratings error:', error);
+    res.status(500).json({ error: 'Failed to fetch ratings' });
+  }
+});
+
+// Get client's rating for a specific coach
+router.get('/clients/:clientId/coaches/:coachId/rating', async (req, res) => {
+  try {
+    const { clientId, coachId } = req.params;
+
+    const { data: review, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      throw error;
+    }
+
+    res.json({
+      hasRated: !!review,
+      review: review || null
+    });
+  } catch (error) {
+    console.error('Fetch client rating error:', error);
+    res.status(500).json({ error: 'Failed to fetch client rating' });
+  }
+});
+
+// Delete a rating (admin only)
+router.delete('/ratings/:reviewId', async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    // Get the coach_id before deleting
+    const { data: review, error: fetchError } = await supabase
+      .from('reviews')
+      .select('coach_id')
+      .eq('id', reviewId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Delete the review
+    const { error } = await supabase
+      .from('reviews')
+      .delete()
+      .eq('id', reviewId);
+
+    if (error) throw error;
+
+    // The database trigger will automatically update the coach's average rating
+
+    res.json({
+      success: true,
+      message: 'Rating deleted successfully'
+    });
+  } catch (error) {
+    console.error('Delete rating error:', error);
+    res.status(500).json({ error: 'Failed to delete rating' });
+  }
+});
+
 // Staff management endpoints
 router.get('/staff', async (req, res) => {
   try {
@@ -1952,8 +2142,8 @@ router.get('/analytics', async (req, res) => {
     // Calculate session metrics
     const completedCount = appointments.filter(a => a.status === 'completed').length;
     const cancelledCount = appointments.filter(a => a.status === 'cancelled').length;
-    const noShowCount = appointments.filter(a => a.status === 'no_show').length;
-    const totalScheduled = appointments.filter(a => ['completed', 'cancelled', 'no_show', 'scheduled'].includes(a.status)).length;
+    const noShowCount = appointments.filter(a => a.status === 'no-show').length;
+    const totalScheduled = appointments.filter(a => ['completed', 'cancelled', 'no-show', 'scheduled'].includes(a.status)).length;
     
     const completionRate = totalScheduled > 0 ? ((completedCount / totalScheduled) * 100).toFixed(1) : 0;
     const cancellationRate = totalScheduled > 0 ? ((cancelledCount / totalScheduled) * 100).toFixed(1) : 0;

@@ -9,11 +9,19 @@ export async function initializeSquare(retries = 3) {
   console.log('Square initialization config:', {
     appId: appId ? `${appId.substring(0, 10)}...` : 'undefined',
     locationId,
-    environment
+    environment,
+    nodeEnv: process.env.NODE_ENV
   });
 
   if (!appId || !locationId) {
-    throw new Error(`Square credentials not properly configured. AppId: ${!!appId}, LocationId: ${!!locationId}`);
+    const error = `Square credentials not properly configured. AppId: ${!!appId}, LocationId: ${!!locationId}, Environment: ${environment}`;
+    console.error('Square configuration error:', error);
+    console.error('Available env vars:', {
+      NEXT_PUBLIC_SQUARE_APPLICATION_ID: !!process.env.NEXT_PUBLIC_SQUARE_APPLICATION_ID,
+      NEXT_PUBLIC_SQUARE_LOCATION_ID: !!process.env.NEXT_PUBLIC_SQUARE_LOCATION_ID,
+      NEXT_PUBLIC_SQUARE_ENVIRONMENT: process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT
+    });
+    throw new Error(error);
   }
 
   let lastError: any;
