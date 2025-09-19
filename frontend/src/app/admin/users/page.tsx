@@ -542,9 +542,18 @@ export default function UserManagement() {
       return;
     }
 
+    const user = users.find(u => u.id === userId);
+    const userName = user?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'this user';
+
+    const userTypeMessages = {
+      client: 'This will permanently delete the client account including all appointment history, session notes, and personal data.',
+      coach: 'This will permanently delete the coach account including all sessions, client relationships, earnings history, and profile information.',
+      staff: 'This will permanently delete the staff account including all administrative permissions and activity history.'
+    };
+
     showWarning(
-      'Delete User',
-      'Are you sure you want to delete this user? This action cannot be undone and will permanently remove all user data.',
+      `Delete ${userType.charAt(0).toUpperCase() + userType.slice(1)}`,
+      `Are you sure you want to delete ${userName}?\n\n${userTypeMessages[userType as keyof typeof userTypeMessages]}\n\nThis action cannot be undone.`,
       () => performDeleteUser(userId, userType),
       () => {} // Do nothing on cancel
     );
@@ -552,8 +561,9 @@ export default function UserManagement() {
 
   const performDeleteUser = async (userId: string, userType: string) => {
       try {
+        const user = users.find(u => u.id === userId);
         const token = localStorage.getItem('token');
-        
+
         if (!token) {
           window.location.href = '/login';
           return;
@@ -574,7 +584,11 @@ export default function UserManagement() {
 
         setUsers(prevUsers => prevUsers.filter(user => user.id !== userId));
         setShowActionMenu(null);
-        showInfo('User Deleted', 'User has been deleted successfully.');
+        const deletedUserName = user?.name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || 'User';
+        showInfo(
+          `${userType.charAt(0).toUpperCase() + userType.slice(1)} Deleted`,
+          `${deletedUserName} has been permanently deleted from the system.`
+        );
       } catch (error) {
         console.error('Failed to delete user:', error);
         showError(
@@ -1057,17 +1071,19 @@ export default function UserManagement() {
 
         {user.status === 'active' ? (
           <>
-            <button
-              onClick={() => onUserAction(user.id, 'deactivate', user.role)}
-              className={`${buttonClass} ${
-                isMobile
-                  ? 'border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-                  : 'text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
-              }`}
-            >
-              <UserX className="h-4 w-4 mr-2" />
-              {isMobile ? 'Deactivate' : 'Deactivate User'}
-            </button>
+            <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+              <button
+                onClick={() => onUserAction(user.id, 'deactivate', user.role)}
+                className={`${buttonClass} ${
+                  isMobile
+                    ? 'border-orange-300 dark:border-orange-600 text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                    : 'text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20'
+                }`}
+              >
+                <UserX className="h-4 w-4 mr-2" />
+                {isMobile ? 'Deactivate' : 'Deactivate User'}
+              </button>
+            </PermissionGate>
             <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
               <button
                 onClick={() => onUserAction(user.id, 'suspend', user.role)}
@@ -1083,31 +1099,35 @@ export default function UserManagement() {
             </PermissionGate>
           </>
         ) : (
-          <button
-            onClick={() => onUserAction(user.id, 'activate', user.role)}
-            className={`${buttonClass} ${
-              isMobile
-                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-            }`}
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            {isMobile ? 'Activate' : user.status === 'suspended' ? 'Reactivate User' : 'Activate User'}
-          </button>
+          <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+            <button
+              onClick={() => onUserAction(user.id, 'activate', user.role)}
+              className={`${buttonClass} ${
+                isMobile
+                  ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                  : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+              }`}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {isMobile ? 'Activate' : user.status === 'suspended' ? 'Reactivate User' : 'Activate User'}
+            </button>
+          </PermissionGate>
         )}
 
         {user.role === 'coach' && user.status === 'pending' && (
-          <button
-            onClick={() => onUserAction(user.id, 'approve', user.role)}
-            className={`${buttonClass} ${
-              isMobile
-                ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-                : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
-            }`}
-          >
-            <CheckCircle className="h-4 w-4 mr-2" />
-            {isMobile ? 'Approve' : 'Approve Coach'}
-          </button>
+          <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+            <button
+              onClick={() => onUserAction(user.id, 'approve', user.role)}
+              className={`${buttonClass} ${
+                isMobile
+                  ? 'border-green-300 dark:border-green-600 text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+                  : 'text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20'
+              }`}
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {isMobile ? 'Approve' : 'Approve Coach'}
+            </button>
+          </PermissionGate>
         )}
 
         <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
@@ -1723,14 +1743,16 @@ export default function UserManagement() {
                             </button>
                             {user.status === 'active' ? (
                               <>
-                                <button
-                                  onClick={() => handleUserAction(user.id, 'deactivate', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
-                                >
-                                  <UserX className="h-4 w-4 mr-2" />
-                                  Deactivate User
-                                </button>
-                                {/* <PermissionGate permission={PERMISSIONS.USERS_STATUS}> */}
+                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                  <button
+                                    onClick={() => handleUserAction(user.id, 'deactivate', user.role)}
+                                    className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
+                                  >
+                                    <UserX className="h-4 w-4 mr-2" />
+                                    Deactivate User
+                                  </button>
+                                </PermissionGate>
+                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
                                   <button
                                     onClick={() => handleUserAction(user.id, 'suspend', user.role)}
                                     className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
@@ -1738,43 +1760,51 @@ export default function UserManagement() {
                                     <Ban className="h-4 w-4 mr-2" />
                                     Suspend User
                                   </button>
-                                {/* </PermissionGate> */}
+                                </PermissionGate>
                               </>
                             ) : user.status === 'inactive' ? (
-                              <button
-                                onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Activate User
-                              </button>
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'activate', user.role)}
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Activate User
+                                </button>
+                              </PermissionGate>
                             ) : user.status === 'suspended' ? (
-                              <button
-                                onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Reactivate User
-                              </button>
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'activate', user.role)}
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Reactivate User
+                                </button>
+                              </PermissionGate>
                             ) : (
-                              <button
-                                onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Activate User
-                              </button>
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'activate', user.role)}
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Activate User
+                                </button>
+                              </PermissionGate>
                             )}
                             {user.role === 'coach' && user.status === 'pending' && (
-                              <button
-                                onClick={() => handleUserAction(user.id, 'approve', user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
-                              >
-                                <CheckCircle className="h-4 w-4 mr-2" />
-                                Approve Coach
-                              </button>
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'approve', user.role)}
+                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Approve Coach
+                                </button>
+                              </PermissionGate>
                             )}
-                            {/* <PermissionGate permission={PERMISSIONS.USERS_DELETE}> */}
+                            <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
                               <button
                                 onClick={() => handleDeleteUser(user.id, user.role)}
                                 className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
@@ -1782,7 +1812,7 @@ export default function UserManagement() {
                                 <Trash2 className="h-4 w-4 mr-2" />
                                 Delete User
                               </button>
-                            {/* </PermissionGate> */}
+                            </PermissionGate>
                           </div>
                         </div>
                       )}

@@ -29,7 +29,8 @@ import {
   Bell,
   MoreHorizontal,
   DollarSign,
-  Type
+  Type,
+  ScrollText
 } from 'lucide-react';
 
 interface AdminLayoutProps {
@@ -265,6 +266,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { name: 'Content', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
     { name: 'Financials', href: '/admin/financials', icon: DollarSign, permission: PERMISSIONS.FINANCIAL_VIEW },
     { name: 'Staff Capabilities', href: '/admin/staff-capabilities', icon: Shield, permission: null, adminOnly: true },
+    { name: 'System Logs', href: '/admin/system-logs', icon: ScrollText, permission: null, adminOnly: true },
     { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
     { name: 'Profile', href: '/admin/profile', icon: User, permission: null, staffOnly: true }, // Staff profile - moved to last
     { name: 'Settings', href: '/admin/settings', icon: Settings, permission: null, adminOnly: true },

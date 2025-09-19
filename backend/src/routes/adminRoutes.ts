@@ -2837,6 +2837,141 @@ router.put('/profile', async (req: AuthRequest, res: Response) => {
   }
 });
 
+// System logs endpoint - Admin only
+router.get('/system-logs', authorize('admin'), async (req, res) => {
+  try {
+    const { page = 1, limit = 50, level, action, user_type } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+
+    // Get system logs from multiple audit tables and console logs
+    let allLogs: any[] = [];
+
+    // Get staff audit logs
+    const { data: staffLogs, error: staffLogsError } = await supabase
+      .from('staff_audit_log')
+      .select(`
+        *,
+        staff:staff_id(first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (staffLogs && !staffLogsError) {
+      const formattedStaffLogs = staffLogs.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'INFO',
+        action: log.action,
+        user_type: 'staff',
+        user_id: log.staff_id,
+        user_name: log.staff ? `${log.staff.first_name} ${log.staff.last_name}` : 'Unknown',
+        user_email: log.staff?.email || '',
+        details: log.details || '',
+        metadata: log.metadata || {},
+        ip_address: log.ip_address || '',
+        user_agent: log.user_agent || '',
+        source: 'staff_audit'
+      }));
+      allLogs = [...allLogs, ...formattedStaffLogs];
+    }
+
+    // Get coach application audit logs if the table exists
+    try {
+      const { data: coachApplicationLogs, error: coachAppLogsError } = await supabase
+        .from('coach_application_audit_log')
+        .select(`
+          *,
+          coach:coach_id(first_name, last_name, email),
+          admin:admin_id(first_name, last_name, email)
+        `)
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (coachApplicationLogs && !coachAppLogsError) {
+        const formattedCoachLogs = coachApplicationLogs.map(log => ({
+          id: log.id,
+          timestamp: log.created_at,
+          level: 'INFO',
+          action: log.action,
+          user_type: log.admin_id ? 'admin' : 'coach',
+          user_id: log.admin_id || log.coach_id,
+          user_name: log.admin ? `${log.admin.first_name} ${log.admin.last_name}` :
+                     log.coach ? `${log.coach.first_name} ${log.coach.last_name}` : 'Unknown',
+          user_email: log.admin?.email || log.coach?.email || '',
+          details: log.details || '',
+          metadata: log.metadata || {},
+          ip_address: log.ip_address || '',
+          user_agent: log.user_agent || '',
+          source: 'coach_application_audit'
+        }));
+        allLogs = [...allLogs, ...formattedCoachLogs];
+      }
+    } catch (error) {
+      console.log('Coach application audit table not found, skipping...');
+    }
+
+    // Sort all logs by timestamp descending
+    allLogs.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+    // Apply filters
+    if (level) {
+      allLogs = allLogs.filter(log => log.level === level);
+    }
+    if (action) {
+      allLogs = allLogs.filter(log => log.action?.toLowerCase().includes(String(action).toLowerCase()));
+    }
+    if (user_type) {
+      allLogs = allLogs.filter(log => log.user_type === user_type);
+    }
+
+    // Get total count before pagination
+    const total = allLogs.length;
+
+    // Apply pagination
+    const paginatedLogs = allLogs.slice(offset, offset + Number(limit));
+
+    // Get summary statistics
+    const stats = {
+      total,
+      levels: {
+        INFO: allLogs.filter(log => log.level === 'INFO').length,
+        WARN: allLogs.filter(log => log.level === 'WARN').length,
+        ERROR: allLogs.filter(log => log.level === 'ERROR').length,
+      },
+      sources: {
+        staff_audit: allLogs.filter(log => log.source === 'staff_audit').length,
+        coach_application_audit: allLogs.filter(log => log.source === 'coach_application_audit').length,
+      },
+      user_types: {
+        admin: allLogs.filter(log => log.user_type === 'admin').length,
+        staff: allLogs.filter(log => log.user_type === 'staff').length,
+        coach: allLogs.filter(log => log.user_type === 'coach').length,
+        client: allLogs.filter(log => log.user_type === 'client').length,
+      }
+    };
+
+    res.json({
+      success: true,
+      logs: paginatedLogs,
+      pagination: {
+        page: Number(page),
+        limit: Number(limit),
+        total,
+        totalPages: Math.ceil(total / Number(limit))
+      },
+      stats,
+      filters: { level, action, user_type }
+    });
+
+  } catch (error) {
+    console.error('System logs fetch error:', error);
+    res.status(500).json({
+      error: 'Failed to fetch system logs',
+      success: false
+    });
+  }
+});
+
 // Mount content management routes
 router.use('/content', contentRoutes);
 
