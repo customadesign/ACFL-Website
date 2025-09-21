@@ -1,12 +1,19 @@
 'use client';
-
 import { useState, useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
-import MeetingContainer from '@/components/MeetingContainer';
-import MockMeetingContainer from '@/components/MockMeetingContainer';
+// Dynamic imports for client-side only components
+const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), {
+  ssr: false,
+  loading: () => <div>Loading meeting...</div>
+});
+const MockMeetingContainer = dynamic(() => import('@/components/MockMeetingContainer'), {
+  ssr: false,
+  loading: () => <div>Loading meeting...</div>
+});
 import MeetingBlocker from '@/components/MeetingBlocker';
 import MeetingStatusDebug from '@/components/MeetingStatusDebug';
 import TestInstructions from '@/components/TestInstructions';
@@ -43,10 +50,11 @@ interface Appointment {
   };
 }
 
-export default function AppointmentsPage() {
+function AppointmentsPageContent() {
   const { user } = useAuth();
   const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isClient, setIsClient] = useState(false);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
@@ -69,8 +77,14 @@ export default function AppointmentsPage() {
   const API_URL = getApiUrl();
 
   useEffect(() => {
-    loadAppointments();
-  }, []); // Remove filter dependency since we always get all appointments
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      loadAppointments();
+    }
+  }, [isClient]); // Only load appointments after client-side hydration
 
   // Calculate unique clients when appointments change
   useEffect(() => {
@@ -98,7 +112,7 @@ export default function AppointmentsPage() {
 
   // WebSocket connection for real-time appointment updates
   useEffect(() => {
-    if (!user?.id || !localStorage.getItem('token')) {
+    if (!isClient || !user?.id || !localStorage.getItem('token')) {
       return;
     }
 
@@ -157,12 +171,34 @@ export default function AppointmentsPage() {
       socketRef.current?.close();
       socketRef.current = null;
     };
-  }, [user?.id, API_URL]);
+  }, [isClient, user?.id, API_URL]);
+
+  if (!isClient) {
+    return (
+      <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
+        <div className="space-y-4">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+            <div className="space-y-4">
+              {[...Array(3)].map((_, i) => (
+                <div key={i} className="bg-gray-200 dark:bg-gray-700 h-32 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </CoachPageWrapper>
+    );
+  }
 
   const isJoinAvailable = (apt: Appointment) => {
     const start = new Date(apt.starts_at).getTime();
     const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
     return nowMs >= start && nowMs <= end;
+  };
+
+  const isCompleteAvailable = (apt: Appointment) => {
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (new Date(apt.starts_at).getTime() + 60 * 60 * 1000);
+    return nowMs >= end;
   };
 
   const getCountdownLabel = (apt: Appointment) => {
@@ -670,7 +706,8 @@ export default function AppointmentsPage() {
                           )}
                           <Button
                             onClick={() => handleStatusChange(appointment.id, 'completed')}
-                            className="bg-blue-600 hover:bg-blue-700 dark:text-white w-full sm:w-auto"
+                            className="bg-blue-600 hover:bg-blue-700 dark:text-white disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto"
+                            disabled={!isCompleteAvailable(appointment)}
                             size="sm"
                           >
                             Mark Complete
@@ -717,6 +754,11 @@ export default function AppointmentsPage() {
                         </div>
                         <div className="mt-2">
                           <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400">{getCountdownLabel(appointment)}</span>
+                          {!isCompleteAvailable(appointment) && (
+                            <div className="text-[10px] sm:text-xs text-amber-600 dark:text-amber-400 mt-1">
+                              Can mark complete after session ends
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
@@ -891,3 +933,24 @@ export default function AppointmentsPage() {
     </CoachPageWrapper>
   );
 }
+
+// Export dynamic component to prevent SSR issues
+const AppointmentsPage = dynamic(() => Promise.resolve(AppointmentsPageContent), {
+  ssr: false,
+  loading: () => (
+    <CoachPageWrapper title="Appointments" description="Manage your coaching sessions and appointments">
+      <div className="space-y-4">
+        <div className="animate-pulse">
+          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-4"></div>
+          <div className="space-y-4">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="bg-gray-200 dark:bg-gray-700 h-32 rounded"></div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </CoachPageWrapper>
+  )
+});
+
+export default AppointmentsPage;

@@ -20,8 +20,8 @@ export interface Payment {
   client_id: string;
   coach_id: string;
   coach_rate_id?: string;
-  stripe_payment_intent_id: string;
-  stripe_customer_id?: string;
+  square_payment_id: string; // Square payment ID (required)
+  square_customer_id?: string; // Square customer ID
   amount_cents: number;
   currency: string;
   platform_fee_cents: number;
@@ -43,7 +43,7 @@ export interface Payment {
 export interface Refund {
   id: string;
   payment_id: string;
-  stripe_refund_id: string;
+  square_refund_id: string;
   amount_cents: number;
   reason: 'duplicate' | 'fraudulent' | 'requested_by_customer' | 'admin_initiated' | 'coach_requested' | 'auto_cancellation';
   status: 'pending' | 'pending_approval' | 'approved' | 'rejected' | 'succeeded' | 'failed' | 'canceled';
@@ -68,7 +68,7 @@ export interface PaymentLog {
   payment_id?: string;
   refund_id?: string;
   event_type: string;
-  stripe_event_id?: string;
+  square_event_id?: string;
   old_status?: string;
   new_status?: string;
   amount_cents?: number;
@@ -77,10 +77,10 @@ export interface PaymentLog {
   created_at: Date;
 }
 
-export interface CoachStripeAccount {
+export interface CoachSquareAccount {
   id: string;
   coach_id: string;
-  stripe_account_id: string;
+  square_account_id: string;
   charges_enabled: boolean;
   payouts_enabled: boolean;
   details_submitted: boolean;
@@ -100,7 +100,7 @@ export interface PaymentSchedule {
   client_id: string;
   coach_id: string;
   coach_rate_id: string;
-  stripe_subscription_id?: string;
+  square_subscription_id?: string;
   frequency: 'weekly' | 'biweekly' | 'monthly' | 'quarterly';
   amount_cents: number;
   is_active: boolean;
@@ -140,7 +140,7 @@ export interface CreateRefundRequest {
 
 export interface CreateRefundResponse {
   refund_id: string;
-  stripe_refund_id: string;
+  square_refund_id: string;
   amount_cents: number;
   status: string;
 }
@@ -156,16 +156,16 @@ export interface CoachRateRequest {
   discount_percentage?: number;
 }
 
-export interface CoachStripeOnboardingRequest {
+export interface CoachSquareOnboardingRequest {
   coach_id: string;
   email: string;
   return_url: string;
   refresh_url: string;
 }
 
-export interface CoachStripeOnboardingResponse {
+export interface CoachSquareOnboardingResponse {
   account_link_url: string;
-  stripe_account_id: string;
+  square_account_id: string;
 }
 
 // Financial reporting types
@@ -273,7 +273,6 @@ export interface CapturePaymentRequest {
 export interface CapturePaymentResponse {
   payment_id: string;
   captured_amount_cents: number;
-  captured_at: Date;
   status: string;
 }
 

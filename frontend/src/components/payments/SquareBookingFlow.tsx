@@ -25,8 +25,7 @@ interface CoachRate {
 
 interface Coach {
   id: string;
-  first_name: string;
-  last_name: string;
+  name: string;
   email: string;
   bio?: string;
 }
@@ -220,13 +219,11 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
         body: JSON.stringify({
           coachId: coachId,
           scheduledAt: scheduledAt.toISOString(),
-          endsAt: endsAt.toISOString(),
-          sessionType: selectedRate?.session_type === 'individual' ? 'session' : 'consultation',
+          sessionType: 'session',
           notes: `Paid session: ${selectedRate?.title}`,
           areaOfFocus: selectedRate?.title,
           paymentId: result.paymentId,
-          isInstantBooking: isInstantBooking,
-          createVideoMeeting: true
+          isInstantBooking: isInstantBooking
         })
       });
 
@@ -234,20 +231,36 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
         const bookingData = await bookingResponse.json();
         const bookingResult = {
           paymentId: result.paymentId,
-          sessionId: bookingData.id,
-          bookingId: bookingData.id
+          sessionId: bookingData.data?.sessionId || bookingData.sessionId,
+          bookingId: bookingData.data?.sessionId || bookingData.sessionId
         };
 
         setBookingResult(bookingResult);
         setStep('success');
         onBookingComplete?.(bookingResult);
       } else {
-        const errorData = await bookingResponse.json();
+        let errorData;
+        try {
+          errorData = await bookingResponse.json();
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError);
+          errorData = { message: `HTTP ${bookingResponse.status}: ${bookingResponse.statusText}` };
+        }
+
         console.error('Booking API error:', {
           status: bookingResponse.status,
           statusText: bookingResponse.statusText,
           url: `${API_URL}/api/client/book-appointment`,
-          data: errorData
+          data: errorData,
+          requestBody: {
+            coachId: coachId,
+            scheduledAt: scheduledAt.toISOString(),
+            sessionType: selectedRate?.session_type || 'session',
+            notes: `Paid session: ${selectedRate?.title}`,
+            areaOfFocus: selectedRate?.title,
+            paymentId: result.paymentId,
+            isInstantBooking: isInstantBooking
+          }
         });
         throw new Error(errorData.message || errorData.error || 'Failed to create booking');
       }
@@ -295,7 +308,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
           </div>
           <h2 className="text-2xl font-bold text-green-600 mb-2">Session Booked!</h2>
           <p className="text-gray-600 mb-4">
-            Your session with {coach?.first_name} {coach?.last_name} has been reserved.
+            Your session with {coach?.name || 'Loading...'} has been reserved.
             Payment is authorized and will be processed after your session is completed.
           </p>
 
@@ -360,7 +373,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="flex items-center gap-2">
                     <User className="h-4 w-4 text-gray-500" />
-                    <span>{coach?.first_name} {coach?.last_name}</span>
+                    <span>{coach?.name || 'Loading...'}</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500" />
@@ -390,7 +403,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
 
           <SquarePaymentForm
             amount={selectedRate.rate_cents}
-            coachName={`${coach?.first_name} ${coach?.last_name}`}
+            coachName={coach?.name || 'Loading...'}
             sessionTitle={selectedRate.title}
             coachId={coachId}
             coachRateId={selectedRate.id}
@@ -415,7 +428,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
             <div className="flex items-center gap-4">
               <div>
                 <h3 className="text-lg font-semibold">
-                  {coach.first_name} {coach.last_name}
+                  {coach.name || 'Loading...'}
                 </h3>
                 {selectedDate && selectedTime && (
                   <p className="text-gray-600">

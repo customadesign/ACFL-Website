@@ -71,18 +71,18 @@ export class PaymentServiceV2 {
     const paymentIntentId = paymentResult.payment?.id!;
     const clientSecret = paymentResult.payment?.receiptUrl || '';
 
-    // Create payment record with 'pending' status (authorized but not captured)
+    // Create payment record with 'authorized' status (authorized but not captured)
     const paymentData = {
       client_id: clientId,
       coach_id: request.coach_id,
       coach_rate_id: request.coach_rate_id,
-      stripe_payment_intent_id: paymentIntentId, // Will be renamed to square_payment_id
-      stripe_customer_id: customerId.id, // Will be renamed to square_customer_id
+      square_payment_id: paymentIntentId, // Using correct Square column name
+      square_customer_id: customerId.id, // Using correct Square column name
       amount_cents: coachRate.rate_cents,
       currency: 'usd',
       platform_fee_cents: platformFee,
       coach_earnings_cents: coachEarnings,
-      status: 'pending', // Payment is authorized but not yet captured
+      status: 'authorized', // Payment is authorized but not yet captured
       session_id: request.sessionId,
       description: request.description || coachRate.title,
       metadata: request.metadata || {},
@@ -106,7 +106,7 @@ export class PaymentServiceV2 {
 
     // Log payment authorization
     await this.logPaymentEvent(payment.id, 'payment_authorized', {
-      stripe_payment_intent_id: paymentIntentId,
+      square_payment_id: paymentIntentId,
       amount_cents: coachRate.rate_cents,
     });
 
@@ -133,28 +133,31 @@ export class PaymentServiceV2 {
       throw new Error(`Payment not found: ${error.message}`);
     }
 
-    if (payment.status !== 'pending') {
+    if (payment.status !== 'pending' && payment.status !== 'authorized') {
       throw new Error(`Payment cannot be captured. Current status: ${payment.status}`);
     }
 
     try {
-      // Capture the Square payment
-      const { result: captureResult } = await paymentsApi.completePayment(payment.stripe_payment_intent_id, {});
+      console.log(`Capturing payment ${paymentId} with Square payment ID: ${payment.square_payment_id}`);
 
+      // Capture the Square payment
+      const { result: captureResult } = await paymentsApi.completePayment(payment.square_payment_id, {});
+
+      console.log(`Square capture result status: ${captureResult.payment?.status}`);
       const captureStatus = captureResult.payment?.status === 'COMPLETED' ? 'succeeded' : 'failed';
 
-      // Update payment status with additional fields
+      // Update payment status with available fields
       const { data: updatedPayment, error: updateError } = await supabase
         .from('payments')
         .update({
           status: 'succeeded',
           paid_at: new Date(),
-          captured_at: new Date(),
-          payment_method_type: captureResult.payment?.sourceType?.toLowerCase() || 'card',
         })
         .eq('id', paymentId)
         .select()
         .single();
+
+      console.log(`Payment ${paymentId} status updated to succeeded in database`);
 
       if (updateError) {
         throw new Error(`Failed to update payment: ${updateError.message}`);
@@ -162,7 +165,7 @@ export class PaymentServiceV2 {
 
       // Log payment capture
       await this.logPaymentEvent(paymentId, 'payment_captured', {
-        stripe_payment_intent_id: payment.stripe_payment_intent_id,
+        square_payment_id: payment.square_payment_id,
         amount_cents: payment.amount_cents,
       });
 
@@ -180,7 +183,6 @@ export class PaymentServiceV2 {
         .from('payments')
         .update({
           status: 'failed',
-          failed_at: new Date(),
         })
         .eq('id', paymentId);
 
@@ -207,27 +209,25 @@ export class PaymentServiceV2 {
       throw new Error(`Payment not found: ${error.message}`);
     }
 
-    if (payment.status !== 'pending') {
+    if (payment.status !== 'pending' && payment.status !== 'authorized') {
       throw new Error(`Cannot cancel payment with status: ${payment.status}`);
     }
 
     // Cancel the Square payment
-    await paymentsApi.cancelPayment(payment.stripe_payment_intent_id);
+    await paymentsApi.cancelPayment(payment.square_payment_id);
 
     // Update payment status
     await supabase
       .from('payments')
       .update({
-        status: 'cancelled',
-        cancelled_at: new Date(),
-        cancellation_reason: reason,
+        status: 'canceled',
       })
       .eq('id', paymentId);
 
     // Log cancellation
     await this.logPaymentEvent(paymentId, 'payment_cancelled', {
       reason,
-      stripe_payment_intent_id: payment.stripe_payment_intent_id,
+      square_payment_id: payment.square_payment_id,
     });
   }
 
@@ -278,7 +278,7 @@ export class PaymentServiceV2 {
     // Create pending refund record first
     const refundData = {
       payment_id: request.payment_id,
-      stripe_refund_id: 'pending_' + Date.now(), // Temporary ID
+      square_refund_id: 'pending_' + Date.now(), // Temporary ID
       amount_cents: refundAmount,
       reason: request.reason,
       status: 'pending',
@@ -308,7 +308,7 @@ export class PaymentServiceV2 {
           amount: formatSquareAmount(refundAmount),
           currency: 'USD'
         },
-        paymentId: payment.stripe_payment_intent_id,
+        paymentId: payment.square_payment_id,
         reason: request.reason || 'Customer requested refund',
         locationId
       });
@@ -319,7 +319,7 @@ export class PaymentServiceV2 {
       await supabase
         .from('refunds')
         .update({
-          stripe_refund_id: refundId,
+          square_refund_id: refundId,
           status: 'processing',
         })
         .eq('id', refund.id);
@@ -336,14 +336,14 @@ export class PaymentServiceV2 {
 
       // Log refund creation
       await this.logRefundEvent(refund.id, 'refund_created', {
-        stripe_refund_id: refundId,
+        square_refund_id: refundId,
         amount_cents: refundAmount,
         reason: request.reason,
       });
 
       return {
         refund_id: refund.id,
-        stripe_refund_id: refundId,
+        square_refund_id: refundId,
         amount_cents: refundAmount,
         status: 'processing',
       };
@@ -381,13 +381,13 @@ export class PaymentServiceV2 {
     }
 
     // Square refunds are processed immediately, so we just update the status
-    const actualRefundId = refund.stripe_refund_id;
+    const actualRefundId = refund.square_refund_id;
 
     // Update refund status
     await supabase
       .from('refunds')
       .update({
-        stripe_refund_id: actualRefundId,
+        square_refund_id: actualRefundId,
         status: 'succeeded',
         processed_at: new Date(),
       })
@@ -409,7 +409,7 @@ export class PaymentServiceV2 {
       .eq('id', refund.payment_id);
 
     await this.logRefundEvent(refundId, 'refund_completed', {
-      stripe_refund_id: actualRefundId,
+      square_refund_id: actualRefundId,
     });
   }
 
@@ -478,8 +478,8 @@ export class PaymentServiceV2 {
   private async transferFundsToCoach(payment: Payment): Promise<void> {
     // Check if coach has payment account configured
     const { data: paymentAccount } = await supabase
-      .from('coach_stripe_accounts') // Will be renamed to coach_payment_accounts
-      .select('stripe_account_id, charges_enabled')
+      .from('coach_square_accounts') // Square payment accounts
+      .select('square_account_id, charges_enabled')
       .eq('coach_id', payment.coach_id)
       .single();
 
@@ -543,7 +543,7 @@ export class PaymentServiceV2 {
     const logData: Partial<PaymentLog> = {
       payment_id: paymentId,
       event_type: eventType,
-      stripe_event_id: details.stripe_event_id,
+      square_event_id: details.square_event_id,
       old_status: details.old_status,
       new_status: details.new_status,
       amount_cents: details.amount_cents,
@@ -562,7 +562,7 @@ export class PaymentServiceV2 {
     const logData: Partial<PaymentLog> = {
       refund_id: refundId,
       event_type: eventType,
-      stripe_event_id: details.stripe_event_id,
+      square_event_id: details.square_event_id,
       amount_cents: details.amount_cents,
       description: details.description,
       metadata: details,
@@ -587,7 +587,7 @@ export class PaymentServiceV2 {
     const { data: dbPayment, error } = await supabase
       .from('payments')
       .select('*')
-      .eq('stripe_payment_intent_id', payment.id)
+      .eq('square_payment_id', payment.id)
       .single();
 
     if (error || !dbPayment) {
@@ -644,7 +644,7 @@ export class PaymentServiceV2 {
     const { data: dbRefund, error } = await supabase
       .from('refunds')
       .select('*')
-      .eq('stripe_refund_id', refund.id)
+      .eq('square_refund_id', refund.id)
       .single();
 
     if (error || !dbRefund) {

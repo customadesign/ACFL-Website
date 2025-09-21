@@ -223,7 +223,7 @@ describe('Payment System Tests', () => {
         id: 'payment_test_123',
         client_id: 'client_test_123',
         coach_id: 'coach_test_123',
-        stripe_payment_intent_id: 'pi_test_123',
+        square_payment_id: 'sq_test_123',
         amount_cents: 10000,
         status: 'pending',
       };
@@ -280,10 +280,10 @@ describe('Payment System Tests', () => {
         refresh_url: 'http://localhost:3000/refresh',
       };
 
-      const result = await stripeAccountService.createCoachStripeAccount(request);
+      const result = await squareAccountService.createCoachSquareAccount(request);
 
-      expect(result.stripe_account_id).toBe('acc_test_123');
-      expect(result.account_link_url).toBe('https://connect.stripe.com/setup');
+      expect(result.square_account_id).toBe('acc_test_123');
+      expect(result.account_link_url).toBe('https://connect.square.com/setup');
     });
   });
 

@@ -1,110 +1,132 @@
--- Fixed Migration to support payment authorization/capture flow
--- Handles existing data properly and updates enum types safely
+-- Fixed Migration for payment authorization/capture flow
+-- Handles missing columns and constraint issues properly
 
--- First, add new columns to payments table
-ALTER TABLE payments 
+-- Step 1: Check if payments table exists and has proper structure
+DO $$
+BEGIN
+    -- Ensure payments table exists
+    IF NOT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'payments') THEN
+        RAISE EXCEPTION 'Payments table does not exist. Please run the base payment table migration first.';
+    END IF;
+
+    -- Check if payments table has an id column
+    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'payments' AND column_name = 'id') THEN
+        RAISE EXCEPTION 'Payments table is missing id column. Please check your base schema.';
+    END IF;
+END $$;
+
+-- Step 2: Add new columns to payments table (safe operations)
+ALTER TABLE payments
 ADD COLUMN IF NOT EXISTS payment_method TEXT DEFAULT 'card',
 ADD COLUMN IF NOT EXISTS authorization_code TEXT,
 ADD COLUMN IF NOT EXISTS captured_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP WITH TIME ZONE;
 
--- Update existing payment statuses to map to new enum values
-UPDATE payments 
-SET status = CASE 
-    WHEN status = 'pending' THEN 'pending'
-    WHEN status = 'succeeded' THEN 'succeeded' 
-    WHEN status = 'failed' THEN 'failed'
-    WHEN status = 'canceled' THEN 'canceled'
-    WHEN status = 'refunded' THEN 'refunded'
-    WHEN status = 'partially_refunded' THEN 'partially_refunded'
-    ELSE 'pending'
-END;
-
--- Drop the existing enum and recreate it with new values
-DO $$ 
+-- Step 3: Handle status column migration safely
+DO $$
 BEGIN
-    -- First change column type to text temporarily
-    ALTER TABLE payments ALTER COLUMN status TYPE TEXT;
-    
-    -- Drop the old enum if it exists
-    DROP TYPE IF EXISTS payment_status_enum;
-    
-    -- Create new enum with all values
+    -- Create a temporary column for the new status
+    IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'payments' AND column_name = 'status_new') THEN
+        ALTER TABLE payments ADD COLUMN status_new TEXT;
+    END IF;
+
+    -- Populate the temporary column with mapped values
+    UPDATE payments
+    SET status_new = CASE
+        WHEN status::text IN ('pending') THEN 'pending'
+        WHEN status::text IN ('succeeded', 'success') THEN 'succeeded'
+        WHEN status::text IN ('failed', 'failure') THEN 'failed'
+        WHEN status::text IN ('canceled', 'cancelled') THEN 'canceled'
+        WHEN status::text IN ('refunded') THEN 'refunded'
+        WHEN status::text IN ('partially_refunded') THEN 'partially_refunded'
+        ELSE 'pending'
+    END;
+
+    -- Drop the old status column
+    ALTER TABLE payments DROP COLUMN IF EXISTS status;
+
+    -- Drop old enum if it exists
+    DROP TYPE IF EXISTS payment_status_enum CASCADE;
+
+    -- Create the new enum
     CREATE TYPE payment_status_enum AS ENUM (
-        'pending', 
+        'pending',
         'authorized',
-        'succeeded', 
-        'failed', 
+        'succeeded',
+        'failed',
         'canceled',
         'requires_capture',
         'partially_refunded',
         'refunded'
     );
-    
-    -- Convert column back to enum type
-    ALTER TABLE payments ALTER COLUMN status TYPE payment_status_enum USING status::payment_status_enum;
-    
-    -- Set default value
-    ALTER TABLE payments ALTER COLUMN status SET DEFAULT 'pending'::payment_status_enum;
+
+    -- Add the new status column with the enum type
+    ALTER TABLE payments ADD COLUMN status payment_status_enum DEFAULT 'pending'::payment_status_enum;
+
+    -- Populate the new status column from the temporary column
+    UPDATE payments SET status = status_new::payment_status_enum;
+
+    -- Drop the temporary column and add not null constraint
+    ALTER TABLE payments DROP COLUMN status_new;
+    ALTER TABLE payments ALTER COLUMN status SET NOT NULL;
 END $$;
 
--- Add new columns to refunds table for approval workflow
-ALTER TABLE refunds 
-ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT false,
-ADD COLUMN IF NOT EXISTS approved_by UUID,
-ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE,
-ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
-ADD COLUMN IF NOT EXISTS auto_approval_policy TEXT;
-
--- Add foreign key constraint for approved_by if users table exists
+-- Step 4: Handle refunds table similar way
 DO $$
 BEGIN
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        -- Add foreign key constraint
-        ALTER TABLE refunds 
-        ADD CONSTRAINT fk_refunds_approved_by 
-        FOREIGN KEY (approved_by) REFERENCES users(id);
+    -- Check if refunds table exists
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'refunds') THEN
+        -- Add new columns first
+        ALTER TABLE refunds
+        ADD COLUMN IF NOT EXISTS requires_approval BOOLEAN DEFAULT false,
+        ADD COLUMN IF NOT EXISTS approved_by UUID,
+        ADD COLUMN IF NOT EXISTS approved_at TIMESTAMP WITH TIME ZONE,
+        ADD COLUMN IF NOT EXISTS rejection_reason TEXT,
+        ADD COLUMN IF NOT EXISTS auto_approval_policy TEXT;
+
+        -- Create temporary column for refunds
+        IF NOT EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'refunds' AND column_name = 'status_new') THEN
+            ALTER TABLE refunds ADD COLUMN status_new TEXT;
+        END IF;
+
+        -- Populate temporary column
+        UPDATE refunds
+        SET status_new = CASE
+            WHEN status::text IN ('pending') THEN 'pending'
+            WHEN status::text IN ('succeeded', 'success') THEN 'succeeded'
+            WHEN status::text IN ('failed', 'failure') THEN 'failed'
+            WHEN status::text IN ('canceled', 'cancelled') THEN 'canceled'
+            ELSE 'pending'
+        END;
+
+        -- Drop old refunds status column and enum
+        ALTER TABLE refunds DROP COLUMN IF EXISTS status;
+        DROP TYPE IF EXISTS refund_status_enum CASCADE;
+
+        -- Create new refund enum
+        CREATE TYPE refund_status_enum AS ENUM (
+            'pending',
+            'pending_approval',
+            'approved',
+            'rejected',
+            'succeeded',
+            'failed',
+            'canceled'
+        );
+
+        -- Add new refunds status column
+        ALTER TABLE refunds ADD COLUMN status refund_status_enum DEFAULT 'pending'::refund_status_enum;
+
+        -- Populate from temporary column
+        UPDATE refunds SET status = status_new::refund_status_enum;
+
+        -- Clean up refunds
+        ALTER TABLE refunds DROP COLUMN status_new;
+        ALTER TABLE refunds ALTER COLUMN status SET NOT NULL;
     END IF;
 END $$;
 
--- Update existing refund statuses
-UPDATE refunds 
-SET status = CASE 
-    WHEN status = 'pending' THEN 'pending'
-    WHEN status = 'succeeded' THEN 'succeeded'
-    WHEN status = 'failed' THEN 'failed'
-    WHEN status = 'canceled' THEN 'canceled'
-    ELSE 'pending'
-END;
-
--- Update refund status enum
-DO $$ 
-BEGIN
-    -- Change to text temporarily
-    ALTER TABLE refunds ALTER COLUMN status TYPE TEXT;
-    
-    -- Drop old enum
-    DROP TYPE IF EXISTS refund_status_enum;
-    
-    -- Create new enum
-    CREATE TYPE refund_status_enum AS ENUM (
-        'pending', 
-        'pending_approval',
-        'approved',
-        'rejected',
-        'succeeded', 
-        'failed', 
-        'canceled'
-    );
-    
-    -- Convert back to enum
-    ALTER TABLE refunds ALTER COLUMN status TYPE refund_status_enum USING status::refund_status_enum;
-    
-    -- Set default
-    ALTER TABLE refunds ALTER COLUMN status SET DEFAULT 'pending'::refund_status_enum;
-END $$;
-
--- Create sessions table to track session completion for payment capture
+-- Step 5: Create sessions table
 CREATE TABLE IF NOT EXISTS sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     coach_id UUID NOT NULL,
@@ -123,21 +145,43 @@ CREATE TABLE IF NOT EXISTS sessions (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Add foreign key constraints for sessions table if tables exist
+-- Step 6: Add foreign key constraints safely
 DO $$
 BEGIN
-    -- Add foreign key constraints if the referenced tables exist
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'users') THEN
-        ALTER TABLE sessions 
-        ADD CONSTRAINT fk_sessions_coach_id FOREIGN KEY (coach_id) REFERENCES users(id),
-        ADD CONSTRAINT fk_sessions_client_id FOREIGN KEY (client_id) REFERENCES users(id),
-        ADD CONSTRAINT fk_sessions_completion_confirmed_by FOREIGN KEY (completion_confirmed_by) REFERENCES users(id),
-        ADD CONSTRAINT fk_sessions_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES users(id);
+    -- Add foreign key for sessions.payment_id only if payments table has id column
+    IF EXISTS (SELECT FROM information_schema.columns WHERE table_name = 'payments' AND column_name = 'id') THEN
+        BEGIN
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_payment_id FOREIGN KEY (payment_id) REFERENCES payments(id);
+        EXCEPTION WHEN duplicate_object THEN
+            -- Constraint already exists, ignore
+            NULL;
+        END;
     END IF;
-    
-    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'payments') THEN
-        ALTER TABLE sessions 
-        ADD CONSTRAINT fk_sessions_payment_id FOREIGN KEY (payment_id) REFERENCES payments(id);
+
+    -- Add user foreign keys if users table exists
+    IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'users') THEN
+        BEGIN
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_coach_id FOREIGN KEY (coach_id) REFERENCES users(id);
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
+
+        BEGIN
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_client_id FOREIGN KEY (client_id) REFERENCES users(id);
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
+
+        BEGIN
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_completion_confirmed_by FOREIGN KEY (completion_confirmed_by) REFERENCES users(id);
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
+
+        BEGIN
+            ALTER TABLE sessions ADD CONSTRAINT fk_sessions_cancelled_by FOREIGN KEY (cancelled_by) REFERENCES users(id);
+        EXCEPTION WHEN duplicate_object THEN NULL; END;
+
+        -- Add refund foreign key if refunds table exists
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'refunds') THEN
+            BEGIN
+                ALTER TABLE refunds ADD CONSTRAINT fk_refunds_approved_by FOREIGN KEY (approved_by) REFERENCES users(id);
+            EXCEPTION WHEN duplicate_object THEN NULL; END;
+        END IF;
     END IF;
 END $$;
 

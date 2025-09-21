@@ -15,7 +15,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import ProfileCardSkeleton from '@/components/ProfileCardSkeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { User, Edit, Save, X, Calendar, Clock, MapPin, Phone, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload, Bell, BellOff, Volume2, VolumeX, MessageCircle } from 'lucide-react'
+import { User, Edit, Save, X, Calendar, Clock, MapPin, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload, Bell, BellOff, Volume2, VolumeX, MessageCircle } from 'lucide-react'
 import { STATE_NAMES } from '@/constants/states'
 import { 
   concernOptions, 
@@ -46,8 +46,6 @@ const profileFormSchema = z.object({
   bio: z.string().optional(),
   profilePhoto: z.string().optional(),
   // Notification preferences
-  emailNotifications: z.boolean().optional(),
-  smsNotifications: z.boolean().optional(),
   pushNotifications: z.boolean().optional(),
   soundNotifications: z.boolean().optional(),
   messageNotifications: z.boolean().optional(),
@@ -96,8 +94,6 @@ function ProfileContent() {
       bio: '',
       profilePhoto: '',
       // Notification preferences defaults
-      emailNotifications: true,
-      smsNotifications: false,
       pushNotifications: true,
       soundNotifications: true,
       messageNotifications: true,
@@ -142,8 +138,6 @@ function ProfileContent() {
 
           // Load notification preferences (with defaults if not set)
           const notificationPrefs = userData.notificationPreferences || {}
-          form.setValue('emailNotifications', notificationPrefs.emailNotifications ?? true)
-          form.setValue('smsNotifications', notificationPrefs.smsNotifications ?? false)
           form.setValue('pushNotifications', notificationPrefs.pushNotifications ?? true)
           form.setValue('soundNotifications', notificationPrefs.soundNotifications ?? true)
           form.setValue('messageNotifications', notificationPrefs.messageNotifications ?? true)
@@ -225,7 +219,6 @@ function ProfileContent() {
     setError(null)
     setSuccess(null)
     // Reset form to original values
-    form.reset()
   }
 
   const handleNotificationSubmit = async () => {
@@ -238,8 +231,6 @@ function ProfileContent() {
 
       // Extract only notification preferences from form
       const notificationData = {
-        emailNotifications: form.getValues('emailNotifications'),
-        smsNotifications: form.getValues('smsNotifications'),
         pushNotifications: form.getValues('pushNotifications'),
         soundNotifications: form.getValues('soundNotifications'),
         messageNotifications: form.getValues('messageNotifications'),
@@ -553,7 +544,7 @@ function ProfileContent() {
                         type="text"
                         value={form.watch('firstName')}
                         onChange={(e) => form.setValue('firstName', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -563,7 +554,7 @@ function ProfileContent() {
                         type="text"
                         value={form.watch('lastName')}
                         onChange={(e) => form.setValue('lastName', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -582,7 +573,7 @@ function ProfileContent() {
                         type="tel"
                         value={form.watch('phone')}
                         onChange={(e) => form.setValue('phone', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                       />
                     </div>
@@ -605,7 +596,7 @@ function ProfileContent() {
                           variant="outline"
                           role="combobox"
                           aria-expanded={openLocation}
-                          disabled={!isEditingNotifications}
+                          disabled={!isEditing}
                           className="w-full justify-between bg-white dark:bg-gray-800"
                         >
                           {form.watch('location') ? (STATE_NAMES as any)[form.watch('location')] || 'Select your state' : 'Select your state'}
@@ -678,7 +669,7 @@ function ProfileContent() {
                     <textarea
                       value={form.watch('bio') || ''}
                       onChange={(e) => form.setValue('bio', e.target.value)}
-                      disabled={!isEditingNotifications}
+                      disabled={!isEditing}
                       placeholder="Tell coaches about yourself, your goals, or what you're looking for in coaching..."
                       rows={4}
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-gray-100  bg-white dark:bg-background text-gray-900 dark:text-white"
@@ -696,7 +687,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('language')}
                         onChange={(e) => form.setValue('language', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select preferred language</option>
@@ -713,7 +704,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('genderIdentity')}
                         onChange={(e) => form.setValue('genderIdentity', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select gender identity</option>
@@ -730,7 +721,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('ethnicIdentity')}
                         onChange={(e) => form.setValue('ethnicIdentity', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select ethnic identity</option>
@@ -747,7 +738,7 @@ function ProfileContent() {
                       <select
                         value={form.watch('religiousBackground')}
                         onChange={(e) => form.setValue('religiousBackground', e.target.value)}
-                        disabled={!isEditingNotifications}
+                        disabled={!isEditing}
                         className="w-full px-3 py-2 border border-border bg-background text-foreground rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:bg-muted"
                       >
                         <option value="">Select religious background</option>
@@ -870,37 +861,6 @@ function ProfileContent() {
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notification Methods</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
-                    <div className="flex items-center space-x-3">
-                      <Mail className="w-5 h-5 text-blue-600" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-900 dark:text-white">Email Notifications</label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications via email</p>
-                      </div>
-                    </div>
-                    <Checkbox
-                      checked={form.watch('emailNotifications')}
-                      onCheckedChange={(checked) => form.setValue('emailNotifications', !!checked)}
-                      disabled={!isEditingNotifications}
-                      className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
-                    <div className="flex items-center space-x-3">
-                      <Phone className="w-5 h-5 text-green-600" />
-                      <div>
-                        <label className="text-sm font-medium text-gray-900 dark:text-white">SMS Notifications</label>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications via text message</p>
-                      </div>
-                    </div>
-                    <Checkbox
-                      checked={form.watch('smsNotifications')}
-                      onCheckedChange={(checked) => form.setValue('smsNotifications', !!checked)}
-                      disabled={!isEditingNotifications}
-                      className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                  </div>
 
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
@@ -1018,18 +978,6 @@ function ProfileContent() {
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 dark:text-white mb-3">Notification Methods</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">Email Notifications</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('emailNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
-                          {form.watch('emailNotifications') ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-gray-700 dark:text-gray-300">SMS Notifications</span>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('smsNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
-                          {form.watch('smsNotifications') ? 'Enabled' : 'Disabled'}
-                        </span>
-                      </div>
                       <div className="flex items-center justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Push Notifications</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('pushNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>

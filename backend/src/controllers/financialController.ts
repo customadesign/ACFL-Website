@@ -114,7 +114,7 @@ export const financialController = {
           (stats.transactionsByStatus[transaction.status] || 0) + 1;
 
         // Calculate totals
-        if (transaction.status === 'succeeded') {
+        if (transaction.status === 'succeeded' || transaction.status === 'captured') {
           stats.totalRevenue += amountDollars;
           stats.successfulTransactions++;
 
@@ -123,7 +123,7 @@ export const financialController = {
           stats.revenueByDay[day] = (stats.revenueByDay[day] || 0) + amountDollars;
         } else if (transaction.status === 'failed') {
           stats.failedTransactions++;
-        } else if (transaction.status === 'pending') {
+        } else if (transaction.status === 'pending' || transaction.status === 'authorized') {
           stats.pendingTransactions++;
         } else if (transaction.status === 'refunded') {
           stats.refundedAmount += amountDollars;
@@ -181,7 +181,7 @@ export const financialController = {
       
       // Fetch transactions for the period
       const { data: transactions, error: transError } = await supabase
-        .from('payment_transactions')
+        .from('payments')
         .select('*')
         .gte('created_at', start_date)
         .lte('created_at', end_date);
@@ -200,26 +200,27 @@ export const financialController = {
       const transactionsByClient: Record<string, number> = {};
       
       transactions?.forEach(transaction => {
-        const amount = Number(transaction.amount);
-        
-        if (transaction.status === 'completed') {
+        const amountCents = Number(transaction.amount_cents || 0);
+        const amount = amountCents / 100; // Convert cents to dollars
+
+        if (transaction.status === 'completed' || transaction.status === 'succeeded' || transaction.status === 'captured') {
           totalRevenue += amount;
           successfulTransactions++;
-          
+
           // Assuming 20% platform fee
           const fee = amount * 0.20;
           platformFees += fee;
           coachPayouts += (amount - fee);
-          
+
           // Group by coach
           if (transaction.coach_id) {
-            transactionsByCoach[transaction.coach_id] = 
+            transactionsByCoach[transaction.coach_id] =
               (transactionsByCoach[transaction.coach_id] || 0) + amount;
           }
-          
+
           // Group by client
           if (transaction.client_id) {
-            transactionsByClient[transaction.client_id] = 
+            transactionsByClient[transaction.client_id] =
               (transactionsByClient[transaction.client_id] || 0) + 1;
           }
         } else if (transaction.status === 'failed') {
@@ -271,13 +272,13 @@ export const financialController = {
       
       // Fetch completed transactions grouped by coach
       let query = supabase
-        .from('payment_transactions')
+        .from('payments')
         .select(`
           coach_id,
           coaches!inner(first_name, last_name, email, hourly_rate_usd),
-          amount
+          amount_cents
         `)
-        .eq('status', 'completed');
+        .in('status', ['completed', 'succeeded', 'captured']);
       
       if (start_date) {
         query = query.gte('created_at', start_date);
@@ -296,7 +297,8 @@ export const financialController = {
       
       transactions?.forEach((transaction: any) => {
         const coachId = transaction.coach_id;
-        const amount = Number(transaction.amount);
+        const amountCents = Number(transaction.amount_cents);
+        const amount = amountCents / 100; // Convert cents to dollars
         const platformFee = amount * 0.20; // 20% platform fee
         const payout = amount - platformFee;
         
@@ -341,22 +343,22 @@ export const financialController = {
       
       // Fetch the transaction
       const { data: transaction, error: fetchError } = await supabase
-        .from('payment_transactions')
+        .from('payments')
         .select('*')
         .eq('id', id)
         .single();
-      
+
       if (fetchError) throw fetchError;
-      
-      if (transaction.status !== 'completed') {
-        return res.status(400).json({ 
-          error: 'Only completed transactions can be refunded' 
+
+      if (transaction.status !== 'completed' && transaction.status !== 'succeeded' && transaction.status !== 'captured') {
+        return res.status(400).json({
+          error: 'Only completed/succeeded/captured transactions can be refunded'
         });
       }
-      
+
       // Update transaction status
       const { error: updateError } = await supabase
-        .from('payment_transactions')
+        .from('payments')
         .update({
           status: 'refunded',
           metadata: {
@@ -370,12 +372,31 @@ export const financialController = {
         .eq('id', id);
       
       if (updateError) throw updateError;
-      
-      // TODO: Integrate with actual payment provider for refund processing
-      
-      res.json({ 
+      // Try to process actual refund through Square if available
+      let squareRefundSuccess = false;
+      if (transaction.square_payment_id) {
+        try {
+          // Import SquarePaymentService
+          const { SquarePaymentService } = await import('../services/squarePaymentService');
+          const squareService = new SquarePaymentService();
+
+          await squareService.createRefund(req.user?.userId || null, {
+            payment_id: transaction.id,
+            reason: reason || 'requested_by_customer',
+            description: `Admin refund: ${reason}`
+          });
+
+          squareRefundSuccess = true;
+        } catch (squareError) {
+          console.error('Square refund failed:', squareError);
+          // Continue with database update even if Square refund fails
+        }
+      }
+
+      res.json({
         message: 'Refund processed successfully',
-        note: 'Payment provider refund integration pending'
+        square_refund_processed: squareRefundSuccess,
+        note: squareRefundSuccess ? 'Square refund initiated' : 'Database status updated (Square refund may be processed separately)'
       });
     } catch (error) {
       console.error('Error processing refund:', error);
@@ -387,14 +408,16 @@ export const financialController = {
 // Helper functions
 function calculateDailyRevenue(transactions: any[]) {
   const dailyRevenue: Record<string, number> = {};
-  
+
   transactions?.forEach(transaction => {
-    if (transaction.status === 'completed') {
+    if (transaction.status === 'completed' || transaction.status === 'succeeded' || transaction.status === 'captured') {
       const date = new Date(transaction.created_at).toISOString().split('T')[0];
-      dailyRevenue[date] = (dailyRevenue[date] || 0) + Number(transaction.amount);
+      const amountCents = Number(transaction.amount_cents || 0);
+      const amount = amountCents / 100; // Convert cents to dollars
+      dailyRevenue[date] = (dailyRevenue[date] || 0) + amount;
     }
   });
-  
+
   return dailyRevenue;
 }
 

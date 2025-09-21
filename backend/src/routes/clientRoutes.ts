@@ -455,6 +455,227 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
   }
 });
 
+// Check client-coach history for rating permission
+router.get('/client/:clientId/coaches/:coachId/history', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const { clientId, coachId } = req.params;
+
+    // Verify the authenticated user matches the clientId
+    if (!req.user || req.user.userId !== clientId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. You can only check your own history.'
+      });
+    }
+
+    // Check the sessions table for completed sessions
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('id, status')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .eq('status', 'completed');
+
+    if (sessionsError && sessionsError.code !== 'PGRST116') {
+      throw sessionsError;
+    }
+
+    const hasHistory = sessions && sessions.length > 0;
+
+    // Check if the client has already rated this coach
+    const { data: existingReview, error: reviewError } = await supabase
+      .from('reviews')
+      .select('id, rating, comment')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (reviewError && reviewError.code !== 'PGRST116') {
+      throw reviewError;
+    }
+
+    res.json({
+      success: true,
+      hasHistory,
+      hasRated: !!existingReview,
+      completedSessions: sessions?.length || 0,
+      review: existingReview || null
+    });
+  } catch (error) {
+    console.error('Check client-coach history error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check history'
+    });
+  }
+});
+
+// Get coach rating statistics
+router.get('/client/coaches/:coachId/ratings', authenticate, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    const { coachId } = req.params;
+
+    // Get coach rating from coaches table
+    const { data: coach, error: coachError } = await supabase
+      .from('coaches')
+      .select('rating')
+      .eq('id', coachId)
+      .single();
+
+    if (coachError) {
+      throw coachError;
+    }
+
+    // Get total reviews count
+    const { data: reviews, error: reviewsError } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('coach_id', coachId);
+
+    if (reviewsError) {
+      throw reviewsError;
+    }
+
+    const totalReviews = reviews ? reviews.length : 0;
+    const averageRating = coach?.rating || 0;
+
+    res.json({
+      success: true,
+      averageRating,
+      totalReviews
+    });
+  } catch (error) {
+    console.error('Get coach ratings error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get ratings'
+    });
+  }
+});
+
+// Submit/Update rating for a coach
+router.post('/client/coaches/:coachId/ratings', [
+  authenticate,
+  body('clientId').isUUID().withMessage('clientId is required'),
+  body('sessionId').optional().isUUID().withMessage('sessionId must be a valid UUID'),
+  body('rating').isInt({ min: 1, max: 5 }).withMessage('rating must be 1-5'),
+  body('comment').optional().isString(),
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({ success: false, message: 'Access denied. Client role required.' });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ success: false, errors: errors.array() });
+    }
+
+    const { coachId } = req.params;
+    const { clientId, sessionId, rating, comment } = req.body;
+
+    // Verify the authenticated user matches the clientId
+    if (req.user.userId !== clientId) {
+      return res.status(403).json({ success: false, message: 'Access denied. You can only submit your own ratings.' });
+    }
+
+    // Check if client has completed sessions with this coach
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('id, status')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .eq('status', 'completed');
+
+    if (sessionsError) {
+      throw sessionsError;
+    }
+
+    if (!sessions || sessions.length === 0) {
+      return res.status(400).json({ success: false, message: 'You can only rate coaches after completing a session with them.' });
+    }
+
+    // If no session ID provided, use the most recent completed session
+    let validSessionId = sessionId;
+    if (!validSessionId) {
+      // Use the first (most recent) completed session
+      validSessionId = sessions[0].id;
+    } else {
+      // Validate the provided session ID
+      const validSession = sessions.find(s => s.id === sessionId);
+      if (!validSession) {
+        return res.status(400).json({ success: false, message: 'Invalid session ID or session not completed.' });
+      }
+    }
+
+    // Check if rating already exists
+    const { data: existingReview, error: existingError } = await supabase
+      .from('reviews')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .single();
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      throw existingError;
+    }
+
+    let review;
+    if (existingReview) {
+      // Update existing review
+      const { data: updatedReview, error: updateError } = await supabase
+        .from('reviews')
+        .update({ rating, comment: comment || null })
+        .eq('id', existingReview.id)
+        .select('*')
+        .single();
+
+      if (updateError) {
+        throw updateError;
+      }
+      review = updatedReview;
+    } else {
+      // Create new review
+      const { data: newReview, error: insertError } = await supabase
+        .from('reviews')
+        .insert({
+          client_id: clientId,
+          coach_id: coachId,
+          session_id: validSessionId,
+          rating,
+          comment: comment || null,
+        })
+        .select('*')
+        .single();
+
+      if (insertError) {
+        throw insertError;
+      }
+      review = newReview;
+    }
+
+    // Update coach aggregate rating
+    const { data: allReviews, error: avgError } = await supabase
+      .from('reviews')
+      .select('rating')
+      .eq('coach_id', coachId);
+
+    if (!avgError && allReviews) {
+      const ratings = allReviews.map(r => Number(r.rating) || 0).filter(n => n > 0);
+      const avg = ratings.length > 0 ? Number((ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(2)) : rating;
+      await supabase
+        .from('coaches')
+        .update({ rating: avg })
+        .eq('id', coachId);
+    }
+
+    res.json({ success: true, data: review });
+  } catch (error: any) {
+    console.error('Submit rating error:', error);
+    res.status(500).json({ success: false, message: 'Failed to submit rating' });
+  }
+});
+
 // Get saved coaches
 router.get('/client/saved-coaches', authenticate, async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -496,6 +717,7 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
           experience,
           rating,
           is_available,
+          profile_photo,
           created_at
         )
       `)
@@ -516,9 +738,10 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
         bio: coach.bio || '',
         sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
         experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
-        rating: 0, // Will be calculated dynamically from reviews
+        rating: coach.rating || 0,
         savedDate: coach.created_at, // Use coach's creation date as fallback
         virtualAvailable: coach.is_available,
+        profilePhoto: coach.profile_photo || '',
         email: coach.email || null
       };
     }) || [];
@@ -890,7 +1113,7 @@ router.post('/client/book-appointment', [
       updated_at: new Date().toISOString()
     };
 
-    console.log('Inserting session with data:', sessionData);
+    console.log('Inserting session with data (without payment_id):', sessionData);
 
     const { data: session, error: sessionError } = await supabase
       .from('sessions')
@@ -1155,6 +1378,21 @@ router.put('/client/appointments/:id/cancel', [
 
     if (updateError) {
       throw updateError;
+    }
+
+    // Handle payment cancellation if payment exists
+    if (appointment.payment_id) {
+      const paymentService = require('../services/paymentServiceV2').PaymentServiceV2;
+      const paymentHandler = new paymentService();
+
+      try {
+        // Release the payment hold when client cancels
+        await paymentHandler.cancelAuthorization(appointment.payment_id, reason || 'Client cancelled the appointment');
+        console.log(`Payment authorization cancelled for appointment ${id}`);
+      } catch (paymentError) {
+        console.error(`Payment cancellation error for appointment ${id}:`, paymentError);
+        // Log the error but don't fail the appointment cancellation
+      }
     }
 
     // Emit WebSocket event for cancelled appointment

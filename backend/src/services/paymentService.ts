@@ -78,8 +78,8 @@ export class PaymentService {
         client_id: clientId,
         coach_id: request.coach_id,
         coach_rate_id: request.coach_rate_id,
-        stripe_payment_intent_id: squarePayment.id!, // Will be renamed to payment_id
-        stripe_customer_id: customerId, // Will be renamed to customer_id
+        square_payment_id: squarePayment.id!, // Will be renamed to payment_id
+        square_customer_id: customerId, // Will be renamed to customer_id
         amount_cents: coachRate.rate_cents,
         currency: 'usd',
         platform_fee_cents: platformFee,
@@ -105,7 +105,7 @@ export class PaymentService {
 
       // Log payment creation
       await this.logPaymentEvent(payment.id, 'payment_created', {
-        stripe_payment_intent_id: squarePayment.id,
+        square_payment_id: squarePayment.id,
         amount_cents: coachRate.rate_cents,
       });
 
@@ -141,7 +141,7 @@ export class PaymentService {
       const { data: payment, error } = await supabase
         .from('payments')
         .select('*')
-        .eq('stripe_payment_intent_id', paymentId)
+        .eq('square_payment_id', paymentId)
         .single();
 
       if (error) {
@@ -172,7 +172,7 @@ export class PaymentService {
 
       // Log status change
       await this.logPaymentEvent(payment.id, `payment_${newStatus}`, {
-        stripe_payment_intent_id: paymentId,
+        square_payment_id: paymentId,
         old_status: payment.status,
         new_status: newStatus,
       });
@@ -225,7 +225,7 @@ export class PaymentService {
           amount: formatSquareAmount(refundAmount),
           currency: 'USD',
         },
-        paymentId: payment.stripe_payment_intent_id, // This contains the Square payment ID
+        paymentId: payment.square_payment_id, // This contains the Square payment ID
         reason: request.description || request.reason,
       };
 
@@ -248,7 +248,7 @@ export class PaymentService {
       // Create refund record
       const refundData = {
         payment_id: request.payment_id,
-        stripe_refund_id: squareRefund.id!, // Will be renamed to refund_id
+        square_refund_id: squareRefund.id!, // Will be renamed to refund_id
         amount_cents: refundAmount,
         reason: request.reason,
         status: 'pending',
@@ -278,14 +278,14 @@ export class PaymentService {
 
       // Log refund creation
       await this.logRefundEvent(refund.id, 'refund_created', {
-        stripe_refund_id: squareRefund.id,
+        square_refund_id: squareRefund.id,
         amount_cents: refundAmount,
         reason: request.reason,
       });
 
       return {
         refund_id: refund.id,
-        stripe_refund_id: squareRefund.id!,
+        square_refund_id: squareRefund.id!,
         amount_cents: refundAmount,
         status: squareRefund.status === 'COMPLETED' ? 'succeeded' : 'pending',
       };
@@ -445,7 +445,7 @@ export class PaymentService {
         status: payment.status === 'COMPLETED' ? 'succeeded' : 'failed',
         updated_at: new Date(),
       })
-      .eq('stripe_payment_intent_id', payment.id);
+      .eq('square_payment_id', payment.id);
 
     if (error) {
       console.error('Failed to update payment status:', error);
@@ -459,7 +459,7 @@ export class PaymentService {
         status: refund.status === 'COMPLETED' ? 'succeeded' : refund.status.toLowerCase(),
         processed_at: refund.status === 'COMPLETED' ? new Date() : null
       })
-      .eq('stripe_refund_id', refund.id)
+      .eq('square_refund_id', refund.id)
       .select()
       .single();
 
@@ -469,7 +469,7 @@ export class PaymentService {
     }
 
     await this.logRefundEvent(data.id, 'refund_updated', {
-      stripe_refund_id: refund.id,
+      square_refund_id: refund.id,
       new_status: refund.status,
     });
   }
@@ -482,7 +482,7 @@ export class PaymentService {
     const logData: Partial<PaymentLog> = {
       payment_id: paymentId,
       event_type: eventType,
-      stripe_event_id: details.stripe_event_id,
+      square_event_id: details.square_event_id,
       old_status: details.old_status,
       new_status: details.new_status,
       amount_cents: details.amount_cents,
@@ -501,7 +501,7 @@ export class PaymentService {
     const logData: Partial<PaymentLog> = {
       refund_id: refundId,
       event_type: eventType,
-      stripe_event_id: details.stripe_event_id,
+      square_event_id: details.square_event_id,
       amount_cents: details.amount_cents,
       description: details.description,
       metadata: details,

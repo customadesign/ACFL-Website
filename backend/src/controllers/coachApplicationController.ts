@@ -5,6 +5,7 @@ import { coachService } from '../services/coachService';
 import emailService from '../services/emailService';
 import smtpEmailService from '../services/smtpEmailService';
 import bcrypt from 'bcrypt';
+import { auditLogger, AuditRequest } from '../utils/auditLogger';
 
 interface CoachApplicationData {
   // Basic Information
@@ -256,8 +257,34 @@ export const submitCoachApplication = async (req: Request, res: Response) => {
       console.log('✅ Audit trail created');
     }
 
-    // Step 7: Send confirmation email
-    console.log('\n📧 Step 7: Sending confirmation email...');
+    // Step 7: Log the application submission
+    console.log('\n📝 Step 7: Logging application submission...');
+    try {
+      const auditReq = req as AuditRequest;
+      await auditLogger.logAction(auditReq, {
+        action: 'COACH_APPLICATION_SUBMITTED',
+        resource_type: 'coach_application',
+        resource_id: application.id,
+        details: `New coach application submitted by ${applicationData.firstName} ${applicationData.lastName} (${applicationData.email})`,
+        metadata: {
+          application_id: application.id,
+          applicant_name: `${applicationData.firstName} ${applicationData.lastName}`,
+          applicant_email: applicationData.email,
+          coaching_expertise: applicationData.coachingExpertise,
+          experience_years: applicationData.coachingExperienceYears,
+          act_training_level: applicationData.actTrainingLevel,
+          languages: applicationData.languagesFluent,
+          submitted_at: application.submitted_at
+        }
+      });
+      console.log('✅ Application submission logged');
+    } catch (auditError) {
+      console.log('⚠️ Warning: Audit logging failed:', auditError);
+      // Don't fail application for audit issues
+    }
+
+    // Step 8: Send confirmation email
+    console.log('\n📧 Step 8: Sending confirmation email...');
     try {
       const emailResult = await emailService.sendCoachApplicationConfirmation({
         email: applicationData.email,
@@ -275,7 +302,7 @@ export const submitCoachApplication = async (req: Request, res: Response) => {
       // Don't fail application for email issues
     }
 
-    // Step 8: Send success response
+    // Step 9: Send success response
     const response = {
       success: true,
       message: 'Application submitted successfully',
@@ -815,6 +842,31 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
       console.log('Warning: Audit trail creation failed:', auditError);
     }
 
+    // Log the status update action
+    try {
+      const auditReq = req as AuditRequest;
+      await auditLogger.logAction(auditReq, {
+        action: 'COACH_APPLICATION_STATUS_UPDATE',
+        resource_type: 'coach_application',
+        resource_id: id,
+        details: `Coach application status changed from "${currentApp.status}" to "${status}" for ${updatedApp.first_name} ${updatedApp.last_name} (${updatedApp.email})`,
+        metadata: {
+          application_id: id,
+          applicant_name: `${updatedApp.first_name} ${updatedApp.last_name}`,
+          applicant_email: updatedApp.email,
+          old_status: currentApp.status,
+          new_status: status,
+          reviewer_id: reviewerId,
+          reason: reason || null,
+          coaching_expertise: updatedApp.coaching_expertise,
+          experience_years: updatedApp.coaching_experience_years,
+          reviewed_at: updatedApp.reviewed_at
+        }
+      });
+    } catch (auditError) {
+      console.log('Warning: Audit logging failed:', auditError);
+    }
+
     // Create coach profile if approved
     if (status === 'approved') {
       try {
@@ -1015,6 +1067,32 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
           console.log(`Warning: SMTP email notification failed for ${applicationId}:`, emailError);
         }
 
+        // Log the bulk status update action
+        try {
+          const auditReq = req as AuditRequest;
+          await auditLogger.logAction(auditReq, {
+            action: 'COACH_APPLICATION_BULK_STATUS_UPDATE',
+            resource_type: 'coach_application',
+            resource_id: applicationId,
+            details: `Bulk coach application status changed from "${currentApp.status}" to "${status}" for ${updatedApp.first_name} ${updatedApp.last_name} (${updatedApp.email})`,
+            metadata: {
+              application_id: applicationId,
+              applicant_name: `${updatedApp.first_name} ${updatedApp.last_name}`,
+              applicant_email: updatedApp.email,
+              old_status: currentApp.status,
+              new_status: status,
+              reviewer_id: reviewerId,
+              reason: reason || null,
+              is_bulk_action: true,
+              total_in_bulk: applicationIds.length,
+              coaching_expertise: updatedApp.coaching_expertise,
+              experience_years: updatedApp.coaching_experience_years
+            }
+          });
+        } catch (auditError) {
+          console.log(`Warning: Audit logging failed for application ${applicationId}:`, auditError);
+        }
+
         results.successful.push({
           id: applicationId,
           name: `${updatedApp.first_name} ${updatedApp.last_name}`,
@@ -1031,6 +1109,31 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
     }
 
     console.log('Bulk update results:', results);
+
+    // Log the overall bulk operation summary
+    try {
+      const auditReq = req as AuditRequest;
+      await auditLogger.logAction(auditReq, {
+        action: 'COACH_APPLICATION_BULK_OPERATION_SUMMARY',
+        resource_type: 'coach_application',
+        resource_id: 'bulk_operation',
+        details: `Bulk coach application ${status} operation completed: ${results.successful.length} successful, ${results.failed.length} failed, ${results.skipped.length} skipped out of ${applicationIds.length} total`,
+        metadata: {
+          operation_type: `bulk_${status}`,
+          total_applications: applicationIds.length,
+          successful_count: results.successful.length,
+          failed_count: results.failed.length,
+          skipped_count: results.skipped.length,
+          reviewer_id: reviewerId,
+          reason: reason || null,
+          successful_applications: results.successful.map(r => r.id),
+          failed_applications: results.failed.map(r => r.id),
+          skipped_applications: results.skipped.map(r => r.id)
+        }
+      });
+    } catch (auditError) {
+      console.log('Warning: Bulk operation summary audit logging failed:', auditError);
+    }
 
     res.json({
       success: true,

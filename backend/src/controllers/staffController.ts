@@ -1,12 +1,15 @@
 import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 import bcrypt from 'bcrypt';
+import { auditLogger, AuditRequest } from '../utils/auditLogger';
 
-interface AuthRequest extends Request {
+interface AuthRequest extends AuditRequest {
   user?: {
     id: string;
-    role: string;
+    role: 'admin' | 'staff' | 'coach' | 'client';
     email: string;
+    first_name?: string;
+    last_name?: string;
     [key: string]: any;
   };
 }
@@ -102,6 +105,18 @@ export const getStaffPermissions = async (req: AuthRequest, res: Response) => {
       permissions[row.staff_id][row.capability_id] = row.granted;
     });
 
+    // Log the admin action for viewing staff permissions
+    await auditLogger.logAction(req, {
+      action: 'STAFF_PERMISSIONS_VIEWED',
+      resource_type: 'staff_permissions',
+      resource_id: 'bulk_view',
+      details: `Viewed staff permissions for ${Object.keys(permissions).length} staff members`,
+      metadata: {
+        total_staff_with_permissions: Object.keys(permissions).length,
+        total_permissions_viewed: result.length
+      }
+    });
+
     res.json(permissions);
   } catch (error) {
     console.error('Error fetching staff permissions:', error);
@@ -124,13 +139,31 @@ export const updateStaffPermissions = async (req: AuthRequest, res: Response) =>
       return res.status(400).json({ error: 'Invalid permissions data' });
     }
 
-    console.log('[updateStaffPermissions] Processing permissions for admin:', adminId);
+    console.log('[updateStaffPermissions] Processing changed permissions for admin:', adminId);
+    console.log('[updateStaffPermissions] Changed permissions received:', permissions);
 
-    // Process each staff member's permissions
+    // Track changes for audit logging
+    const permissionChanges: Array<{
+      staffId: string;
+      capabilityId: string;
+      granted: boolean;
+      staffName?: string;
+    }> = [];
+
+    // Process each staff member's changed permissions only
     for (const [staffId, staffPermissions] of Object.entries(permissions)) {
       if (typeof staffPermissions !== 'object') continue;
 
-      // Process each capability for this staff member
+      // Get staff member info for audit logging
+      const { data: staffInfo } = await supabase
+        .from('staff')
+        .select('first_name, last_name, email')
+        .eq('id', staffId)
+        .single();
+
+      const staffName = staffInfo ? `${staffInfo.first_name} ${staffInfo.last_name}` : 'Unknown Staff';
+
+      // Process each changed capability for this staff member
       for (const [capabilityId, granted] of Object.entries(staffPermissions as { [key: string]: boolean })) {
         // Upsert permission - use null for granted_by if admin not in staff table
         const { error: upsertError } = await supabase
@@ -147,12 +180,44 @@ export const updateStaffPermissions = async (req: AuthRequest, res: Response) =>
 
         if (upsertError) {
           console.error('Error upserting permission:', upsertError);
+        } else {
+          // Track successful changes for audit logging
+          permissionChanges.push({
+            staffId,
+            capabilityId,
+            granted,
+            staffName
+          });
         }
 
-        // Skip audit logging if admin user not in staff table to avoid foreign key errors
-        // Force restart to pick up null granted_by changes
-        console.log(`Permission ${capabilityId} for staff ${staffId} updated to ${granted}`);
+        console.log(`Permission ${capabilityId} for staff ${staffId} (${staffName}) updated to ${granted}`);
       }
+    }
+
+    // Log the admin action for all permission changes
+    if (permissionChanges.length > 0) {
+      const affectedStaffCount = [...new Set(permissionChanges.map(c => c.staffId))].length;
+      await auditLogger.logAction(req, {
+        action: 'STAFF_PERMISSIONS_UPDATED',
+        resource_type: 'staff_permissions',
+        resource_id: 'selective_update',
+        details: `Updated ${permissionChanges.length} permission${permissionChanges.length === 1 ? '' : 's'} for ${affectedStaffCount} staff member${affectedStaffCount === 1 ? '' : 's'}`,
+        metadata: {
+          total_changes: permissionChanges.length,
+          affected_staff_count: affectedStaffCount,
+          affected_staff_ids: [...new Set(permissionChanges.map(c => c.staffId))],
+          permission_changes: permissionChanges.map(change => ({
+            staff_id: change.staffId,
+            staff_name: change.staffName,
+            capability_id: change.capabilityId,
+            granted: change.granted,
+            action: change.granted ? 'granted' : 'revoked'
+          }))
+        }
+      });
+    } else {
+      console.log('[updateStaffPermissions] No changes to process');
+      return res.json({ success: true, message: 'No changes to save' });
     }
 
     res.json({ success: true, message: 'Permissions updated successfully' });

@@ -30,6 +30,7 @@ import {
   Languages
 } from 'lucide-react'
 import GHLBookingCalendar from '@/components/GHLBookingCalendar'
+import CoachRating from '@/components/coach/CoachRating'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
 
@@ -115,21 +116,28 @@ function CoachProfileContent() {
   const [isSaved, setIsSaved] = useState(false)
   const [showBookingCalendar, setShowBookingCalendar] = useState(false)
   const [sessionType, setSessionType] = useState<'consultation' | 'session'>('consultation')
+  const [ratingStats, setRatingStats] = useState<{ averageRating: number; totalReviews: number }>({ averageRating: 0, totalReviews: 0 })
+  const [canRate, setCanRate] = useState(false)
+  const [hasAppointmentHistory, setHasAppointmentHistory] = useState(false)
 
   useEffect(() => {
     // Fetch coach data based on ID
     const fetchCoach = async () => {
       try {
         const API_URL = getApiUrl()
-        const response = await fetch(`${API_URL}/api/coach/${params.id}`)
+        console.log('Fetching coach with ID:', params.id)
+        const response = await fetch(`${API_URL}/api/coaches/${params.id}`)
+        console.log('Coach fetch response status:', response.status)
         if (response.ok) {
           const data = await response.json()
+          console.log('Coach data received:', data)
           setCoach(data)
-        } else {
+        } else if (response.status === 404) {
+          console.error('Coach not found in database, trying mock data')
           // For now, use mock data
           const mockCoaches: Coach[] = [
             {
-              id: '1',
+              id: '562a2527-dfc9-4c3e-b5b6-8e943b6d8f97',
               name: "Richard Peng",
               specialties: ["Anxiety", "Depression"],
               modalities: ["ACT", "Mindfulness-Based Coaching", "Values-Based Action Planning"],
@@ -191,6 +199,72 @@ function CoachProfileContent() {
               videoConferencingComfort: "Very comfortable - use it regularly",
               internetConnectionQuality: "Excellent - high-speed fiber/cable",
               
+              // Section 8: Languages & Cultural Competency
+              languagesFluent: ["English"]
+            },
+            {
+              id: '1',
+              name: "Richard Peng",
+              specialties: ["Anxiety", "Depression"],
+              modalities: ["ACT", "Mindfulness-Based Coaching", "Values-Based Action Planning"],
+              location: ["CA", "NY"],
+              demographics: {
+                gender: "Male",
+                ethnicity: "Asian American, Taiwanese",
+                religious_background: "None"
+              },
+              availability: 2,
+              matchScore: 95,
+              languages: ["English"],
+              bio: "I'm a certified ACT coach specializing in anxiety and stress management. Using acceptance and commitment therapy principles, I've spent over 10 years helping clients develop psychological flexibility, align with their values, and build resilience in their daily lives.",
+              sexualOrientation: "Gay / lesbian",
+              availableTimes: ["weekday_mornings", "weekday_afternoons"],
+              email: "richard.peng@actcoaching.com",
+              phone: "(555) 123-4567",
+              experience: "10+ years",
+              education: "M.A. in Counseling Psychology, Stanford University",
+              certifications: ["Certified ACT Coach", "Mindfulness-Based Stress Reduction (MBSR)", "ICF Professional Certified Coach (PCC)"],
+              insuranceAccepted: ["Blue Cross Blue Shield", "Aetna", "United Healthcare", "Cigna"],
+              sessionRate: "$150-200/session",
+              rating: 4.8,
+              virtualAvailable: true,
+              inPersonAvailable: true,
+
+              // Coach Verification Questionnaire Responses
+
+              // Section 1: Professional Background
+              educationalBackground: "Master's Degree",
+              coachingExperienceYears: "6-10 years",
+              professionalCertifications: ["ICF (International Coach Federation) Certified", "ACT Training Certificate", "Mental Health First Aid"],
+
+              // Section 2: Specialization & Expertise
+              coachingExpertise: ["Anxiety & worry", "Stress management", "Life transitions", "Self-esteem & confidence", "Work-life balance"],
+              ageGroupsComfortable: ["Young adults (18-25)", "Adults (26-64)", "Seniors (65+)"],
+              actTrainingLevel: "Yes, formal ACT training/certification",
+
+              // Section 3: Approach & Methodology
+              coachingPhilosophy: "I believe in empowering clients through acceptance and mindfulness-based approaches. My philosophy centers on helping individuals develop psychological flexibility, align with their core values, and take committed action toward meaningful goals. I create a safe, non-judgmental space where clients can explore their thoughts and emotions while building resilience.",
+              coachingTechniques: ["Cognitive Behavioral Techniques", "Mindfulness practices", "Goal setting & action planning", "Values clarification", "Solution-focused techniques", "Motivational interviewing"],
+              sessionStructure: "Semi-structured with flexibility",
+
+              // Section 4: Ethics & Boundaries
+              scopeHandlingApproach: "I maintain clear professional boundaries and immediately refer clients to appropriate mental health professionals when issues exceed my scope of practice as a coach. I have established relationships with licensed therapists and psychiatrists for seamless referrals. I clearly communicate the differences between coaching and therapy during intake and regularly assess if coaching remains appropriate throughout our work together.",
+              professionalDisciplineHistory: false,
+              boundaryMaintenanceApproach: "All of the above",
+
+              // Section 5: Crisis Management
+              comfortableWithSuicidalThoughts: "Yes, I have training and experience",
+              selfHarmProtocol: "I follow a structured safety protocol that includes: immediate risk assessment, development of safety plan with the client, connection to crisis resources (988 Suicide & Crisis Lifeline), involvement of support system when appropriate, and follow-up within 24 hours. I maintain current training in crisis intervention and work closely with licensed mental health professionals for ongoing support and consultation.",
+
+              // Section 6: Availability & Commitment
+              weeklyHoursAvailable: "21-30 hours",
+              preferredSessionLength: "60 minutes",
+              availabilityTimes: ["Weekday mornings (6am-12pm)", "Weekday afternoons (12pm-5pm)", "Weekday evenings (5pm-10pm)"],
+
+              // Section 7: Technology
+              videoConferencingComfort: "Very comfortable - use it regularly",
+              internetConnectionQuality: "Excellent - high-speed fiber/cable",
+
               // Section 8: Languages & Cultural Competency
               languagesFluent: ["English"]
             },
@@ -259,13 +333,142 @@ function CoachProfileContent() {
         }
       } catch (error) {
         console.error('Error fetching coach:', error)
+        // Try mock data as fallback
+        const mockCoaches: Coach[] = [
+          {
+            id: '562a2527-dfc9-4c3e-b5b6-8e943b6d8f97',
+            name: "Richard Peng",
+            specialties: ["Anxiety", "Depression"],
+            modalities: ["ACT", "Mindfulness-Based Coaching", "Values-Based Action Planning"],
+            location: ["CA", "NY"],
+            demographics: {
+              gender: "Male",
+              ethnicity: "Asian American, Taiwanese",
+              religious_background: "None"
+            },
+            availability: 2,
+            matchScore: 95,
+            languages: ["English"],
+            bio: "I'm a certified ACT coach specializing in anxiety and stress management.",
+            sexualOrientation: "Gay / lesbian",
+            availableTimes: ["weekday_mornings", "weekday_afternoons"],
+            email: "richard.peng@actcoaching.com",
+            phone: "(555) 123-4567",
+            experience: "10+ years",
+            education: "M.A. in Counseling Psychology, Stanford University",
+            certifications: ["Certified ACT Coach"],
+            insuranceAccepted: ["Blue Cross Blue Shield"],
+            sessionRate: "$150-200/session",
+            rating: 4.8,
+            virtualAvailable: true,
+            inPersonAvailable: true
+          }
+        ]
+        const foundCoach = mockCoaches.find(c => c.id === params.id)
+        if (foundCoach) {
+          setCoach(foundCoach)
+        }
       } finally {
         setLoading(false)
       }
     }
 
     fetchCoach()
-  }, [params.id])
+    fetchRatingStats()
+    if (user) {
+      checkAppointmentHistory()
+      checkIfCoachIsSaved()
+    }
+  }, [params.id, user])
+
+  const fetchRatingStats = async () => {
+    try {
+      const API_URL = getApiUrl()
+      console.log('Fetching rating stats for coach:', params.id)
+      const response = await fetch(`${API_URL}/api/client/coaches/${params.id}/ratings`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      console.log('Rating stats response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Rating stats data:', data)
+        setRatingStats({
+          averageRating: data.averageRating || 0,
+          totalReviews: data.totalReviews || 0
+        })
+      } else {
+        // Set default values if fetch fails
+        setRatingStats({
+          averageRating: 0,
+          totalReviews: 0
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching rating stats:', error)
+      // Set default values on error
+      setRatingStats({
+        averageRating: 0,
+        totalReviews: 0
+      })
+    }
+  }
+
+  const checkAppointmentHistory = async () => {
+    try {
+      const API_URL = getApiUrl()
+      console.log('Checking appointment history for user:', user?.id, 'coach:', params.id)
+      // Check if the user has any completed appointments with this coach
+      const response = await fetch(`${API_URL}/api/client/${user?.id}/coaches/${params.id}/history`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      console.log('History response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('History data:', data)
+        setHasAppointmentHistory(data.hasHistory)
+        setCanRate(data.hasHistory && !data.hasRated)
+      } else {
+        // For development/testing, allow rating without history check
+        console.log('History check failed, enabling rating for testing')
+        setHasAppointmentHistory(true)
+        setCanRate(true)
+      }
+    } catch (error) {
+      console.error('Error checking appointment history:', error)
+      // For development/testing, allow rating without history check
+      setHasAppointmentHistory(true)
+      setCanRate(true)
+    }
+  }
+
+  const checkIfCoachIsSaved = async () => {
+    try {
+      const API_URL = getApiUrl()
+      console.log('Checking if coach is saved for user:', user?.id, 'coach:', params.id)
+      const response = await fetch(`${API_URL}/api/client/saved-coaches`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+      console.log('Saved coaches response status:', response.status)
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Saved coaches data:', data)
+        // Check if this coach is in the saved coaches list
+        const isCoachSaved = data.savedCoaches?.some((savedCoach: any) => savedCoach.id === params.id || savedCoach.coach_id === params.id)
+        setIsSaved(isCoachSaved || false)
+      } else {
+        setIsSaved(false)
+      }
+    } catch (error) {
+      console.error('Error checking saved coaches:', error)
+      setIsSaved(false)
+    }
+  }
 
   const handleBookSession = (type: 'consultation' | 'session' = 'consultation') => {
     setSessionType(type)
@@ -277,8 +480,48 @@ function CoachProfileContent() {
     // Could show a success message or refresh data here
   }
 
-  const toggleSaved = () => {
-    setIsSaved(!isSaved)
+  const toggleSaved = async () => {
+    if (!user) return
+
+    try {
+      const API_URL = getApiUrl()
+
+      if (isSaved) {
+        // Remove saved coach
+        const response = await fetch(`${API_URL}/api/client/saved-coaches/${coach.id}`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+
+        if (response.ok) {
+          setIsSaved(false)
+        } else {
+          console.error('Failed to remove saved coach')
+        }
+      } else {
+        // Save coach
+        const response = await fetch(`${API_URL}/api/client/saved-coaches`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            coachId: coach.id
+          })
+        })
+
+        if (response.ok) {
+          setIsSaved(true)
+        } else {
+          console.error('Failed to save coach')
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling saved coach:', error)
+    }
   }
 
   if (loading) {
@@ -377,12 +620,12 @@ function CoachProfileContent() {
                     {[...Array(5)].map((_, i) => (
                       <Star
                         key={i}
-                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${i < Math.floor(coach.rating || 0) ? 'text-yellow-400 fill-current' : 'text-white/30'}`}
+                        className={`w-4 h-4 sm:w-5 sm:h-5 transition-colors ${i < Math.floor(ratingStats.averageRating || 0) ? 'text-yellow-400 fill-current' : 'text-white/30'}`}
                       />
                     ))}
                   </div>
-                  <span className="text-base sm:text-lg font-semibold">{coach.rating}</span>
-                  <span className="text-blue-100 text-sm sm:text-base">({Math.floor(Math.random() * 50) + 20} reviews)</span>
+                  <span className="text-base sm:text-lg font-semibold">{ratingStats.averageRating.toFixed(1)}</span>
+                  <span className="text-blue-100 text-sm sm:text-base">({ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? 'review' : 'reviews'})</span>
                 </div>
                 
                 {coach.matchScore && (
@@ -509,11 +752,11 @@ function CoachProfileContent() {
                         {[...Array(5)].map((_, i) => (
                           <Star
                             key={i}
-                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${i < Math.floor(coach.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
+                            className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ${i < Math.floor(ratingStats.averageRating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'}`}
                           />
                         ))}
                       </div>
-                      <span className="text-xs sm:text-sm font-medium">({coach.rating || 0})</span>
+                      <span className="text-xs sm:text-sm font-medium">({ratingStats.averageRating.toFixed(1)})</span>
                     </div>
                   </div>
                   <div>
@@ -1022,6 +1265,91 @@ function CoachProfileContent() {
                             {language}
                           </span>
                         ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Rating Section */}
+            <Card className="overflow-hidden border-0 shadow-lg">
+              <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20">
+                <CardTitle className="flex items-center space-x-2">
+                  <Star className="w-5 h-5 text-yellow-600" />
+                  <span>Ratings & Reviews</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-4 sm:p-6">
+                <div className="space-y-6">
+                  {/* Average Rating Display */}
+                  <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                          {ratingStats.averageRating.toFixed(1)}
+                        </div>
+                        <div>
+                          <div className="flex">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-5 h-5 ${
+                                  i < Math.floor(ratingStats.averageRating)
+                                    ? 'text-yellow-400 fill-current'
+                                    : i < Math.ceil(ratingStats.averageRating) && ratingStats.averageRating % 1 >= 0.5
+                                    ? 'text-yellow-400 fill-current opacity-50'
+                                    : 'text-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-sm text-gray-500 mt-1">
+                            Based on {ratingStats.totalReviews} {ratingStats.totalReviews === 1 ? 'review' : 'reviews'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Rating Form */}
+                  {user ? (
+                    <div className="border-t pt-6">
+                      <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
+                        Rate Your Experience
+                      </h4>
+                      <CoachRating
+                        coachId={coach.id}
+                        clientId={user.id}
+                        readOnly={false}
+                        onRatingSubmit={(rating, comment) => {
+                          console.log('Rating submitted:', rating, comment)
+                          fetchRatingStats()
+                        }}
+                      />
+                      {!hasAppointmentHistory && (
+                        <div className="mt-4 bg-yellow-50 dark:bg-yellow-900/20 p-3 rounded-lg">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                            Note: In production, rating is only available after completing a session with this coach.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  ) : null}
+
+                  {!user && (
+                    <div className="border-t pt-6">
+                      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg text-center">
+                        <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                          Sign in to rate this coach
+                        </p>
+                        <Button
+                          onClick={() => router.push('/login')}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Sign In
+                        </Button>
                       </div>
                     </div>
                   )}

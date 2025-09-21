@@ -5,14 +5,15 @@ import { SignOptions } from 'jsonwebtoken';
 import { validationResult } from 'express-validator';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
-import { 
-  RegisterClientDto, 
-  RegisterCoachDto, 
-  LoginDto, 
+import {
+  RegisterClientDto,
+  RegisterCoachDto,
+  LoginDto,
   AuthResponse,
-  JWTPayload 
+  JWTPayload
 } from '../types/auth';
 import emailService from '../services/emailService';
+import { auditLogger, AuditRequest } from '../utils/auditLogger';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
@@ -704,6 +705,17 @@ export const login = async (req: Request, res: Response) => {
       // Don't fail the login if this update fails
     }
 
+    // Log successful login
+    const auditReq = req as AuditRequest;
+    auditReq.user = {
+      id: profile.id,
+      email: email,
+      role: role,
+      first_name: profile.first_name,
+      last_name: profile.last_name
+    };
+    await auditLogger.logLogin(auditReq, email, role, true);
+
     // Remove password_hash from response
     const { password_hash, ...safeProfile } = profile;
 
@@ -735,10 +747,33 @@ export const login = async (req: Request, res: Response) => {
     console.log(`Total time: ${duration}ms`);
     console.error('Error:', error.message);
     console.log('========================================\n');
-    
-    res.status(500).json({ 
-      success: false, 
-      message: 'Login failed' 
+
+    // Log failed login attempt
+    const { email } = req.body;
+    if (email) {
+      const auditReq = req as AuditRequest;
+      // Try to determine role from email lookup
+      let attemptedRole = 'unknown';
+      const { data: adminCheck } = await supabase.from('admins').select('id').ilike('email', email).single();
+      if (adminCheck) attemptedRole = 'admin';
+      else {
+        const { data: staffCheck } = await supabase.from('staff').select('id').ilike('email', email).single();
+        if (staffCheck) attemptedRole = 'staff';
+        else {
+          const { data: clientCheck } = await supabase.from('clients').select('id').ilike('email', email).single();
+          if (clientCheck) attemptedRole = 'client';
+          else {
+            const { data: coachCheck } = await supabase.from('coaches').select('id').ilike('email', email).single();
+            if (coachCheck) attemptedRole = 'coach';
+          }
+        }
+      }
+      await auditLogger.logLogin(auditReq, email, attemptedRole, false);
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Login failed'
     });
   }
 };

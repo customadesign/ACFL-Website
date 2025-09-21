@@ -281,7 +281,7 @@ export class SquarePaymentService {
 
       return {
         refund_id: refund.id,
-        stripe_refund_id: squareRefund.id!, // Using existing field name for compatibility
+        square_refund_id: squareRefund.id!, // Square refund ID
         amount_cents: refundAmount,
         status: squareRefund.status === 'COMPLETED' ? 'succeeded' : 'processing',
       };

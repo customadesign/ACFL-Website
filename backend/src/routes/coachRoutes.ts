@@ -6,6 +6,7 @@ import { authenticate } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
+import { createVideoSDKMeeting } from '../services/videoSDKService';
 import path from 'path';
 
 const router = Router();
@@ -533,15 +534,14 @@ router.get('/coach/appointments', authenticate, async (req: Request & { user?: a
     // Create meeting IDs for appointments that need them
     for (const appointment of upcomingConfirmed) {
       try {
-        const { createVideoSDKMeeting } = require('../services/videoSDKService')
         const meetingData = await createVideoSDKMeeting()
-        
+
         // Update appointment with meeting ID
         await supabase
           .from('sessions')
           .update({ meeting_id: meetingData.meetingId })
           .eq('id', appointment.id)
-        
+
         appointment.meeting_id = meetingData.meetingId
         console.log(`Created meeting ID ${meetingData.meetingId} for coach appointment ${appointment.id}`)
       } catch (error) {
@@ -764,6 +764,31 @@ router.put('/coach/appointments/:id', [
 
     if (updateError) {
       throw updateError;
+    }
+
+    // Handle payment processing based on status change
+    if (currentAppointment.payment_id) {
+      const paymentService = require('../services/paymentServiceV2').PaymentServiceV2;
+      const paymentHandler = new paymentService();
+
+      try {
+        if (status === 'confirmed' && currentAppointment.status === 'scheduled') {
+          // Do NOT capture payment when confirmed - wait until completed
+          console.log(`Appointment ${id} confirmed, payment will be captured after completion`);
+        } else if (status === 'completed' && currentAppointment.status !== 'completed') {
+          // Capture the payment when appointment is marked as completed
+          await paymentHandler.capturePayment(currentAppointment.payment_id);
+          console.log(`Payment captured for completed appointment ${id}`);
+        } else if (status === 'cancelled' && currentAppointment.status !== 'cancelled') {
+          // Release the payment hold when coach cancels
+          await paymentHandler.cancelAuthorization(currentAppointment.payment_id, 'Coach cancelled the appointment');
+          console.log(`Payment authorization cancelled for appointment ${id}`);
+        }
+      } catch (paymentError) {
+        console.error(`Payment processing error for appointment ${id}:`, paymentError);
+        // Log the error but don't fail the appointment update
+        // You might want to handle this differently based on your business logic
+      }
     }
 
     // Emit WebSocket event for status update

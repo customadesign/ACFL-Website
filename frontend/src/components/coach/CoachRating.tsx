@@ -43,7 +43,12 @@ export default function CoachRating({
 
   const checkExistingRating = async () => {
     try {
-      const response = await fetch(`/api/admin/clients/${clientId}/coaches/${coachId}/rating`)
+      const API_URL = 'http://localhost:3001' // Backend API URL
+      const response = await fetch(`${API_URL}/api/client/${clientId}/coaches/${coachId}/history`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
       if (response.ok) {
         const data = await response.json()
         if (data.hasRated && data.review) {
@@ -63,7 +68,7 @@ export default function CoachRating({
       return
     }
 
-    if (!clientId || !sessionId) {
+    if (!clientId) {
       setError('Missing required information')
       return
     }
@@ -72,14 +77,16 @@ export default function CoachRating({
     setError('')
 
     try {
-      const response = await fetch(`/api/admin/coaches/${coachId}/ratings`, {
+      const API_URL = 'http://localhost:3001' // Backend API URL
+      const response = await fetch(`${API_URL}/api/client/coaches/${coachId}/ratings`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
           clientId,
-          sessionId,
+          ...(sessionId && { sessionId }),
           rating,
           comment
         })
@@ -88,6 +95,8 @@ export default function CoachRating({
       if (response.ok) {
         const data = await response.json()
         setHasRated(true)
+        // Reload the rating data to show the submitted rating
+        checkExistingRating()
         if (onRatingSubmit) {
           onRatingSubmit(rating, comment)
         }

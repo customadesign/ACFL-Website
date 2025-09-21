@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
-import { 
-  DollarSign, 
-  TrendingUp, 
+import {
+  DollarSign,
+  TrendingUp,
   TrendingDown,
-  CreditCard, 
+  CreditCard,
   Users,
   FileText,
   Download,
@@ -14,7 +14,8 @@ import {
   Calendar,
   Search,
   RotateCcw,
-  AlertTriangle
+  AlertTriangle,
+  X
 } from 'lucide-react';
 
 interface Transaction {
@@ -23,6 +24,7 @@ interface Transaction {
   client_id: string;
   coach_id: string;
   amount: number;
+  amount_cents?: number;
   currency: string;
   status: string;
   payment_method: string;
@@ -56,6 +58,112 @@ interface TransactionStats {
   revenueByDay: Record<string, number>;
 }
 
+// Refund Modal Component
+interface RefundModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  transaction: Transaction | null;
+  onRefund: (transactionId: string, reason: string) => void;
+}
+
+function RefundModal({ isOpen, onClose, transaction, onRefund }: RefundModalProps) {
+  const [reason, setReason] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!transaction || !reason.trim()) return;
+
+    setIsProcessing(true);
+    try {
+      await onRefund(transaction.id, reason);
+      onClose();
+      setReason('');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  if (!isOpen || !transaction) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl w-full max-w-md mx-4">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Process Refund
+          </h3>
+          <button
+            onClick={onClose}
+            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <div className="mb-4">
+            <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg mb-4">
+              <h4 className="font-medium text-gray-900 dark:text-white mb-2">Transaction Details</h4>
+              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                <p><strong>ID:</strong> {transaction.id.slice(0, 8)}...</p>
+                <p><strong>Client:</strong> {transaction.client.first_name} {transaction.client.last_name}</p>
+                <p><strong>Amount:</strong> {new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount)}</p>
+                <p><strong>Status:</strong> {transaction.status}</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="refund-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Refund Reason <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="refund-reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Please provide a detailed reason for this refund..."
+              rows={4}
+              required
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            />
+          </div>
+
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
+            <div className="flex items-start">
+              <AlertTriangle className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-2 flex-shrink-0" />
+              <div className="text-sm text-yellow-800 dark:text-yellow-200">
+                <p className="font-medium">Important:</p>
+                <p>This action will process a refund through Square. Please ensure this is necessary as refunds cannot be undone.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!reason.trim() || isProcessing}
+              className="flex-1 px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isProcessing ? 'Processing...' : 'Process Refund'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 export default function FinancialManagement() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [stats, setStats] = useState<TransactionStats | null>(null);
@@ -66,11 +174,22 @@ export default function FinancialManagement() {
   const [dateFilter, setDateFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [refundModal, setRefundModal] = useState<{
+    isOpen: boolean;
+    transaction: Transaction | null;
+  }>({
+    isOpen: false,
+    transaction: null
+  });
 
   const statusColors: Record<string, string> = {
     completed: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+    succeeded: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
+    captured: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300',
     pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300',
+    authorized: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300',
     failed: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
+    canceled: 'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300',
     refunded: 'bg-gray-100 dark:bg-gray-900/30 text-gray-800 dark:text-gray-300'
   };
 
@@ -176,8 +295,6 @@ export default function FinancialManagement() {
   };
 
   const handleRefund = async (transactionId: string, reason: string) => {
-    if (!confirm('Are you sure you want to process this refund?')) return;
-
     try {
       const response = await fetch(`${getApiUrl()}/api/admin/financial/transactions/${transactionId}/refund`, {
         method: 'POST',
@@ -191,11 +308,14 @@ export default function FinancialManagement() {
       if (response.ok) {
         fetchTransactions();
         fetchStats();
-        alert('Refund processed successfully');
+        // Show success notification (you could implement a toast notification here)
+        console.log('Refund processed successfully');
+      } else {
+        throw new Error('Failed to process refund');
       }
     } catch (error) {
       console.error('Error processing refund:', error);
-      alert('Failed to process refund');
+      throw error; // Re-throw to let the modal handle the error
     }
   };
 
@@ -316,9 +436,11 @@ export default function FinancialManagement() {
               className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
             >
               <option value="all">All Statuses</option>
-              <option value="completed">Completed</option>
+              <option value="succeeded">Completed</option>
+              <option value="authorized">Authorized</option>
               <option value="pending">Pending</option>
               <option value="failed">Failed</option>
+              <option value="canceled">Canceled</option>
               <option value="refunded">Refunded</option>
             </select>
 
@@ -409,7 +531,7 @@ export default function FinancialManagement() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900 dark:text-white">
-                        {formatCurrency(transaction.amount)}
+                        {formatCurrency(transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount)}
                       </div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
                         {transaction.currency}
@@ -426,15 +548,14 @@ export default function FinancialManagement() {
                       {new Date(transaction.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      {transaction.status === 'completed' && (
+                      {(transaction.status === 'completed' || transaction.status === 'succeeded' || transaction.status === 'captured') && (
                         <button
-                          onClick={() => {
-                            const reason = prompt('Enter refund reason:');
-                            if (reason) {
-                              handleRefund(transaction.id, reason);
-                            }
-                          }}
-                          className="text-red-600 hover:text-red-900 dark:hover:text-red-400"
+                          onClick={() => setRefundModal({
+                            isOpen: true,
+                            transaction
+                          })}
+                          className="text-red-600 hover:text-red-900 dark:hover:text-red-400 p-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20"
+                          title="Process Refund"
                         >
                           <RotateCcw className="w-4 h-4" />
                         </button>
@@ -472,6 +593,14 @@ export default function FinancialManagement() {
           </div>
         )}
       </div>
+
+      {/* Refund Modal */}
+      <RefundModal
+        isOpen={refundModal.isOpen}
+        onClose={() => setRefundModal({ isOpen: false, transaction: null })}
+        transaction={refundModal.transaction}
+        onRefund={handleRefund}
+      />
     </div>
   );
 }

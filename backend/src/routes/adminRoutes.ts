@@ -10,6 +10,7 @@ import contentRoutes from './contentRoutes';
 import financialRoutes from './financialRoutes';
 import staffRoutes from './staffRoutes';
 import { getStaffPermissions, updateStaffPermissions } from '../controllers/staffController';
+import { auditLogger, AuditRequest } from '../utils/auditLogger';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -636,7 +637,7 @@ router.post('/users', authorize('admin'), async (req, res) => {
           qualifications: userData.qualifications || ['Certified Life Coach'],
           languages: userData.languages || ['English'],
           is_available: true,
-          rating: 4.5,
+          rating: userData.rating || null,
           status: userData.status || 'pending',
           password_hash: hashedPassword,
           created_at: new Date().toISOString()
@@ -726,6 +727,22 @@ router.post('/users', authorize('admin'), async (req, res) => {
         // Don't fail the user creation if email fails
       }
     }
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'USER_CREATED',
+      resource_type: userType,
+      resource_id: result.id,
+      details: `Created ${userType} user: ${userData.firstName} ${userData.lastName} (${userData.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: result.id,
+        email: userData.email,
+        status: userData.status || (userType === 'coach' ? 'pending' : 'active'),
+        email_sent: temporaryPassword ? true : false
+      }
+    });
 
     res.status(201).json({
       success: true,
@@ -839,7 +856,7 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
 
     let result;
     
-    // Transform camelCase to snake_case for database fields
+    // Transform form camelCase to snake_case for database fields
     const transformToSnakeCase = (data: any) => {
       const transformed: any = {
         updated_at: new Date().toISOString()
@@ -917,6 +934,21 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
         return res.status(400).json({ error: 'Invalid user type' });
     }
 
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'USER_UPDATED',
+      resource_type: userType,
+      resource_id: id,
+      details: `Updated ${userType} user: ${result.first_name} ${result.last_name} (${result.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: id,
+        updated_fields: Object.keys(userData),
+        new_values: updateData
+      }
+    });
+
     res.json({
       success: true,
       message: `${userType} updated successfully`,
@@ -979,6 +1011,25 @@ router.delete('/users/:id', authorize('admin'), async (req, res) => {
     
     const { error: deleteError } = await deleteQuery;
     if (deleteError) throw deleteError;
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'USER_DELETED',
+      resource_type: userType,
+      resource_id: id,
+      details: `Deleted ${userType} user: ${user.first_name} ${user.last_name} (${user.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: id,
+        deleted_user_data: {
+          email: user.email,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          status: user.status
+        }
+      }
+    });
 
     res.json({
       success: true,
@@ -1062,8 +1113,22 @@ router.post('/users/:id/impersonate', requirePermission('users.impersonate'), as
       { expiresIn: '2h' } // Shorter expiry for security
     );
 
-    // Log the impersonation for audit purposes
-    console.log(`Admin ${adminUser.id} (${adminUser.email}) impersonating ${userType} ${userData.id} (${userData.email})`);
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'USER_IMPERSONATION',
+      resource_type: userType,
+      resource_id: id,
+      details: `Started impersonating ${userType} user: ${userData.first_name} ${userData.last_name} (${userData.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: id,
+        impersonated_user_email: userData.email,
+        impersonation_duration: '2h',
+        admin_id: adminUser.id,
+        admin_email: adminUser.email
+      }
+    });
 
     res.json({
       success: true,
@@ -1167,6 +1232,20 @@ router.post('/users/:id/reset-password', authorize('admin', 'staff'), async (req
       console.error('Password update error:', updateError);
       throw updateError;
     }
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'PASSWORD_RESET',
+      resource_type: userType,
+      resource_id: id,
+      details: `Reset password for ${userType} user: ${userData.first_name} ${userData.last_name} (${userData.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: id,
+        user_email: userData.email
+      }
+    });
 
     // Send new credentials via email
     try {
@@ -1279,6 +1358,23 @@ router.post('/users/:id/:action', authorize('admin', 'staff'), async (req, res) 
     const { data: updatedUser, error } = await query;
     if (error) throw error;
 
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: `USER_${action.toUpperCase()}`,
+      resource_type: userType,
+      resource_id: id,
+      details: `${action} ${userType} user: ${updatedUser.first_name} ${updatedUser.last_name} (${updatedUser.email})`,
+      metadata: {
+        user_type: userType,
+        user_id: id,
+        action: action,
+        new_status: statusValue,
+        user_email: updatedUser.email,
+        user_name: `${updatedUser.first_name} ${updatedUser.last_name}`
+      }
+    });
+
     res.json({
       success: true,
       message: `User ${action} successful`,
@@ -1390,11 +1486,28 @@ router.put('/coaches/:id/:action', async (req, res) => {
       console.error('Coach status update error:', error);
       return res.status(500).json({ error: 'Failed to update coach status' });
     }
-    
-    res.json({ 
-      success: true, 
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: `COACH_${action.toUpperCase()}`,
+      resource_type: 'coach',
+      resource_id: id,
+      details: `${action} coach: ${data.first_name} ${data.last_name} (${data.email})`,
+      metadata: {
+        coach_id: id,
+        action: action,
+        new_status: newStatus,
+        reason: reason || null,
+        coach_email: data.email,
+        coach_name: `${data.first_name} ${data.last_name}`
+      }
+    });
+
+    res.json({
+      success: true,
       message: `Coach ${action} successful`,
-      coach: data 
+      coach: data
     });
   } catch (error) {
     console.error('Coach action error:', error);
@@ -1411,6 +1524,22 @@ router.post('/coaches/:coachId/ratings', async (req, res) => {
     // Validate rating value
     if (!rating || rating < 1 || rating > 5) {
       return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+
+    // Check if client has completed sessions with this coach
+    const { data: sessions, error: sessionsError } = await supabase
+      .from('sessions')
+      .select('id')
+      .eq('client_id', clientId)
+      .eq('coach_id', coachId)
+      .eq('status', 'completed');
+
+    const hasHistory = sessions && sessions.length > 0;
+
+    if (!hasHistory) {
+      return res.status(403).json({
+        error: 'You can only rate coaches after completing a session with them'
+      });
     }
 
     // Check if a review already exists for this client-coach pair
@@ -1457,21 +1586,30 @@ router.post('/coaches/:coachId/ratings', async (req, res) => {
       reviewData = data;
     }
 
-    // The database trigger will automatically update the coach's average rating
-
-    // Fetch updated coach rating
-    const { data: coach, error: coachError } = await supabase
-      .from('coaches')
+    // Calculate and update the coach's average rating
+    const { data: allReviews, error: reviewsError } = await supabase
+      .from('reviews')
       .select('rating')
-      .eq('id', coachId)
-      .single();
+      .eq('coach_id', coachId);
 
-    if (coachError) throw coachError;
+    if (reviewsError) throw reviewsError;
+
+    const averageRating = allReviews && allReviews.length > 0
+      ? allReviews.reduce((sum, review) => sum + review.rating, 0) / allReviews.length
+      : rating; // If this is the first review, use its rating
+
+    // Update coach's rating in the coaches table
+    const { error: updateError } = await supabase
+      .from('coaches')
+      .update({ rating: averageRating })
+      .eq('id', coachId);
+
+    if (updateError) throw updateError;
 
     res.json({
       success: true,
       review: reviewData,
-      averageRating: coach.rating
+      averageRating: averageRating
     });
   } catch (error) {
     console.error('Rating creation error:', error);
@@ -1479,7 +1617,7 @@ router.post('/coaches/:coachId/ratings', async (req, res) => {
   }
 });
 
-// Get coach ratings
+// Get coach ratings (public endpoint - no auth required for viewing)
 router.get('/coaches/:coachId/ratings', async (req, res) => {
   try {
     const { coachId } = req.params;
@@ -1510,14 +1648,16 @@ router.get('/coaches/:coachId/ratings', async (req, res) => {
 
     if (error) throw error;
 
-    // Get average rating
+    // Get average rating from coaches table
     const { data: coach, error: coachError } = await supabase
       .from('coaches')
       .select('rating')
       .eq('id', coachId)
       .single();
 
-    if (coachError) throw coachError;
+    if (coachError && coachError.code !== 'PGRST116') {
+      throw coachError;
+    }
 
     res.json({
       reviews: reviews || [],
@@ -1911,12 +2051,32 @@ router.put('/appointments/:appointmentId/status', async (req, res) => {
       throw updateError;
     }
 
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    const clientName = currentAppointment.clients ? `${currentAppointment.clients.first_name} ${currentAppointment.clients.last_name}` : 'Unknown';
+    const coachName = currentAppointment.coaches ? `${currentAppointment.coaches.first_name} ${currentAppointment.coaches.last_name}` : 'Unknown';
+
+    await auditLogger.logAction(auditReq, {
+      action: 'APPOINTMENT_STATUS_UPDATE',
+      resource_type: 'appointment',
+      resource_id: appointmentId,
+      details: `Changed appointment status from "${currentAppointment.status}" to "${status}" for session between ${clientName} and ${coachName}`,
+      metadata: {
+        appointment_id: appointmentId,
+        old_status: currentAppointment.status,
+        new_status: status,
+        client_id: currentAppointment.client_id,
+        coach_id: currentAppointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        reason: reason || null,
+        starts_at: currentAppointment.starts_at
+      }
+    });
+
     // Emit WebSocket notifications
     const io = req.app.get('io');
     if (io && currentAppointment.clients && currentAppointment.coaches) {
-      const clientName = `${currentAppointment.clients.first_name} ${currentAppointment.clients.last_name}`;
-      const coachName = `${currentAppointment.coaches.first_name} ${currentAppointment.coaches.last_name}`;
-      
       const notificationData = {
         id: updatedAppointment.id,
         starts_at: updatedAppointment.starts_at,
@@ -1979,18 +2139,44 @@ router.put('/appointments/:appointmentId/notes', async (req, res) => {
     // Update admin notes
     const { data: updatedAppointment, error: updateError } = await supabase
       .from('sessions')
-      .update({ 
+      .update({
         admin_notes: adminNotes || '',
         updated_at: new Date().toISOString()
       })
       .eq('id', appointmentId)
-      .select()
+      .select(`
+        *,
+        clients:client_id(first_name, last_name, email),
+        coaches:coach_id(first_name, last_name, email)
+      `)
       .single();
 
     if (updateError) {
       console.error('Update admin notes error:', updateError);
       throw updateError;
     }
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    const clientName = updatedAppointment.clients ? `${updatedAppointment.clients.first_name} ${updatedAppointment.clients.last_name}` : 'Unknown';
+    const coachName = updatedAppointment.coaches ? `${updatedAppointment.coaches.first_name} ${updatedAppointment.coaches.last_name}` : 'Unknown';
+
+    await auditLogger.logAction(auditReq, {
+      action: 'APPOINTMENT_NOTES_UPDATE',
+      resource_type: 'appointment',
+      resource_id: appointmentId,
+      details: `Updated admin notes for appointment between ${clientName} and ${coachName}`,
+      metadata: {
+        appointment_id: appointmentId,
+        client_id: updatedAppointment.client_id,
+        coach_id: updatedAppointment.coach_id,
+        client_name: clientName,
+        coach_name: coachName,
+        old_notes: currentAppointment.admin_notes || '',
+        new_notes: adminNotes || '',
+        starts_at: updatedAppointment.starts_at
+      }
+    });
 
     console.log('Admin notes updated successfully');
     res.json({
@@ -2075,11 +2261,23 @@ router.get('/analytics', async (req, res) => {
       ? ((currentRevenue - prevRevenue) / prevRevenue * 100).toFixed(1)
       : 0;
 
-    // Calculate coach metrics
-    const activeCoaches = coaches.filter(c => c.status === 'approved');
-    const averageRating = activeCoaches.length > 0
-      ? (activeCoaches.reduce((sum, c) => sum + (c.rating || 0), 0) / activeCoaches.length).toFixed(1)
+    // Calculate coach metrics - include both 'approved' and 'active' coaches
+    const activeCoaches = coaches.filter(c => c.status === 'approved' || c.status === 'active');
+    const coachesWithRatings = activeCoaches.filter(c => c.rating && parseFloat(c.rating) > 0);
+
+    // Debug logging for rating calculation
+    console.log('Analytics - Coach rating calculation:', {
+      totalCoaches: coaches.length,
+      activeCoaches: activeCoaches.length,
+      coachesWithRatings: coachesWithRatings.length,
+      coachStatuses: coaches.map(c => ({ name: `${c.first_name} ${c.last_name}`, status: c.status, rating: c.rating })),
+      ratings: coachesWithRatings.map(c => parseFloat(c.rating))
+    });
+
+    const averageRatingNum = coachesWithRatings.length > 0
+      ? coachesWithRatings.reduce((sum, c) => sum + (parseFloat(c.rating) || 0), 0) / coachesWithRatings.length
       : 0;
+    const averageRating = averageRatingNum.toFixed(1);
     
     // Calculate total coach hours
     const completedAppointments = appointments.filter(a => a.status === 'completed');
@@ -2206,7 +2404,7 @@ router.get('/analytics', async (req, res) => {
         completionRate,
         noShowRate,
         cancellationRate,
-        averageRating: averageRating // Use coach average rating as proxy
+        averageRating: averageRatingNum // Use coach average rating as proxy
       },
       topCoaches: topCoachesList.length > 0 ? topCoachesList : [
         { id: '1', name: 'No data available', rating: 0, sessions: 0, revenue: 0 }
@@ -3036,6 +3234,35 @@ router.get('/system-logs', authorize('admin'), async (req, res) => {
     // Get system logs from multiple audit tables and console logs
     let allLogs: any[] = [];
 
+    // Get admin audit logs
+    const { data: adminLogs, error: adminLogsError } = await supabase
+      .from('admin_audit_log')
+      .select(`
+        *,
+        admin:admin_id(first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (adminLogs && !adminLogsError) {
+      const formattedAdminLogs = adminLogs.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'INFO',
+        action: log.action,
+        user_type: 'admin',
+        user_id: log.admin_id,
+        user_name: log.admin ? `${log.admin.first_name} ${log.admin.last_name}` : 'Unknown',
+        user_email: log.admin?.email || '',
+        details: log.details || '',
+        metadata: log.metadata || {},
+        ip_address: log.ip_address || '',
+        user_agent: log.user_agent || '',
+        source: 'admin_audit'
+      }));
+      allLogs = [...allLogs, ...formattedAdminLogs];
+    }
+
     // Get staff audit logs
     const { data: staffLogs, error: staffLogsError } = await supabase
       .from('staff_audit_log')
@@ -3065,6 +3292,93 @@ router.get('/system-logs', authorize('admin'), async (req, res) => {
       allLogs = [...allLogs, ...formattedStaffLogs];
     }
 
+    // Get client audit logs
+    const { data: clientLogs, error: clientLogsError } = await supabase
+      .from('client_audit_log')
+      .select(`
+        *,
+        client:client_id(first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (clientLogs && !clientLogsError) {
+      const formattedClientLogs = clientLogs.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'INFO',
+        action: log.action,
+        user_type: 'client',
+        user_id: log.client_id,
+        user_name: log.client ? `${log.client.first_name} ${log.client.last_name}` : 'Unknown',
+        user_email: log.client?.email || '',
+        details: log.details || '',
+        metadata: log.metadata || {},
+        ip_address: log.ip_address || '',
+        user_agent: log.user_agent || '',
+        source: 'client_audit'
+      }));
+      allLogs = [...allLogs, ...formattedClientLogs];
+    }
+
+    // Get coach audit logs
+    const { data: coachLogs, error: coachLogsError } = await supabase
+      .from('coach_audit_log')
+      .select(`
+        *,
+        coach:coach_id(first_name, last_name, email)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (coachLogs && !coachLogsError) {
+      const formattedCoachLogs = coachLogs.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'INFO',
+        action: log.action,
+        user_type: 'coach',
+        user_id: log.coach_id,
+        user_name: log.coach ? `${log.coach.first_name} ${log.coach.last_name}` : 'Unknown',
+        user_email: log.coach?.email || '',
+        details: log.details || '',
+        metadata: log.metadata || {},
+        ip_address: log.ip_address || '',
+        user_agent: log.user_agent || '',
+        source: 'coach_audit'
+      }));
+      allLogs = [...allLogs, ...formattedCoachLogs];
+    }
+
+    // Get session audit logs
+    const { data: sessionLogs, error: sessionLogsError } = await supabase
+      .from('session_audit_log')
+      .select(`
+        *,
+        session:session_id(id)
+      `)
+      .order('created_at', { ascending: false })
+      .limit(100);
+
+    if (sessionLogs && !sessionLogsError) {
+      const formattedSessionLogs = sessionLogs.map(log => ({
+        id: log.id,
+        timestamp: log.created_at,
+        level: 'INFO',
+        action: log.action,
+        user_type: log.user_type,
+        user_id: log.user_id,
+        user_name: log.metadata?.user_name || 'Unknown',
+        user_email: log.metadata?.user_email || '',
+        details: log.details || '',
+        metadata: log.metadata || {},
+        ip_address: log.ip_address || '',
+        user_agent: log.user_agent || '',
+        source: 'session_audit'
+      }));
+      allLogs = [...allLogs, ...formattedSessionLogs];
+    }
+
     // Get coach application audit logs if the table exists
     try {
       const { data: coachApplicationLogs, error: coachAppLogsError } = await supabase
@@ -3078,7 +3392,7 @@ router.get('/system-logs', authorize('admin'), async (req, res) => {
         .limit(100);
 
       if (coachApplicationLogs && !coachAppLogsError) {
-        const formattedCoachLogs = coachApplicationLogs.map(log => ({
+        const formattedCoachAppLogs = coachApplicationLogs.map(log => ({
           id: log.id,
           timestamp: log.created_at,
           level: 'INFO',
@@ -3094,7 +3408,7 @@ router.get('/system-logs', authorize('admin'), async (req, res) => {
           user_agent: log.user_agent || '',
           source: 'coach_application_audit'
         }));
-        allLogs = [...allLogs, ...formattedCoachLogs];
+        allLogs = [...allLogs, ...formattedCoachAppLogs];
       }
     } catch (error) {
       console.log('Coach application audit table not found, skipping...');
@@ -3129,7 +3443,11 @@ router.get('/system-logs', authorize('admin'), async (req, res) => {
         ERROR: allLogs.filter(log => log.level === 'ERROR').length,
       },
       sources: {
+        admin_audit: allLogs.filter(log => log.source === 'admin_audit').length,
         staff_audit: allLogs.filter(log => log.source === 'staff_audit').length,
+        client_audit: allLogs.filter(log => log.source === 'client_audit').length,
+        coach_audit: allLogs.filter(log => log.source === 'coach_audit').length,
+        session_audit: allLogs.filter(log => log.source === 'session_audit').length,
         coach_application_audit: allLogs.filter(log => log.source === 'coach_application_audit').length,
       },
       user_types: {

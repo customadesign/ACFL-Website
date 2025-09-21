@@ -23,7 +23,12 @@ import {
   CreditCard,
   Calendar,
   MessageSquare,
-  BarChart3
+  BarChart3,
+  ArrowLeft,
+  Menu,
+  X,
+  ChevronRight,
+  ChevronDown
 } from 'lucide-react';
 
 interface StaffMember {
@@ -147,6 +152,8 @@ export default function StaffCapabilities() {
   const [staffMembers, setStaffMembers] = useState<StaffMember[]>([]);
   const [selectedStaff, setSelectedStaff] = useState<StaffMember | null>(null);
   const [permissions, setPermissions] = useState<{ [staffId: string]: { [capabilityId: string]: boolean } }>({});
+  const [originalPermissions, setOriginalPermissions] = useState<{ [staffId: string]: { [capabilityId: string]: boolean } }>({});
+  const [changedPermissions, setChangedPermissions] = useState<{ [staffId: string]: { [capabilityId: string]: boolean } }>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingPermissions, setIsLoadingPermissions] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -155,6 +162,9 @@ export default function StaffCapabilities() {
   const [departmentFilter, setDepartmentFilter] = useState('all');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+  const [mobileView, setMobileView] = useState<'staff' | 'permissions'>('staff');
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<{ [key: string]: boolean }>({});
 
   const isReadOnly = isStaff && !isAdmin;
 
@@ -214,6 +224,8 @@ export default function StaffCapabilities() {
         const data = await response.json();
         console.log('Staff permissions fetched:', data);
         setPermissions(data);
+        setOriginalPermissions(JSON.parse(JSON.stringify(data))); // Deep copy
+        setChangedPermissions({}); // Clear any previous changes
       } else {
         const errorText = await response.text();
         console.error('Failed to fetch permissions:', response.status, errorText);
@@ -235,16 +247,49 @@ export default function StaffCapabilities() {
         [capabilityId]: granted
       }
     }));
+
+    // Track changes by comparing with original permissions
+    const originalValue = originalPermissions[staffId]?.[capabilityId] || false;
+
+    if (originalValue !== granted) {
+      // This is a change from the original value
+      setChangedPermissions(prev => ({
+        ...prev,
+        [staffId]: {
+          ...prev[staffId],
+          [capabilityId]: granted
+        }
+      }));
+    } else {
+      // This value is back to the original, remove from changes
+      setChangedPermissions(prev => {
+        const newChanges = { ...prev };
+        if (newChanges[staffId]) {
+          delete newChanges[staffId][capabilityId];
+          // If no more changes for this staff member, remove the staff entry
+          if (Object.keys(newChanges[staffId]).length === 0) {
+            delete newChanges[staffId];
+          }
+        }
+        return newChanges;
+      });
+    }
   };
 
   const savePermissions = async () => {
+    // Only proceed if there are changes
+    if (Object.keys(changedPermissions).length === 0) {
+      console.log('No changes to save');
+      return;
+    }
+
     setIsSaving(true);
     setPermissionError(null);
     try {
       const token = localStorage.getItem('token');
       const API_URL = getApiUrl();
 
-      console.log('Saving permissions:', permissions);
+      console.log('Saving changed permissions only:', changedPermissions);
 
       const response = await fetch(`${API_URL}/api/admin/staff-permissions`, {
         method: 'PUT',
@@ -252,12 +297,17 @@ export default function StaffCapabilities() {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ permissions })
+        body: JSON.stringify({ permissions: changedPermissions })
       });
 
       if (response.ok) {
         const result = await response.json();
         console.log('Permissions saved successfully:', result);
+
+        // Update original permissions with the current state and clear changes
+        setOriginalPermissions(JSON.parse(JSON.stringify(permissions)));
+        setChangedPermissions({});
+
         setShowSuccessMessage(true);
         setTimeout(() => setShowSuccessMessage(false), 3000);
       } else {
@@ -304,6 +354,30 @@ export default function StaffCapabilities() {
     }
   };
 
+  const toggleCategoryExpansion = (category: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [category]: !prev[category]
+    }));
+  };
+
+  const getPermissionSummary = (staffId: string) => {
+    const staffPermissions = permissions[staffId] || {};
+    const grantedCount = Object.values(staffPermissions).filter(Boolean).length;
+    const totalEditPermissions = PAGE_CAPABILITIES.reduce((total, page) =>
+      total + page.capabilities.filter(cap => !isReadPermission(cap.id)).length, 0
+    );
+    const totalReadPermissions = PAGE_CAPABILITIES.reduce((total, page) =>
+      total + page.capabilities.filter(cap => isReadPermission(cap.id)).length, 0
+    );
+
+    return {
+      granted: grantedCount,
+      totalEdit: totalEditPermissions,
+      totalRead: totalReadPermissions
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
@@ -320,165 +394,56 @@ export default function StaffCapabilities() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Staff Capabilities</h1>
-            <p className="text-gray-600 dark:text-gray-400">
-              {isReadOnly
-                ? 'View staff permissions - Staff have read access to all pages by default and need explicit permissions for edit actions'
-                : 'Manage staff permissions - Staff have read access by default, configure edit permissions as needed'}
-            </p>
-          </div>
-          {!isReadOnly && (
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Mobile Navigation Bar */}
+      <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+        <div className="px-4 py-3">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Staff Capabilities</h1>
             <button
-              onClick={savePermissions}
-              disabled={isSaving}
-              className="bg-blue-600 dark:bg-blue-700 text-white px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center space-x-2 disabled:opacity-50"
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
             >
-              {isSaving ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+              {showMobileMenu ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
-          )}
-        </div>
-      </div>
+          </div>
 
-      {/* Read-only notice for staff */}
-      {isReadOnly && (
-        <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center">
-            <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
-            <span className="text-blue-800 dark:text-blue-200">
-              You have read access to all admin pages by default. Only administrators can grant additional edit permissions.
-            </span>
+          {/* Mobile View Toggle */}
+          <div className="mt-3 flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+            <button
+              onClick={() => setMobileView('staff')}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                mobileView === 'staff'
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400'
+              }`}
+            >
+              <Users className="h-4 w-4 inline mr-2" />
+              Staff ({filteredStaffMembers.length})
+            </button>
+            <button
+              onClick={() => setMobileView('permissions')}
+              disabled={!selectedStaff}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                mobileView === 'permissions' && selectedStaff
+                  ? 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm'
+                  : 'text-gray-500 dark:text-gray-400 disabled:opacity-50'
+              }`}
+            >
+              <Shield className="h-4 w-4 inline mr-2" />
+              Permissions
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Success Message */}
-      {showSuccessMessage && (
-        <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <div className="flex items-center">
-            <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
-            <span className="text-green-800 dark:text-green-200">Permissions saved successfully!</span>
-          </div>
-        </div>
-      )}
-
-      {/* Error Message */}
-      {permissionError && (
-        <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-center">
-            <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
-            <span className="text-red-800 dark:text-red-200">{permissionError}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Staff Members List */}
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Staff Members</h2>
-
-            {/* Staff Filters */}
+        {/* Mobile Menu Dropdown */}
+        {showMobileMenu && (
+          <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
             <div className="space-y-3">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search staff..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                />
-              </div>
-
-              <select
-                value={departmentFilter}
-                onChange={(e) => setDepartmentFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-              >
-                <option value="all">All Departments</option>
-                {departments.map(dept => (
-                  <option key={dept} value={dept}>{dept}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="max-h-96 overflow-y-auto">
-            {filteredStaffMembers.map((staff) => (
-              <button
-                key={staff.id}
-                onClick={() => setSelectedStaff(staff)}
-                className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 transition-colors ${
-                  selectedStaff?.id === staff.id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''
-                }`}
-              >
-                <div className="flex items-center space-x-3">
-                  <div className="h-8 w-8 rounded-full bg-purple-500 flex items-center justify-center">
-                    <User className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
-                      {staff.first_name} {staff.last_name}
-                    </div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                      {staff.department} • {staff.role_level}
-                    </div>
-                  </div>
-                  {selectedStaff?.id === staff.id && (
-                    <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  )}
-                </div>
-              </button>
-            ))}
-
-            {filteredStaffMembers.length === 0 && (
-              <div className="p-8 text-center text-gray-500 dark:text-gray-400">
-                <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                <p>No staff members found</p>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Capabilities Management */}
-        <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                  {selectedStaff ? `Permissions for ${selectedStaff.first_name} ${selectedStaff.last_name}` : 'Select a Staff Member'}
-                </h2>
-                {selectedStaff && (
-                  <div className="mt-1">
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {selectedStaff.department} • {selectedStaff.email}
-                    </p>
-                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                      {/* Count only edit permissions (read permissions are default) */}
-                      {Object.values(permissions[selectedStaff.id] || {}).filter(Boolean).length} edit permissions granted
-                      {/* Count read permissions separately */}
-                      • {filteredCapabilities.reduce((total, page) =>
-                        total + page.capabilities.filter(cap => isReadPermission(cap.id)).length, 0
-                      )} read permissions (default)
-                    </p>
-                  </div>
-                )}
-              </div>
-
               <select
                 value={selectedCategory}
                 onChange={(e) => setSelectedCategory(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               >
                 {categories.map(category => (
                   <option key={category} value={category}>
@@ -488,126 +453,563 @@ export default function StaffCapabilities() {
               </select>
             </div>
           </div>
+        )}
+      </div>
 
-          <div className="max-h-96 overflow-y-auto">
-            {isLoadingPermissions ? (
-              <div className="flex items-center justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                <span className="text-gray-600 dark:text-gray-400">Loading permissions...</span>
+      {/* Desktop Header */}
+      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Staff Capabilities</h1>
+            <p className="text-gray-600 dark:text-gray-400">
+              {isReadOnly
+                ? 'View staff permissions - Staff have read access to all pages by default'
+                : 'Manage staff permissions - Staff have read access by default, configure edit permissions as needed'}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Alert Messages */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Read-only notice for staff */}
+        {isReadOnly && (
+          <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center">
+              <Eye className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+              <span className="text-blue-800 dark:text-blue-200">
+                You have read access to all admin pages by default. Only administrators can grant additional edit permissions.
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Success Message */}
+        {showSuccessMessage && (
+          <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+            <div className="flex items-center">
+              <CheckCircle className="h-5 w-5 text-green-600 dark:text-green-400 mr-2" />
+              <span className="text-green-800 dark:text-green-200">Permissions saved successfully!</span>
+            </div>
+          </div>
+        )}
+
+        {/* Error Message */}
+        {permissionError && (
+          <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex items-center">
+              <XCircle className="h-5 w-5 text-red-600 dark:text-red-400 mr-2" />
+              <span className="text-red-800 dark:text-red-200">{permissionError}</span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Main Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+        {/* Desktop Layout */}
+        <div className="hidden lg:grid lg:grid-cols-3 gap-6">
+          {/* Staff Members List - Desktop */}
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Staff Members</h2>
+
+              {/* Staff Filters */}
+              <div className="space-y-3">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search staff..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  />
+                </div>
+
+                <select
+                  value={departmentFilter}
+                  onChange={(e) => setDepartmentFilter(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="all">All Departments</option>
+                  {departments.map(dept => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
               </div>
-            ) : selectedStaff ? (
-              <div className="divide-y divide-gray-200 dark:divide-gray-700">
-                {filteredCapabilities.map((page) => {
-                  const Icon = page.icon;
-                  return (
-                    <div key={page.id} className="p-6">
-                      <div className="flex items-start space-x-3 mb-4">
-                        <div className="flex-shrink-0">
-                          <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                            <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                          </div>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto">
+              {filteredStaffMembers.map((staff) => {
+                const summary = getPermissionSummary(staff.id);
+                return (
+                  <button
+                    key={staff.id}
+                    onClick={() => setSelectedStaff(staff)}
+                    className={`w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-200 dark:border-gray-700 transition-colors ${
+                      selectedStaff?.id === staff.id ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800' : ''
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="h-10 w-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <User className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          {staff.first_name} {staff.last_name}
                         </div>
-                        <div className="flex-1">
-                          <h3 className="text-base font-medium text-gray-900 dark:text-white">{page.name}</h3>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{page.description}</p>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {staff.department} • {staff.role_level}
+                        </div>
+                        <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                          {summary.granted}/{summary.totalEdit} edit permissions
                         </div>
                       </div>
+                      {selectedStaff?.id === staff.id && (
+                        <CheckCircle className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 ml-11">
-                        {page.capabilities.map((capability) => {
-                          const isGranted = getPermissionStatus(selectedStaff.id, capability.id);
-                          const isReadPerm = isReadPermission(capability.id);
-                          const hasDefaultAccess = isReadPerm; // Staff get read permissions by default
+              {filteredStaffMembers.length === 0 && (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No staff members found</p>
+                </div>
+              )}
+            </div>
+          </div>
 
+          {/* Capabilities Management - Desktop */}
+          <div className="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 relative">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                    {selectedStaff ? `Permissions for ${selectedStaff.first_name} ${selectedStaff.last_name}` : 'Select a Staff Member'}
+                  </h2>
+                  {selectedStaff && (
+                    <div className="mt-1">
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {selectedStaff.department} • {selectedStaff.email}
+                      </p>
+                      {(() => {
+                        const summary = getPermissionSummary(selectedStaff.id);
+                        return (
+                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            {summary.granted}/{summary.totalEdit} edit permissions • {summary.totalRead} read permissions (default)
+                          </p>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </div>
+
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  {categories.map(category => (
+                    <option key={category} value={category}>
+                      {category === 'all' ? 'All Categories' : category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="max-h-96 overflow-y-auto pb-20">
+              {isLoadingPermissions ? (
+                <div className="flex items-center justify-center p-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                  <span className="text-gray-600 dark:text-gray-400">Loading permissions...</span>
+                </div>
+              ) : selectedStaff ? (
+                <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredCapabilities.map((page) => {
+                    const Icon = page.icon;
+                    const categoryExpanded = expandedCategories[page.id] !== false; // Default to expanded
+                    return (
+                      <div key={page.id} className="p-6">
+                        <button
+                          onClick={() => toggleCategoryExpansion(page.id)}
+                          className="flex items-center space-x-3 mb-4 w-full text-left hover:bg-gray-50 dark:hover:bg-gray-700/50 p-2 rounded-lg transition-colors"
+                        >
+                          <div className="flex-shrink-0">
+                            <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                              <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                            </div>
+                          </div>
+                          <div className="flex-1">
+                            <h3 className="text-base font-medium text-gray-900 dark:text-white">{page.name}</h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">{page.description}</p>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${categoryExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {categoryExpanded && (
+                          <div className="space-y-3 ml-11">
+                            {page.capabilities.map((capability) => {
+                              const isGranted = getPermissionStatus(selectedStaff.id, capability.id);
+                              const isReadPerm = isReadPermission(capability.id);
+                              const hasDefaultAccess = isReadPerm;
+
+                              return (
+                                <div key={capability.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg hover:border-gray-300 dark:hover:border-gray-500 transition-colors">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center space-x-2 mb-1">
+                                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                        {capability.name}
+                                      </span>
+                                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(capability.level)}`}>
+                                        {capability.level}
+                                      </span>
+                                      {hasDefaultAccess && (
+                                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                                          Default
+                                        </span>
+                                      )}
+                                    </div>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {capability.description}
+                                      {hasDefaultAccess && <span className="text-blue-600 dark:text-blue-400"> • Auto-granted</span>}
+                                    </p>
+                                  </div>
+                                  {hasDefaultAccess ? (
+                                    <div className="ml-3 px-3 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300">
+                                      <Eye className="h-4 w-4" />
+                                      <span className="hidden sm:inline">Default</span>
+                                    </div>
+                                  ) : isReadOnly ? (
+                                    <div className={`ml-3 px-3 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium ${
+                                      isGranted
+                                        ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                        : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                    }`}>
+                                      {isGranted ? (
+                                        <>
+                                          <Unlock className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Granted</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Lock className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Denied</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => updatePermission(selectedStaff.id, capability.id, !isGranted)}
+                                      className={`ml-3 px-3 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 text-sm font-medium ${
+                                        isGranted
+                                          ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
+                                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                      }`}
+                                    >
+                                      {isGranted ? (
+                                        <>
+                                          <Unlock className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Granted</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Lock className="h-4 w-4" />
+                                          <span className="hidden sm:inline">Grant</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-12 text-center text-gray-500 dark:text-gray-400">
+                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">Select a Staff Member</h3>
+                  <p className="text-sm">Choose a staff member from the list to manage their page access and capabilities.</p>
+                </div>
+              )}
+            </div>
+
+            {/* Sticky Save Button - Desktop */}
+            {!isReadOnly && selectedStaff && (
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+                <button
+                  onClick={savePermissions}
+                  disabled={isSaving || Object.keys(changedPermissions).length === 0}
+                  className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 font-medium"
+                >
+                  {isSaving ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Save className="h-4 w-4" />
+                  )}
+                  <span>
+                    {isSaving
+                      ? 'Saving...'
+                      : Object.keys(changedPermissions).length === 0
+                        ? 'No Changes'
+                        : `Save Changes (${Object.keys(changedPermissions).length} staff)`}
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Mobile Layout */}
+        <div className="lg:hidden">
+          {/* Staff List View - Mobile */}
+          {mobileView === 'staff' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div className="space-y-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search staff..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                    />
+                  </div>
+
+                  <select
+                    value={departmentFilter}
+                    onChange={(e) => setDepartmentFilter(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Departments</option>
+                    {departments.map(dept => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                {filteredStaffMembers.map((staff) => {
+                  const summary = getPermissionSummary(staff.id);
+                  return (
+                    <button
+                      key={staff.id}
+                      onClick={() => {
+                        setSelectedStaff(staff);
+                        setMobileView('permissions');
+                      }}
+                      className="w-full p-4 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                    >
+                      <div className="flex items-center space-x-3">
+                        <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                          <User className="h-6 w-6 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="text-base font-medium text-gray-900 dark:text-white">
+                            {staff.first_name} {staff.last_name}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            {staff.department} • {staff.role_level}
+                          </div>
+                          <div className="text-sm text-blue-600 dark:text-blue-400 mt-1">
+                            {summary.granted}/{summary.totalEdit} edit permissions granted
+                          </div>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-gray-400" />
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {filteredStaffMembers.length === 0 && (
+                  <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                    <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <p>No staff members found</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Permissions View - Mobile */}
+          {mobileView === 'permissions' && (
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 relative">
+              {selectedStaff ? (
+                <>
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <button
+                      onClick={() => setMobileView('staff')}
+                      className="flex items-center text-blue-600 dark:text-blue-400 text-sm font-medium mb-3"
+                    >
+                      <ArrowLeft className="h-4 w-4 mr-1" />
+                      Back to Staff List
+                    </button>
+                    <div className="flex items-center space-x-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
+                        <User className="h-6 w-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {selectedStaff.first_name} {selectedStaff.last_name}
+                        </h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {selectedStaff.department} • {selectedStaff.email}
+                        </p>
+                        {(() => {
+                          const summary = getPermissionSummary(selectedStaff.id);
                           return (
-                            <div key={capability.id} className="flex items-center justify-between p-3 border border-gray-200 dark:border-gray-600 rounded-lg">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-2">
-                                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                                    {capability.name}
-                                  </span>
-                                  <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(capability.level)}`}>
-                                    {capability.level}
-                                  </span>
-                                  {hasDefaultAccess && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                                      Default
-                                    </span>
-                                  )}
+                            <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                              {summary.granted}/{summary.totalEdit} edit permissions
+                            </p>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="max-h-96 overflow-y-auto pb-20">
+                    {isLoadingPermissions ? (
+                      <div className="flex items-center justify-center p-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
+                        <span className="text-gray-600 dark:text-gray-400">Loading permissions...</span>
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                        {filteredCapabilities.map((page) => {
+                          const Icon = page.icon;
+                          const categoryExpanded = expandedCategories[page.id] !== false;
+                          return (
+                            <div key={page.id} className="p-4">
+                              <button
+                                onClick={() => toggleCategoryExpansion(page.id)}
+                                className="flex items-center space-x-3 mb-3 w-full text-left"
+                              >
+                                <div className="h-8 w-8 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                  <Icon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                                 </div>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {capability.description}
-                                  {hasDefaultAccess && <span className="text-blue-600 dark:text-blue-400"> • Staff have this access by default</span>}
-                                </p>
-                              </div>
-                              {hasDefaultAccess ? (
-                                <div
-                                  className="ml-3 px-3 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
-                                  title="Staff have read access by default"
-                                >
-                                  <Eye className="h-4 w-4" />
-                                  <span>Default Access</span>
+                                <div className="flex-1">
+                                  <h3 className="text-base font-medium text-gray-900 dark:text-white">{page.name}</h3>
+                                  <p className="text-sm text-gray-500 dark:text-gray-400">{page.description}</p>
                                 </div>
-                              ) : isReadOnly ? (
-                                <div
-                                  className={`ml-3 px-3 py-2 rounded-lg flex items-center space-x-2 text-sm font-medium ${
-                                    isGranted
-                                      ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
-                                      : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
-                                  }`}
-                                  title={isGranted ? 'Permission is granted' : 'Permission is denied'}
-                                >
-                                  {isGranted ? (
-                                    <>
-                                      <Unlock className="h-4 w-4" />
-                                      <span>Granted</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Lock className="h-4 w-4" />
-                                      <span>Denied</span>
-                                    </>
-                                  )}
+                                <ChevronDown className={`h-4 w-4 text-gray-400 transition-transform ${categoryExpanded ? 'rotate-180' : ''}`} />
+                              </button>
+
+                              {categoryExpanded && (
+                                <div className="space-y-3">
+                                  {page.capabilities.map((capability) => {
+                                    const isGranted = getPermissionStatus(selectedStaff.id, capability.id);
+                                    const isReadPerm = isReadPermission(capability.id);
+                                    const hasDefaultAccess = isReadPerm;
+
+                                    return (
+                                      <div key={capability.id} className="border border-gray-200 dark:border-gray-600 rounded-lg p-3">
+                                        <div className="flex items-start justify-between">
+                                          <div className="flex-1 min-w-0">
+                                            <div className="flex items-center space-x-2 mb-1">
+                                              <span className="text-sm font-medium text-gray-900 dark:text-white">
+                                                {capability.name}
+                                              </span>
+                                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${getLevelColor(capability.level)}`}>
+                                                {capability.level}
+                                              </span>
+                                            </div>
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                              {capability.description}
+                                            </p>
+                                            {hasDefaultAccess && (
+                                              <div className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400">
+                                                <Eye className="h-3 w-3" />
+                                                <span>Default access for all staff</span>
+                                              </div>
+                                            )}
+                                          </div>
+                                          {hasDefaultAccess ? (
+                                            <div className="ml-3 px-3 py-1 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 text-xs font-medium">
+                                              Default
+                                            </div>
+                                          ) : isReadOnly ? (
+                                            <div className={`ml-3 px-3 py-1 rounded-md text-xs font-medium ${
+                                              isGranted
+                                                ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
+                                                : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300'
+                                            }`}>
+                                              {isGranted ? 'Granted' : 'Denied'}
+                                            </div>
+                                          ) : (
+                                            <button
+                                              onClick={() => updatePermission(selectedStaff.id, capability.id, !isGranted)}
+                                              className={`ml-3 px-3 py-1 rounded-md transition-colors text-xs font-medium ${
+                                                isGranted
+                                                  ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
+                                                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600'
+                                              }`}
+                                            >
+                                              {isGranted ? 'Granted' : 'Grant'}
+                                            </button>
+                                          )}
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
                                 </div>
-                              ) : (
-                                <button
-                                  onClick={() => updatePermission(selectedStaff.id, capability.id, !isGranted)}
-                                  className={`ml-3 px-3 py-2 rounded-lg transition-all duration-200 flex items-center space-x-2 text-sm font-medium ${
-                                    isGranted
-                                      ? 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50'
-                                      : 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50'
-                                  }`}
-                                  title={isGranted ? 'Click to deny permission' : 'Click to grant permission'}
-                                >
-                                  {isGranted ? (
-                                    <>
-                                      <Unlock className="h-4 w-4" />
-                                      <span>Granted</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Lock className="h-4 w-4" />
-                                      <span>Denied</span>
-                                    </>
-                                  )}
-                                </button>
                               )}
                             </div>
                           );
                         })}
                       </div>
+                    )}
+                  </div>
+
+                  {/* Sticky Save Button - Mobile */}
+                  {!isReadOnly && (
+                    <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 rounded-b-lg">
+                      <button
+                        onClick={savePermissions}
+                        disabled={isSaving || Object.keys(changedPermissions).length === 0}
+                        className="w-full bg-blue-600 dark:bg-blue-700 text-white px-4 py-3 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 font-medium"
+                      >
+                        {isSaving ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        ) : (
+                          <Save className="h-4 w-4" />
+                        )}
+                        <span>
+                          {isSaving
+                            ? 'Saving...'
+                            : Object.keys(changedPermissions).length === 0
+                              ? 'No Changes'
+                              : `Save Changes (${Object.keys(changedPermissions).length})`}
+                        </span>
+                      </button>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-12 text-center text-gray-500 dark:text-gray-400">
-                <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <h3 className="text-lg font-medium mb-2">Select a Staff Member</h3>
-                <p className="text-sm">Choose a staff member from the list to manage their page access and capabilities.</p>
-              </div>
-            )}
-          </div>
+                  )}
+                </>
+              ) : (
+                <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                  <Shield className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                  <h3 className="text-lg font-medium mb-2">No Staff Selected</h3>
+                  <p className="text-sm mb-4">Switch to the staff tab to select a staff member.</p>
+                  <button
+                    onClick={() => setMobileView('staff')}
+                    className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm"
+                  >
+                    Go to Staff List
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
