@@ -1,10 +1,24 @@
 // Utility function to get API URL based on environment
 export const getApiUrl = () => {
-  // In production, directly call the backend service
-  if (process.env.NODE_ENV === 'production') {
+  // Check multiple conditions to detect production environment
+  const isProduction =
+    process.env.NODE_ENV === 'production' ||
+    process.env.VERCEL_ENV === 'production' ||
+    process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
+    typeof window !== 'undefined' && (
+      window.location.hostname !== 'localhost' &&
+      window.location.hostname !== '127.0.0.1' &&
+      !window.location.hostname.includes('localhost')
+    );
+
+  // Always use production URL if any production indicator is detected
+  if (isProduction) {
+    console.log('Using production API URL');
     return 'https://therapist-matcher-backend.onrender.com';
   }
-  // Otherwise use environment variable or localhost
+
+  // Development environment
+  console.log('Using development API URL');
   return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 };
 

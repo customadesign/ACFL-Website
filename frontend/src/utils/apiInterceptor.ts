@@ -40,16 +40,11 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
       const errorData = await response.json().catch(() => ({}))
 
       if (response.status === 403 && errorData.code === 'ACCOUNT_DEACTIVATED') {
-        toast.error('Your account is deactivated. Please reactivate it to continue.', {
-          duration: 5000,
-          icon: '🚫'
-        })
-
-        // Redirect to settings page
-        const userRole = localStorage.getItem('userRole') || 'client'
-        window.location.href = `/${userRole}/settings`
-
-        throw new Error('ACCOUNT_DEACTIVATED')
+        // Don't show error toast - let the UI components handle this gracefully
+        const error = new Error('Your account is deactivated. Some features are not available until you reactivate your account.')
+        ;(error as any).isDeactivated = true
+        ;(error as any).code = 'ACCOUNT_DEACTIVATED'
+        throw error
       }
 
       throw new Error(errorData.message || 'API request failed')
@@ -60,6 +55,18 @@ export const apiRequest = async (url: string, options: RequestInit = {}) => {
     console.error('API Request Error:', error)
     throw error
   }
+}
+
+// Graceful error handler that shows user-friendly messages
+export const handleDeactivatedAccountError = (error: any, actionDescription: string) => {
+  if (error.code === 'ACCOUNT_DEACTIVATED' || error.isDeactivated) {
+    toast.error(`Cannot ${actionDescription}. Your account is deactivated. Please reactivate it in Account Settings.`, {
+      duration: 6000,
+      icon: '⚠️'
+    })
+    return true
+  }
+  return false
 }
 
 // Hook to check if user account is active

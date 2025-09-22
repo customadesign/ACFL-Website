@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Star } from 'lucide-react'
+import { getApiUrl } from '@/lib/api'
 
 interface CoachRatingProps {
   coachId: string
@@ -43,7 +44,7 @@ export default function CoachRating({
 
   const checkExistingRating = async () => {
     try {
-      const API_URL = 'http://localhost:3001' // Backend API URL
+      const API_URL = getApiUrl()
       const response = await fetch(`${API_URL}/api/client/${clientId}/coaches/${coachId}/history`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -77,7 +78,7 @@ export default function CoachRating({
     setError('')
 
     try {
-      const API_URL = 'http://localhost:3001' // Backend API URL
+      const API_URL = getApiUrl()
       const response = await fetch(`${API_URL}/api/client/coaches/${coachId}/ratings`, {
         method: 'POST',
         headers: {

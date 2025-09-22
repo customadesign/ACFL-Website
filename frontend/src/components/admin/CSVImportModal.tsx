@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { X, Upload, FileText, CheckCircle, AlertTriangle } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 interface CSVImportModalProps {
   isOpen: boolean;
@@ -84,7 +85,8 @@ export default function CSVImportModal({ isOpen, onClose, onImportComplete }: CS
   const downloadTemplate = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`/api/csv-import/template/unified`, {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/csv-import/template/unified`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -117,7 +119,8 @@ export default function CSVImportModal({ isOpen, onClose, onImportComplete }: CS
       formData.append('csvFile', selectedFile);
 
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/csv-import/validate', {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/csv-import/validate`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -156,9 +159,10 @@ export default function CSVImportModal({ isOpen, onClose, onImportComplete }: CS
       formData.append('sendEmails', sendEmails.toString());
 
       const token = localStorage.getItem('token');
+      const API_URL = getApiUrl();
       console.log('Making import request with token:', token ? 'Present' : 'Missing');
 
-      const response = await fetch('/api/csv-import/import', {
+      const response = await fetch(`${API_URL}/api/csv-import/import`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

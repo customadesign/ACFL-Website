@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import DeactivatedActionButton from '@/components/DeactivatedActionButton'
 import { 
   Heart, 
   Calendar, 
@@ -565,14 +566,16 @@ function CoachProfileContent() {
               <span className="hidden xs:inline">Back to Search</span>
               <span className="xs:hidden">Back</span>
             </Button>
-            <Button
-              variant="ghost"
-              onClick={toggleSaved}
-              className={`flex items-center space-x-1 sm:space-x-2 transition-colors text-sm sm:text-base ${isSaved ? 'text-red-500 hover:text-red-600' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
-            >
-              <Heart className={`w-4 h-4 transition-all ${isSaved ? 'fill-current scale-110' : ''}`} />
-              <span>{isSaved ? 'Saved' : 'Save'}</span>
-            </Button>
+            <DeactivatedActionButton action={isSaved ? "remove saved coach" : "save coach"}>
+              <Button
+                variant="ghost"
+                onClick={toggleSaved}
+                className={`flex items-center space-x-1 sm:space-x-2 transition-colors text-sm sm:text-base ${isSaved ? 'text-red-500 hover:text-red-600' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
+              >
+                <Heart className={`w-4 h-4 transition-all ${isSaved ? 'fill-current scale-110' : ''}`} />
+                <span>{isSaved ? 'Saved' : 'Save'}</span>
+              </Button>
+            </DeactivatedActionButton>
           </div>
         </div>
       </div>
@@ -640,22 +643,27 @@ function CoachProfileContent() {
 
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                <Button
-                  size="lg"
-                  className="bg-white text-blue-700 hover:bg-blue-50 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
-                  onClick={() => handleBookSession('consultation')}
-                >
-                  <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Free Consultation
-                </Button>
-                <Button
-                  size="lg"
-                  className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
-                  onClick={() => handleBookSession('session')}
-                >
-                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                  Book Paid Session
-                </Button>
+                <DeactivatedActionButton action="book a consultation">
+                  <Button
+                    size="lg"
+                    className="bg-white text-blue-700 hover:bg-blue-50 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
+                    onClick={() => handleBookSession('consultation')}
+                  >
+                    <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Free Consultation
+                  </Button>
+                </DeactivatedActionButton>
+
+                <DeactivatedActionButton action="book a session">
+                  <Button
+                    size="lg"
+                    className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
+                    onClick={() => handleBookSession('session')}
+                  >
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Book Paid Session
+                  </Button>
+                </DeactivatedActionButton>
               </div>
             </div>
 

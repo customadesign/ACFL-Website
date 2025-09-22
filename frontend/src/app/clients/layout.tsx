@@ -11,6 +11,7 @@ import { useMeeting } from '@/contexts/MeetingContext';
 import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
+import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
 import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, UserSearch, User, Settings } from 'lucide-react';
 
 export default function ClientLayout({
@@ -413,6 +414,9 @@ export default function ClientLayout({
 
         {/* Main Content - Adjust padding based on meeting state */}
         <div className={`flex-1 overflow-auto ${isInMeeting ? 'pb-0' : 'pb-16'} sm:pb-0`}>
+          <div className="container mx-auto px-4 py-4">
+            <DeactivatedAccountBanner />
+          </div>
           {children}
         </div>
 
