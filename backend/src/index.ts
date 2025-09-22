@@ -20,6 +20,7 @@ import staffRoutes from './routes/staffRoutes';
 import csvImportRoutes from './routes/csvImportRoutes';
 import financialRoutes from './routes/financialRoutes';
 import { supabase } from './lib/supabase';
+import { cronService } from './services/cronService';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -252,6 +253,28 @@ io.on('connection', (socket) => {
 
 server.listen(port, () => {
   console.log(`Server running on port ${port} - Authorization updated`);
+
+  // Start cron jobs for appointment reminders
+  cronService.startAllJobs();
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully...');
+  cronService.stopAllJobs();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully...');
+  cronService.stopAllJobs();
+  server.close(() => {
+    console.log('Server closed');
+    process.exit(0);
+  });
 });
 
 

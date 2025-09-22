@@ -18,7 +18,7 @@ import {
   acceptStaffInvitation,
   getInvitationDetails
 } from '../controllers/staffInvitationController';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, requireActiveUser } from '../middleware/auth';
 import multer from 'multer';
 
 const router = Router();
@@ -44,9 +44,9 @@ const upload = multer({
 router.use(authenticate);
 
 // Staff profile routes (for logged-in staff member)
-router.get('/profile', authorize('staff'), getStaffProfile);              // GET /api/admin/staff/profile
-router.put('/profile', authorize('staff'), updateStaffProfile);           // PUT /api/admin/staff/profile
-router.post('/profile/photo', authorize('staff'), upload.single('photo'), uploadStaffProfilePhoto); // POST /api/admin/staff/profile/photo
+router.get('/profile', authenticate, requireActiveUser, authorize('staff'), getStaffProfile);              // GET /api/admin/staff/profile
+router.put('/profile', authenticate, requireActiveUser, authorize('staff'), updateStaffProfile);           // PUT /api/admin/staff/profile
+router.post('/profile/photo', authenticate, requireActiveUser, authorize('staff'), upload.single('photo'), uploadStaffProfilePhoto); // POST /api/admin/staff/profile/photo
 
 // Staff management routes - admin only
 router.get('/', authorize('admin'), getStaffMembers);                    // GET /api/admin/staff
@@ -55,8 +55,8 @@ router.put('/:id', authorize('admin'), updateStaffMember);               // PUT 
 router.delete('/:id', authorize('admin'), deleteStaffMember);            // DELETE /api/admin/staff/:id
 
 // Staff permissions routes
-router.get('/permissions', authorize('admin', 'staff'), getStaffPermissions);     // GET /api/admin/staff/permissions - staff can read
-router.put('/permissions', authorize('admin'), updateStaffPermissions);           // PUT /api/admin/staff/permissions - admin only
+router.get('/permissions', authenticate, requireActiveUser, authorize('admin', 'staff'), getStaffPermissions);     // GET /api/admin/staff/permissions - staff can read
+router.put('/permissions', authenticate, requireActiveUser, authorize('admin'), updateStaffPermissions);           // PUT /api/admin/staff/permissions - admin only
 
 // Staff invitation routes - admin only
 router.post('/invitations', authorize('admin'), sendStaffInvitation);            // POST /api/admin/staff/invitations - send invitation

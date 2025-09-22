@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -14,7 +15,11 @@ import { availabilityOptions, therapyModalityOptions, genderIdentityOptions } fr
 import { STATE_NAMES } from '@/constants/states';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Input } from '@/components/ui/input';
-import { RefreshCw, Camera, Upload, User, Award, Clock, Shield, Heart, Globe, Settings } from 'lucide-react';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { RefreshCw, Camera, Upload, User, Award, Clock, Shield, Heart, Globe, Settings, UserX, Download, FileText, FileImage, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -58,6 +63,7 @@ const PROFESSIONAL_CERTIFICATIONS = [
 
 export default function CoachProfilePage() {
   const { user } = useAuth();
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -68,6 +74,13 @@ export default function CoachProfilePage() {
   const [openLocation, setOpenLocation] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
+
+  // Export and deletion state
+  const [isExporting, setIsExporting] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [deletionStatus, setDeletionStatus] = useState<any>(null);
+  const [loadingDeletionStatus, setLoadingDeletionStatus] = useState(false);
   
   const [profileData, setProfileData] = useState({
     // Basic Information
@@ -514,6 +527,168 @@ export default function CoachProfilePage() {
       setError('Failed to upload photo. Please try again.');
     }
   };
+
+  // Export data function
+  const handleExportData = async (format: 'csv' | 'pdf') => {
+    try {
+      setIsExporting(true)
+      setError('')
+      setSuccessMessage('')
+
+      const API_URL = getApiUrl()
+      const response = await fetch(`${API_URL}/api/coach/export-data`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ format })
+      })
+
+      if (response.ok) {
+        // Create a blob from the response and trigger download
+        const blob = await response.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.style.display = 'none'
+        a.href = url
+        a.download = `coach-data-export-${new Date().toISOString().split('T')[0]}.${format}`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+
+        setSuccessMessage(`Your data export (${format.toUpperCase()}) has been downloaded successfully.`)
+      } else {
+        const errorData = await response.json()
+        setError(errorData.message || 'Failed to export data')
+      }
+    } catch (error) {
+      console.error('Export error:', error)
+      setError('Failed to export data. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  // Deletion functions
+  const fetchDeletionStatus = async () => {
+    try {
+      setLoadingDeletionStatus(true)
+      const API_URL = getApiUrl()
+      const response = await fetch(`${API_URL}/api/coach/deletion-status`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setDeletionStatus(data.data)
+      } else {
+        // Set default active status if API fails
+        setDeletionStatus({
+          isActive: true,
+          hasPendingDeletion: false,
+          deletion: null
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching deletion status:', error)
+      // Set default active status if API fails
+      setDeletionStatus({
+        isActive: true,
+        hasPendingDeletion: false,
+        deletion: null
+      })
+    } finally {
+      setLoadingDeletionStatus(false)
+    }
+  }
+
+  const handleRequestDeletion = async () => {
+    try {
+      setIsExporting(true)
+      setError('')
+      setSuccessMessage('')
+
+      const API_URL = getApiUrl()
+      const response = await fetch(`${API_URL}/api/coach/request-deletion`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ reason: deletionReason })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage('Account deletion has been scheduled. Your account is now deactivated and will be permanently deleted in 30 days.')
+        setShowDeleteDialog(false)
+        setDeletionReason('')
+        await fetchDeletionStatus()
+      } else {
+        setError(data.message || 'Failed to request account deletion')
+      }
+    } catch (error) {
+      console.error('Deletion request error:', error)
+      setError('Failed to request account deletion. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const handleCancelDeletion = async () => {
+    try {
+      setIsExporting(true)
+      setError('')
+      setSuccessMessage('')
+
+      const API_URL = getApiUrl()
+      const response = await fetch(`${API_URL}/api/coach/cancel-deletion`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccessMessage('Account deletion has been cancelled. Your account has been reactivated.')
+        await fetchDeletionStatus()
+      } else {
+        setError(data.message || 'Failed to cancel account deletion')
+      }
+    } catch (error) {
+      console.error('Cancel deletion error:', error)
+      setError('Failed to cancel account deletion. Please try again.')
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getDaysUntilDeletion = (deletionDate: string) => {
+    const days = Math.ceil((new Date(deletionDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    return Math.max(0, days)
+  }
+
+  // Load deletion status on component mount
+  useEffect(() => {
+    fetchDeletionStatus()
+  }, [])
 
   return (
     <>
@@ -1638,6 +1813,200 @@ export default function CoachProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {/* Account Status */}
+          {!loadingDeletionStatus && deletionStatus && deletionStatus.isActive !== undefined && (
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Shield className="w-5 h-5" />
+                  <span>Account Status</span>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Account Status:</span>
+                    <div className="flex items-center space-x-2">
+                      {deletionStatus.isActive ? (
+                        <>
+                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <span className="text-green-600">Active</span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="w-4 h-4 text-red-500" />
+                          <span className="text-red-600">Deactivated</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {deletionStatus.hasPendingDeletion && deletionStatus.deletion && (
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+                        <div className="flex-1">
+                          <h4 className="font-medium text-red-800 mb-2">Account Deletion Scheduled</h4>
+                          <div className="space-y-2 text-sm text-red-700">
+                            <p>
+                              <strong>Deactivated:</strong> {formatDate(deletionStatus.deletion.deactivated_at)}
+                            </p>
+                            <p>
+                              <strong>Scheduled Deletion:</strong> {formatDate(deletionStatus.deletion.scheduled_deletion_at)}
+                            </p>
+                            <p>
+                              <strong>Days Remaining:</strong> {getDaysUntilDeletion(deletionStatus.deletion.scheduled_deletion_at)} days
+                            </p>
+                            {deletionStatus.deletion.reason && (
+                              <p>
+                                <strong>Reason:</strong> {deletionStatus.deletion.reason}
+                              </p>
+                            )}
+                          </div>
+                          <div className="mt-4">
+                            <Button
+                              onClick={handleCancelDeletion}
+                              disabled={isExporting}
+                              className="bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {isExporting ? 'Cancelling...' : 'Cancel Deletion'}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Data Export */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Download className="w-5 h-5" />
+                <span>Export Your Data</span>
+              </CardTitle>
+              <CardDescription>
+                Download a copy of all your professional data, including profile information, session history, client interactions, and earnings.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                  <CardContent className="p-6 text-center">
+                    <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                    <h3 className="font-semibold mb-2">CSV Export</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Download your data in CSV format, suitable for spreadsheet applications.
+                    </p>
+                    <Button
+                      onClick={() => handleExportData('csv')}
+                      disabled={isExporting}
+                      className="w-full"
+                    >
+                      {isExporting ? 'Generating...' : 'Download CSV'}
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
+                  <CardContent className="p-6 text-center">
+                    <FileImage className="w-12 h-12 mx-auto mb-4 text-red-600" />
+                    <h3 className="font-semibold mb-2">PDF Export</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Download a comprehensive PDF report of your data.
+                    </p>
+                    <Button
+                      onClick={() => handleExportData('pdf')}
+                      disabled={isExporting}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {isExporting ? 'Generating...' : 'Download PDF'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account Deletion */}
+          {(!deletionStatus || !deletionStatus.hasPendingDeletion) && (
+            <Card className="border-red-200 bg-card border-border">
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2 text-red-600">
+                  <UserX className="w-5 h-5" />
+                  <span>Delete Account</span>
+                </CardTitle>
+                <CardDescription>
+                  Permanently delete your account and all associated data. This action cannot be undone.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <h4 className="font-medium text-red-800 mb-2">What happens when you delete your account:</h4>
+                    <ul className="list-disc list-inside text-sm text-red-700 space-y-1">
+                      <li>Your account will be immediately deactivated</li>
+                      <li>You will lose access to all your data and client information</li>
+                      <li>All scheduled sessions will be cancelled</li>
+                      <li>Your data will be permanently deleted after 30 days</li>
+                      <li>You can cancel the deletion within 30 days by contacting support</li>
+                      <li>This action cannot be undone after the 30-day period</li>
+                    </ul>
+                  </div>
+
+                  <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+                    <DialogTrigger asChild>
+                      <Button variant="destructive" className="w-full">
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Delete My Account
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Delete Account</DialogTitle>
+                        <DialogDescription>
+                          Are you sure you want to delete your account? This will immediately deactivate your account and schedule it for permanent deletion in 30 days.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <Label htmlFor="reason">Reason for deletion (optional)</Label>
+                          <Textarea
+                            id="reason"
+                            placeholder="Let us know why you're deleting your account..."
+                            value={deletionReason}
+                            onChange={(e) => setDeletionReason(e.target.value)}
+                            maxLength={500}
+                          />
+                        </div>
+                      </div>
+                      <DialogFooter>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowDeleteDialog(false)}
+                          disabled={isExporting}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          onClick={handleRequestDeletion}
+                          disabled={isExporting}
+                        >
+                          {isExporting ? 'Deleting...' : 'Delete Account'}
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
       </CoachPageWrapper>

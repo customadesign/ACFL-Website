@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt = require('jsonwebtoken');
 import { JWTPayload } from '../types/auth';
+import { supabase } from '../lib/supabase';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -110,4 +111,76 @@ export const verifyAdminToken = async (
   } catch (error) {
     res.status(401).json({ error: 'Invalid admin token' });
   }
+};
+
+// Middleware to check if user account is active
+export const requireActiveUser = async (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Please authenticate' });
+    }
+
+    const { userId, role } = req.user;
+    let tableName: string;
+
+    // Determine which table to check based on user role
+    switch (role) {
+      case 'client':
+        tableName = 'clients';
+        break;
+      case 'coach':
+        tableName = 'coaches';
+        break;
+      case 'staff':
+      case 'admin':
+        tableName = 'staff';
+        break;
+      default:
+        return res.status(400).json({ error: 'Invalid user role' });
+    }
+
+    // Check if user is active
+    const { data: user, error } = await supabase
+      .from(tableName)
+      .select('is_active, status')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error checking user status:', error);
+      return res.status(500).json({ error: 'Failed to verify user status' });
+    }
+
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // Check if user is inactive/deactivated
+    if (user.is_active === false || user.status === 'inactive') {
+      return res.status(403).json({
+        error: 'Account is deactivated. Please contact support to reactivate your account.',
+        code: 'ACCOUNT_DEACTIVATED'
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Active user check error:', error);
+    res.status(500).json({ error: 'Failed to verify user status' });
+  }
+};
+
+// Middleware that allows deactivated users to access specific endpoints
+export const allowDeactivatedUser = (
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) => {
+  // This middleware simply passes through without checking active status
+  // Use this for endpoints that deactivated users should be able to access
+  next();
 };

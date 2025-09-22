@@ -7,6 +7,7 @@ import {
 } from '../lib/square';
 import { CoachRateService } from './coachRateService';
 import { BookingNotificationService } from './bookingNotificationService';
+import { appointmentReminderService } from './appointmentReminderService';
 import {
   BookingRequest,
   BookingAcceptance,
@@ -343,6 +344,15 @@ export class BookingService {
         session.id,
         payment.id
       );
+
+      // Schedule appointment reminders
+      try {
+        await appointmentReminderService.scheduleSessionReminders(session.id);
+        console.log(`Scheduled reminders for session ${session.id}`);
+      } catch (reminderError) {
+        console.error('Failed to schedule reminders for session:', reminderError);
+        // Don't fail the booking if reminder scheduling fails
+      }
 
       // TODO: Create video meeting and update session with meeting details
 

@@ -2,18 +2,21 @@ import { Router } from 'express';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
 import { coachSearchService } from '../services/coachSearchService';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireActiveUser, allowDeactivatedUser } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 import { createVideoSDKMeeting } from '../services/videoSDKService';
 import { PaymentServiceV2 } from '../services/paymentServiceV2';
+import { appointmentReminderService } from '../services/appointmentReminderService';
+import { dataExportService } from '../services/dataExportService';
 import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
 // Get client profile
-router.get('/client/profile', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/client/profile', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
       return res.status(403).json({ 
@@ -87,6 +90,8 @@ router.get('/client/profile', authenticate, async (req: Request & { user?: any }
 
 // Update client profile
 router.put('/client/profile', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('firstName').optional().isString(),
   body('lastName').optional().isString(),
@@ -236,6 +241,8 @@ router.put('/client/profile', [
 // Submit a review for a completed session
 router.post('/client/reviews', [
   authenticate,
+  requireActiveUser,
+  authenticate,
   body('sessionId').isUUID().withMessage('sessionId is required'),
   body('coachId').isUUID().withMessage('coachId is required'),
   body('rating').isInt({ min: 1, max: 5 }).withMessage('rating must be 1-5'),
@@ -354,7 +361,7 @@ router.post('/client/reviews', [
 });
 
 // Get client appointments
-router.get('/client/appointments', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/client/appointments', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
       return res.status(403).json({ 
@@ -456,7 +463,7 @@ router.get('/client/appointments', authenticate, async (req: Request & { user?: 
 });
 
 // Check client-coach history for rating permission
-router.get('/client/:clientId/coaches/:coachId/history', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/client/:clientId/coaches/:coachId/history', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     const { clientId, coachId } = req.params;
 
@@ -511,7 +518,7 @@ router.get('/client/:clientId/coaches/:coachId/history', authenticate, async (re
 });
 
 // Get coach rating statistics
-router.get('/client/coaches/:coachId/ratings', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/client/coaches/:coachId/ratings', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     const { coachId } = req.params;
 
@@ -555,6 +562,8 @@ router.get('/client/coaches/:coachId/ratings', authenticate, async (req: Request
 
 // Submit/Update rating for a coach
 router.post('/client/coaches/:coachId/ratings', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('clientId').isUUID().withMessage('clientId is required'),
   body('sessionId').optional().isUUID().withMessage('sessionId must be a valid UUID'),
@@ -677,7 +686,7 @@ router.post('/client/coaches/:coachId/ratings', [
 });
 
 // Get saved coaches
-router.get('/client/saved-coaches', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/client/saved-coaches', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
       return res.status(403).json({ 
@@ -762,6 +771,8 @@ router.get('/client/saved-coaches', authenticate, async (req: Request & { user?:
 // Save a coach
 router.post('/client/saved-coaches', [
   authenticate,
+  requireActiveUser,
+  authenticate,
   body('coachId').notEmpty().withMessage('Coach ID is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -840,7 +851,7 @@ router.post('/client/saved-coaches', [
 });
 
 // Remove saved coach
-router.delete('/client/saved-coaches/:coachId', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.delete('/client/saved-coaches/:coachId', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'client') {
       return res.status(403).json({ 
@@ -891,6 +902,8 @@ router.delete('/client/saved-coaches/:coachId', authenticate, async (req: Reques
 
 // Get all available coaches (for initial load)
 router.get('/client/coaches', [
+  authenticate,
+  requireActiveUser,
   authenticate
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -929,6 +942,8 @@ router.get('/client/coaches', [
 
 // Search coaches
 router.post('/client/search-coaches', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('preferences').isObject().withMessage('Preferences object is required')
 ], async (req: Request & { user?: any }, res: Response) => {
@@ -999,6 +1014,8 @@ router.post('/client/search-coaches', [
 
 // Book appointment with coach
 router.post('/client/book-appointment', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('coachId').notEmpty().withMessage('Coach ID is required'),
   body('scheduledAt').isISO8601().withMessage('Valid scheduled date/time is required'),
@@ -1125,6 +1142,15 @@ router.post('/client/book-appointment', [
 
     if (sessionError) {
       throw sessionError;
+    }
+
+    // Schedule appointment reminders
+    try {
+      await appointmentReminderService.scheduleSessionReminders(session.id);
+      console.log(`Scheduled reminders for session ${session.id}`);
+    } catch (reminderError) {
+      console.error('Failed to schedule reminders for session:', reminderError);
+      // Don't fail the booking if reminder scheduling fails
     }
 
     // Handle payment if paymentId is provided
@@ -2270,6 +2296,258 @@ router.delete('/client/conversations/:partnerId', authenticate, async (req: Requ
     res.status(500).json({ 
       success: false, 
       message: 'Failed to delete conversation' 
+    });
+  }
+});
+
+// Export client data
+router.post('/client/export-data', [
+  authenticate,
+  allowDeactivatedUser,
+  authenticate,
+  body('format').isIn(['csv', 'pdf']).withMessage('Format must be csv or pdf')
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Client role required.'
+      });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { format } = req.body;
+
+    // Get client profile to get user ID
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id')
+      .eq('id', req.user.userId)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    console.log(`Generating ${format} export for client ${clientProfile.id}`);
+
+    const filePath = await dataExportService.exportUserData({
+      format,
+      userId: clientProfile.id,
+      userType: 'client',
+      includePersonalData: true,
+      includeActivityData: true,
+      includeMessagesData: true,
+      includeSessionsData: true
+    });
+
+    // Set appropriate headers for file download
+    const fileName = path.basename(filePath);
+    const mimeType = format === 'csv' ? 'text/csv' : 'application/pdf';
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', mimeType);
+
+    // Stream the file to the response
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    // Clean up the file after sending (with delay)
+    fileStream.on('end', () => {
+      setTimeout(() => {
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Failed to delete export file:', err);
+          else console.log('Export file cleaned up:', fileName);
+        });
+      }, 5000); // 5 second delay to ensure download completes
+    });
+
+  } catch (error) {
+    console.error('Export client data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export data',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Request account deletion
+router.post('/client/request-deletion', [
+  authenticate,
+  allowDeactivatedUser,
+  authenticate,
+  body('reason').optional().isString().isLength({ max: 500 })
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Client role required.'
+      });
+    }
+
+    const { reason } = req.body;
+
+    // Get client profile to get user ID
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name')
+      .eq('id', req.user.userId)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    // Check if deletion is already scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(clientProfile.id, 'client');
+
+    if (existingDeletion) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account deletion is already scheduled',
+        data: {
+          scheduledDeletionAt: existingDeletion.scheduled_deletion_at,
+          deactivatedAt: existingDeletion.deactivated_at
+        }
+      });
+    }
+
+    // Schedule account deletion
+    await dataExportService.scheduleAccountDeletion(clientProfile.id, 'client');
+
+    console.log(`Account deletion scheduled for client ${clientProfile.id} (${clientProfile.first_name} ${clientProfile.last_name})`);
+
+    res.json({
+      success: true,
+      message: 'Account deletion has been scheduled. Your account will be deactivated immediately and permanently deleted in 30 days. You can cancel this request within 30 days by contacting support.',
+      data: {
+        deactivatedAt: new Date().toISOString(),
+        scheduledDeletionAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Request account deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to request account deletion',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Cancel account deletion
+router.post('/client/cancel-deletion', authenticate, allowDeactivatedUser, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Client role required.'
+      });
+    }
+
+    // Get client profile to get user ID
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, first_name, last_name')
+      .eq('id', req.user.userId)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    // Check if deletion is scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(clientProfile.id, 'client');
+
+    if (!existingDeletion) {
+      return res.status(400).json({
+        success: false,
+        message: 'No scheduled account deletion found'
+      });
+    }
+
+    // Cancel account deletion
+    await dataExportService.cancelAccountDeletion(clientProfile.id, 'client');
+
+    console.log(`Account deletion cancelled for client ${clientProfile.id} (${clientProfile.first_name} ${clientProfile.last_name})`);
+
+    res.json({
+      success: true,
+      message: 'Account deletion has been cancelled. Your account has been reactivated.'
+    });
+
+  } catch (error) {
+    console.error('Cancel account deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel account deletion',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get account deletion status
+router.get('/client/deletion-status', authenticate, allowDeactivatedUser, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'client') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Client role required.'
+      });
+    }
+
+    // Get client profile to get user ID
+    const { data: clientProfile, error: clientError } = await supabase
+      .from('clients')
+      .select('id, is_active, deactivated_at')
+      .eq('id', req.user.userId)
+      .single();
+
+    if (clientError || !clientProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    // Check if deletion is scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(clientProfile.id, 'client');
+
+    res.json({
+      success: true,
+      data: {
+        isActive: clientProfile.is_active,
+        deactivatedAt: clientProfile.deactivated_at,
+        hasPendingDeletion: !!existingDeletion,
+        deletion: existingDeletion
+      }
+    });
+
+  } catch (error) {
+    console.error('Get deletion status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get deletion status',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

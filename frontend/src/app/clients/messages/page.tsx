@@ -449,7 +449,7 @@ useEffect(() => {
 									placeholder="Search conversations..."
 									value={searchTerm}
 									onChange={(e) => setSearchTerm(e.target.value)}
-									className="pl-10"
+									className="pl-10 dark:text-white"
 								/>
 							</div>
 

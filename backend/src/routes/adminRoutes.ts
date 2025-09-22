@@ -11,6 +11,7 @@ import financialRoutes from './financialRoutes';
 import staffRoutes from './staffRoutes';
 import { getStaffPermissions, updateStaffPermissions } from '../controllers/staffController';
 import { auditLogger, AuditRequest } from '../utils/auditLogger';
+import { appointmentReminderService } from '../services/appointmentReminderService';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -293,8 +294,8 @@ router.get('/users', async (req, res) => {
     try {
       const { data: clients, error: clientsError } = await supabase
         .from('clients')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo');
-      
+        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at');
+
       if (clientsError) {
         console.error('Clients fetch error:', clientsError);
       } else if (clients && clients.length > 0) {
@@ -303,7 +304,7 @@ router.get('/users', async (req, res) => {
           ...client,
           name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Unnamed User',
           role: 'client',
-          status: client.status || 'active'
+          status: client.is_active === false ? 'inactive' : (client.status || 'active')
         })));
       }
     } catch (clientError) {
@@ -314,7 +315,7 @@ router.get('/users', async (req, res) => {
     try {
       const { data: coaches, error: coachesError } = await supabase
         .from('coaches')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo');
+        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at');
 
       if (coachesError) {
         console.error('Coaches fetch error:', coachesError);
@@ -324,7 +325,7 @@ router.get('/users', async (req, res) => {
           ...coach,
           name: `${coach.first_name || ''} ${coach.last_name || ''}`.trim() || 'Unnamed Coach',
           role: 'coach',
-          status: coach.status || 'active'
+          status: coach.is_active === false ? 'inactive' : (coach.status || 'active')
         })));
       }
     } catch (coachError) {
@@ -387,28 +388,28 @@ router.get('/users/export', async (req, res) => {
     // Get clients
     const { data: clients, error: clientsError } = await supabase
       .from('clients')
-      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, dob, gender_identity, ethnic_identity, religious_background');
+      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, dob, gender_identity, ethnic_identity, religious_background, is_active, deactivated_at');
 
     if (!clientsError && clients) {
       users.push(...clients.map(client => ({
         ...client,
         role: 'client',
         name: `${client.first_name || ''} ${client.last_name || ''}`.trim(),
-        status: client.status || 'active'
+        status: client.is_active === false ? 'inactive' : (client.status || 'active')
       })));
     }
 
     // Get coaches
     const { data: coaches, error: coachesError } = await supabase
       .from('coaches')
-      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, specialties, years_experience, hourly_rate_usd, bio, qualifications');
+      .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, specialties, years_experience, hourly_rate_usd, bio, qualifications, is_active, deactivated_at');
 
     if (!coachesError && coaches) {
       users.push(...coaches.map(coach => ({
         ...coach,
         role: 'coach',
         name: `${coach.first_name || ''} ${coach.last_name || ''}`.trim(),
-        status: coach.status || 'active'
+        status: coach.is_active === false ? 'inactive' : (coach.status || 'active')
       })));
     }
 
@@ -2633,6 +2634,77 @@ router.get('/test-db', async (req, res) => {
   } catch (error) {
     console.error('Database test error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Test appointment reminders
+router.post('/test-reminders/:sessionId', async (req: AuthRequest, res: Response) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    console.log(`Testing reminders for session ${sessionId}`);
+
+    // Trigger reminders for this session
+    await appointmentReminderService.scheduleSessionReminders(sessionId);
+
+    res.json({
+      success: true,
+      message: `Reminders triggered for session ${sessionId}`,
+      details: 'Check your email and messages for the reminders'
+    });
+  } catch (error) {
+    console.error('Test reminder error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to trigger reminders',
+      details: error instanceof Error ? error.message : error
+    });
+  }
+});
+
+// Process due reminders manually (for testing)
+router.post('/process-reminders', async (req: AuthRequest, res: Response) => {
+  try {
+    console.log('Manually processing due reminders...');
+
+    await appointmentReminderService.processDueReminders();
+
+    res.json({
+      success: true,
+      message: 'Due reminders processed successfully'
+    });
+  } catch (error) {
+    console.error('Process reminders error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to process reminders',
+      details: error instanceof Error ? error.message : error
+    });
+  }
+});
+
+// Check and send reminders for upcoming sessions
+router.post('/check-upcoming-sessions', async (req: AuthRequest, res: Response) => {
+  try {
+    console.log('Checking for upcoming sessions without reminders...');
+
+    await appointmentReminderService.checkUpcomingSessions();
+
+    res.json({
+      success: true,
+      message: 'Checked upcoming sessions and sent necessary reminders'
+    });
+  } catch (error) {
+    console.error('Check upcoming sessions error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to check upcoming sessions',
+      details: error instanceof Error ? error.message : error
+    });
   }
 });
 

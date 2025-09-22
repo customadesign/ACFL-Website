@@ -2,17 +2,19 @@ import { Router } from 'express';
 import { getCoachById } from '../controllers/coachController';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
-import { authenticate } from '../middleware/auth';
+import { authenticate, requireActiveUser, allowDeactivatedUser } from '../middleware/auth';
 import { validationResult, body } from 'express-validator';
 import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 import { createVideoSDKMeeting } from '../services/videoSDKService';
+import { dataExportService } from '../services/dataExportService';
 import path from 'path';
+import fs from 'fs';
 
 const router = Router();
 
 // Get coach profile (put specific routes before parameterized ones)
-router.get('/coach/profile', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/profile', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -72,6 +74,8 @@ router.get('/coach/profile', authenticate, async (req: Request & { user?: any },
 
 // Update coach profile
 router.put('/coach/profile', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('firstName').optional().trim().isLength({ min: 2, max: 50 }),
   body('lastName').optional().trim().isLength({ min: 2, max: 50 }),
@@ -326,7 +330,7 @@ router.put('/coach/profile', [
 });
 
 // Get coach dashboard stats
-router.get('/coach/dashboard', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/dashboard', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -438,7 +442,7 @@ router.get('/coach/dashboard', authenticate, async (req: Request & { user?: any 
 });
 
 // Get coach appointments
-router.get('/coach/appointments', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/appointments', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -563,7 +567,7 @@ router.get('/coach/appointments', authenticate, async (req: Request & { user?: a
 });
 
 // Get coach clients
-router.get('/coach/clients', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/clients', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -683,6 +687,8 @@ router.get('/coach/clients', authenticate, async (req: Request & { user?: any },
 
 // Update appointment status
 router.put('/coach/appointments/:id', [
+  authenticate,
+  requireActiveUser,
   authenticate,
   body('status').isIn(['scheduled', 'confirmed', 'cancelled', 'completed'])
 ], async (req: Request & { user?: any }, res: Response) => {
@@ -886,6 +892,8 @@ router.post('/test-admin-notification', authenticate, async (req: Request & { us
 // Reschedule appointment
 router.put('/coach/appointments/:id/reschedule', [
   authenticate,
+  requireActiveUser,
+  authenticate,
   body('new_starts_at').isISO8601(),
   body('reason').optional().isString()
 ], async (req: Request & { user?: any }, res: Response) => {
@@ -1014,7 +1022,7 @@ router.put('/coach/appointments/:id/reschedule', [
 });
 
 // Notify about appointment ready to join (called when meeting room is ready)
-router.post('/coach/appointments/:id/ready', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.post('/coach/appointments/:id/ready', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -1115,7 +1123,7 @@ router.post('/coach/appointments/:id/ready', authenticate, async (req: Request &
 });
 
 // Get coach profile stats
-router.get('/coach/profile/stats', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/profile/stats', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     if (!req.user || req.user.role !== 'coach') {
       return res.status(403).json({ 
@@ -1241,6 +1249,8 @@ router.get('/coach/application-data', authenticate, async (req: Request & { user
 
 // Send message from coach
 router.post('/coach/send-message', [
+  authenticate,
+  requireActiveUser,
   authenticate
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -1337,7 +1347,7 @@ router.post('/coach/send-message', [
 });
 
 // Get coach messages
-router.get('/coach/messages', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/messages', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     const { page = 1, limit = 50, conversation_with } = req.query as any;
     const offset = (Number(page) - 1) * Number(limit);
@@ -1399,7 +1409,7 @@ router.get('/coach/messages', authenticate, async (req: Request & { user?: any }
 });
 
 // Get coach conversations
-router.get('/coach/conversations', authenticate, async (req: Request & { user?: any }, res: Response) => {
+router.get('/coach/conversations', authenticate, requireActiveUser, async (req: Request & { user?: any }, res: Response) => {
   try {
     // Get coach profile by email first
     const { data: coachProfile, error: coachError } = await supabase
@@ -2540,6 +2550,258 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
     res.status(500).json({
       success: false,
       message: 'Failed to get revenue data'
+    });
+  }
+});
+
+// Export coach data
+router.post('/coach/export-data', [
+  authenticate,
+  allowDeactivatedUser,
+  authenticate,
+  body('format').isIn(['csv', 'pdf']).withMessage('Format must be csv or pdf')
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
+      });
+    }
+
+    const { format } = req.body;
+
+    // Get coach profile by email first (case-insensitive)
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    console.log(`Generating ${format} export for coach ${coachProfile.id}`);
+
+    const filePath = await dataExportService.exportUserData({
+      format,
+      userId: coachProfile.id,
+      userType: 'coach',
+      includePersonalData: true,
+      includeActivityData: true,
+      includeMessagesData: true,
+      includeSessionsData: true
+    });
+
+    // Set appropriate headers for file download
+    const fileName = path.basename(filePath);
+    const mimeType = format === 'csv' ? 'text/csv' : 'application/pdf';
+
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+    res.setHeader('Content-Type', mimeType);
+
+    // Stream the file to the response
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+
+    // Clean up the file after sending (with delay)
+    fileStream.on('end', () => {
+      setTimeout(() => {
+        fs.unlink(filePath, (err) => {
+          if (err) console.error('Failed to delete export file:', err);
+          else console.log('Export file cleaned up:', fileName);
+        });
+      }, 5000); // 5 second delay to ensure download completes
+    });
+
+  } catch (error) {
+    console.error('Export coach data error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to export data',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Request account deletion
+router.post('/coach/request-deletion', [
+  authenticate,
+  allowDeactivatedUser,
+  authenticate,
+  body('reason').optional().isString().isLength({ max: 500 })
+], async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    const { reason } = req.body;
+
+    // Get coach profile by email first (case-insensitive)
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id, first_name, last_name')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Check if deletion is already scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(coachProfile.id, 'coach');
+
+    if (existingDeletion) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account deletion is already scheduled',
+        data: {
+          scheduledDeletionAt: existingDeletion.scheduled_deletion_at,
+          deactivatedAt: existingDeletion.deactivated_at
+        }
+      });
+    }
+
+    // Schedule account deletion
+    await dataExportService.scheduleAccountDeletion(coachProfile.id, 'coach');
+
+    console.log(`Account deletion scheduled for coach ${coachProfile.id} (${coachProfile.first_name} ${coachProfile.last_name})`);
+
+    res.json({
+      success: true,
+      message: 'Account deletion has been scheduled. Your account will be deactivated immediately and permanently deleted in 30 days. You can cancel this request within 30 days by contacting support.',
+      data: {
+        deactivatedAt: new Date().toISOString(),
+        scheduledDeletionAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Request account deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to request account deletion',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Cancel account deletion
+router.post('/coach/cancel-deletion', authenticate, allowDeactivatedUser, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    // Get coach profile by email first (case-insensitive)
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id, first_name, last_name')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Check if deletion is scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(coachProfile.id, 'coach');
+
+    if (!existingDeletion) {
+      return res.status(400).json({
+        success: false,
+        message: 'No scheduled account deletion found'
+      });
+    }
+
+    // Cancel account deletion
+    await dataExportService.cancelAccountDeletion(coachProfile.id, 'coach');
+
+    console.log(`Account deletion cancelled for coach ${coachProfile.id} (${coachProfile.first_name} ${coachProfile.last_name})`);
+
+    res.json({
+      success: true,
+      message: 'Account deletion has been cancelled. Your account has been reactivated.'
+    });
+
+  } catch (error) {
+    console.error('Cancel account deletion error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to cancel account deletion',
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+});
+
+// Get account deletion status
+router.get('/coach/deletion-status', authenticate, allowDeactivatedUser, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    if (!req.user || req.user.role !== 'coach') {
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
+      });
+    }
+
+    // Get coach profile by email first (case-insensitive)
+    const { data: coachProfile, error: coachError } = await supabase
+      .from('coaches')
+      .select('id, is_active, deactivated_at')
+      .ilike('email', req.user.email)
+      .single();
+
+    if (coachError || !coachProfile) {
+      return res.status(404).json({
+        success: false,
+        message: 'Coach profile not found'
+      });
+    }
+
+    // Check if deletion is scheduled
+    const existingDeletion = await dataExportService.getAccountDeletionStatus(coachProfile.id, 'coach');
+
+    res.json({
+      success: true,
+      data: {
+        isActive: coachProfile.is_active,
+        deactivatedAt: coachProfile.deactivated_at,
+        hasPendingDeletion: !!existingDeletion,
+        deletion: existingDeletion
+      }
+    });
+
+  } catch (error) {
+    console.error('Get deletion status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get deletion status',
+      error: error instanceof Error ? error.message : 'Unknown error'
     });
   }
 });

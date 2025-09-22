@@ -488,7 +488,7 @@ function CoachProfileContent() {
 
       if (isSaved) {
         // Remove saved coach
-        const response = await fetch(`${API_URL}/api/client/saved-coaches/${coach.id}`, {
+        const response = await fetch(`${API_URL}/api/client/saved-coaches/${coach?.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -509,7 +509,7 @@ function CoachProfileContent() {
             'Authorization': `Bearer ${localStorage.getItem('token')}`
           },
           body: JSON.stringify({
-            coachId: coach.id
+            coachId: coach?.id
           })
         })
 
