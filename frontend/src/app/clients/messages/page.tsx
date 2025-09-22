@@ -9,7 +9,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send } from 'lucide-react'
+import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send, Search, Filter, MessageCircle } from 'lucide-react'
 import { io } from 'socket.io-client'
 
 type Conversation = {
@@ -39,15 +39,20 @@ type Message = {
 
 function MessagesContent() {
 	const API_URL = getApiUrl()
-const { user, logout } = useAuth()
+	const { user, logout } = useAuth()
 	const searchParams = useSearchParams()
 	const [conversations, setConversations] = useState<Conversation[]>([])
+	const [filteredConversations, setFilteredConversations] = useState<Conversation[]>([])
 	const [activePartnerId, setActivePartnerId] = useState<string | null>(null)
 	const [messages, setMessages] = useState<Message[]>([])
 	const [loading, setLoading] = useState(true)
 	const [initialLoad, setInitialLoad] = useState(true)
 	const [sending, setSending] = useState(false)
 	const [text, setText] = useState('')
+
+	// Filter states
+	const [searchTerm, setSearchTerm] = useState('')
+	const [showUnreadOnly, setShowUnreadOnly] = useState(false)
 	const [selectedFile, setSelectedFile] = useState<File | null>(null)
 	const [uploading, setUploading] = useState(false)
 	const [showMobileChat, setShowMobileChat] = useState(false)
@@ -161,6 +166,26 @@ useEffect(() => {
 			initiateConversationWith(conversationWith, partnerName ? decodeURIComponent(partnerName) : undefined)
 		}
 	}, [searchParams, loading])
+
+	// Filter conversations
+	useMemo(() => {
+		let filtered = conversations
+
+		// Apply search filter
+		if (searchTerm) {
+			filtered = filtered.filter(c =>
+				c.partnerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+				c.lastBody.toLowerCase().includes(searchTerm.toLowerCase())
+			)
+		}
+
+		// Apply unread filter
+		if (showUnreadOnly) {
+			filtered = filtered.filter(c => c.unreadCount > 0)
+		}
+
+		setFilteredConversations(filtered)
+	}, [conversations, searchTerm, showUnreadOnly])
 
 	// Refresh when window regains focus
 	useEffect(() => {
@@ -410,9 +435,41 @@ useEffect(() => {
 			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
 					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
 					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col`}>
-						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700">Conversations</div>
+						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+							<span>Conversations ({filteredConversations.length})</span>
+							<MessageCircle className="w-4 h-4 text-gray-500" />
+						</div>
+
+						{/* Filter Controls */}
+						<div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
+							{/* Search */}
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+								<Input
+									placeholder="Search conversations..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className="pl-10"
+								/>
+							</div>
+
+							{/* Unread Filter */}
+							<Button
+								variant={showUnreadOnly ? "default" : "outline"}
+								onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+								size="sm"
+								className={`w-full flex items-center justify-center gap-2 ${
+									showUnreadOnly
+										? 'dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700'
+										: 'dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
+								}`}
+							>
+								<Filter className="w-4 h-4" />
+								{showUnreadOnly ? 'Show All' : 'Unread Only'}
+							</Button>
+						</div>
 						<div className="flex-1 overflow-y-auto">
-							{conversations.map(c => (
+							{filteredConversations.map(c => (
 								<div key={c.partnerId} className="relative group">
 									<button
 										onClick={() => {
@@ -441,6 +498,15 @@ useEffect(() => {
 									</button>
 								</div>
 							))}
+							{filteredConversations.length === 0 && (
+								<div className="p-8 text-center text-gray-500 dark:text-gray-400">
+									<MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+									<p>No conversations found</p>
+									{(searchTerm || showUnreadOnly) && (
+										<p className="text-sm mt-1">Try adjusting your filters</p>
+									)}
+								</div>
+							)}
 						</div>
 					</div>
 
