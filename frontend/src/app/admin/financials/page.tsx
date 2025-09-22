@@ -63,22 +63,49 @@ interface RefundModalProps {
   isOpen: boolean;
   onClose: () => void;
   transaction: Transaction | null;
-  onRefund: (transactionId: string, reason: string) => void;
+  onRefund: (transactionId: string, reason: string, amount?: number) => void;
 }
 
 function RefundModal({ isOpen, onClose, transaction, onRefund }: RefundModalProps) {
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState('admin_initiated');
+  const [customReason, setCustomReason] = useState('');
+  const [refundType, setRefundType] = useState<'full' | 'partial'>('full');
+  const [partialAmount, setPartialAmount] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!transaction || !reason.trim()) return;
+    if (!transaction) return;
+
+    // Validate inputs
+    if (reason === 'other' && !customReason.trim()) {
+      alert('Please provide a custom reason');
+      return;
+    }
+
+    if (refundType === 'partial') {
+      const amount = parseFloat(partialAmount);
+      if (!amount || amount <= 0) {
+        alert('Please enter a valid partial refund amount');
+        return;
+      }
+      const maxAmount = transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount;
+      if (amount > maxAmount) {
+        alert(`Partial refund amount cannot exceed ${maxAmount}`);
+        return;
+      }
+    }
 
     setIsProcessing(true);
     try {
-      await onRefund(transaction.id, reason);
+      const finalReason = reason === 'other' ? customReason : reason;
+      const refundAmount = refundType === 'partial' ? parseFloat(partialAmount) : undefined;
+      await onRefund(transaction.id, finalReason, refundAmount);
       onClose();
-      setReason('');
+      setReason('admin_initiated');
+      setCustomReason('');
+      setRefundType('full');
+      setPartialAmount('');
     } finally {
       setIsProcessing(false);
     }
@@ -117,20 +144,92 @@ function RefundModal({ isOpen, onClose, transaction, onRefund }: RefundModalProp
             </div>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Refund Type <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="full"
+                  checked={refundType === 'full'}
+                  onChange={(e) => setRefundType(e.target.value as 'full' | 'partial')}
+                  className="mr-2"
+                />
+                Full Refund (${new Intl.NumberFormat('en-US', {
+                  style: 'currency',
+                  currency: 'USD'
+                }).format(transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount).replace('$', '')})
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  value="partial"
+                  checked={refundType === 'partial'}
+                  onChange={(e) => setRefundType(e.target.value as 'full' | 'partial')}
+                  className="mr-2"
+                />
+                Partial Refund
+              </label>
+            </div>
+          </div>
+
+          {refundType === 'partial' && (
+            <div className="mb-4">
+              <label htmlFor="partial-amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Refund Amount <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                <input
+                  id="partial-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  max={transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount}
+                  value={partialAmount}
+                  onChange={(e) => setPartialAmount(e.target.value)}
+                  placeholder="0.00"
+                  className="w-full pl-8 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+          )}
+
+          <div className="mb-4">
             <label htmlFor="refund-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Refund Reason <span className="text-red-500">*</span>
             </label>
-            <textarea
+            <select
               id="refund-reason"
               value={reason}
               onChange={(e) => setReason(e.target.value)}
-              placeholder="Please provide a detailed reason for this refund..."
-              rows={4}
-              required
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
-            />
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
+            >
+              <option value="admin_initiated">Admin Initiated</option>
+              <option value="requested_by_customer">Customer Requested</option>
+              <option value="coach_requested">Coach Requested</option>
+              <option value="auto_cancellation">Auto Cancellation</option>
+              <option value="other">Other</option>
+            </select>
           </div>
+
+          {reason === 'other' && (
+            <div className="mb-4">
+              <label htmlFor="custom-reason" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Custom Reason <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                id="custom-reason"
+                value={customReason}
+                onChange={(e) => setCustomReason(e.target.value)}
+                placeholder="Please provide a detailed reason for this refund..."
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              />
+            </div>
+          )}
 
           <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
             <div className="flex items-start">
@@ -294,27 +393,41 @@ export default function FinancialManagement() {
     }
   };
 
-  const handleRefund = async (transactionId: string, reason: string) => {
+  const handleRefund = async (transactionId: string, reason: string, amount?: number) => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/admin/financial/transactions/${transactionId}/refund`, {
+      const requestBody: any = {
+        reason: reason,
+        description: `Admin initiated refund: ${reason}`
+      };
+
+      // Add amount_cents for partial refunds
+      if (amount) {
+        requestBody.amount_cents = Math.round(amount * 100); // Convert dollars to cents
+      }
+
+      const response = await fetch(`${getApiUrl()}/api/admin/payments/${transactionId}/refund`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify(requestBody)
       });
 
       if (response.ok) {
+        const data = await response.json();
         fetchTransactions();
         fetchStats();
         // Show success notification (you could implement a toast notification here)
-        console.log('Refund processed successfully');
+        console.log('Refund processed successfully:', data);
+        alert(`Refund processed successfully! Refund ID: ${data.data.refund_id}`);
       } else {
-        throw new Error('Failed to process refund');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to process refund');
       }
     } catch (error) {
       console.error('Error processing refund:', error);
+      alert(`Error processing refund: ${(error as Error).message}`);
       throw error; // Re-throw to let the modal handle the error
     }
   };

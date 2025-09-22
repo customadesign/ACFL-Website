@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import CoachPageWrapper from '@/components/CoachPageWrapper';
 // Dynamic imports for client-side only components
 const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), {
@@ -25,7 +27,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMeeting } from '@/contexts/MeetingContext';
 import axios from 'axios';
 import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Calendar, Clock, FileText, History, Users } from 'lucide-react';
+import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Calendar, Clock, FileText, History, Users, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react';
 import { io, Socket } from 'socket.io-client';
 import RescheduleModal from '@/components/RescheduleModal';
 
@@ -54,6 +56,7 @@ function AppointmentsPageContent() {
   const { user } = useAuth();
   const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [isClient, setIsClient] = useState(false);
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
@@ -74,7 +77,109 @@ function AppointmentsPageContent() {
   const [uniqueClients, setUniqueClients] = useState<Array<{ id: string; name: string; sessionCount: number }>>([]);
   const socketRef = useRef<Socket | null>(null);
 
+  // Additional filter states for enhanced filtering
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'thisWeek' | 'thisMonth' | 'last3Months'>('all');
+
   const API_URL = getApiUrl();
+
+  // Define applyFilters function before useEffects
+  const applyFilters = () => {
+    let filtered = [...appointments];
+
+    // Apply main filter (status based)
+    const now = new Date().toISOString();
+    switch (filter) {
+      case 'upcoming':
+        filtered = filtered.filter(apt => apt.status === 'scheduled');
+        break;
+      case 'past':
+        filtered = filtered.filter(apt => apt.status === 'cancelled' || apt.status === 'completed');
+        break;
+      case 'pending':
+        filtered = filtered.filter(apt => apt.status === 'confirmed');
+        break;
+      case 'all':
+      default:
+        // No status filtering
+        break;
+    }
+
+    // Apply search filter (search in client name and notes)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(apt => {
+        const clientName = apt.clients ? `${apt.clients.first_name} ${apt.clients.last_name}`.toLowerCase() : '';
+        const notes = apt.notes?.toLowerCase() || '';
+        const status = apt.status.toLowerCase();
+        const date = new Date(apt.starts_at).toLocaleDateString();
+
+        return clientName.includes(query) ||
+               notes.includes(query) ||
+               status.includes(query) ||
+               date.includes(query);
+      });
+    }
+
+    // Apply date filter
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    switch (dateFilter) {
+      case 'thisWeek':
+        // This week (7 days from today - past and future)
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const sevenDaysFromNow = new Date(today);
+        sevenDaysFromNow.setDate(today.getDate() + 7);
+        sevenDaysFromNow.setHours(23, 59, 59, 999);
+
+        filtered = filtered.filter(apt => {
+          const appointmentDate = new Date(apt.starts_at);
+          return appointmentDate >= sevenDaysAgo && appointmentDate <= sevenDaysFromNow;
+        });
+        break;
+      case 'thisMonth':
+        // This month
+        const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+        filtered = filtered.filter(apt => new Date(apt.starts_at) >= startOfMonth);
+        break;
+      case 'last3Months':
+        // Last 3 months
+        const last3Months = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+        filtered = filtered.filter(apt => new Date(apt.starts_at) >= last3Months);
+        break;
+      case 'all':
+      default:
+        // No date filtering
+        break;
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === 'dateAdded') {
+        comparison = new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+      } else if (sortBy === 'name') {
+        const nameA = a.clients ? `${a.clients.first_name} ${a.clients.last_name}` : '';
+        const nameB = b.clients ? `${b.clients.first_name} ${b.clients.last_name}` : '';
+        comparison = nameA.localeCompare(nameB);
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    setFilteredAppointments(filtered);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setDateFilter('all');
+    // Keep the main filter and sorting as they are
+  };
 
   useEffect(() => {
     setIsClient(true);
@@ -103,6 +208,11 @@ function AppointmentsPageContent() {
     });
     setUniqueClients(Array.from(clientMap.values()));
   }, [appointments]);
+
+  // Apply filters whenever appointments or filter criteria change
+  useEffect(() => {
+    applyFilters();
+  }, [appointments, filter, searchQuery, dateFilter, sortBy, sortOrder]);
 
   // Tick every second to enable/disable Join and update countdown labels
   useEffect(() => {
@@ -519,6 +629,54 @@ function AppointmentsPageContent() {
         </div>
       </div>
 
+      {/* Enhanced Search and Filter Controls */}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Input
+                placeholder="Search by client name, notes, status, or date..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Date filter" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Time</SelectItem>
+                <SelectItem value="thisWeek">This Week</SelectItem>
+                <SelectItem value="thisMonth">This Month</SelectItem>
+                <SelectItem value="last3Months">Last 3 Months</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Clear filters and results count */}
+        {(searchQuery || dateFilter !== 'all') && (
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-500">
+              {filteredAppointments.length} appointment{filteredAppointments.length !== 1 ? 's' : ''} found
+            </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearFilters}
+              className="text-xs"
+            >
+              <Filter className="h-3 w-3 mr-1" />
+              Clear filters
+            </Button>
+          </div>
+        )}
+      </div>
+
       {/* Sort Controls - Show for all tabs */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
@@ -557,32 +715,27 @@ function AppointmentsPageContent() {
         {initialLoad ? (
           <AppointmentCardSkeleton count={5} />
         ) : (() => {
-          // Filter appointments based on selected tab - status-only approach
-          const filteredAppointments = appointments.filter(apt => {
-            switch (filter) {
-              case 'upcoming':
-                return apt.status === 'scheduled';
-              case 'past':
-                return apt.status === 'cancelled' || apt.status === 'completed';
-              case 'pending':
-                return apt.status === 'confirmed';
-              case 'all':
-              default:
-                return true;
-            }
-          });
-
-          // Apply sorting to all appointments
-          const sortedAppointments = sortAppointments([...filteredAppointments]);
-
-          return sortedAppointments.length === 0 ? (
+          // Use the filtered appointments from our enhanced filtering
+          return filteredAppointments.length === 0 ? (
             <Card>
               <CardContent className="text-center py-12">
-                <p className="text-muted-foreground">No {filter} appointments found</p>
+                <p className="text-muted-foreground">
+                  {(searchQuery || dateFilter !== 'all') ? 'No appointments match your current filters' : `No ${filter} appointments found`}
+                </p>
+                {(searchQuery || dateFilter !== 'all') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearFilters}
+                    className="mt-2"
+                  >
+                    Clear filters
+                  </Button>
+                )}
               </CardContent>
             </Card>
           ) : (
-            sortedAppointments.map((appointment) => (
+            filteredAppointments.map((appointment) => (
             <Card key={appointment.id} className="overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col">

@@ -3494,4 +3494,121 @@ router.get('/staff-permissions', authorize('admin', 'staff'), getStaffPermission
 router.put('/staff-permissions', authorize('admin'), updateStaffPermissions);
 console.log('Staff permissions routes registered');
 
+// Payment refund endpoint - Admin only
+router.post('/payments/:paymentId/refund', authorize('admin'), async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+    const { amount_cents, reason, description } = req.body;
+
+    // Import SquarePaymentService
+    const { SquarePaymentService } = await import('../services/squarePaymentService');
+    const squarePaymentService = new SquarePaymentService();
+
+    // Get admin user info from the authenticated request
+    const adminUser = (req as any).user;
+
+    // Create refund request
+    const refundRequest = {
+      payment_id: paymentId,
+      amount_cents: amount_cents, // Optional - if not provided, refunds full amount
+      reason: reason || 'admin_initiated',
+      description: description || 'Admin initiated refund'
+    };
+
+    // Process the refund
+    const refundResponse = await squarePaymentService.createRefund(adminUser.id, refundRequest);
+
+    // Log the admin action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'PAYMENT_REFUND',
+      resource_type: 'payment',
+      resource_id: paymentId,
+      details: `Processed refund of $${(amount_cents || 0) / 100} for payment ${paymentId}. Reason: ${reason}`,
+      metadata: {
+        refund_id: refundResponse.refund_id,
+        square_refund_id: refundResponse.square_refund_id,
+        amount_cents: refundResponse.amount_cents,
+        reason: reason,
+        description: description
+      }
+    });
+
+    res.json({
+      success: true,
+      data: refundResponse,
+      message: 'Refund processed successfully'
+    });
+
+  } catch (error) {
+    console.error('Admin refund error:', error);
+
+    // Log the failed action
+    const auditReq = req as AuditRequest;
+    await auditLogger.logAction(auditReq, {
+      action: 'PAYMENT_REFUND_FAILED',
+      resource_type: 'payment',
+      resource_id: req.params.paymentId,
+      details: `Failed to process refund: ${(error as Error).message}`,
+      metadata: {
+        error: (error as Error).message,
+        request_body: req.body
+      }
+    });
+
+    res.status(500).json({
+      error: (error as Error).message || 'Failed to process refund',
+      success: false
+    });
+  }
+});
+
+// Get payment details for refund - Admin only
+router.get('/payments/:paymentId', authorize('admin'), async (req, res) => {
+  try {
+    const { paymentId } = req.params;
+
+    // Get payment details
+    const { data: payment, error } = await supabase
+      .from('payments')
+      .select(`
+        *,
+        client:client_id(first_name, last_name, email),
+        coach:coach_id(first_name, last_name, email)
+      `)
+      .eq('id', paymentId)
+      .single();
+
+    if (error) {
+      throw new Error(`Payment not found: ${error.message}`);
+    }
+
+    // Get existing refunds
+    const { data: refunds, error: refundsError } = await supabase
+      .from('refunds')
+      .select('*')
+      .eq('payment_id', paymentId)
+      .order('created_at', { ascending: false });
+
+    if (refundsError) {
+      console.error('Error fetching refunds:', refundsError);
+    }
+
+    res.json({
+      success: true,
+      data: {
+        payment,
+        refunds: refunds || []
+      }
+    });
+
+  } catch (error) {
+    console.error('Payment fetch error:', error);
+    res.status(500).json({
+      error: (error as Error).message || 'Failed to fetch payment details',
+      success: false
+    });
+  }
+});
+
 export default router;

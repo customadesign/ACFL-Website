@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { X, Calendar, Clock, FileText, ChevronDown, ChevronUp, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { X, Calendar, Clock, FileText, ChevronDown, ChevronUp, User, Search, Filter } from 'lucide-react';
 import { getApiUrl } from '@/lib/api';
 import { apiGet } from '@/lib/api-client';
 import SessionNotesModal from './SessionNotesModal';
@@ -42,12 +44,19 @@ export default function ClientSessionHistory({
   onClose
 }: ClientSessionHistoryProps) {
   const [sessions, setSessions] = useState<Session[]>([]);
+  const [filteredSessions, setFilteredSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [expandedSession, setExpandedSession] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [showNotesModal, setShowNotesModal] = useState(false);
-  
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [dateFilter, setDateFilter] = useState<'all' | 'thisWeek' | 'thisMonth' | 'last3Months'>('all');
+  const [sortBy, setSortBy] = useState<'date' | 'status'>('date');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
   const API_URL = getApiUrl();
 
   useEffect(() => {
@@ -56,11 +65,16 @@ export default function ClientSessionHistory({
     }
   }, [isOpen, clientId]);
 
+  // Apply filters whenever sessions, searchQuery, or filters change
+  useEffect(() => {
+    applyFilters();
+  }, [sessions, searchQuery, dateFilter, sortBy, sortOrder]);
+
   const loadSessionHistory = async () => {
     try {
       setLoading(true);
       const response = await apiGet(`${API_URL}/api/coach/clients/${clientId}/sessions`);
-      
+
       if (response.data.success) {
         setSessions(response.data.data);
       }
@@ -70,6 +84,86 @@ export default function ClientSessionHistory({
     } finally {
       setLoading(false);
     }
+  };
+
+  const applyFilters = () => {
+    let filtered = [...sessions];
+
+    // Apply search filter (search in session notes)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(session => {
+        // Search in session notes
+        const hasNotesMatch = session.session_notes?.some(note =>
+          note.notes?.toLowerCase().includes(query) ||
+          note.goals_met?.some(goal => goal.toLowerCase().includes(query)) ||
+          note.next_steps?.toLowerCase().includes(query)
+        );
+        // Search in session status and date
+        const hasGeneralMatch = session.status.toLowerCase().includes(query) ||
+          new Date(session.starts_at).toLocaleDateString().includes(query);
+
+        return hasNotesMatch || hasGeneralMatch;
+      });
+    }
+
+    // Apply date filter
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    switch (dateFilter) {
+      case 'thisWeek':
+        // This week (7 days from today - past and future)
+        const sevenDaysAgo = new Date(today);
+        sevenDaysAgo.setDate(today.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const sevenDaysFromNow = new Date(today);
+        sevenDaysFromNow.setDate(today.getDate() + 7);
+        sevenDaysFromNow.setHours(23, 59, 59, 999);
+
+        filtered = filtered.filter(session => {
+          const sessionDate = new Date(session.starts_at);
+          return sessionDate >= sevenDaysAgo && sessionDate <= sevenDaysFromNow;
+        });
+        break;
+      case 'thisMonth':
+        // This month
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        filtered = filtered.filter(session => new Date(session.starts_at) >= startOfMonth);
+        break;
+      case 'last3Months':
+        // Last 3 months
+        const last3Months = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
+        filtered = filtered.filter(session => new Date(session.starts_at) >= last3Months);
+        break;
+      case 'all':
+      default:
+        // No date filtering
+        break;
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let comparison = 0;
+
+      if (sortBy === 'date') {
+        comparison = new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+      } else if (sortBy === 'status') {
+        comparison = a.status.localeCompare(b.status);
+      }
+
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    setFilteredSessions(filtered);
+  };
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setDateFilter('all');
+    setSortBy('date');
+    setSortOrder('desc');
   };
 
   const getStatusColor = (status: string) => {
@@ -109,7 +203,7 @@ export default function ClientSessionHistory({
                 Session History
               </CardTitle>
               <CardDescription>
-                {clientName} - {sessions.length} total sessions
+                {clientName} - {filteredSessions.length} of {sessions.length} sessions
               </CardDescription>
             </div>
             <Button
@@ -123,6 +217,75 @@ export default function ClientSessionHistory({
           </CardHeader>
           
           <CardContent className="space-y-4">
+            {!loading && (
+              <div className="space-y-4 border-b pb-4">
+                {/* Search and Filter Controls */}
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                      <Input
+                        placeholder="Search in session notes, goals, or status..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Select value={dateFilter} onValueChange={(value: any) => setDateFilter(value)}>
+                      <SelectTrigger className="w-[150px]">
+                        <SelectValue placeholder="Date filter" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Time</SelectItem>
+                        <SelectItem value="thisWeek">This Week</SelectItem>
+                        <SelectItem value="thisMonth">This Month</SelectItem>
+                        <SelectItem value="last3Months">Last 3 Months</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Select value={sortBy} onValueChange={(value: any) => setSortBy(value)}>
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="date">Date</SelectItem>
+                        <SelectItem value="status">Status</SelectItem>
+                      </SelectContent>
+                    </Select>
+
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                      className="px-3"
+                    >
+                      {sortOrder === 'asc' ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Clear filters button */}
+                {(searchQuery || dateFilter !== 'all' || sortBy !== 'date' || sortOrder !== 'desc') && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm text-gray-500">
+                      {filteredSessions.length} session{filteredSessions.length !== 1 ? 's' : ''} found
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearFilters}
+                      className="text-xs"
+                    >
+                      <Filter className="h-3 w-3 mr-1" />
+                      Clear filters
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {loading ? (
               <div className="text-center py-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
@@ -132,13 +295,25 @@ export default function ClientSessionHistory({
               <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-md">
                 {error}
               </div>
+            ) : filteredSessions.length === 0 && sessions.length > 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-500 dark:text-gray-400">No sessions match your current filters.</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={clearFilters}
+                  className="mt-2"
+                >
+                  Clear filters
+                </Button>
+              </div>
             ) : sessions.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-gray-500 dark:text-gray-400">No sessions found for this client.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {sessions.map((session) => (
+                {filteredSessions.map((session) => (
                   <div
                     key={session.id}
                     className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden"
