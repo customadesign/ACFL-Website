@@ -888,6 +888,223 @@ class EmailService {
     });
   }
 
+  async sendAdminPasswordReset({ email, password, firstName, lastName, role }: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    role: string;
+  }) {
+    const subject = 'Password Reset - ACT Coaching For Life';
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
+          .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #ff5722 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .credentials-box {
+            background: #fff3e0;
+            border: 2px solid #ff9800;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+          }
+          .credentials-box h3 {
+            margin-top: 0;
+            color: #e65100;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .credential-item {
+            margin: 15px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #FF6B6B;
+          }
+          .credential-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+          }
+          .credential-value {
+            font-size: 16px;
+            color: #212529;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+          }
+          .button {
+            display: inline-block;
+            padding: 14px 35px;
+            background: linear-gradient(135deg, #FF6B6B 0%, #ff5722 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+          }
+          .warning {
+            background: #ffebee;
+            border: 1px solid #f44336;
+            color: #b71c1c;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #e9ecef;
+          }
+          .security-tips {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+          }
+          .security-tips h4 {
+            margin-top: 0;
+            color: #004085;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Password Reset Completed</h1>
+          </div>
+          <div class="content">
+            <h2>Hello${firstName ? `, ${firstName}` : ''}!</h2>
+            <p>Your password has been reset by an administrator. Below are your new login credentials:</p>
+
+            <div class="credentials-box">
+              <h3>New Login Credentials</h3>
+              <div class="credential-item">
+                <div class="credential-label">Email Address</div>
+                <div class="credential-value">${email}</div>
+              </div>
+              <div class="credential-item">
+                <div class="credential-label">New Password</div>
+                <div class="credential-value">${password}</div>
+              </div>
+              <div class="credential-item">
+                <div class="credential-label">Account Type</div>
+                <div class="credential-value">${role.charAt(0).toUpperCase() + role.slice(1)}</div>
+              </div>
+            </div>
+
+            <div class="warning">
+              <span>⚠️</span>
+              <strong>Important:</strong> Please change your password immediately after logging in for security purposes.
+            </div>
+
+            <center>
+              <a href="${loginUrl}" class="button">Login to Your Account</a>
+            </center>
+
+            <div class="security-tips">
+              <h4>🛡️ Security Reminder:</h4>
+              <ul>
+                <li>Your password was reset for security reasons</li>
+                <li>Please change it to something only you know</li>
+                <li>Use a strong, unique password</li>
+                <li>Never share your credentials with anyone</li>
+              </ul>
+            </div>
+
+            <p>If you did not request this password reset or have any concerns, please contact our support team immediately at <a href="mailto:support@actcoachingforlife.com">support@actcoachingforlife.com</a></p>
+
+            <p>Best regards,<br><strong>The ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p><strong>ACT Coaching For Life</strong></p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Password Reset - ACT Coaching For Life
+
+      Hello${firstName ? `, ${firstName}` : ''}!
+
+      Your password has been reset by an administrator. Here are your new login credentials:
+
+      Email: ${email}
+      New Password: ${password}
+      Account Type: ${role.charAt(0).toUpperCase() + role.slice(1)}
+
+      IMPORTANT: Please change your password immediately after logging in for security purposes.
+
+      Login at: ${loginUrl}
+
+      Security Reminder:
+      - Your password was reset for security reasons
+      - Please change it to something only you know
+      - Use a strong, unique password
+      - Never share your credentials with anyone
+
+      If you did not request this password reset, please contact support@actcoachingforlife.com immediately.
+
+      Best regards,
+      The ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
   async sendUserCredentials({ email, password, firstName, lastName, role }: {
     email: string;
     password: string;
@@ -1105,6 +1322,261 @@ class EmailService {
       subject,
       text,
       html
+    });
+  }
+
+  async sendSessionReminder({
+    clientEmail,
+    coachEmail,
+    clientName,
+    coachName,
+    appointmentDetails,
+    timeUntilSession
+  }: {
+    clientEmail: string;
+    coachEmail: string;
+    clientName: string;
+    coachName: string;
+    appointmentDetails: AppointmentDetails;
+    timeUntilSession: string;
+  }) {
+    const clientSubject = `Session Reminder: Your appointment with ${coachName} is approaching`;
+    const coachSubject = `Session Reminder: Your appointment with ${clientName} is approaching`;
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+
+    const clientHtml = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Session Reminder</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
+          .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .reminder-box {
+            background: #e8f5e8;
+            border: 2px solid #4CAF50;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            text-align: center;
+          }
+          .reminder-box h3 {
+            margin-top: 0;
+            color: #2e7d32;
+            font-size: 18px;
+          }
+          .appointment-details {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+          }
+          .detail-item {
+            margin: 10px 0;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
+          }
+          .detail-item:last-child {
+            border-bottom: none;
+          }
+          .detail-label {
+            font-weight: 600;
+            color: #495057;
+            display: inline-block;
+            width: 120px;
+          }
+          .detail-value {
+            color: #212529;
+          }
+          .button {
+            display: inline-block;
+            padding: 14px 35px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+          }
+          .info-box {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+          }
+          .info-box h4 {
+            margin-top: 0;
+            color: #1976d2;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #e9ecef;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>⏰ Session Reminder</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${clientName}!</h2>
+            <p>This is a friendly reminder that your coaching session is approaching soon.</p>
+
+            <div class="reminder-box">
+              <h3>📅 Your session starts ${timeUntilSession}</h3>
+              <p>Don't forget about your upcoming appointment with <strong>${coachName}</strong></p>
+            </div>
+
+            <div class="appointment-details">
+              <h3>Session Details</h3>
+              <div class="detail-item">
+                <span class="detail-label">Coach:</span>
+                <span class="detail-value">${coachName}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Date:</span>
+                <span class="detail-value">${appointmentDetails.date}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Time:</span>
+                <span class="detail-value">${appointmentDetails.time}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Duration:</span>
+                <span class="detail-value">${appointmentDetails.duration || '60 minutes'}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Type:</span>
+                <span class="detail-value">${appointmentDetails.type || 'Video Session'}</span>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${loginUrl}" class="button">Access Your Dashboard</a>
+            </div>
+
+            <div class="info-box">
+              <h4>📝 Preparation Tips:</h4>
+              <ul>
+                <li>Review any notes from your previous session</li>
+                <li>Prepare any questions or topics you'd like to discuss</li>
+                <li>Ensure you have a stable internet connection for video sessions</li>
+                <li>Find a quiet, private space for your session</li>
+              </ul>
+            </div>
+
+            <p>If you need to reschedule or have any questions, please contact ${coachName} or our support team as soon as possible.</p>
+
+            <p>Looking forward to your session!</p>
+            <p><strong>The ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p><strong>ACT Coaching For Life</strong></p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            <p>This email was sent to ${clientEmail}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const coachHtml = clientHtml
+      .replace(`Hi ${clientName}!`, `Hi ${coachName}!`)
+      .replace(`your coaching session`, `your coaching session with ${clientName}`)
+      .replace(`with <strong>${coachName}</strong>`, `with <strong>${clientName}</strong>`)
+      .replace(`Coach:</span>\n                <span class="detail-value">${coachName}`, `Client:</span>\n                <span class="detail-value">${clientName}`)
+      .replace(`please contact ${coachName}`, `please contact ${clientName}`)
+      .replace(`This email was sent to ${clientEmail}`, `This email was sent to ${coachEmail}`);
+
+    const clientText = `
+      Session Reminder - ACT Coaching For Life
+
+      Hi ${clientName}!
+
+      This is a reminder that your coaching session is approaching soon.
+
+      Your session starts ${timeUntilSession}
+
+      Session Details:
+      - Coach: ${coachName}
+      - Date: ${appointmentDetails.date}
+      - Time: ${appointmentDetails.time}
+      - Duration: ${appointmentDetails.duration || '60 minutes'}
+      - Type: ${appointmentDetails.type || 'Video Session'}
+
+      Preparation Tips:
+      - Review any notes from your previous session
+      - Prepare questions or topics you'd like to discuss
+      - Ensure stable internet connection for video sessions
+      - Find a quiet, private space for your session
+
+      Access your dashboard: ${loginUrl}
+
+      If you need to reschedule, please contact ${coachName} or our support team.
+
+      Looking forward to your session!
+      The ACT Coaching For Life Team
+    `;
+
+    const coachText = clientText
+      .replace(`Hi ${clientName}!`, `Hi ${coachName}!`)
+      .replace(`your coaching session`, `your coaching session with ${clientName}`)
+      .replace(`Coach: ${coachName}`, `Client: ${clientName}`)
+      .replace(`please contact ${coachName}`, `please contact ${clientName}`);
+
+    // Send to client
+    await this.sendEmail({
+      to: clientEmail,
+      subject: clientSubject,
+      text: clientText,
+      html: clientHtml
+    });
+
+    // Send to coach
+    return this.sendEmail({
+      to: coachEmail,
+      subject: coachSubject,
+      text: coachText,
+      html: coachHtml
     });
   }
 }

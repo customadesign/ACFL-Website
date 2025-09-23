@@ -1251,7 +1251,7 @@ router.post('/users/:id/reset-password', authorize('admin', 'staff'), async (req
     // Send new credentials via email
     try {
       console.log('Sending password reset email to:', userData.email);
-      const emailResult = await emailService.sendUserCredentials({
+      const emailResult = await emailService.sendAdminPasswordReset({
         email: userData.email,
         password: newPassword,
         firstName: userData.first_name,

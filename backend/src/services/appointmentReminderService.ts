@@ -352,70 +352,31 @@ export class AppointmentReminderService {
     const data: SessionReminderData = JSON.parse(reminder.data);
     const sessionTime = new Date(data.sessionTime);
 
-    const timeString = sessionTime.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
+    const hoursText = reminder.hours_before === 1 ? 'in 1 hour' : `in ${reminder.hours_before} hours`;
 
-    const hoursText = reminder.hours_before === 1 ? '1 hour' : `${reminder.hours_before} hours`;
+    const appointmentDetails = {
+      date: sessionTime.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      time: sessionTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      }),
+      duration: '60 minutes',
+      type: 'Video Session'
+    };
 
-    const subject = `Session Reminder - Coaching with ${data.coachName}`;
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #3b82f6; color: white; padding: 20px; text-align: center;">
-          <h1 style="margin: 0; font-size: 24px;">ACFL Coaching</h1>
-          <p style="margin: 10px 0 0 0;">Session Reminder</p>
-        </div>
-
-        <div style="padding: 30px; background-color: #f9fafb;">
-          <h2 style="color: #1f2937; margin-bottom: 20px;">Hi ${data.clientName},</h2>
-
-          <p style="color: #374151; font-size: 16px; line-height: 1.5;">
-            This is a friendly reminder that you have a coaching session scheduled in <strong>${hoursText}</strong>.
-          </p>
-
-          <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <h3 style="color: #1f2937; margin-top: 0;">Session Details:</h3>
-            <p style="color: #374151; margin: 5px 0;"><strong>Coach:</strong> ${data.coachName}</p>
-            <p style="color: #374151; margin: 5px 0;"><strong>Date & Time:</strong> ${timeString}</p>
-            <p style="color: #374151; margin: 5px 0;"><strong>Session ID:</strong> ${data.sessionId}</p>
-          </div>
-
-          ${data.meetingId ? `
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL}/clients/appointments"
-               style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Join Session
-            </a>
-          </div>
-          ` : ''}
-
-          <p style="color: #374151; font-size: 14px; margin-top: 30px;">
-            If you need to reschedule or have any questions, please contact your coach or visit your appointments page.
-          </p>
-
-          <p style="color: #374151; font-size: 14px; margin-top: 20px;">
-            Best regards,<br>
-            The ACFL Team
-          </p>
-        </div>
-
-        <div style="background-color: #e5e7eb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px;">
-          <p style="margin: 0;">This is an automated reminder from ACFL Coaching Platform</p>
-        </div>
-      </div>
-    `;
-
-    await this.emailService.sendEmail({
-      to: data.clientEmail,
-      subject,
-      html
+    await this.emailService.sendSessionReminder({
+      clientEmail: data.clientEmail,
+      coachEmail: data.coachEmail,
+      clientName: data.clientName,
+      coachName: data.coachName,
+      appointmentDetails,
+      timeUntilSession: hoursText
     });
   }
 
@@ -486,71 +447,32 @@ export class AppointmentReminderService {
     const now = new Date();
     const minutesUntilSession = Math.round((sessionTime.getTime() - now.getTime()) / (1000 * 60));
 
-    const timeString = sessionTime.toLocaleString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      timeZoneName: 'short'
-    });
+    const appointmentDetails = {
+      date: sessionTime.toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }),
+      time: sessionTime.toLocaleTimeString('en-US', {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZoneName: 'short'
+      }),
+      duration: '60 minutes',
+      type: 'Video Session'
+    };
 
-    const subject = `URGENT: Session Starting Soon - ${data.coachName}`;
-
-    const html = `
-      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background-color: #ef4444; color: white; padding: 20px; text-align: center;">
-          <h1 style="margin: 0; font-size: 24px;">⏰ ACFL Coaching</h1>
-          <p style="margin: 10px 0 0 0;">Session Starting Soon!</p>
-        </div>
-
-        <div style="padding: 30px; background-color: #f9fafb;">
-          <h2 style="color: #1f2937; margin-bottom: 20px;">Hi ${data.clientName},</h2>
-
-          <div style="background-color: #fef2f2; border: 2px solid #ef4444; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="color: #991b1b; font-size: 18px; font-weight: bold; margin: 0;">
-              Your session starts in ${minutesUntilSession} minutes!
-            </p>
-          </div>
-
-          <div style="background-color: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-            <h3 style="color: #1f2937; margin-top: 0;">Session Details:</h3>
-            <p style="color: #374151; margin: 5px 0;"><strong>Coach:</strong> ${data.coachName}</p>
-            <p style="color: #374151; margin: 5px 0;"><strong>Time:</strong> ${timeString}</p>
-            <p style="color: #374151; margin: 5px 0;"><strong>Session ID:</strong> ${data.sessionId}</p>
-          </div>
-
-          ${data.meetingId ? `
-          <div style="text-align: center; margin: 30px 0;">
-            <a href="${process.env.FRONTEND_URL}/clients/appointments"
-               style="background-color: #ef4444; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Join Session Now
-            </a>
-          </div>
-          ` : ''}
-
-          <p style="color: #374151; font-size: 14px; margin-top: 30px;">
-            Please join your session on time. Your coach is ready to meet with you!
-          </p>
-
-          <p style="color: #374151; font-size: 14px; margin-top: 20px;">
-            Best regards,<br>
-            The ACFL Team
-          </p>
-        </div>
-
-        <div style="background-color: #e5e7eb; padding: 20px; text-align: center; color: #6b7280; font-size: 12px;">
-          <p style="margin: 0;">This is an urgent reminder from ACFL Coaching Platform</p>
-        </div>
-      </div>
-    `;
+    const timeUntilSession = minutesUntilSession <= 1 ? 'in 1 minute' : `in ${minutesUntilSession} minutes`;
 
     try {
-      await this.emailService.sendEmail({
-        to: data.clientEmail,
-        subject,
-        html
+      await this.emailService.sendSessionReminder({
+        clientEmail: data.clientEmail,
+        coachEmail: data.coachEmail,
+        clientName: data.clientName,
+        coachName: data.coachName,
+        appointmentDetails,
+        timeUntilSession
       });
       console.log(`Sent immediate email reminder for session ${data.sessionId}`);
     } catch (error) {
