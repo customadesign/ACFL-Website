@@ -35,7 +35,6 @@
     "multer": "^2.0.2",
     "node-cron": "^4.2.1",
     "nodemailer": "^7.0.6",
-    "resend": "^6.0.1",
     "socket.io": "^4.8.1",
     "square": "^38.0.0"
   },

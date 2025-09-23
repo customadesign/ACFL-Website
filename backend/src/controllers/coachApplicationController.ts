@@ -3,7 +3,6 @@ import { validationResult } from 'express-validator';
 import { supabase } from '../lib/supabase';
 import { coachService } from '../services/coachService';
 import emailService from '../services/emailService';
-import smtpEmailService from '../services/smtpEmailService';
 import bcrypt from 'bcrypt';
 import { auditLogger, AuditRequest } from '../utils/auditLogger';
 
@@ -883,7 +882,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
     // Send notification email using SMTP
     try {
       if (status === 'approved') {
-        const emailResult = await smtpEmailService.sendCoachApprovalEmail({
+        const emailResult = await emailService.sendCoachApprovalEmail({
           email: updatedApp.email,
           first_name: updatedApp.first_name
         });
@@ -894,7 +893,7 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
           console.log('⚠️ Warning: Approval email failed:', emailResult.error);
         }
       } else if (status === 'rejected') {
-        const emailResult = await smtpEmailService.sendCoachRejectionEmail({
+        const emailResult = await emailService.sendCoachRejectionEmail({
           email: updatedApp.email,
           first_name: updatedApp.first_name,
           rejection_reason: reason || 'Application did not meet our current requirements'
@@ -1044,7 +1043,7 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
         // Send notification email using SMTP
         try {
           if (status === 'approved') {
-            const emailResult = await smtpEmailService.sendCoachApprovalEmail({
+            const emailResult = await emailService.sendCoachApprovalEmail({
               email: updatedApp.email,
               first_name: updatedApp.first_name
             });
@@ -1053,7 +1052,7 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
               console.log(`⚠️ Warning: Approval email failed for ${applicationId}:`, emailResult.error);
             }
           } else if (status === 'rejected') {
-            const emailResult = await smtpEmailService.sendCoachRejectionEmail({
+            const emailResult = await emailService.sendCoachRejectionEmail({
               email: updatedApp.email,
               first_name: updatedApp.first_name,
               rejection_reason: reason || 'Application did not meet our current requirements'

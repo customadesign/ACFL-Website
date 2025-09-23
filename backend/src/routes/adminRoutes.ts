@@ -4,7 +4,7 @@ import { requirePermission } from '../middleware/adminAuth';
 import { supabase } from '../lib/supabase';
 import { JWTPayload } from '../types/auth';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
-import smtpEmailService from '../services/smtpEmailService';
+import emailService from '../services/emailService';
 import { generateSecurePassword } from '../utils/passwordGenerator';
 import contentRoutes from './contentRoutes';
 import financialRoutes from './financialRoutes';
@@ -710,7 +710,7 @@ router.post('/users', authorize('admin'), async (req, res) => {
     if (temporaryPassword) {
       try {
         console.log('Sending credentials email to:', userData.email);
-        const emailResult = await smtpEmailService.sendUserCredentials({
+        const emailResult = await emailService.sendUserCredentials({
           email: userData.email,
           password: temporaryPassword,
           firstName: userData.firstName,
@@ -1251,7 +1251,7 @@ router.post('/users/:id/reset-password', authorize('admin', 'staff'), async (req
     // Send new credentials via email
     try {
       console.log('Sending password reset email to:', userData.email);
-      const emailResult = await smtpEmailService.sendUserCredentials({
+      const emailResult = await emailService.sendUserCredentials({
         email: userData.email,
         password: newPassword,
         firstName: userData.first_name,
@@ -2733,7 +2733,7 @@ router.post('/test-email', async (req: AuthRequest, res: Response) => {
       role: 'client'
     };
     
-    const result = await smtpEmailService.sendUserCredentials(testCredentials);
+    const result = await emailService.sendUserCredentials(testCredentials);
     
     if (result.success) {
       res.json({

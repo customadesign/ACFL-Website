@@ -19,8 +19,10 @@ import contentRoutes from './routes/contentRoutes';
 import staffRoutes from './routes/staffRoutes';
 import csvImportRoutes from './routes/csvImportRoutes';
 import financialRoutes from './routes/financialRoutes';
+import invoiceRoutes from './routes/invoiceRoutes';
 import { supabase } from './lib/supabase';
 import { cronService } from './services/cronService';
+import { initializeInvoiceJobs } from './jobs/invoiceJobs';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -72,6 +74,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/csv-import', csvImportRoutes);
 app.use('/api/admin/financial', financialRoutes);
+app.use('/api', invoiceRoutes);
 app.use('/api', matchRoutes);
 app.use('/api', coachRoutes);
 app.use('/api', clientRoutes);
@@ -256,6 +259,9 @@ server.listen(port, () => {
 
   // Start cron jobs for appointment reminders
   cronService.startAllJobs();
+
+  // Initialize invoice cron jobs
+  initializeInvoiceJobs();
 });
 
 // Graceful shutdown

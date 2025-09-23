@@ -1,16 +1,17 @@
-import { Resend } from 'resend';
-
-// Initialize Resend with API key
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@linkage-va-hub.com';
+import nodemailer from 'nodemailer';
 
 interface EmailData {
   to: string | string[];
+  cc?: string[];
   subject: string;
   text?: string;
   html?: string;
   templateData?: Record<string, any>;
+  attachments?: Array<{
+    filename: string;
+    content: Buffer | string;
+    contentType?: string;
+  }>;
 }
 
 interface User {
@@ -35,59 +36,82 @@ interface AppointmentConfirmationData {
 }
 
 class EmailService {
+  private transporter: nodemailer.Transporter;
   private isConfigured: boolean;
 
   constructor() {
-    this.isConfigured = !!process.env.RESEND_API_KEY;
-    
-    if (!this.isConfigured) {
-      console.warn('Resend API key not configured. Email notifications will be disabled.');
+    this.isConfigured = this.checkConfiguration();
+
+    if (this.isConfigured) {
+      this.transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+        tls: {
+          rejectUnauthorized: false // Allow self-signed certificates
+        }
+      });
+    } else {
+      console.warn('SMTP configuration incomplete. Email notifications will be disabled.');
     }
   }
 
-  async sendEmail({ to, subject, text, html, templateData = {} }: EmailData) {
+  private checkConfiguration(): boolean {
+    return !!(
+      process.env.SMTP_HOST &&
+      process.env.SMTP_PORT &&
+      process.env.SMTP_USER &&
+      process.env.SMTP_PASS
+    );
+  }
+
+  async sendEmail({ to, cc, subject, text, html, templateData = {}, attachments }: EmailData) {
     if (!this.isConfigured) {
       console.log('Email service not configured. Would have sent:', { to, subject });
       return { success: false, message: 'Email service not configured' };
     }
 
     try {
-      const emailData = {
-        from: `${process.env.RESEND_FROM_NAME || 'ACT Coaching For Life'} <${FROM_EMAIL}>`,
-        to: Array.isArray(to) ? to : [to],
+      const mailOptions: any = {
+        from: `${process.env.SMTP_FROM_NAME || 'ACT Coaching For Life'} <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
+        to: Array.isArray(to) ? to.join(', ') : to,
         subject: subject,
         text: text,
         html: html,
       };
 
-      console.log('Attempting to send email with Resend:', {
-        to: emailData.to,
-        from: emailData.from,
-        subject: emailData.subject,
-        hasApiKey: !!process.env.RESEND_API_KEY,
-        apiKeyLength: process.env.RESEND_API_KEY?.length
+      if (cc && cc.length > 0) {
+        mailOptions.cc = cc.join(', ');
+      }
+
+      if (attachments && attachments.length > 0) {
+        mailOptions.attachments = attachments.map(att => ({
+          filename: att.filename,
+          content: att.content,
+          contentType: att.contentType || 'application/octet-stream'
+        }));
+      }
+
+      console.log('Attempting to send email via SMTP:', {
+        to: mailOptions.to,
+        from: mailOptions.from,
+        subject: mailOptions.subject,
+        hasAttachments: !!(attachments && attachments.length > 0)
       });
 
-      const { data, error } = await resend.emails.send(emailData);
-      
-      if (error) {
-        console.error('Resend error:', error);
-        return { 
-          success: false, 
-          error: error.message || 'Email sending failed',
-          details: error
-        };
-      }
-      
-      console.log('Email sent successfully to:', to);
-      console.log('Resend response:', data);
-      return { success: true, messageId: data.id };
+      const info = await this.transporter.sendMail(mailOptions);
+
+      console.log('Email sent successfully:', info.messageId);
+      return { success: true, messageId: info.messageId };
     } catch (error: any) {
       console.error('Email sending failed:', error);
-      
-      // Return detailed error for debugging
-      return { 
-        success: false, 
+
+      return {
+        success: false,
         error: error.message,
         details: error
       };
@@ -120,7 +144,7 @@ class EmailService {
           <div class="content">
             <h2>Hi ${user.first_name || user.email}!</h2>
             <p>We're thrilled to have you join our community of individuals committed to personal growth and well-being.</p>
-            
+
             ${user.role === 'client' ? `
               <p>As a client, you now have access to:</p>
               <ul>
@@ -144,9 +168,9 @@ class EmailService {
               <p>Ready to help clients on their journey? Access your coach dashboard:</p>
               <a href="${process.env.FRONTEND_URL || 'http://localhost:4000'}/coaches" class="button">Go to Dashboard</a>
             `}
-            
+
             <p>If you have any questions or need assistance, our support team is here to help. Simply reply to this email or contact us through the platform.</p>
-            
+
             <p>Welcome aboard!</p>
             <p><strong>The ACT Coaching For Life Team</strong></p>
           </div>
@@ -161,18 +185,18 @@ class EmailService {
 
     const text = `
       Welcome to ACT Coaching For Life!
-      
+
       Hi ${user.first_name || user.email}!
-      
+
       We're thrilled to have you join our community of individuals committed to personal growth and well-being.
-      
-      ${user.role === 'client' 
+
+      ${user.role === 'client'
         ? 'As a client, you can browse qualified ACT coaches, book appointments, message securely, have video sessions, and track your progress.'
         : 'As a coach, you can manage clients, set availability, message securely, conduct video sessions, and view analytics.'
       }
-      
+
       Get started at: ${process.env.FRONTEND_URL || 'http://localhost:4000'}/${user.role}s
-      
+
       Welcome aboard!
       The ACT Coaching For Life Team
     `;
@@ -187,7 +211,7 @@ class EmailService {
 
   async sendAppointmentConfirmation({ clientEmail, coachEmail, clientName, coachName, appointmentDetails }: AppointmentConfirmationData) {
     const subject = 'Appointment Confirmed - ACT Coaching For Life';
-    
+
     const clientHtml = `
       <!DOCTYPE html>
       <html>
@@ -210,7 +234,7 @@ class EmailService {
           <div class="content">
             <h2>Hi ${clientName}!</h2>
             <p>Your appointment has been confirmed with coach <strong>${coachName}</strong>.</p>
-            
+
             <div class="appointment-box">
               <h3>Appointment Details:</h3>
               <p><strong>Date:</strong> ${appointmentDetails.date}</p>
@@ -218,9 +242,9 @@ class EmailService {
               <p><strong>Duration:</strong> ${appointmentDetails.duration || '60 minutes'}</p>
               <p><strong>Type:</strong> ${appointmentDetails.type || 'Video Session'}</p>
             </div>
-            
+
             <p>You'll receive a meeting link before your appointment starts. You can also manage this appointment from your dashboard.</p>
-            
+
             <p>Looking forward to your session!</p>
             <p><strong>ACT Coaching For Life</strong></p>
           </div>
@@ -256,7 +280,7 @@ class EmailService {
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/reset-password?token=${resetToken}`;
-    
+
     const subject = 'Reset Your Password - ACT Coaching For Life';
     const html = `
       <!DOCTYPE html>
@@ -280,19 +304,19 @@ class EmailService {
           </div>
           <div class="content">
             <p>We received a request to reset your password for your ACT Coaching For Life account.</p>
-            
+
             <p>Click the button below to reset your password:</p>
             <p><a href="${resetUrl}" class="button">Reset Password</a></p>
-            
+
             <p>Or copy and paste this link into your browser:</p>
             <p style="word-break: break-all; color: #666;">${resetUrl}</p>
-            
+
             <div class="warning">
               <strong>Security Note:</strong> This link will expire in 1 hour for your security. If you didn't request this reset, please ignore this email.
             </div>
-            
+
             <p>If you continue to have problems, please contact our support team.</p>
-            
+
             <p><strong>ACT Coaching For Life Team</strong></p>
           </div>
         </div>
@@ -302,14 +326,14 @@ class EmailService {
 
     const text = `
       Password Reset Request
-      
+
       We received a request to reset your password for your ACT Coaching For Life account.
-      
+
       Reset your password by clicking this link: ${resetUrl}
-      
+
       This link will expire in 1 hour for your security.
       If you didn't request this reset, please ignore this email.
-      
+
       ACT Coaching For Life Team
     `;
 
@@ -323,7 +347,7 @@ class EmailService {
 
   async sendCoachApplicationConfirmation({ email, first_name, application_id }: { email: string; first_name: string; application_id: string }) {
     const subject = 'Application Received - ACT Coaching For Life';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -348,7 +372,7 @@ class EmailService {
           <div class="content">
             <h2>Thank you, ${first_name}!</h2>
             <p>We have received your coach application and it is currently under review.</p>
-            
+
             <div class="info-box">
               <h3>What happens next?</h3>
               <ul>
@@ -357,12 +381,12 @@ class EmailService {
                 <li>You'll receive an email notification with our decision</li>
               </ul>
             </div>
-            
+
             <p><strong>Application ID:</strong> ${application_id}</p>
             <p>Please keep this ID for your records.</p>
-            
+
             <p>If you have any questions, please contact us at support@actcoachingforlife.com</p>
-            
+
             <p>Best regards,<br><strong>ACT Coaching For Life Team</strong></p>
           </div>
           <div class="footer">
@@ -376,21 +400,21 @@ class EmailService {
 
     const text = `
       Application Received - ACT Coaching For Life
-      
+
       Thank you, ${first_name}!
-      
+
       We have received your coach application and it is currently under review.
-      
+
       What happens next:
       - Our team will review your qualifications within 3-5 business days
       - We may contact your professional references
       - You'll receive an email notification with our decision
-      
+
       Application ID: ${application_id}
       Please keep this ID for your records.
-      
+
       If you have questions, contact support@actcoachingforlife.com
-      
+
       Best regards,
       ACT Coaching For Life Team
     `;
@@ -406,7 +430,7 @@ class EmailService {
   async sendCoachApprovalEmail({ email, first_name }: { email: string; first_name: string }) {
     const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
     const subject = 'Congratulations! Your Coach Application Has Been Approved';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -432,7 +456,7 @@ class EmailService {
           <div class="content">
             <h2>Congratulations, ${first_name}!</h2>
             <p>Your coach application has been approved. You can now log in to your coach dashboard and start helping clients achieve their goals.</p>
-            
+
             <div class="next-steps">
               <h3>Next Steps:</h3>
               <ul>
@@ -442,12 +466,12 @@ class EmailService {
                 <li>Start accepting client bookings</li>
               </ul>
             </div>
-            
+
             <p>Ready to get started?</p>
             <p><a href="${loginUrl}" class="button">Login to Your Dashboard</a></p>
-            
+
             <p>If you have any questions or need assistance, our support team is here to help at support@actcoachingforlife.com</p>
-            
+
             <p>Welcome to the team!</p>
             <p><strong>ACT Coaching For Life Team</strong></p>
           </div>
@@ -462,19 +486,19 @@ class EmailService {
 
     const text = `
       Congratulations! Your Coach Application Has Been Approved
-      
+
       Dear ${first_name},
-      
+
       Your coach application has been approved. You can now log in to your coach dashboard and start helping clients.
-      
+
       Next Steps:
       - Complete your coach profile
       - Set your availability schedule
       - Review platform guidelines
       - Start accepting client bookings
-      
+
       Login URL: ${loginUrl}
-      
+
       Welcome to the team!
       ACT Coaching For Life Team
     `;
@@ -489,7 +513,7 @@ class EmailService {
 
   async sendCoachRejectionEmail({ email, first_name, rejection_reason }: { email: string; first_name: string; rejection_reason: string }) {
     const subject = 'Update on Your Coach Application';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -514,18 +538,18 @@ class EmailService {
           <div class="content">
             <h2>Thank you for your interest, ${first_name}</h2>
             <p>Thank you for your interest in becoming a coach with ACT Coaching For Life. After careful review, we have decided not to move forward with your application at this time.</p>
-            
+
             <div class="reason-box">
               <h3>Feedback:</h3>
               <p>${rejection_reason}</p>
             </div>
-            
+
             <p>You may reapply after 6 months. We encourage you to gain additional experience or training in the areas mentioned above.</p>
-            
+
             <p>If you have questions about this decision, please contact support@actcoachingforlife.com</p>
-            
+
             <p>We appreciate your interest in our platform and wish you the best in your coaching journey.</p>
-            
+
             <p>Best regards,<br><strong>ACT Coaching For Life Team</strong></p>
           </div>
           <div class="footer">
@@ -539,17 +563,17 @@ class EmailService {
 
     const text = `
       Application Update - ACT Coaching For Life
-      
+
       Dear ${first_name},
-      
+
       Thank you for your interest in becoming a coach with ACT Coaching For Life. After careful review, we have decided not to move forward with your application at this time.
-      
+
       Feedback: ${rejection_reason}
-      
+
       You may reapply after 6 months. We encourage you to gain additional experience or training in the areas mentioned above.
-      
+
       If you have questions, please contact support@actcoachingforlife.com
-      
+
       Best regards,
       ACT Coaching For Life Team
     `;
@@ -570,7 +594,7 @@ class EmailService {
   }) {
     const applicationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/register/coach/verification?id=${application_id}`;
     const subject = 'Complete Your Coach Application - ACT Coaching For Life';
-    
+
     const html = `
       <!DOCTYPE html>
       <html>
@@ -610,6 +634,482 @@ class EmailService {
       html
     });
   }
+
+  async sendStaffInvitation({
+    email,
+    first_name,
+    last_name,
+    invitationUrl,
+    invitedBy,
+    department,
+    role_level,
+    customMessage,
+    expiresAt
+  }: {
+    email: string;
+    first_name: string;
+    last_name: string;
+    invitationUrl: string;
+    invitedBy: string;
+    department: string;
+    role_level: string;
+    customMessage?: string;
+    expiresAt: string;
+  }) {
+    const subject = 'Staff Invitation - Join ACT Coaching For Life Team';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Staff Invitation</title>
+        <style>
+          body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f4f7fa;
+          }
+          .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 300;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .invitation-card {
+            background-color: #f8f9ff;
+            border: 1px solid #e1e8ff;
+            border-radius: 8px;
+            padding: 25px;
+            margin: 25px 0;
+          }
+          .role-badge {
+            display: inline-block;
+            background-color: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: capitalize;
+          }
+          .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white !important;
+            text-decoration: none !important;
+            padding: 16px 32px;
+            border-radius: 25px;
+            font-weight: bold;
+            margin: 20px 0;
+            text-align: center;
+            transition: all 0.3s ease;
+          }
+          .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+          }
+          .info-item {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+          }
+          .info-label {
+            font-weight: bold;
+            color: #4a5568;
+            font-size: 14px;
+            margin-bottom: 5px;
+          }
+          .info-value {
+            color: #2d3748;
+            font-size: 16px;
+          }
+          .custom-message {
+            background-color: #fff7ed;
+            border-left: 4px solid #f59e0b;
+            padding: 20px;
+            margin: 20px 0;
+            font-style: italic;
+          }
+          .footer {
+            background-color: #f7fafc;
+            padding: 30px;
+            text-align: center;
+            color: #718096;
+            font-size: 14px;
+            border-top: 1px solid #e2e8f0;
+          }
+          .expiry-notice {
+            background-color: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #991b1b;
+            text-align: center;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🎉 You're Invited to Join Our Team!</h1>
+          </div>
+          <div class="content">
+            <h2>Hello ${first_name} ${last_name},</h2>
+            <p>You have been invited by <strong>${invitedBy}</strong> to join the ACT Coaching For Life team as a staff member!</p>
+
+            <div class="invitation-card">
+              <h3 style="margin-top: 0; color: #667eea;">Your Role Details</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-label">Position</div>
+                  <div class="info-value">
+                    <span class="role-badge">${role_level}</span>
+                  </div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Department</div>
+                  <div class="info-value">${department}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Email</div>
+                  <div class="info-value">${email}</div>
+                </div>
+                <div class="info-item">
+                  <div class="info-label">Invited By</div>
+                  <div class="info-value">${invitedBy}</div>
+                </div>
+              </div>
+            </div>
+
+            ${customMessage ? `
+              <div class="custom-message">
+                <strong>Personal Message:</strong><br>
+                ${customMessage}
+              </div>
+            ` : ''}
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${invitationUrl}" class="cta-button">Accept Invitation & Create Account</a>
+            </div>
+
+            <div class="expiry-notice">
+              ⏰ <strong>Important:</strong> This invitation expires on ${expiresAt}
+            </div>
+
+            <p><strong>What happens next?</strong></p>
+            <ol>
+              <li>Click the "Accept Invitation" button above</li>
+              <li>Create a secure password for your account</li>
+              <li>Complete your staff profile</li>
+              <li>Start collaborating with the team!</li>
+            </ol>
+
+            <p><strong>Need help?</strong> Contact our support team at <a href="mailto:support@actcoachingforlife.com">support@actcoachingforlife.com</a></p>
+
+            <p>We're excited to have you join our team!</p>
+          </div>
+          <div class="footer">
+            <p><strong>ACT Coaching For Life</strong></p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            <p>This invitation was sent to ${email}</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+              If you did not expect this invitation, please contact us at support@actcoachingforlife.com
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Staff Invitation - Join ACT Coaching For Life Team
+
+      Hello ${first_name} ${last_name},
+
+      You have been invited by ${invitedBy} to join the ACT Coaching For Life team!
+
+      Role Details:
+      - Position: ${role_level}
+      - Department: ${department}
+      - Email: ${email}
+      - Invited by: ${invitedBy}
+
+      ${customMessage ? `Personal Message: ${customMessage}\n` : ''}
+
+      To accept this invitation and create your account, please visit:
+      ${invitationUrl}
+
+      IMPORTANT: This invitation expires on ${expiresAt}
+
+      What happens next:
+      1. Click the invitation link above
+      2. Create a secure password for your account
+      3. Complete your staff profile
+      4. Start collaborating with the team!
+
+      Need help? Contact our support team at support@actcoachingforlife.com
+
+      We're excited to have you join our team!
+
+      Best regards,
+      The ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
+  async sendUserCredentials({ email, password, firstName, lastName, role }: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+    role: string;
+  }) {
+    const subject = 'Your ACT Coaching For Life Account Credentials';
+    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Your Account Credentials</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
+          .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .credentials-box {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+          }
+          .credentials-box h3 {
+            margin-top: 0;
+            color: #495057;
+            font-size: 16px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+          }
+          .credential-item {
+            margin: 15px 0;
+            padding: 12px;
+            background: white;
+            border-radius: 4px;
+            border-left: 4px solid #667eea;
+          }
+          .credential-label {
+            font-size: 12px;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+          }
+          .credential-value {
+            font-size: 16px;
+            color: #212529;
+            font-weight: 500;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+          }
+          .button {
+            display: inline-block;
+            padding: 14px 35px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 16px;
+            margin: 20px 0;
+            transition: transform 0.2s;
+          }
+          .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #e9ecef;
+          }
+          .security-tips {
+            background: #e8f4fd;
+            border: 1px solid #bee5eb;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+          }
+          .security-tips h4 {
+            margin-top: 0;
+            color: #004085;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Your Account Has Been Created</h1>
+          </div>
+          <div class="content">
+            <h2>Welcome${firstName ? `, ${firstName}` : ''}!</h2>
+            <p>An administrator has created your ${role} account for ACT Coaching For Life. Below are your login credentials:</p>
+
+            <div class="credentials-box">
+              <h3>Login Credentials</h3>
+              <div class="credential-item">
+                <div class="credential-label">Email Address</div>
+                <div class="credential-value">${email}</div>
+              </div>
+              <div class="credential-item">
+                <div class="credential-label">Temporary Password</div>
+                <div class="credential-value">${password}</div>
+              </div>
+              <div class="credential-item">
+                <div class="credential-label">Account Type</div>
+                <div class="credential-value">${role.charAt(0).toUpperCase() + role.slice(1)}</div>
+              </div>
+            </div>
+
+            <div class="warning">
+              <span>⚠️</span>
+              <strong>Important:</strong> Please change your password immediately after your first login for security purposes.
+            </div>
+
+            <center>
+              <a href="${loginUrl}" class="button">Login to Your Account</a>
+            </center>
+
+            <div class="security-tips">
+              <h4>🛡️ Security Tips:</h4>
+              <ul>
+                <li>Never share your password with anyone</li>
+                <li>Use a strong, unique password</li>
+                <li>Enable two-factor authentication if available</li>
+                <li>Log out when using shared computers</li>
+              </ul>
+            </div>
+
+            <p>If you did not expect this email or have any concerns, please contact our support team immediately at <a href="mailto:support@actcoachingforlife.com">support@actcoachingforlife.com</a></p>
+
+            <p>Best regards,<br><strong>The ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p><strong>ACT Coaching For Life</strong></p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+              This is an automated message. Please do not reply directly to this email.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Your ACT Coaching For Life Account Has Been Created
+
+      Welcome${firstName ? `, ${firstName}` : ''}!
+
+      An administrator has created your ${role} account. Here are your login credentials:
+
+      Email: ${email}
+      Temporary Password: ${password}
+      Account Type: ${role.charAt(0).toUpperCase() + role.slice(1)}
+
+      IMPORTANT: Please change your password immediately after your first login.
+
+      Login at: ${loginUrl}
+
+      Security Tips:
+      - Never share your password with anyone
+      - Use a strong, unique password
+      - Enable two-factor authentication if available
+      - Log out when using shared computers
+
+      If you did not expect this email, please contact support@actcoachingforlife.com immediately.
+
+      Best regards,
+      The ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
 }
 
-export default new EmailService();
+const emailService = new EmailService();
+
+// Export the service and individual methods
+export default emailService;
+export const sendEmail = emailService.sendEmail.bind(emailService);

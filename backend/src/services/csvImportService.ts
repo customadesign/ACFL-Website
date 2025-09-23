@@ -2,7 +2,7 @@ import { parse } from 'csv-parse';
 import * as bcrypt from 'bcryptjs';
 import { supabase } from '../lib/supabase';
 import { generateMemorablePassword } from '../utils/passwordGenerator';
-import emailService from './smtpEmailService';
+import emailService from './emailService';
 
 interface ImportResult {
   success: boolean;

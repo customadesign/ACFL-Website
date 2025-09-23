@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
-import smtpEmailService from '../services/smtpEmailService';
+import emailService from '../services/emailService';
 
 interface AuthRequest extends Request {
   user?: {
@@ -111,7 +111,7 @@ export const sendStaffInvitation = async (req: AuthRequest, res: Response) => {
     try {
       const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/staff/accept-invitation?token=${invitationToken}`;
 
-      const emailResult = await smtpEmailService.sendStaffInvitation({
+      const emailResult = await emailService.sendStaffInvitation({
         email,
         first_name: first_name || 'New Team Member',
         last_name: last_name || '',
@@ -242,7 +242,7 @@ export const resendStaffInvitation = async (req: AuthRequest, res: Response) => 
     try {
       const invitationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/staff/accept-invitation?token=${newToken}`;
 
-      const emailResult = await smtpEmailService.sendStaffInvitation({
+      const emailResult = await emailService.sendStaffInvitation({
         email: invitation.email,
         first_name: invitation.first_name || 'New Team Member',
         last_name: invitation.last_name || '',
