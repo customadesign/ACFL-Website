@@ -14,6 +14,7 @@ export interface AuditLogEntry {
 export interface AuditRequest extends Request {
   user?: {
     id: string;
+    userId: string;
     email: string;
     role: 'admin' | 'staff' | 'coach' | 'client';
     first_name?: string;

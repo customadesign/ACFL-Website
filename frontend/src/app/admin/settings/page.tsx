@@ -47,8 +47,8 @@ interface SystemSettings {
     ipWhitelist: string[];
   };
   payment: {
-    stripePublicKey: string;
-    stripeWebhookSecret: string;
+    squareApplicationId: string;
+    squareWebhookSecret: string;
     defaultCurrency: string;
     taxRate: number;
     processingFee: number;
@@ -119,10 +119,10 @@ export default function AdminSettings() {
           ipWhitelist: []
         },
         payment: {
-          stripePublicKey: 'pk_test_...',
-          stripeWebhookSecret: 'whsec_...',
+          squareApplicationId: 'sq0idp-...',
+          squareWebhookSecret: 'sq_webhook_...',
           defaultCurrency: 'USD',
-          taxRate: 8.5,
+          taxRate: 0,
           processingFee: 2.9
         },
         scheduling: {

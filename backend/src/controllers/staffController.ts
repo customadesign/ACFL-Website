@@ -6,6 +6,7 @@ import { auditLogger, AuditRequest } from '../utils/auditLogger';
 interface AuthRequest extends AuditRequest {
   user?: {
     id: string;
+    userId: string;
     role: 'admin' | 'staff' | 'coach' | 'client';
     email: string;
     first_name?: string;

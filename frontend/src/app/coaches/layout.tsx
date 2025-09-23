@@ -12,7 +12,7 @@ import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, Settings } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, Settings, CreditCard } from 'lucide-react';
 
 export default function CoachLayout({
   children,
@@ -108,6 +108,7 @@ export default function CoachLayout({
       icon: MessageSquare
     },
     { name: 'Clients', href: '/coaches/clients', icon: Users },
+    { name: 'Billing & Earnings', href: '/coaches/billing', icon: CreditCard },
     { name: 'Revenue & Performance', href: '/coaches/revenue', icon: TrendingUp },
     { name: 'Profile', href: '/coaches/profile', icon: User },
   ];

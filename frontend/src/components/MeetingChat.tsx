@@ -23,6 +23,7 @@ interface MeetingChatProps {
   participantName: string
   isVisible: boolean
   onToggle: () => void
+  isScreenSharing?: boolean
 }
 
 interface ChatMessage {
@@ -35,11 +36,12 @@ interface ChatMessage {
   expires_at: string
 }
 
-export default function MeetingChat({ 
-  meetingId, 
-  participantName, 
-  isVisible, 
-  onToggle 
+export default function MeetingChat({
+  meetingId,
+  participantName,
+  isVisible,
+  onToggle,
+  isScreenSharing = false
 }: MeetingChatProps) {
   const { user } = useAuth()
   const [messages, setMessages] = useState<ChatMessage[]>([])
@@ -338,16 +340,16 @@ export default function MeetingChat({
   // Supabase provides optional persistence when configured
 
   return (
-    <div className="fixed bottom-4 right-4 z-50">
+    <div className={`fixed ${isScreenSharing ? 'bottom-20 md:bottom-20' : 'bottom-20'} right-2 sm:right-4 z-50`}>
       {/* Chat Toggle Button */}
       <Button
         onClick={onToggle}
-        className="rounded-full h-12 w-12 p-0 mb-2 shadow-lg relative"
+        className="rounded-full h-10 w-10 sm:h-12 sm:w-12 p-0 mb-2 shadow-lg relative"
         variant={isVisible ? "default" : "outline"}
       >
-        <MessageSquare size={20} />
+        <MessageSquare size={16} className="sm:size-5" />
         {unreadCount > 0 && (
-          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
             {unreadCount > 9 ? '9+' : unreadCount}
           </div>
         )}
@@ -355,108 +357,217 @@ export default function MeetingChat({
 
       {/* Chat Panel */}
       {isVisible && (
-        <Card className="w-80 h-96 flex flex-col shadow-xl">
-          {/* Header */}
-          <div className="flex items-center justify-between p-3 border-b bg-gray-50 rounded-t-lg">
-            <div className="flex items-center gap-2">
-              <Users size={16} className="text-gray-600" />
-              <h3 className="text-sm font-medium">Meeting Chat</h3>
-              {/* Connection status indicator */}
-              <div className={`w-2 h-2 rounded-full ${
-                isConnected ? 'bg-green-500' : 'bg-red-500'
-              }`} title={isConnected ? 'Connected' : 'Disconnected'} />
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onToggle}
-              className="h-6 w-6 p-0"
-            >
-              <X size={14} />
-            </Button>
+        <>
+          {/* Mobile: Full screen overlay */}
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 sm:hidden">
+            <Card className="w-full h-[85vh] flex flex-col shadow-xl rounded-t-lg rounded-b-none">
+              {/* Header */}
+              <div className="flex items-center justify-between p-3 border-b bg-gray-50 rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Users size={16} className="text-gray-600" />
+                  <h3 className="text-sm font-medium">Meeting Chat</h3>
+                  {/* Connection status indicator */}
+                  <div className={`w-2 h-2 rounded-full ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`} title={isConnected ? 'Connected' : 'Disconnected'} />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggle}
+                  className="h-8 w-8 p-0"
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+
+              {/* Messages */}
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"
+              >
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    No messages yet. Start the conversation!
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${isMyMessage(message.sender_id) ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-[85%] ${
+                        isMyMessage(message.sender_id)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-900 border'
+                      } rounded-lg px-3 py-2 shadow-sm`}>
+                        {!isMyMessage(message.sender_id) && (
+                          <div className="text-xs font-medium text-gray-600 mb-1">
+                            {message.sender_name}
+                          </div>
+                        )}
+                        <div className="text-sm break-words">{message.message}</div>
+                        <div className={`text-xs mt-1 ${
+                          isMyMessage(message.sender_id) ? 'text-blue-200' : 'text-gray-500'
+                        }`}>
+                          {formatTime(message.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Scroll to bottom button */}
+              {isScrolledUp && (
+                <div className="absolute bottom-20 right-6">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-full h-8 w-8 p-0 shadow-lg"
+                    onClick={scrollToBottom}
+                  >
+                    <ChevronDown size={14} />
+                  </Button>
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="p-3 border-t bg-white">
+                <div className="flex gap-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type a message..."
+                    className="flex-1 text-sm"
+                    disabled={sending}
+                    maxLength={500}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() || sending}
+                    size="sm"
+                    className="px-3"
+                  >
+                    <Send size={14} />
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {isConnected
+                    ? "Real-time chat powered by VideoSDK"
+                    : "Connecting to chat..."
+                  }
+                </div>
+              </div>
+            </Card>
           </div>
 
-          {/* Messages */}
-          <div 
-            ref={messagesContainerRef}
-            className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"
-          >
-            {messages.length === 0 ? (
-              <div className="text-center text-gray-500 text-sm py-8">
-                No messages yet. Start the conversation!
+          {/* Desktop: Floating panel */}
+          <Card className="hidden sm:flex w-80 h-96 flex-col shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 border-b bg-gray-50 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-gray-600" />
+                <h3 className="text-sm font-medium">Meeting Chat</h3>
+                {/* Connection status indicator */}
+                <div className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                }`} title={isConnected ? 'Connected' : 'Disconnected'} />
               </div>
-            ) : (
-              messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex ${isMyMessage(message.sender_id) ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div className={`max-w-[80%] ${
-                    isMyMessage(message.sender_id) 
-                      ? 'bg-blue-600 text-white' 
-                      : 'bg-white text-gray-900 border'
-                  } rounded-lg px-3 py-2 shadow-sm`}>
-                    {!isMyMessage(message.sender_id) && (
-                      <div className="text-xs font-medium text-gray-600 mb-1">
-                        {message.sender_name}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="h-6 w-6 p-0"
+              >
+                <X size={14} />
+              </Button>
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"
+            >
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-500 text-sm py-8">
+                  No messages yet. Start the conversation!
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${isMyMessage(message.sender_id) ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[80%] ${
+                      isMyMessage(message.sender_id)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-900 border'
+                    } rounded-lg px-3 py-2 shadow-sm`}>
+                      {!isMyMessage(message.sender_id) && (
+                        <div className="text-xs font-medium text-gray-600 mb-1">
+                          {message.sender_name}
+                        </div>
+                      )}
+                      <div className="text-sm break-words">{message.message}</div>
+                      <div className={`text-xs mt-1 ${
+                        isMyMessage(message.sender_id) ? 'text-blue-200' : 'text-gray-500'
+                      }`}>
+                        {formatTime(message.created_at)}
                       </div>
-                    )}
-                    <div className="text-sm">{message.message}</div>
-                    <div className={`text-xs mt-1 ${
-                      isMyMessage(message.sender_id) ? 'text-blue-200' : 'text-gray-500'
-                    }`}>
-                      {formatTime(message.created_at)}
                     </div>
                   </div>
-                </div>
-              ))
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Scroll to bottom button */}
+            {isScrolledUp && (
+              <div className="absolute bottom-16 right-6">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-full h-8 w-8 p-0 shadow-lg"
+                  onClick={scrollToBottom}
+                >
+                  <ChevronDown size={14} />
+                </Button>
+              </div>
             )}
-            <div ref={messagesEndRef} />
-          </div>
 
-          {/* Scroll to bottom button */}
-          {isScrolledUp && (
-            <div className="absolute bottom-16 right-6">
-              <Button
-                size="sm"
-                variant="secondary"
-                className="rounded-full h-8 w-8 p-0 shadow-lg"
-                onClick={scrollToBottom}
-              >
-                <ChevronDown size={14} />
-              </Button>
+            {/* Input */}
+            <div className="p-3 border-t bg-white rounded-b-lg">
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message..."
+                  className="flex-1 text-sm"
+                  disabled={sending}
+                  maxLength={500}
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || sending}
+                  size="sm"
+                  className="px-3"
+                >
+                  <Send size={14} />
+                </Button>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {isConnected
+                  ? "Real-time chat powered by VideoSDK"
+                  : "Connecting to chat..."
+                }
+              </div>
             </div>
-          )}
-
-          {/* Input */}
-          <div className="p-3 border-t bg-white rounded-b-lg">
-            <div className="flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Type a message..."
-                className="flex-1 text-sm"
-                disabled={sending}
-                maxLength={500}
-              />
-              <Button
-                onClick={sendMessage}
-                disabled={!newMessage.trim() || sending}
-                size="sm"
-                className="px-3"
-              >
-                <Send size={14} />
-              </Button>
-            </div>
-            <div className="text-xs text-gray-500 mt-1">
-              {isConnected 
-                ? "Real-time chat powered by VideoSDK" 
-                : "Connecting to chat..."
-              }
-            </div>
-          </div>
-        </Card>
+          </Card>
+        </>
       )}
     </div>
   )

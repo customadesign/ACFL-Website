@@ -12,7 +12,7 @@ import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, UserSearch, User, Settings } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, UserSearch, User, Settings, CreditCard } from 'lucide-react';
 
 export default function ClientLayout({
   children,
@@ -90,18 +90,19 @@ export default function ClientLayout({
   const navItems = [
     { name: 'Dashboard', href: '/clients', icon: Home },
     { name: 'Find Coaches', href: '/clients/search-coaches', icon: UserSearch },
-    { 
-      name: 'Appointments', 
+    {
+      name: 'Appointments',
       href: '/clients/appointments',
       notificationCount: appointmentNotificationCount,
       icon: Calendar
     },
-    { 
-      name: 'Messages', 
+    {
+      name: 'Messages',
       href: '/clients/messages',
       notificationCount: unreadMessageCount,
       icon: MessageSquare
     },
+    { name: 'Billing & Payments', href: '/clients/billing', icon: CreditCard },
     { name: 'Profile', href: '/clients/profile', icon: User },
   ];
 

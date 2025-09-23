@@ -123,21 +123,21 @@ function WaitingLobby({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900 flex items-center justify-center">
-      <Card className="w-full max-w-md p-8 text-center">
-        <div className="mb-6">
-          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <Clock className="text-blue-600" size={40} />
+    <div className="fixed inset-0 bg-gray-900 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md p-6 sm:p-8 text-center">
+        <div className="mb-4 sm:mb-6">
+          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Clock className="text-blue-600" size={32} />
           </div>
-          <h2 className="text-2xl font-bold mb-2">Waiting for Host</h2>
-          <p className="text-gray-600">
+          <h2 className="text-xl sm:text-2xl font-bold mb-2">Waiting for Host</h2>
+          <p className="text-gray-600 text-sm sm:text-base">
             Hi {participantName}, you're in the waiting room
           </p>
         </div>
 
-        <div className="mb-6">
+        <div className="mb-4 sm:mb-6">
           <p className="text-sm text-gray-500 mb-2">Waiting time</p>
-          <p className="text-3xl font-mono font-bold text-gray-800">
+          <p className="text-2xl sm:text-3xl font-mono font-bold text-gray-800">
             {formatTime(waitTime)}
           </p>
         </div>
@@ -150,6 +150,7 @@ function WaitingLobby({
             variant="outline"
             onClick={onLeave}
             className="w-full"
+            size="sm"
           >
             Leave Waiting Room
           </Button>
@@ -288,7 +289,7 @@ function ParticipantView({ participantId }: { participantId: string }) {
 
   return (
     <div className={`relative bg-gray-900 rounded-lg overflow-hidden aspect-video transition-all duration-200 ${
-      isSpeaking ? 'ring-4 ring-green-500 ring-opacity-75' : ''
+      isSpeaking ? 'ring-2 sm:ring-4 ring-green-500 ring-opacity-75' : ''
     }`}>
       <audio ref={micRef} autoPlay muted={isLocal} />
       {webcamOn ? (
@@ -303,39 +304,40 @@ function ParticipantView({ participantId }: { participantId: string }) {
       ) : (
         <div className="w-full h-full flex items-center justify-center bg-gray-800">
           <div className="text-center">
-            <div className={`w-20 h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3 transition-all duration-200 ${
+            <div className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 transition-all duration-200 ${
               isSpeaking ? 'ring-2 ring-green-400 ring-opacity-75' : ''
             }`}>
-              <VideoOff className="text-gray-400" size={42} />
+              <VideoOff className="text-gray-400" size={24} />
             </div>
-            <p className="text-white font-medium">{displayName}</p>
+            <p className="text-white font-medium text-xs sm:text-sm truncate px-2">{displayName}</p>
           </div>
         </div>
       )}
-      
+
       {/* Speaking indicator overlay */}
       {isSpeaking && (
-        <div className="absolute top-2 right-2">
-          <div className="bg-green-500 rounded-full px-2 py-1 flex items-center gap-1">
-            <div className="w-2 h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-white text-xs font-medium">Speaking</span>
+        <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
+          <div className="bg-green-500 rounded-full px-1 sm:px-2 py-1 flex items-center gap-1">
+            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
+            <span className="text-white text-xs font-medium hidden sm:inline">Speaking</span>
           </div>
         </div>
       )}
-      
+
       {/* Name and status overlay */}
-      <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between">
-        <div className={`bg-black/60 rounded px-2 py-1 flex items-center gap-2 transition-all duration-200 ${
+      <div className="absolute bottom-1 left-1 right-1 sm:bottom-2 sm:left-2 sm:right-2 flex items-center justify-between">
+        <div className={`bg-black/60 rounded px-1 sm:px-2 py-1 flex items-center gap-1 sm:gap-2 transition-all duration-200 max-w-[70%] ${
           isSpeaking ? 'bg-green-900/60' : ''
         }`}>
-          <span className="text-white text-sm">{displayName}</span>
-          {isLocal && <span className="text-xs text-blue-400">(You)</span>}
-          {isSpeaking && <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />}
+          <span className="text-white text-xs sm:text-sm truncate">{displayName}</span>
+          {isLocal && <span className="text-xs text-blue-400 hidden sm:inline">(You)</span>}
+          {isLocal && <span className="text-xs text-blue-400 sm:hidden">You</span>}
+          {isSpeaking && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0" />}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-1 flex-shrink-0">
           {!micOn && (
-            <div className="bg-red-600 rounded p-1">
-              <MicOff size={14} className="text-white" />
+            <div className="bg-red-600 rounded p-0.5 sm:p-1">
+              <MicOff size={10} className="text-white sm:size-3" />
             </div>
           )}
         </div>
@@ -466,133 +468,134 @@ function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatTogg
 
   return (
     <>
-      <div className="flex items-center justify-center gap-3 p-4 bg-white border-t shadow-lg backdrop-blur-sm">
+      <div className="flex items-center justify-center gap-3 sm:gap-9 p-3 sm:p-6 bg-white border-t shadow-lg backdrop-blur-sm">
         {/* Microphone Control */}
         <Button
           variant={localMicOn ? "outline" : "destructive"}
-          size="lg"
+          size="sm"
           onClick={handleMicToggle}
           disabled={micToggling}
-          className="rounded-full shadow-md"
+          className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
           title={localMicOn ? "Mute microphone" : "Unmute microphone"}
         >
           {micToggling ? (
-            <Loader2 size={20} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin sm:size-5" />
           ) : localMicOn ? (
-            <Mic size={20} />
+            <Mic size={16} className="sm:size-5" />
           ) : (
-            <MicOff size={20} />
+            <MicOff size={16} className="sm:size-5" />
           )}
         </Button>
 
         {/* Camera Control */}
         <Button
           variant={localWebcamOn ? "outline" : "destructive"}
-          size="lg"
+          size="sm"
           onClick={() => toggleWebcam()}
-          className="rounded-full shadow-md"
+          className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
           title={localWebcamOn ? "Turn off camera" : "Turn on camera"}
         >
-          {localWebcamOn ? <Video size={20} /> : <VideoOff size={20} />}
+          {localWebcamOn ? <Video size={16} className="sm:size-5" /> : <VideoOff size={16} className="sm:size-5" />}
         </Button>
 
-        {/* Screen Share Control */}
         <Button
           variant={isPresenting ? "default" : "outline"}
-          size="lg"
+          size="sm"
           onClick={handleScreenShare}
           disabled={isScreenSharing}
-          className={`rounded-full shadow-md ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
+          className={`rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 xs:flex ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
           title={isPresenting ? "Stop sharing screen" : "Share screen"}
         >
           {isScreenSharing ? (
-            <Loader2 size={20} className="animate-spin" />
+            <Loader2 size={16} className="animate-spin sm:size-5" />
           ) : (
-            <Share2 size={20} />
+            <Share2 size={16} className="sm:size-5" />
           )}
         </Button>
 
-        {/* Chat Control */}
         {onChatToggle && (
           <Button
             variant="outline"
-            size="lg"
+            size="sm"
             onClick={onChatToggle}
-            className="rounded-full shadow-md"
+            className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 hidden sm:w-12 xs:flex"
             title="Toggle chat"
           >
-            <MessageSquare size={20} />
+            <MessageSquare size={16} className="sm:size-5" />
           </Button>
         )}
 
         {/* End/Leave Meeting */}
         <Button
           variant="destructive"
-          size="lg"
+          size="sm"
           onClick={handleEndMeeting}
-          className="rounded-full px-6 shadow-md"
+          className="rounded-full px-3 sm:px-6 shadow-md flex-shrink-0 h-10 sm:h-12"
           title={isHost ? "End meeting for all" : "Leave meeting"}
         >
-          <PhoneOff size={20} className="mr-2" />
-          {isHost ? 'End' : 'Leave'}
+          <PhoneOff size={16} className="mr-1 sm:mr-2 sm:size-5" />
+          <span className="text-xs sm:text-sm">{isHost ? 'End' : 'Leave'}</span>
         </Button>
       </div>
 
-      {/* Status Indicators */}
-      <div className="bg-gray-50/95 px-4 py-2 border-t backdrop-blur-sm flex items-center justify-center gap-4 text-xs text-gray-600">
+      {/* Status Indicators - Hidden on small screens to save space */}
+      <div className="bg-gray-50/95 px-2 sm:px-4 py-2 border-t backdrop-blur-sm hidden sm:flex items-center justify-center gap-2 sm:gap-4 text-xs text-gray-600 overflow-x-auto">
         {localMicOn && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span>Mic on</span>
+            <span className="hidden md:inline">Mic on</span>
           </div>
         )}
         {localWebcamOn && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span>Camera on</span>
+            <span className="hidden md:inline">Camera on</span>
           </div>
         )}
         {isPresenting && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span>You're sharing your screen</span>
+            <span className="hidden md:inline">You're sharing your screen</span>
           </div>
         )}
         {presenterId && !isPresenting && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span>Someone is sharing screen</span>
+            <span className="hidden md:inline">Someone is sharing screen</span>
           </div>
         )}
       </div>
 
       {/* End Meeting Confirmation */}
       {showEndConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <Card className="w-full max-w-md p-6">
-            <h3 className="text-lg font-semibold mb-2">End meeting for all?</h3>
-            <p className="text-gray-600 mb-4">
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="w-full max-w-md p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold mb-2">End meeting for all?</h3>
+            <p className="text-gray-600 mb-4 text-sm sm:text-base">
               This will end the meeting for all participants. Are you sure?
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <Button
                 variant="outline"
                 onClick={() => setShowEndConfirm(false)}
-                className="flex-1"
+                className="flex-1 text-sm"
+                size="sm"
               >
                 Cancel
               </Button>
               <Button
                 variant="outline"
                 onClick={handleLeaveMeeting}
-                className="flex-1"
+                className="flex-1 text-sm"
+                size="sm"
               >
                 Leave Only
               </Button>
               <Button
                 variant="destructive"
                 onClick={confirmEndMeeting}
-                className="flex-1"
+                className="flex-1 text-sm"
+                size="sm"
               >
                 End for All
               </Button>
@@ -651,10 +654,13 @@ function ScreenShareView({ participantId }: { participantId: string }) {
         playsInline
         className="w-full h-full object-contain"
       />
-      <div className="absolute top-4 left-4">
-        <div className="bg-blue-600 rounded px-3 py-1 flex items-center gap-2">
-          <Share2 size={14} className="text-white" />
-          <span className="text-white text-sm font-medium">{displayName} is sharing</span>
+      <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
+        <div className="bg-blue-600 rounded px-2 py-1 sm:px-3 sm:py-1 flex items-center gap-1 sm:gap-2">
+          <Share2 size={12} className="text-white sm:size-3.5" />
+          <span className="text-white text-xs sm:text-sm font-medium truncate max-w-32 sm:max-w-none">
+            <span className="hidden sm:inline">{displayName} is sharing</span>
+            <span className="sm:hidden">{displayName}</span>
+          </span>
         </div>
       </div>
     </div>
@@ -677,6 +683,7 @@ function MeetingView({
   const [hasLeft, setHasLeft] = useState(false)
   const [connectionState, setConnectionState] = useState('CONNECTING')
   const [showChat, setShowChat] = useState(false)
+  const [windowWidth, setWindowWidth] = useState(1200)
 
   const {
     participants,
@@ -708,68 +715,149 @@ function MeetingView({
   const participantIds = [...participants.keys()]
   const presenterParticipant = presenterId ? participants.get(presenterId) : null
 
+  // Handle window resize for responsive grid
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== 'undefined') {
+        setWindowWidth(window.innerWidth)
+      }
+    }
+
+    // Initial set
+    if (typeof window !== 'undefined') {
+      setWindowWidth(window.innerWidth)
+    }
+
+    // Add event listener
+    if (typeof window !== 'undefined') {
+      window.addEventListener('resize', handleResize)
+      return () => window.removeEventListener('resize', handleResize)
+    }
+  }, [])
+
+  // Calculate optimal grid layout
+  const getGridLayout = (participantCount: number, screenWidth: number) => {
+    if (participantCount === 0) return { cols: 1, rows: 1 }
+    if (participantCount === 1) return { cols: 1, rows: 1 }
+    if (participantCount === 2) return { cols: screenWidth < 640 ? 1 : 2, rows: screenWidth < 640 ? 2 : 1 }
+
+    // For 3+ participants, calculate optimal grid based on screen size and participant count
+    const maxCols = screenWidth < 640 ? 2 : screenWidth < 1024 ? 3 : 4
+    const optimalCols = Math.min(Math.ceil(Math.sqrt(participantCount)), maxCols)
+    const rows = Math.ceil(participantCount / optimalCols)
+
+    return { cols: optimalCols, rows }
+  }
+
+  const gridLayout = getGridLayout(participantIds.length, windowWidth)
+
   return (
     <div className="fixed inset-0 bg-gray-900 flex flex-col">
       {/* Header */}
-      <div className="bg-white border-b px-4 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h2 className="font-semibold">Video Session</h2>
-          <ConnectionStatus connectionStatus={connectionState} />
+      <div className="bg-white border-b px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+          <h2 className="font-semibold text-sm sm:text-base truncate">Video Session</h2>
+          <div className="hidden sm:block">
+            <ConnectionStatus connectionStatus={connectionState} />
+          </div>
         </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <Users size={16} />
-            <span>{participantIds.length} participants</span>
+        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
+            <Users size={14} className="sm:size-4" />
+            <span className="hidden xs:inline">{participantIds.length}</span>
+            <span className="xs:hidden">{participantIds.length}</span>
           </div>
           {presenterId && (
-            <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded flex items-center gap-1">
-              <Share2 size={12} />
-              Screen Sharing
+            <span className="px-1 sm:px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded flex items-center gap-1">
+              <Share2 size={10} className="sm:size-3" />
+              <span className="hidden sm:inline">Screen Sharing</span>
             </span>
           )}
           {isHost && (
-            <span className="px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-              HOST
+            <span className="px-1 sm:px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
+              <span>HOST</span>
             </span>
           )}
         </div>
       </div>
 
       {/* Main Content Area - adjusted to account for fixed controls */}
-      <div className="flex-1 flex pb-24">
-        {/* Screen Share or Main Video Area */}
-        <div className="flex-1 p-4">
+      <div className={`flex-1 flex ${presenterId ? 'pb-32 sm:pb-20 md:pb-24' : 'pb-16 sm:pb-20 md:pb-24'}`}>
+        <div className="flex-1 p-2 sm:p-4 overflow-hidden">
           {presenterId ? (
             <ScreenShareView participantId={presenterId} />
           ) : (
-            <div className={`grid gap-4 h-full ${
-              participantIds.length === 1 ? 'grid-cols-1' : 
-              participantIds.length === 2 ? 'grid-cols-2' : 
-              participantIds.length <= 4 ? 'grid-cols-2' : 
-              'grid-cols-3'
-            }`}>
-              {participantIds.map((participantId) => (
-                <ParticipantView key={participantId} participantId={participantId} />
-              ))}
+            <div className="h-full w-full overflow-y-auto">
+              <div
+                className="grid gap-2 sm:gap-4 min-h-full w-full"
+                style={{
+                  gridTemplateColumns: `repeat(${gridLayout.cols}, minmax(0, 1fr))`,
+                  gridTemplateRows: `repeat(${gridLayout.rows}, minmax(0, 1fr))`
+                }}
+                key={`grid-${participantIds.length}-${gridLayout.cols}x${gridLayout.rows}`}
+              >
+                {participantIds.map((participantId, index) => (
+                  <ParticipantView
+                    key={`participant-${participantId}-${index}`}
+                    participantId={participantId}
+                  />
+                ))}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Sidebar with participant videos when screen sharing */}
+        {/* Sidebar with participant videos when screen sharing - Mobile: bottom overlay, Desktop: sidebar */}
         {presenterId && (
-          <div className="w-72 bg-gray-800 p-4 border-l border-gray-700">
-            <h3 className="text-white text-sm font-medium mb-3 flex items-center gap-2">
-              <Users size={14} />
-              Participants ({participantIds.length})
-            </h3>
-            <div className="space-y-3">
-              {participantIds.map((participantId) => (
-                <div key={participantId} className="h-42">
-                  <ParticipantView participantId={participantId} />
+          <>
+            <div className="fixed bottom-16 left-0 right-0 bg-gray-800/95 backdrop-blur-sm p-2 border-t border-gray-700 md:hidden z-40">
+              <div className="flex items-center gap-2 mb-2">
+                <Users size={14} className="text-white" />
+                <span className="text-white text-xs font-medium">{participantIds.length} participants</span>
+              </div>
+              <div className="overflow-x-auto pb-2">
+                <div
+                  className="grid gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${participantIds.length}, minmax(80px, 80px))`,
+                    gridTemplateRows: '64px',
+                    width: `${participantIds.length * 88}px`
+                  }}
+                  key={`mobile-grid-${participantIds.length}`}
+                >
+                  {participantIds.map((participantId, index) => (
+                    <div key={`mobile-participant-${participantId}-${index}`} className="rounded-lg overflow-hidden">
+                      <ParticipantView participantId={participantId} />
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+
+            {/* Desktop: Traditional sidebar */}
+            <div className="hidden md:block w-72 md:w-80 bg-gray-800 p-2 sm:p-4 border-l border-gray-700 overflow-hidden flex flex-col">
+              <h3 className="text-white text-sm font-medium mb-3 flex items-center gap-2 flex-shrink-0">
+                <Users size={14} />
+                <span>Participants ({participantIds.length})</span>
+              </h3>
+              <div className="flex-1 overflow-y-auto">
+                <div
+                  className="grid gap-3"
+                  style={{
+                    gridTemplateColumns: `repeat(${participantIds.length === 1 ? 1 : windowWidth < 1280 ? 1 : 2}, minmax(0, 1fr))`,
+                    gridAutoRows: 'minmax(120px, auto)'
+                  }}
+                  key={`desktop-grid-${participantIds.length}-${windowWidth < 1280 ? 1 : 2}`}
+                >
+                  {participantIds.map((participantId, index) => (
+                    <div key={`desktop-participant-${participantId}-${index}`} className="aspect-video">
+                      <ParticipantView participantId={participantId} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
 
@@ -784,6 +872,7 @@ function MeetingView({
         participantName={participantName}
         isVisible={showChat}
         onToggle={() => setShowChat(!showChat)}
+        isScreenSharing={!!presenterId}
       />
     </div>
   )

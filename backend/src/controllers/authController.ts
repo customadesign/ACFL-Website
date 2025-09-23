@@ -709,6 +709,7 @@ export const login = async (req: Request, res: Response) => {
     const auditReq = req as AuditRequest;
     auditReq.user = {
       id: profile.id,
+      userId: profile.id,
       email: email,
       role: role,
       first_name: profile.first_name,

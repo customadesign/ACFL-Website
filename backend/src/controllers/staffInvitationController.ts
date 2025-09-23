@@ -7,7 +7,8 @@ import emailService from '../services/emailService';
 interface AuthRequest extends Request {
   user?: {
     id: string;
-    role: string;
+    userId: string;
+    role: 'client' | 'coach' | 'admin' | 'staff';
     email: string;
     [key: string]: any;
   };

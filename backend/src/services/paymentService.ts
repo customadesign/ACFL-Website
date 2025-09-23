@@ -8,6 +8,8 @@ import {
   generateIdempotencyKey
 } from '../lib/square';
 import { CoachRateService } from './coachRateService';
+import { billingService } from './billingService';
+import { BankAccountService } from './bankAccountService';
 import {
   Payment,
   CreatePaymentIntentRequest,
@@ -60,7 +62,7 @@ export class PaymentService {
         },
         customerId,
         locationId,
-        autocomplete: false, // Don't auto-capture, similar to Stripe's manual capture
+        autocomplete: false, // Hold payment until session completion
         note: request.description || coachRate.title,
         referenceId: `${clientId}_${request.coach_id}_${Date.now()}`,
       };
@@ -84,7 +86,7 @@ export class PaymentService {
         currency: 'usd',
         platform_fee_cents: platformFee,
         coach_earnings_cents: coachEarnings,
-        status: 'pending',
+        status: 'authorized', // Payment is authorized but not captured
         description: request.description || coachRate.title,
         metadata: request.metadata || {},
       };
@@ -123,9 +125,9 @@ export class PaymentService {
     }
   }
 
-  async confirmPayment(paymentId: string): Promise<Payment> {
+  async capturePayment(paymentId: string, sessionId?: string): Promise<Payment> {
     try {
-      // Complete the Square payment
+      // Complete/capture the Square payment after session completion
       const completeResponse = await paymentsApi.completePayment(
         paymentId,
         {}
@@ -177,12 +179,69 @@ export class PaymentService {
         new_status: newStatus,
       });
 
-      // If successful, transfer funds to coach (if they have connected account)
+      // If successful, create billing transactions and initiate payout to coach
       if (newStatus === 'succeeded') {
         try {
-          await this.transferFundsToCoach(updatedPayment);
+          // Create billing transaction for client (payment)
+          await billingService.createBillingTransaction({
+            user_id: updatedPayment.client_id,
+            user_type: 'client',
+            transaction_type: 'payment',
+            amount_cents: updatedPayment.amount_cents,
+            currency: updatedPayment.currency.toUpperCase(),
+            status: 'completed',
+            description: `Payment to coach: ${updatedPayment.description || 'Coaching session'}`,
+            reference_id: updatedPayment.id,
+            reference_type: 'payment',
+            metadata: {
+              coach_id: updatedPayment.coach_id,
+              square_payment_id: updatedPayment.square_payment_id,
+              session_id: sessionId
+            }
+          });
+
+          // Create billing transaction for coach (earning)
+          await billingService.createBillingTransaction({
+            user_id: updatedPayment.coach_id,
+            user_type: 'coach',
+            transaction_type: 'payment',
+            amount_cents: updatedPayment.coach_earnings_cents,
+            currency: updatedPayment.currency.toUpperCase(),
+            status: 'completed',
+            description: `Earning from client: ${updatedPayment.description || 'Coaching session'}`,
+            reference_id: updatedPayment.id,
+            reference_type: 'payment',
+            metadata: {
+              client_id: updatedPayment.client_id,
+              platform_fee_cents: updatedPayment.platform_fee_cents,
+              square_payment_id: updatedPayment.square_payment_id,
+              session_id: sessionId
+            }
+          });
+
+          // Create billing transaction for platform fee
+          if (updatedPayment.platform_fee_cents > 0) {
+            await billingService.createBillingTransaction({
+              user_id: updatedPayment.coach_id,
+              user_type: 'coach',
+              transaction_type: 'fee',
+              amount_cents: updatedPayment.platform_fee_cents,
+              currency: updatedPayment.currency.toUpperCase(),
+              status: 'completed',
+              description: `Platform fee for coaching session`,
+              reference_id: updatedPayment.id,
+              reference_type: 'payment',
+              metadata: {
+                client_id: updatedPayment.client_id,
+                square_payment_id: updatedPayment.square_payment_id,
+                session_id: sessionId
+              }
+            });
+          }
+
+          await this.initiatePayoutToCoach(updatedPayment);
         } catch (error) {
-          console.error('Failed to transfer funds to coach:', error);
+          console.error('Failed to create billing transactions or initiate payout:', error);
           // Don't throw error as payment is still successful
         }
       }
@@ -275,6 +334,51 @@ export class PaymentService {
         .from('payments')
         .update({ status: newPaymentStatus })
         .eq('id', request.payment_id);
+
+      // Create billing transaction for the refund
+      try {
+        await billingService.createBillingTransaction({
+          user_id: payment.client_id,
+          user_type: 'client',
+          transaction_type: 'refund',
+          amount_cents: refundAmount,
+          currency: payment.currency.toUpperCase(),
+          status: 'completed',
+          description: `Refund for payment: ${request.reason.replace(/_/g, ' ')}`,
+          reference_id: refund.id,
+          reference_type: 'refund',
+          metadata: {
+            payment_id: payment.id,
+            square_refund_id: squareRefund.id,
+            reason: request.reason
+          }
+        });
+
+        // If coach penalty, this would need to be handled through payout adjustments
+        // rather than credit deductions since we removed the credit system
+        if (coachPenalty > 0) {
+          await billingService.createBillingTransaction({
+            user_id: payment.coach_id,
+            user_type: 'coach',
+            transaction_type: 'refund',
+            amount_cents: coachPenalty,
+            currency: payment.currency.toUpperCase(),
+            status: 'completed',
+            description: `Refund penalty: ${request.reason.replace(/_/g, ' ')}`,
+            reference_id: refund.id,
+            reference_type: 'refund',
+            metadata: {
+              payment_id: payment.id,
+              square_refund_id: squareRefund.id,
+              reason: request.reason,
+              note: 'This amount will be deducted from future payouts'
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to create billing transactions for refund:', error);
+        // Don't throw error as refund is still successful
+      }
 
       // Log refund creation
       await this.logRefundEvent(refund.id, 'refund_created', {
@@ -375,34 +479,87 @@ export class PaymentService {
     }
   }
 
-  private async transferFundsToCoach(payment: Payment): Promise<void> {
-    // Check if coach has payment account configured
-    const { data: paymentAccount } = await supabase
-      .from('coach_stripe_accounts') // Will be renamed to coach_payment_accounts
-      .select('stripe_account_id, charges_enabled')
-      .eq('coach_id', payment.coach_id)
-      .single();
-
-    if (!paymentAccount || !paymentAccount.charges_enabled) {
-      console.log(`Coach ${payment.coach_id} doesn't have enabled payment account`);
-      return;
-    }
-
-    // Note: Square doesn't have a direct equivalent to Stripe Connect
-    // You would need to implement a separate payout system
-    // For now, log the transfer intention
+  private async initiatePayoutToCoach(payment: Payment): Promise<void> {
     try {
-      const transferId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const bankAccountService = new BankAccountService();
 
-      await this.logPaymentEvent(payment.id, 'funds_transferred', {
-        transfer_id: transferId,
+      // Get coach's default bank account
+      const bankAccount = await bankAccountService.getDefaultBankAccount(payment.coach_id);
+
+      if (!bankAccount) {
+        await this.logPaymentEvent(payment.id, 'payout_failed', {
+          error: 'No bank account configured for coach',
+          coach_id: payment.coach_id
+        });
+        return;
+      }
+
+      // Create payout record
+      const payoutData = {
+        coach_id: payment.coach_id,
+        bank_account_id: bankAccount.id,
+        payment_id: payment.id,
         amount_cents: payment.coach_earnings_cents,
+        currency: payment.currency,
+        status: 'pending',
+        payout_method: 'bank_transfer',
+        fees_cents: 0, // Square typically covers standard transfer fees
+        net_amount_cents: payment.coach_earnings_cents,
+        metadata: {
+          client_id: payment.client_id,
+          square_payment_id: payment.square_payment_id
+        }
+      };
+
+      const { data: payout, error } = await supabase
+        .from('payouts')
+        .insert([payoutData])
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(`Failed to create payout record: ${error.message}`);
+      }
+
+      // Initiate payout via Square (this would be implemented based on Square's payout API)
+      await this.processSquarePayout(payout);
+
+      await this.logPaymentEvent(payment.id, 'payout_initiated', {
+        payout_id: payout.id,
+        amount_cents: payment.coach_earnings_cents,
+        bank_account_id: bankAccount.id
       });
     } catch (error) {
-      await this.logPaymentEvent(payment.id, 'transfer_failed', {
+      await this.logPaymentEvent(payment.id, 'payout_failed', {
         error: (error as Error).message,
       });
-      throw error;
+      console.error('Failed to initiate payout to coach:', error);
+      // Don't throw error as this is a background process
+    }
+  }
+
+  private async processSquarePayout(payout: any): Promise<void> {
+    // This is a placeholder for Square payout processing
+    // In a real implementation, you would use Square's payout API
+    // For now, we'll mark it as processing and simulate completion
+    try {
+      await supabase
+        .from('payouts')
+        .update({
+          status: 'processing',
+          payout_date: new Date(),
+          estimated_arrival_date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000) // 2 days
+        })
+        .eq('id', payout.id);
+
+      // In production, this would integrate with Square's actual payout API
+      console.log(`Payout initiated for coach ${payout.coach_id}: $${payout.amount_cents / 100}`);
+    } catch (error) {
+      console.error('Failed to process Square payout:', error);
+      await supabase
+        .from('payouts')
+        .update({ status: 'failed', failure_reason: (error as Error).message })
+        .eq('id', payout.id);
     }
   }
 

@@ -35,12 +35,12 @@ export class CoachRateService {
     coachId: string,
     rateRequest: CoachRateRequest
   ): Promise<CoachRate> {
-    // Stub: Price creation would happen here with new payment gateway
+    // Stub: Square product creation would happen here with Square API
     const priceId = `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
     const rateData = {
       coach_id: coachId,
-      stripe_price_id: priceId, // Will be renamed to price_id
+      square_product_id: priceId, // Square product ID
       ...rateRequest,
     };
 
@@ -72,9 +72,9 @@ export class CoachRateService {
     let priceId;
     let finalUpdates = updates;
     if (updates.rate_cents && updates.rate_cents !== currentRate.rate_cents) {
-      // Stub: Price creation would happen here with new payment gateway
+      // Stub: Square product creation would happen here with Square API
       priceId = `price_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-      finalUpdates = { ...updates, stripe_price_id: priceId } as any;
+      finalUpdates = { ...updates, square_product_id: priceId } as any;
     }
 
     const { data, error } = await supabase
@@ -89,9 +89,9 @@ export class CoachRateService {
     }
 
     // Deactivate old price if we created a new one
-    if (priceId && currentRate.stripe_price_id) {
+    if (priceId && currentRate.square_product_id) {
       // Stub: Old price deactivation would happen here with new payment gateway
-      console.log(`Would deactivate old price: ${currentRate.stripe_price_id}`);
+      console.log(`Would deactivate old price: ${currentRate.square_product_id}`);
     }
 
     return data;
@@ -113,9 +113,9 @@ export class CoachRateService {
     }
 
     // Deactivate price
-    if (currentRate.stripe_price_id) {
+    if (currentRate.square_product_id) {
       // Stub: Price deactivation would happen here with new payment gateway
-      console.log(`Would deactivate price: ${currentRate.stripe_price_id}`);
+      console.log(`Would deactivate price: ${currentRate.square_product_id}`);
     }
   }
 
@@ -178,7 +178,7 @@ export class CoachRateService {
     const newRateData = {
       ...originalRate,
       id: undefined, // Let database generate new ID
-      stripe_price_id: newPriceId,
+      square_product_id: newPriceId,
       title: `${originalRate.title} (Copy)`,
       created_at: undefined,
       updated_at: undefined,
@@ -215,7 +215,7 @@ export class CoachRateService {
 
   async calculateCoachEarnings(
     rateCents: number,
-    platformFeePercentage: number = 15
+    platformFeePercentage: number = 0  // Changed from 15 to 0 for no platform fee
   ): Promise<{ coachEarnings: number; platformFee: number }> {
     const platformFee = Math.floor((rateCents * platformFeePercentage) / 100);
     const coachEarnings = rateCents - platformFee;
