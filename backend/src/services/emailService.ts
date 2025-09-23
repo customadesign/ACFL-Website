@@ -52,7 +52,8 @@ class EmailService {
           pass: process.env.SMTP_PASS,
         },
         tls: {
-          rejectUnauthorized: false // Allow self-signed certificates
+          rejectUnauthorized: false, // Allow self-signed certificates
+          servername: process.env.SMTP_HOST
         }
       });
     } else {
