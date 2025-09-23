@@ -221,6 +221,12 @@ const BookingRequestManager: React.FC = () => {
   };
 
   const handleRateSelect = (rateId: string) => {
+    if (rateId === 'custom') {
+      setSelectedRateId(rateId);
+      // Keep current finalPrice for custom pricing
+      return;
+    }
+
     const rate = coachRates.find(r => r.id === rateId);
     if (rate) {
       setSelectedRateId(rateId);
@@ -374,7 +380,7 @@ const BookingRequestManager: React.FC = () => {
                             <SelectValue placeholder="Select a rate or set custom price" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">Custom Price</SelectItem>
+                            <SelectItem value="custom">Custom Price</SelectItem>
                             {coachRates
                               .filter(rate =>
                                 rate.session_type === request.session_type ||

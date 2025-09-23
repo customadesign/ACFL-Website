@@ -22,6 +22,8 @@ import TestInstructions from '@/components/TestInstructions';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import SessionNotesModal from '@/components/SessionNotesModal';
 import ClientSessionHistory from '@/components/ClientSessionHistory';
+import SessionProgressTracker from '@/components/progress/SessionProgressTracker';
+import ProgressGoalManager from '@/components/progress/ProgressGoalManager';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
 import { useMeeting } from '@/contexts/MeetingContext';
@@ -824,6 +826,14 @@ function AppointmentsPageContent() {
                         >
                           <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Notes
                         </Button>
+                        <div className="w-full sm:w-auto">
+                          <SessionProgressTracker
+                            sessionId={appointment.id}
+                            clientId={appointment.client_id}
+                            clientName={appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
+                            userRole="coach"
+                          />
+                        </div>
                         <Link href={`/coaches/messages?conversation_with=${appointment.client_id}&partner_name=${encodeURIComponent(appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client')}`} className="w-full sm:w-auto">
                           <Button
                             variant="outline"
@@ -876,6 +886,14 @@ function AppointmentsPageContent() {
                           >
                             <FileText className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Notes
                           </Button>
+                          <div className="w-full sm:w-auto">
+                            <SessionProgressTracker
+                              sessionId={appointment.id}
+                              clientId={appointment.client_id}
+                              clientName={appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
+                              userRole="coach"
+                            />
+                          </div>
                         </div>
                         <div className="flex flex-col sm:flex-row gap-2">
                           <Button

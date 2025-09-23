@@ -152,7 +152,7 @@ export default function ClientLayout({
                       <Link
                         href="/clients/settings"
                         onClick={() => setShowDropdown(false)}
-                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2 block"
+                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent items-center space-x-2 block"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>
@@ -215,7 +215,7 @@ export default function ClientLayout({
                       <Link
                         href="/clients/settings"
                         onClick={() => setShowDropdown(false)}
-                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2 block"
+                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent items-center space-x-2 block"
                       >
                         <Settings className="w-4 h-4" />
                         <span>Settings</span>

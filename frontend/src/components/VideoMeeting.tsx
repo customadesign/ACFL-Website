@@ -1,920 +1,574 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import {
-  MeetingProvider,
-  useMeeting,
-  useParticipant,
-  MeetingConsumer
-} from '@videosdk.live/react-sdk'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Card } from '@/components/ui/card'
-import {
-  Mic,
-  MicOff,
-  Video,
-  VideoOff,
-  Phone,
-  PhoneOff,
+import { 
+  MessageSquare, 
+  Send, 
+  X, 
   Users,
-  MessageSquare,
-  Share2,
-  Settings,
-  Loader2,
-  AlertCircle,
-  UserCheck,
-  UserX,
-  Clock
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
-import MeetingChat from '@/components/MeetingChat'
-import { updateParticipantStatus } from '@/services/videoMeeting'
+import { dbHelpers, supabase, isSupabaseConfigured } from '@/lib/supabase'
+import { useAuth } from '@/contexts/AuthContext'
+import { getApiUrl } from '@/lib/api'
+import { io } from 'socket.io-client'
+import { usePubSub } from '@videosdk.live/react-sdk'
 
-interface VideoMeetingProps {
+interface MeetingChatProps {
   meetingId: string
-  token: string
   participantName: string
-  isHost: boolean
-  appointmentId: string
-  onMeetingEnd: () => void
-  initialMicOn?: boolean
-  initialWebcamOn?: boolean
+  isVisible: boolean
+  onToggle: () => void
+  isScreenSharing?: boolean
 }
 
-// Connection State Display Component
-function ConnectionStatus({ connectionStatus }: { connectionStatus: string }) {
-  const getStatusDisplay = () => {
-    switch (connectionStatus) {
-      case 'CONNECTING':
-        return {
-          icon: <Loader2 className="animate-spin" size={16} />,
-          text: 'Connecting...',
-          color: 'text-yellow-600'
-        }
-      case 'CONNECTED':
-        return {
-          icon: <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />,
-          text: 'Connected',
-          color: 'text-green-600'
-        }
-      case 'FAILED':
-        return {
-          icon: <AlertCircle size={16} />,
-          text: 'Connection Failed',
-          color: 'text-red-600'
-        }
-      case 'DISCONNECTED':
-        return {
-          icon: <UserX size={16} />,
-          text: 'Disconnected',
-          color: 'text-gray-600'
-        }
-      case 'CLOSING':
-        return {
-          icon: <Loader2 className="animate-spin" size={16} />,
-          text: 'Closing...',
-          color: 'text-orange-600'
-        }
-      case 'CLOSED':
-        return {
-          icon: <PhoneOff size={16} />,
-          text: 'Meeting Ended',
-          color: 'text-gray-600'
-        }
-      default:
-        return {
-          icon: null,
-          text: connectionStatus,
-          color: 'text-gray-600'
-        }
-    }
-  }
-
-  const status = getStatusDisplay()
-
-  return (
-    <div className={`flex items-center gap-2 ${status.color}`}>
-      {status.icon}
-      <span className="text-sm font-medium">{status.text}</span>
-    </div>
-  )
+interface ChatMessage {
+  id: string
+  meeting_id: string
+  sender_id: string
+  sender_name: string
+  message: string
+  created_at: string
+  expires_at: string
 }
 
-// Waiting Lobby Component
-function WaitingLobby({ 
-  participantName, 
-  onLeave 
-}: { 
-  participantName: string
-  onLeave: () => void 
-}) {
-  const [waitTime, setWaitTime] = useState(0)
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setWaitTime(prev => prev + 1)
-    }, 1000)
-    return () => clearInterval(interval)
-  }, [])
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins}:${secs.toString().padStart(2, '0')}`
-  }
-
-  return (
-    <div className="fixed inset-0 bg-gray-900 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 sm:p-8 text-center">
-        <div className="mb-4 sm:mb-6">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <Clock className="text-blue-600" size={32} />
-          </div>
-          <h2 className="text-xl sm:text-2xl font-bold mb-2">Waiting for Host</h2>
-          <p className="text-gray-600 text-sm sm:text-base">
-            Hi {participantName}, you're in the waiting room
-          </p>
-        </div>
-
-        <div className="mb-4 sm:mb-6">
-          <p className="text-sm text-gray-500 mb-2">Waiting time</p>
-          <p className="text-2xl sm:text-3xl font-mono font-bold text-gray-800">
-            {formatTime(waitTime)}
-          </p>
-        </div>
-
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">
-            The host will let you in soon. Please wait...
-          </p>
-          <Button
-            variant="outline"
-            onClick={onLeave}
-            className="w-full"
-            size="sm"
-          >
-            Leave Waiting Room
-          </Button>
-        </div>
-      </Card>
-    </div>
-  )
-}
-
-// Participant Video Component with Speaking Indicators
-function ParticipantView({ participantId }: { participantId: string }) {
-  const micRef = useRef<HTMLAudioElement>(null)
-  const { 
-    webcamStream, 
-    micStream, 
-    webcamOn, 
-    micOn, 
-    isLocal, 
-    displayName
-  } = useParticipant(participantId)
+export default function MeetingChat({
+  meetingId,
+  participantName,
+  isVisible,
+  onToggle,
+  isScreenSharing = false
+}: MeetingChatProps) {
+  const { user } = useAuth()
+  const [messages, setMessages] = useState<ChatMessage[]>([])
+  const [newMessage, setNewMessage] = useState('')
+  const [sending, setSending] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const messagesContainerRef = useRef<HTMLDivElement>(null)
+  const [isScrolledUp, setIsScrolledUp] = useState(false)
+  const [isConnected, setIsConnected] = useState(false)
+  const socketRef = useRef<ReturnType<typeof io> | null>(null)
   
-  // Simple speaking detection based on audio stream activity
-  const [isSpeaking, setIsSpeaking] = useState(false)
+  const API_URL = getApiUrl()
   
-  useEffect(() => {
-    if (micStream && micOn) {
-      // Create a proper MediaStream from the micStream track
-      const mediaStream = new MediaStream()
-      if (micStream.track) {
-        mediaStream.addTrack(micStream.track)
+  // VideoSDK PubSub for real-time chat
+  const { publish, messages: pubSubMessages } = usePubSub('CHAT', {
+    onMessageReceived: (data: any) => {
+      console.log('Received PubSub message:', data)
+      
+      // VideoSDK sends the message with payload structure
+      // data.message contains the actual message we sent
+      // data.senderId contains who sent it
+      // data.senderName contains the sender's display name
+      
+      let messageContent = ''
+      let senderId = ''
+      let senderName = ''
+      
+      // If data.message exists, it's the actual payload we sent
+      if (data.message) {
+        // Parse our custom payload from data.message
+        if (typeof data.message === 'string') {
+          try {
+            const parsed = JSON.parse(data.message)
+            messageContent = parsed.message || ''
+            senderId = parsed.senderId || data.senderId || 'unknown'
+            senderName = parsed.senderName || data.senderName || 'Unknown'
+          } catch (e) {
+            // If parsing fails, treat it as plain text
+            messageContent = data.message
+            senderId = data.senderId || 'unknown'
+            senderName = data.senderName || 'Unknown'
+          }
+        } else {
+          messageContent = data.message.message || data.message
+          senderId = data.message.senderId || data.senderId || 'unknown'
+          senderName = data.message.senderName || data.senderName || 'Unknown'
+        }
       } else {
-        // If micStream doesn't have a track property, it might already be a MediaStream
-        console.warn('micStream format unexpected, skipping audio visualization')
-        setIsSpeaking(false)
+        // Fallback for different message structure
+        messageContent = data.text || data.content || ''
+        senderId = data.senderId || 'unknown'
+        senderName = data.senderName || 'Unknown'
+      }
+      
+      if (!messageContent) {
+        console.warn('Received empty message:', data)
         return
       }
       
-      const audioContext = new AudioContext()
-      const source = audioContext.createMediaStreamSource(mediaStream)
-      const analyser = audioContext.createAnalyser()
-      analyser.fftSize = 256
-      source.connect(analyser)
-      
-      const bufferLength = analyser.frequencyBinCount
-      const dataArray = new Uint8Array(bufferLength)
-      
-      const checkAudioLevel = () => {
-        analyser.getByteFrequencyData(dataArray)
-        const average = dataArray.reduce((sum, value) => sum + value, 0) / bufferLength
-        // Use different thresholds for local vs remote participants
-        const threshold = isLocal ? 15 : 25 // Lower threshold for local user
-        setIsSpeaking(average > threshold)
-        
-        requestAnimationFrame(checkAudioLevel)
+      // Handle incoming message from VideoSDK PubSub
+      const chatMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        meeting_id: meetingId,
+        sender_id: senderId,
+        sender_name: senderName,
+        message: messageContent,
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
       }
       
-      checkAudioLevel()
+      // Add message to state, avoiding duplicates
+      const currentUserId = user?.id || 'guest'
       
-      return () => {
-        audioContext.close()
-      }
-    } else {
-      setIsSpeaking(false)
-    }
-  }, [micStream, micOn, isLocal])
-
-  const videoRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    if (webcamOn && webcamStream && videoRef.current) {
-      // Check if track is still live before using it
-      if (webcamStream.track && webcamStream.track.readyState === 'live') {
-        // Just detach existing stream without stopping tracks
-        if (videoRef.current.srcObject) {
-          videoRef.current.srcObject = null
+      setMessages(prev => {
+        // Skip if we just sent this exact message (it's already added locally)
+        if (senderId === currentUserId && prev.find(m => 
+          m.message === messageContent && 
+          m.sender_id === currentUserId &&
+          Math.abs(new Date(m.created_at).getTime() - Date.now()) < 1000
+        )) {
+          return prev
         }
         
-        const mediaStream = new MediaStream([webcamStream.track])
-        videoRef.current.srcObject = mediaStream
-        
-        // Only play if the element is not already playing
-        if (videoRef.current.paused) {
-          videoRef.current.play().catch(error => {
-            // Ignore interruption errors
-            if (error.name !== 'AbortError') {
-              console.error("video play error", error)
-            }
-          })
-        }
-      } else {
-        console.warn("Webcam track already ended or not available")
-      }
-    }
-    
-    return () => {
-      // Just detach stream, don't stop tracks - let VideoSDK manage them
-      if (videoRef.current && videoRef.current.srcObject) {
-        videoRef.current.srcObject = null
-      }
-    }
-  }, [webcamStream, webcamOn])
-
-  useEffect(() => {
-    if (micOn && micStream && micRef.current) {
-      // Check if track is still live before using it
-      if (micStream.track && micStream.track.readyState === 'live') {
-        // Just detach existing stream without stopping tracks
-        if (micRef.current.srcObject) {
-          micRef.current.srcObject = null
+        // Avoid any other duplicates
+        if (prev.find(m => 
+          m.message === messageContent && 
+          m.sender_name === senderName &&
+          Math.abs(new Date(m.created_at).getTime() - new Date(chatMessage.created_at).getTime()) < 2000
+        )) {
+          return prev
         }
         
-        const mediaStream = new MediaStream([micStream.track])
-        micRef.current.srcObject = mediaStream
-        
-        // Only play if the element is not already playing
-        if (micRef.current.paused) {
-          micRef.current.play().catch(error => {
-            // Ignore interruption errors
-            if (error.name !== 'AbortError') {
-              console.error("audio play error", error)
-            }
-          })
-        }
-      } else {
-        console.warn("Mic track already ended or not available")
-      }
-    }
-    
-    return () => {
-      // Just detach stream, don't stop tracks - let VideoSDK manage them
-      if (micRef.current && micRef.current.srcObject) {
-        micRef.current.srcObject = null
-      }
-    }
-  }, [micStream, micOn])
-
-  return (
-    <div className={`relative bg-gray-900 rounded-lg overflow-hidden aspect-video transition-all duration-200 ${
-      isSpeaking ? 'ring-2 sm:ring-4 ring-green-500 ring-opacity-75' : ''
-    }`}>
-      <audio ref={micRef} autoPlay muted={isLocal} />
-      {webcamOn ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted={isLocal}
-          className="w-full h-full object-cover"
-          style={{ transform: isLocal ? 'scaleX(-1)' : 'none' }}
-        />
-      ) : (
-        <div className="w-full h-full flex items-center justify-center bg-gray-800">
-          <div className="text-center">
-            <div className={`w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 transition-all duration-200 ${
-              isSpeaking ? 'ring-2 ring-green-400 ring-opacity-75' : ''
-            }`}>
-              <VideoOff className="text-gray-400" size={24} />
-            </div>
-            <p className="text-white font-medium text-xs sm:text-sm truncate px-2">{displayName}</p>
-          </div>
-        </div>
-      )}
-
-      {/* Speaking indicator overlay */}
-      {isSpeaking && (
-        <div className="absolute top-1 right-1 sm:top-2 sm:right-2">
-          <div className="bg-green-500 rounded-full px-1 sm:px-2 py-1 flex items-center gap-1">
-            <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-white rounded-full animate-pulse" />
-            <span className="text-white text-xs font-medium hidden sm:inline">Speaking</span>
-          </div>
-        </div>
-      )}
-
-      {/* Name and status overlay */}
-      <div className="absolute bottom-1 left-1 right-1 sm:bottom-2 sm:left-2 sm:right-2 flex items-center justify-between">
-        <div className={`bg-black/60 rounded px-1 sm:px-2 py-1 flex items-center gap-1 sm:gap-2 transition-all duration-200 max-w-[70%] ${
-          isSpeaking ? 'bg-green-900/60' : ''
-        }`}>
-          <span className="text-white text-xs sm:text-sm truncate">{displayName}</span>
-          {isLocal && <span className="text-xs text-blue-400 hidden sm:inline">(You)</span>}
-          {isLocal && <span className="text-xs text-blue-400 sm:hidden">You</span>}
-          {isSpeaking && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-green-400 rounded-full animate-pulse flex-shrink-0" />}
-        </div>
-        <div className="flex gap-1 flex-shrink-0">
-          {!micOn && (
-            <div className="bg-red-600 rounded p-0.5 sm:p-1">
-              <MicOff size={10} className="text-white sm:size-3" />
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Meeting Controls Component
-function MeetingControls({ isHost, onChatToggle }: { isHost: boolean; onChatToggle?: () => void }) {
-  const {
-    leave,
-    end,
-    toggleMic,
-    toggleWebcam,
-    toggleScreenShare,
-    muteMic,
-    unmuteMic,
-    localMicOn,
-    localWebcamOn,
-    presenterId,
-    localParticipant
-  } = useMeeting()
-
-  const [showEndConfirm, setShowEndConfirm] = useState(false)
-  const [isScreenSharing, setIsScreenSharing] = useState(false)
-  const [micToggling, setMicToggling] = useState(false)
-  const micStreamRef = useRef<MediaStream | null>(null)
-
-  // Check if current user is presenting
-  const isPresenting = presenterId === localParticipant?.id
-
-  const handleLeaveMeeting = () => {
-    leave()
-  }
-
-  const handleEndMeeting = () => {
-    if (isHost) {
-      setShowEndConfirm(true)
-    } else {
-      leave()
-    }
-  }
-
-  const confirmEndMeeting = () => {
-    end()
-    setShowEndConfirm(false)
-  }
-
-  const handleScreenShare = async () => {
-    try {
-      setIsScreenSharing(true)
-      await toggleScreenShare()
-      setIsScreenSharing(false)
-    } catch (error) {
-      console.error('Screen share toggle failed:', error)
-      setIsScreenSharing(false)
-    }
-  }
-
-  const handleMicToggle = async () => {
-    if (micToggling) return
-    
-    setMicToggling(true)
-    try {
-      if (localMicOn) {
-        // Mute the microphone using VideoSDK's proper method
-        await muteMic()
-      } else {
-        // Unmute the microphone using VideoSDK's proper method
-        await unmuteMic()
-      }
+        return [...prev, chatMessage]
+      })
       
-    } catch (error: any) {
-      console.error('VideoSDK microphone toggle failed:', error)
-      
-      // Handle InvalidStateError (track ended) by reacquiring mic
-      if (error.name === 'InvalidStateError' || error.message?.includes('track ended')) {
+      // If message is from another user, play notification sound and increment unread count
+      if (senderId !== currentUserId) {
+        // Play notification sound for new messages from others
         try {
-          console.log('Attempting to reacquire microphone due to track ended error')
-          
-          // Force re-acquire mic permission
-          const newStream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-              echoCancellation: true,
-              noiseSuppression: true,
-              autoGainControl: true
+          const audio = new Audio('/sounds/message.mp3');
+          audio.volume = 0.3;
+          audio.play().catch(() => {
+            // Fallback to Web Audio API if file doesn't exist
+            try {
+              const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+              const oscillator = audioContext.createOscillator();
+              const gainNode = audioContext.createGain();
+              
+              oscillator.connect(gainNode);
+              gainNode.connect(audioContext.destination);
+              
+              oscillator.frequency.value = 800;
+              oscillator.type = 'sine';
+              
+              gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+              gainNode.gain.linearRampToValueAtTime(0.08, audioContext.currentTime + 0.05);
+              gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.2);
+              
+              oscillator.start(audioContext.currentTime);
+              oscillator.stop(audioContext.currentTime + 0.2);
+            } catch (error) {
+              console.log('Could not play chat notification sound');
             }
-          })
-          
-          const [newTrack] = newStream.getAudioTracks()
-          if (newTrack && newTrack.readyState === 'live') {
-            console.log('Successfully reacquired microphone, retrying toggle')
-            
-            // Clean up old stream reference
-            if (micStreamRef.current) {
-              micStreamRef.current.getTracks().forEach(track => {
-                if (track.readyState === 'ended') {
-                  track.stop()
-                }
-              })
-            }
-            micStreamRef.current = newStream
-            
-            // Retry the toggle after a brief delay
-            await new Promise(resolve => setTimeout(resolve, 200))
-            await toggleMic()
-            
-            console.log('Successfully recovered microphone functionality')
-          }
-        } catch (getUserMediaError) {
-          console.error('Failed to reacquire microphone:', getUserMediaError)
-          alert('Microphone access was lost and could not be restored. Please refresh the page or check your microphone permissions.')
-        }
-      } else {
-        // For other errors, try fallback toggle
-        try {
-          await toggleMic()
-        } catch (fallbackError) {
-          console.error('Fallback microphone toggle also failed:', fallbackError)
-          alert('Microphone toggle failed. Please refresh the page to continue.')
-        }
-      }
-    } finally {
-      setTimeout(() => setMicToggling(false), 300)
-    }
-  }
-
-  return (
-    <>
-      <div className="flex items-center justify-center gap-3 sm:gap-9 p-3 sm:p-6 bg-white border-t shadow-lg backdrop-blur-sm">
-        {/* Microphone Control */}
-        <Button
-          variant={localMicOn ? "outline" : "destructive"}
-          size="sm"
-          onClick={handleMicToggle}
-          disabled={micToggling}
-          className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
-          title={localMicOn ? "Mute microphone" : "Unmute microphone"}
-        >
-          {micToggling ? (
-            <Loader2 size={16} className="animate-spin sm:size-5" />
-          ) : localMicOn ? (
-            <Mic size={16} className="sm:size-5" />
-          ) : (
-            <MicOff size={16} className="sm:size-5" />
-          )}
-        </Button>
-
-        {/* Camera Control */}
-        <Button
-          variant={localWebcamOn ? "outline" : "destructive"}
-          size="sm"
-          onClick={() => toggleWebcam()}
-          className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12"
-          title={localWebcamOn ? "Turn off camera" : "Turn on camera"}
-        >
-          {localWebcamOn ? <Video size={16} className="sm:size-5" /> : <VideoOff size={16} className="sm:size-5" />}
-        </Button>
-
-        <Button
-          variant={isPresenting ? "default" : "outline"}
-          size="sm"
-          onClick={handleScreenShare}
-          disabled={isScreenSharing}
-          className={`rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 sm:w-12 xs:flex ${isPresenting ? 'bg-blue-600 hover:bg-blue-700 text-white' : ''}`}
-          title={isPresenting ? "Stop sharing screen" : "Share screen"}
-        >
-          {isScreenSharing ? (
-            <Loader2 size={16} className="animate-spin sm:size-5" />
-          ) : (
-            <Share2 size={16} className="sm:size-5" />
-          )}
-        </Button>
-
-        {onChatToggle && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onChatToggle}
-            className="rounded-full shadow-md flex-shrink-0 h-10 w-10 sm:h-12 hidden sm:w-12 xs:flex"
-            title="Toggle chat"
-          >
-            <MessageSquare size={16} className="sm:size-5" />
-          </Button>
-        )}
-
-        {/* End/Leave Meeting */}
-        <Button
-          variant="destructive"
-          size="sm"
-          onClick={handleEndMeeting}
-          className="rounded-full px-3 sm:px-6 shadow-md flex-shrink-0 h-10 sm:h-12"
-          title={isHost ? "End meeting for all" : "Leave meeting"}
-        >
-          <PhoneOff size={16} className="mr-1 sm:mr-2 sm:size-5" />
-          <span className="text-xs sm:text-sm">{isHost ? 'End' : 'Leave'}</span>
-        </Button>
-      </div>
-
-      {/* Status Indicators - Hidden on small screens to save space */}
-      <div className="bg-gray-50/95 px-2 sm:px-4 py-2 border-t backdrop-blur-sm hidden sm:flex items-center justify-center gap-2 sm:gap-4 text-xs text-gray-600 overflow-x-auto">
-        {localMicOn && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="hidden md:inline">Mic on</span>
-          </div>
-        )}
-        {localWebcamOn && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="w-2 h-2 bg-green-500 rounded-full" />
-            <span className="hidden md:inline">Camera on</span>
-          </div>
-        )}
-        {isPresenting && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="hidden md:inline">You're sharing your screen</span>
-          </div>
-        )}
-        {presenterId && !isPresenting && (
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-            <span className="hidden md:inline">Someone is sharing screen</span>
-          </div>
-        )}
-      </div>
-
-      {/* End Meeting Confirmation */}
-      {showEndConfirm && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md p-4 sm:p-6">
-            <h3 className="text-base sm:text-lg font-semibold mb-2">End meeting for all?</h3>
-            <p className="text-gray-600 mb-4 text-sm sm:text-base">
-              This will end the meeting for all participants. Are you sure?
-            </p>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-              <Button
-                variant="outline"
-                onClick={() => setShowEndConfirm(false)}
-                className="flex-1 text-sm"
-                size="sm"
-              >
-                Cancel
-              </Button>
-              <Button
-                variant="outline"
-                onClick={handleLeaveMeeting}
-                className="flex-1 text-sm"
-                size="sm"
-              >
-                Leave Only
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={confirmEndMeeting}
-                className="flex-1 text-sm"
-                size="sm"
-              >
-                End for All
-              </Button>
-            </div>
-          </Card>
-        </div>
-      )}
-    </>
-  )
-}
-
-// Screen Share View Component
-function ScreenShareView({ participantId }: { participantId: string }) {
-  const { screenShareStream, displayName } = useParticipant(participantId)
-  const screenRef = useRef<HTMLVideoElement>(null)
-
-  useEffect(() => {
-    if (screenShareStream && screenRef.current) {
-      // Check if track is still live before using it
-      if (screenShareStream.track && screenShareStream.track.readyState === 'live') {
-        // Just detach existing stream without stopping tracks
-        if (screenRef.current.srcObject) {
-          screenRef.current.srcObject = null
+          });
+        } catch (error) {
+          console.log('Could not play chat notification sound');
         }
         
-        const mediaStream = new MediaStream([screenShareStream.track])
-        screenRef.current.srcObject = mediaStream
-        
-        // Only play if the element is not already playing
-        if (screenRef.current.paused) {
-          screenRef.current.play().catch(error => {
-            // Ignore interruption errors
-            if (error.name !== 'AbortError') {
-              console.error("screen share play error", error)
-            }
-          })
+        if (!isVisible) {
+          setUnreadCount(prev => prev + 1)
         }
-      } else {
-        console.warn("Screen share track already ended or not available")
       }
-    }
-    
-    return () => {
-      // Just detach stream, don't stop tracks - let VideoSDK manage them
-      if (screenRef.current && screenRef.current.srcObject) {
-        screenRef.current.srcObject = null
-      }
-    }
-  }, [screenShareStream])
-
-  return (
-    <div className="relative bg-black rounded-lg overflow-hidden w-full h-full">
-      <video
-        ref={screenRef}
-        autoPlay
-        playsInline
-        className="w-full h-full object-contain"
-      />
-      <div className="absolute top-2 left-2 sm:top-4 sm:left-4">
-        <div className="bg-blue-600 rounded px-2 py-1 sm:px-3 sm:py-1 flex items-center gap-1 sm:gap-2">
-          <Share2 size={12} className="text-white sm:size-3.5" />
-          <span className="text-white text-xs sm:text-sm font-medium truncate max-w-32 sm:max-w-none">
-            <span className="hidden sm:inline">{displayName} is sharing</span>
-            <span className="sm:hidden">{displayName}</span>
-          </span>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Main Meeting View Component
-function MeetingView({ 
-  isHost, 
-  onMeetingEnd,
-  meetingId,
-  participantName
-}: { 
-  isHost: boolean
-  onMeetingEnd: () => void
-  meetingId: string
-  participantName: string
-}) {
-  const [hasJoined, setHasJoined] = useState(false)
-  const [hasLeft, setHasLeft] = useState(false)
-  const [connectionState, setConnectionState] = useState('CONNECTING')
-  const [showChat, setShowChat] = useState(false)
-  const [windowWidth, setWindowWidth] = useState(1200)
-
-  const {
-    participants,
-    localParticipant,
-    presenterId
-  } = useMeeting({
-    onMeetingJoined: () => {
-      if (!hasJoined) {
-        console.log("Meeting Joined")
-        updateParticipantStatus(meetingId, 'joined')
-        setHasJoined(true)
-        setConnectionState('CONNECTED')
-      }
-    },
-    onMeetingLeft: () => {
-      if (!hasLeft) {
-        console.log("Meeting Left")
-        updateParticipantStatus(meetingId, 'left')
-        setHasLeft(true)
-        setConnectionState('CLOSED')
-        onMeetingEnd()
-      }
-    },
-    onPresenterChanged: (presenterId) => {
-      console.log("Presenter changed:", presenterId)
+      
+      setIsConnected(true)
     }
   })
 
-  const participantIds = [...participants.keys()]
-  const presenterParticipant = presenterId ? participants.get(presenterId) : null
-
-  // Handle window resize for responsive grid
+  // Load existing messages (if Supabase is configured for persistence)
   useEffect(() => {
-    const handleResize = () => {
-      if (typeof window !== 'undefined') {
-        setWindowWidth(window.innerWidth)
+    if (meetingId && isSupabaseConfigured) {
+      loadMessages()
+    }
+  }, [meetingId])
+
+  // VideoSDK PubSub connection status
+  useEffect(() => {
+    // Set connected status based on VideoSDK PubSub
+    if (meetingId) {
+      // VideoSDK PubSub connects automatically when the meeting is active
+      setTimeout(() => setIsConnected(true), 500)
+    }
+    
+    return () => {
+      setIsConnected(false)
+    }
+  }, [meetingId])
+  
+  // Optional Supabase subscription for message persistence
+  useEffect(() => {
+    if (!meetingId || !isSupabaseConfigured) return
+
+    const channel = dbHelpers.subscribeMeetingChat(meetingId, (payload) => {
+      if (payload.eventType === 'INSERT') {
+        const newMsg = payload.new as ChatMessage
+        
+        // Only add from Supabase if we haven't already received it via PubSub
+        setMessages(prev => {
+          if (prev.find(m => 
+            m.message === newMsg.message && 
+            m.sender_name === newMsg.sender_name &&
+            Math.abs(new Date(m.created_at).getTime() - new Date(newMsg.created_at).getTime()) < 5000
+          )) return prev
+          return [...prev, newMsg]
+        })
+      }
+    })
+
+    return () => {
+      if (channel && supabase) {
+        supabase.removeChannel(channel)
       }
     }
+  }, [meetingId])
 
-    // Initial set
-    if (typeof window !== 'undefined') {
-      setWindowWidth(window.innerWidth)
+  // Auto-scroll to bottom
+  useEffect(() => {
+    if (messagesEndRef.current && !isScrolledUp) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages])
+
+  // Reset unread count when chat becomes visible
+  useEffect(() => {
+    if (isVisible) {
+      setUnreadCount(0)
+    }
+  }, [isVisible])
+
+  // Handle scroll detection
+  useEffect(() => {
+    const container = messagesContainerRef.current
+    if (!container) return
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const isNearBottom = scrollHeight - scrollTop - clientHeight < 50
+      setIsScrolledUp(!isNearBottom)
     }
 
-    // Add event listener
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize)
-      return () => window.removeEventListener('resize', handleResize)
-    }
+    container.addEventListener('scroll', handleScroll)
+    return () => container.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Calculate optimal grid layout
-  const getGridLayout = (participantCount: number, screenWidth: number) => {
-    if (participantCount === 0) return { cols: 1, rows: 1 }
-    if (participantCount === 1) return { cols: 1, rows: 1 }
-    if (participantCount === 2) return { cols: screenWidth < 640 ? 1 : 2, rows: screenWidth < 640 ? 2 : 1 }
-
-    // For 3+ participants, calculate optimal grid based on screen size and participant count
-    const maxCols = screenWidth < 640 ? 2 : screenWidth < 1024 ? 3 : 4
-    const optimalCols = Math.min(Math.ceil(Math.sqrt(participantCount)), maxCols)
-    const rows = Math.ceil(participantCount / optimalCols)
-
-    return { cols: optimalCols, rows }
+  const loadMessages = async () => {
+    try {
+      if (!isSupabaseConfigured) return
+      const data = await dbHelpers.getMeetingChatMessages(meetingId)
+      setMessages(data || [])
+    } catch (error) {
+      console.error('Failed to load meeting chat messages:', error)
+    }
   }
 
-  const gridLayout = getGridLayout(participantIds.length, windowWidth)
+  const sendMessage = async () => {
+    if (!newMessage.trim() || sending) return
 
-  return (
-    <div className="fixed inset-0 bg-gray-900 flex flex-col">
-      {/* Header */}
-      <div className="bg-white border-b px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-          <h2 className="font-semibold text-sm sm:text-base truncate">Video Session</h2>
-          <div className="hidden sm:block">
-            <ConnectionStatus connectionStatus={connectionState} />
-          </div>
-        </div>
-        <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-          <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-600">
-            <Users size={14} className="sm:size-4" />
-            <span className="hidden xs:inline">{participantIds.length}</span>
-            <span className="xs:hidden">{participantIds.length}</span>
-          </div>
-          {presenterId && (
-            <span className="px-1 sm:px-2 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded flex items-center gap-1">
-              <Share2 size={10} className="sm:size-3" />
-              <span className="hidden sm:inline">Screen Sharing</span>
-            </span>
-          )}
-          {isHost && (
-            <span className="px-1 sm:px-2 py-1 bg-green-100 text-green-700 text-xs font-medium rounded">
-              <span>HOST</span>
-            </span>
-          )}
-        </div>
-      </div>
-
-      {/* Main Content Area - adjusted to account for fixed controls */}
-      <div className={`flex-1 flex ${presenterId ? 'pb-32 sm:pb-20 md:pb-24' : 'pb-16 sm:pb-20 md:pb-24'}`}>
-        <div className="flex-1 p-2 sm:p-4 overflow-hidden">
-          {presenterId ? (
-            <ScreenShareView participantId={presenterId} />
-          ) : (
-            <div className="h-full w-full overflow-y-auto">
-              <div
-                className="grid gap-2 sm:gap-4 min-h-full w-full"
-                style={{
-                  gridTemplateColumns: `repeat(${gridLayout.cols}, minmax(0, 1fr))`,
-                  gridTemplateRows: `repeat(${gridLayout.rows}, minmax(0, 1fr))`
-                }}
-                key={`grid-${participantIds.length}-${gridLayout.cols}x${gridLayout.rows}`}
-              >
-                {participantIds.map((participantId, index) => (
-                  <ParticipantView
-                    key={`participant-${participantId}-${index}`}
-                    participantId={participantId}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar with participant videos when screen sharing - Mobile: bottom overlay, Desktop: sidebar */}
-        {presenterId && (
-          <>
-            <div className="fixed bottom-16 left-0 right-0 bg-gray-800/95 backdrop-blur-sm p-2 border-t border-gray-700 md:hidden z-40">
-              <div className="flex items-center gap-2 mb-2">
-                <Users size={14} className="text-white" />
-                <span className="text-white text-xs font-medium">{participantIds.length} participants</span>
-              </div>
-              <div className="overflow-x-auto pb-2">
-                <div
-                  className="grid gap-2"
-                  style={{
-                    gridTemplateColumns: `repeat(${participantIds.length}, minmax(80px, 80px))`,
-                    gridTemplateRows: '64px',
-                    width: `${participantIds.length * 88}px`
-                  }}
-                  key={`mobile-grid-${participantIds.length}`}
-                >
-                  {participantIds.map((participantId, index) => (
-                    <div key={`mobile-participant-${participantId}-${index}`} className="rounded-lg overflow-hidden">
-                      <ParticipantView participantId={participantId} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop: Traditional sidebar */}
-            <div className="hidden md:block w-72 md:w-80 bg-gray-800 p-2 sm:p-4 border-l border-gray-700 overflow-hidden flex flex-col">
-              <h3 className="text-white text-sm font-medium mb-3 flex items-center gap-2 flex-shrink-0">
-                <Users size={14} />
-                <span>Participants ({participantIds.length})</span>
-              </h3>
-              <div className="flex-1 overflow-y-auto">
-                <div
-                  className="grid gap-3"
-                  style={{
-                    gridTemplateColumns: `repeat(${participantIds.length === 1 ? 1 : windowWidth < 1280 ? 1 : 2}, minmax(0, 1fr))`,
-                    gridAutoRows: 'minmax(120px, auto)'
-                  }}
-                  key={`desktop-grid-${participantIds.length}-${windowWidth < 1280 ? 1 : 2}`}
-                >
-                  {participantIds.map((participantId, index) => (
-                    <div key={`desktop-participant-${participantId}-${index}`} className="aspect-video">
-                      <ParticipantView participantId={participantId} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Fixed Controls at Bottom */}
-      <div className="fixed bottom-0 left-0 right-0 z-50">
-        <MeetingControls isHost={isHost} onChatToggle={() => setShowChat(!showChat)} />
-      </div>
+    setSending(true)
+    try {
+      const messagePayload = {
+        senderId: user?.id || 'guest',
+        senderName: participantName,
+        message: newMessage.trim(),
+        timestamp: new Date().toISOString()
+      }
       
-      {/* Meeting Chat */}
-      <MeetingChat
-        meetingId={meetingId}
-        participantName={participantName}
-        isVisible={showChat}
-        onToggle={() => setShowChat(!showChat)}
-        isScreenSharing={!!presenterId}
-      />
-    </div>
-  )
-}
+      // Send via VideoSDK PubSub for instant real-time delivery
+      console.log('Sending message via PubSub:', messagePayload)
+      publish(JSON.stringify(messagePayload), { persist: false })
+      
+      // Also save to Supabase if configured for persistence
+      if (user?.id && isSupabaseConfigured) {
+        dbHelpers.sendMeetingChatMessage(
+          meetingId,
+          user.id,
+          participantName,
+          newMessage.trim()
+        ).catch(error => {
+          console.error('Failed to persist message:', error)
+        })
+      }
+      
+      // Add message to local state immediately for sender
+      const localMessage: ChatMessage = {
+        id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        meeting_id: meetingId,
+        sender_id: user?.id || 'guest',
+        sender_name: participantName,
+        message: newMessage.trim(),
+        created_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+      }
+      
+      setMessages(prev => [...prev, localMessage])
+      setNewMessage('')
+    } catch (error) {
+      console.error('Failed to send meeting chat message:', error)
+    } finally {
+      setSending(false)
+    }
+  }
 
-// Main Component with MeetingProvider
-export default function VideoMeeting({
-  meetingId,
-  token,
-  participantName,
-  isHost,
-  appointmentId,
-  onMeetingEnd,
-  initialMicOn = true,
-  initialWebcamOn = true
-}: VideoMeetingProps) {
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      sendMessage()
+    }
+  }
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    setIsScrolledUp(false)
+  }
+
+  const formatTime = (timestamp: string) => {
+    const date = new Date(timestamp)
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  }
+
+  const isMyMessage = (senderId: string) => {
+    if (!user?.id) return senderId === 'guest' && senderId === (user?.id || 'guest')
+    return senderId === user?.id
+  }
+
+  // Component uses VideoSDK PubSub for instant real-time messaging
+  // Supabase provides optional persistence when configured
+
   return (
-    <MeetingProvider
-      config={{
-        meetingId,
-        micEnabled: initialMicOn,
-        webcamEnabled: initialWebcamOn,
-        name: participantName,
-        mode: 'CONFERENCE',
-        multiStream: true,
-        debugMode: process.env.NODE_ENV === 'development',
-        // Video quality settings
-        maxResolution: 'hd'
-      }}
-      token={token}
-      joinWithoutUserInteraction={true}
-    >
-      <MeetingConsumer>
-        {() => (
-          <MeetingView
-            isHost={isHost}
-            onMeetingEnd={onMeetingEnd}
-            meetingId={meetingId}
-            participantName={participantName}
-          />
+    <div className={`fixed ${isScreenSharing ? 'bottom-20 md:bottom-20' : 'bottom-20'} right-2 sm:right-4 z-50`}>
+      {/* Chat Toggle Button */}
+      <Button
+        onClick={onToggle}
+        className="rounded-full h-10 w-10 sm:h-12 sm:w-12 p-0 mb-2 shadow-lg relative"
+        variant={isVisible ? "default" : "outline"}
+      >
+        <MessageSquare size={16} className="sm:size-5" />
+        {unreadCount > 0 && (
+          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center">
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </div>
         )}
-      </MeetingConsumer>
-    </MeetingProvider>
+      </Button>
+
+      {/* Chat Panel */}
+      {isVisible && (
+        <>
+          {/* Mobile: Full screen overlay */}
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 sm:hidden">
+            <Card className="w-full h-[85vh] flex flex-col shadow-xl rounded-t-lg rounded-b-none">
+              {/* Header */}
+              <div className="flex items-center justify-between p-3 border-b bg-gray-50 rounded-t-lg">
+                <div className="flex items-center gap-2">
+                  <Users size={16} className="text-gray-600" />
+                  <h3 className="text-sm font-medium">Meeting Chat</h3>
+                  {/* Connection status indicator */}
+                  <div className={`w-2 h-2 rounded-full ${
+                    isConnected ? 'bg-green-500' : 'bg-red-500'
+                  }`} title={isConnected ? 'Connected' : 'Disconnected'} />
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={onToggle}
+                  className="h-8 w-8 p-0"
+                >
+                  <X size={16} />
+                </Button>
+              </div>
+
+              {/* Messages */}
+              <div
+                ref={messagesContainerRef}
+                className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"
+              >
+                {messages.length === 0 ? (
+                  <div className="text-center text-gray-500 text-sm py-8">
+                    No messages yet. Start the conversation!
+                  </div>
+                ) : (
+                  messages.map((message) => (
+                    <div
+                      key={message.id}
+                      className={`flex ${isMyMessage(message.sender_id) ? 'justify-end' : 'justify-start'}`}
+                    >
+                      <div className={`max-w-[85%] ${
+                        isMyMessage(message.sender_id)
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-white text-gray-900 border'
+                      } rounded-lg px-3 py-2 shadow-sm`}>
+                        {!isMyMessage(message.sender_id) && (
+                          <div className="text-xs font-medium text-gray-600 mb-1">
+                            {message.sender_name}
+                          </div>
+                        )}
+                        <div className="text-sm break-words">{message.message}</div>
+                        <div className={`text-xs mt-1 ${
+                          isMyMessage(message.sender_id) ? 'text-blue-200' : 'text-gray-500'
+                        }`}>
+                          {formatTime(message.created_at)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+                <div ref={messagesEndRef} />
+              </div>
+
+              {/* Scroll to bottom button */}
+              {isScrolledUp && (
+                <div className="absolute bottom-20 right-6">
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    className="rounded-full h-8 w-8 p-0 shadow-lg"
+                    onClick={scrollToBottom}
+                  >
+                    <ChevronDown size={14} />
+                  </Button>
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="p-3 border-t bg-white">
+                <div className="flex gap-2">
+                  <Input
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Type a message..."
+                    className="flex-1 text-sm"
+                    disabled={sending}
+                    maxLength={500}
+                  />
+                  <Button
+                    onClick={sendMessage}
+                    disabled={!newMessage.trim() || sending}
+                    size="sm"
+                    className="px-3"
+                  >
+                    <Send size={14} />
+                  </Button>
+                </div>
+                <div className="text-xs text-gray-500 mt-1">
+                  {isConnected
+                    ? "Real-time chat powered by VideoSDK"
+                    : "Connecting to chat..."
+                  }
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          {/* Desktop: Floating panel */}
+          <Card className="hidden sm:flex w-80 h-96 flex-col shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-3 border-b bg-gray-50 rounded-t-lg">
+              <div className="flex items-center gap-2">
+                <Users size={16} className="text-gray-600" />
+                <h3 className="text-sm font-medium">Meeting Chat</h3>
+                {/* Connection status indicator */}
+                <div className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                }`} title={isConnected ? 'Connected' : 'Disconnected'} />
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={onToggle}
+                className="h-6 w-6 p-0"
+              >
+                <X size={14} />
+              </Button>
+            </div>
+
+            {/* Messages */}
+            <div
+              ref={messagesContainerRef}
+              className="flex-1 p-3 overflow-y-auto space-y-2 bg-gray-50"
+            >
+              {messages.length === 0 ? (
+                <div className="text-center text-gray-500 text-sm py-8">
+                  No messages yet. Start the conversation!
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${isMyMessage(message.sender_id) ? 'justify-end' : 'justify-start'}`}
+                  >
+                    <div className={`max-w-[80%] ${
+                      isMyMessage(message.sender_id)
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-white text-gray-900 border'
+                    } rounded-lg px-3 py-2 shadow-sm`}>
+                      {!isMyMessage(message.sender_id) && (
+                        <div className="text-xs font-medium text-gray-600 mb-1">
+                          {message.sender_name}
+                        </div>
+                      )}
+                      <div className="text-sm break-words">{message.message}</div>
+                      <div className={`text-xs mt-1 ${
+                        isMyMessage(message.sender_id) ? 'text-blue-200' : 'text-gray-500'
+                      }`}>
+                        {formatTime(message.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Scroll to bottom button */}
+            {isScrolledUp && (
+              <div className="absolute bottom-16 right-6">
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="rounded-full h-8 w-8 p-0 shadow-lg"
+                  onClick={scrollToBottom}
+                >
+                  <ChevronDown size={14} />
+                </Button>
+              </div>
+            )}
+
+            {/* Input */}
+            <div className="p-3 border-t bg-white rounded-b-lg">
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="Type a message..."
+                  className="flex-1 text-sm"
+                  disabled={sending}
+                  maxLength={500}
+                />
+                <Button
+                  onClick={sendMessage}
+                  disabled={!newMessage.trim() || sending}
+                  size="sm"
+                  className="px-3"
+                >
+                  <Send size={14} />
+                </Button>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {isConnected
+                  ? "Real-time chat powered by VideoSDK"
+                  : "Connecting to chat..."
+                }
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
+    </div>
   )
 }

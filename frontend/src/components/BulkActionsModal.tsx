@@ -311,7 +311,7 @@ export default function BulkActionsModal({
           {/* Reason Input for Rejection */}
           {action === 'reject' && (
             <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4 animate-in slide-in-from-top duration-300">
-              <label className="block text-sm font-semibold text-red-800 dark:text-red-300 mb-3 flex items-center">
+              <label className="block text-sm font-semibold text-red-800 dark:text-red-300 mb-3 items-center">
                 <AlertTriangle className="w-4 h-4 mr-2" />
                 Reason for Rejection *
               </label>

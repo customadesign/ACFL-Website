@@ -9,6 +9,8 @@ import { Label } from '@/components/ui/label';
 import { CalendarDays, Clock, User, CreditCard, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
 import { toast } from 'react-toastify';
 import CoachRating from '@/components/coach/CoachRating';
+import SessionProgressTracker from '@/components/progress/SessionProgressTracker';
+import WellnessCheckIn from '@/components/progress/WellnessCheckIn';
 import {
   Dialog,
   DialogContent,
@@ -198,7 +200,7 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
       in_progress: { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle, label: 'In Progress' },
       completed: { color: 'bg-green-100 text-green-800', icon: CheckCircle, label: 'Completed' },
       cancelled: { color: 'bg-red-100 text-red-800', icon: XCircle, label: 'Cancelled' },
-      'no-show': { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: 'No Show' },
+      no_show: { color: 'bg-gray-100 text-gray-800', icon: XCircle, label: 'No Show' },
     };
 
     const config = statusConfig[status];
@@ -299,6 +301,18 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
                         rows={3}
                       />
                     </div>
+
+                    {/* Progress Tracking */}
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-2">Session Progress</h4>
+                      <SessionProgressTracker
+                        sessionId={session.id}
+                        clientId={session.client_id}
+                        clientName="Client" // You might want to pass actual client name
+                        userRole={userRole}
+                      />
+                    </div>
+
                     <div className="flex gap-2">
                       <Button
                         onClick={() => completeSession(session.id)}
@@ -335,10 +349,21 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
                   <div className="space-y-4">
                     <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
                       <p className="text-sm text-yellow-800">
-                        Your payment is authorized but not yet charged. You will only be charged 
+                        Your payment is authorized but not yet charged. You will only be charged
                         after your coach confirms the session is completed.
                       </p>
                     </div>
+
+                    {/* Wellness Check-in for Clients */}
+                    <div className="border-t pt-4">
+                      <h4 className="text-sm font-medium mb-2">Pre-Session Check-in</h4>
+                      <WellnessCheckIn
+                        clientId={session.client_id}
+                        sessionId={session.id}
+                        userRole={userRole}
+                      />
+                    </div>
+
                     <Button
                       variant="outline"
                       onClick={() => {
