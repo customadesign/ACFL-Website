@@ -1,5 +1,6 @@
 import * as cron from 'node-cron';
 import { appointmentReminderService } from './appointmentReminderService';
+import { calendarSyncService } from './calendarSyncService';
 
 export class CronService {
   private static instance: CronService;
@@ -19,6 +20,7 @@ export class CronService {
    */
   public startAllJobs(): void {
     this.startReminderProcessingJob();
+    this.startCalendarSyncJob();
     this.startCleanupJob();
     console.log('All cron jobs started successfully');
   }
@@ -60,6 +62,40 @@ export class CronService {
 
     this.jobs.set(jobName, job);
     console.log(`Started cron job: ${jobName} - runs every 5 minutes`);
+  }
+
+  /**
+   * Start calendar sync processing job
+   * Runs every 2 minutes to process calendar sync queue
+   */
+  private startCalendarSyncJob(): void {
+    const jobName = 'calendarSync';
+
+    const job = cron.schedule('*/2 * * * *', async () => {
+      try {
+        console.log('Processing calendar sync queue...');
+
+        // Process multiple jobs in parallel for better performance
+        const promises: Promise<boolean>[] = [];
+        for (let i = 0; i < 5; i++) { // Process up to 5 jobs concurrently
+          promises.push(calendarSyncService.processNextSyncJob());
+        }
+
+        const results = await Promise.allSettled(promises);
+        const successCount = results.filter(r => r.status === 'fulfilled' && r.value).length;
+
+        if (successCount > 0) {
+          console.log(`Processed ${successCount} calendar sync jobs`);
+        }
+      } catch (error) {
+        console.error('Error in calendar sync cron job:', error);
+      }
+    }, {
+      timezone: "America/New_York"
+    });
+
+    this.jobs.set(jobName, job);
+    console.log(`Started cron job: ${jobName} - runs every 2 minutes`);
   }
 
   /**

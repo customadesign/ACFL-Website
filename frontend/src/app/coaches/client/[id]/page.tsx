@@ -216,9 +216,9 @@ export default function ClientProfilePage() {
         <Card>
           <CardContent className="text-center py-12">
             <p className="text-red-600 dark:text-red-400 mb-4">{error || 'Client not found'}</p>
-            <Button onClick={() => router.push('/coaches/appointments')}>
+            <Button onClick={() => router.push('/coaches/calendar')}>
               <ChevronLeft className="mr-2 h-4 w-4" />
-              Back to Appointments
+              Back to Calendar
             </Button>
           </CardContent>
         </Card>
@@ -235,7 +235,7 @@ export default function ClientProfilePage() {
       <div className="mb-6">
         <Button
           variant="ghost"
-          onClick={() => router.push('/coaches/appointments')}
+          onClick={() => router.push('/coaches/calendar')}
           className="hover:bg-gray-100 dark:hover:bg-gray-800"
         >
           <ChevronLeft className="mr-2 h-4 w-4" />
@@ -290,7 +290,7 @@ export default function ClientProfilePage() {
                   Message
                 </Button>
               </Link>
-              <Link href={`/coaches/appointments`}>
+              <Link href={`/coaches/calendar?activeTab=appointments`}>
                 <Button variant="outline" size="sm">
                   <Calendar className="mr-2 h-4 w-4" />
                   View Sessions

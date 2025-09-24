@@ -238,7 +238,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => {
-                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                    window.location.href = user.role === 'coach' ? '/coaches/calendar' : '/clients/appointments';
                   }}
                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-red-500 hover:bg-red-600 text-white transition-all transform hover:scale-105 shadow-md"
                 >
@@ -339,7 +339,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => {
-                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                    window.location.href = user.role === 'coach' ? '/coaches/calendar' : '/clients/appointments';
                   }}
                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-orange-500 hover:bg-orange-600 text-white transition-all transform hover:scale-105 shadow-md"
                 >
@@ -423,7 +423,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
                     if (data.meeting_link) {
                       window.open(data.meeting_link, '_blank');
                     } else {
-                      window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                      window.location.href = user.role === 'coach' ? '/coaches/calendar' : '/clients/appointments';
                     }
                   }}
                   className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-full bg-purple-500 hover:bg-purple-600 text-white transition-all transform hover:scale-105 shadow-lg"
@@ -525,7 +525,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => {
-                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                    window.location.href = user.role === 'coach' ? '/coaches/calendar' : '/clients/appointments';
                   }}
                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-green-500 hover:bg-green-600 text-white transition-all transform hover:scale-105 shadow-md"
                 >
@@ -633,7 +633,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
               <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => {
-                    window.location.href = user.role === 'coach' ? '/coaches/appointments' : '/clients/appointments';
+                    window.location.href = user.role === 'coach' ? '/coaches/calendar' : '/clients/appointments';
                   }}
                   className="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-full bg-green-500 hover:bg-green-600 text-white transition-all transform hover:scale-105 shadow-md"
                 >

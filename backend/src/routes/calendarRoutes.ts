@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { supabase } from '../lib/supabase';
 import { authenticate } from '../middleware/auth';
 import { JWTPayload } from '../types/auth';
+import { calendarSyncService } from '../services/calendarSyncService';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -534,9 +535,11 @@ router.post('/book-appointment', async (req, res) => {
       });
     }
 
+    // Queue calendar sync for all connected calendars
+    await calendarSyncService.queueSessionSync(coachId, newAppointment.id, 'create');
+
     // TODO: Send booking confirmation emails
     // TODO: Create VideoSDK meeting room
-    // TODO: Add calendar events
 
     res.status(201).json({
       success: true,
@@ -592,8 +595,11 @@ router.put('/appointment/:appointmentId/cancel', async (req, res) => {
 
     if (error) throw error;
 
+    // Queue calendar sync to update/remove cancelled appointment
+    await calendarSyncService.queueSessionSync(appointment.coach_id, appointmentId, 'update');
+
     // TODO: Send cancellation notifications
-    
+
     res.json({
       success: true,
       message: 'Appointment cancelled',
@@ -701,6 +707,9 @@ router.put('/appointment/:appointmentId/reschedule', async (req, res) => {
         updated_at: new Date().toISOString()
       });
     }
+
+    // Queue calendar sync to update rescheduled appointment
+    await calendarSyncService.queueSessionSync(appointment.coach_id, appointmentId, 'update');
 
     res.json({
       success: true,

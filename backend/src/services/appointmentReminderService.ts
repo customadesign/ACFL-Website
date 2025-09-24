@@ -57,9 +57,7 @@ export class AppointmentReminderService {
             id,
             first_name,
             last_name,
-            users!coaches_user_id_fkey (
-              email
-            )
+            email
           )
         `)
         .eq('id', sessionId)
@@ -80,7 +78,7 @@ export class AppointmentReminderService {
         clientName: `${client.first_name} ${client.last_name}`,
         coachName: `${coach.first_name} ${coach.last_name}`,
         clientEmail: client.email,
-        coachEmail: coach.users.email,
+        coachEmail: coach.email,
         sessionTime: session.starts_at,
         meetingId: session.meeting_id
       };
@@ -210,9 +208,7 @@ export class AppointmentReminderService {
             id,
             first_name,
             last_name,
-            users!coaches_user_id_fkey (
-              email
-            )
+            email
           )
         `)
         .gte('starts_at', now.toISOString())
@@ -244,7 +240,7 @@ export class AppointmentReminderService {
             clientName: `${client.first_name} ${client.last_name}`,
             coachName: `${coach.first_name} ${coach.last_name}`,
             clientEmail: client.email,
-            coachEmail: coach.users.email,
+            coachEmail: coach.email,
             sessionTime: session.starts_at,
             meetingId: session.meeting_id
           };

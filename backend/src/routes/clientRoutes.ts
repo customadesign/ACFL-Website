@@ -9,6 +9,7 @@ import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 import { createVideoSDKMeeting } from '../services/videoSDKService';
 import { PaymentServiceV2 } from '../services/paymentServiceV2';
 import { appointmentReminderService } from '../services/appointmentReminderService';
+import { calendarSyncService } from '../services/calendarSyncService';
 import { dataExportService } from '../services/dataExportService';
 import path from 'path';
 import fs from 'fs';
@@ -1153,6 +1154,15 @@ router.post('/client/book-appointment', [
       // Don't fail the booking if reminder scheduling fails
     }
 
+    // Trigger calendar sync for new appointment
+    try {
+      await calendarSyncService.queueSessionSync(coachId, session.id, 'create');
+      console.log(`Calendar sync triggered for new session ${session.id}`);
+    } catch (syncError) {
+      console.error(`Calendar sync failed for new session ${session.id}:`, syncError);
+      // Don't fail the booking if calendar sync fails
+    }
+
     // Handle payment if paymentId is provided
     if (paymentId) {
       try {
@@ -1330,6 +1340,15 @@ router.put('/client/appointments/:id/reschedule', [
       // Don't send notification to client since they initiated it
     }
 
+    // Trigger calendar sync for rescheduled appointment
+    try {
+      await calendarSyncService.queueSessionSync(appointment.coach_id, updatedAppointment.id, 'update');
+      console.log(`Calendar sync triggered for rescheduled session ${id}`);
+    } catch (syncError) {
+      console.error(`Calendar sync failed for rescheduled session ${id}:`, syncError);
+      // Don't fail the reschedule if calendar sync fails
+    }
+
     res.json({
       success: true,
       message: 'Appointment rescheduled successfully',
@@ -1448,6 +1467,15 @@ router.put('/client/appointments/:id/cancel', [
       });
 
       // Don't send notification to client since they initiated it
+    }
+
+    // Trigger calendar sync for cancelled appointment
+    try {
+      await calendarSyncService.queueSessionSync(appointment.coach_id, updatedAppointment.id, 'delete');
+      console.log(`Calendar sync triggered for cancelled session ${id}`);
+    } catch (syncError) {
+      console.error(`Calendar sync failed for cancelled session ${id}:`, syncError);
+      // Don't fail the cancellation if calendar sync fails
     }
 
     res.json({

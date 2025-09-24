@@ -28,7 +28,9 @@
       "mcp__playwright__browser_type",
       "mcp__playwright__browser_close",
       "Bash(cd:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm install:*)",
+      "Bash(npm start)"
     ],
     "deny": [],
     "ask": []

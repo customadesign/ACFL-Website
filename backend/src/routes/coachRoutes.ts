@@ -8,6 +8,7 @@ import { Request, Response } from 'express';
 import { uploadAttachment, uploadToSupabase } from '../middleware/upload';
 import { createVideoSDKMeeting } from '../services/videoSDKService';
 import { dataExportService } from '../services/dataExportService';
+import { calendarSyncService } from '../services/calendarSyncService';
 import path from 'path';
 import fs from 'fs';
 
@@ -827,19 +828,37 @@ router.put('/coach/appointments/:id', [
         });
         
         // Don't send notification to coach since they initiated it
+
+        // Trigger calendar sync for cancelled appointment
+        try {
+          await calendarSyncService.queueSessionSync(req.user.userId, updatedAppointment.id, 'delete');
+          console.log(`Calendar sync triggered for cancelled appointment ${id}`);
+        } catch (syncError) {
+          console.error(`Calendar sync failed for cancelled appointment ${id}:`, syncError);
+          // Don't fail the appointment cancellation if calendar sync fails
+        }
       } else if (status === 'confirmed') {
         // Send appointment confirmation notification to client
         io.to(`user:${updatedAppointment.client_id}`).emit('appointment:confirmed', {
           ...notificationData,
           message: `Coach has confirmed your appointment`
         });
-        
+
         // Notify admin about confirmation
         io.to('admin:notifications').emit('admin:appointment_confirmed', {
           ...notificationData,
           status: 'confirmed',
           updated_at: new Date().toISOString()
         });
+
+        // Trigger calendar sync for confirmed appointment
+        try {
+          await calendarSyncService.queueSessionSync(req.user.userId, updatedAppointment.id, 'create');
+          console.log(`Calendar sync triggered for confirmed appointment ${id}`);
+        } catch (syncError) {
+          console.error(`Calendar sync failed for appointment ${id}:`, syncError);
+          // Don't fail the appointment confirmation if calendar sync fails
+        }
       } else if (status === 'completed') {
         // Notify admin about completion
         io.to('admin:notifications').emit('admin:appointment_completed', {
@@ -847,6 +866,15 @@ router.put('/coach/appointments/:id', [
           status: 'completed',
           updated_at: new Date().toISOString()
         });
+
+        // Trigger calendar sync for completed appointment
+        try {
+          await calendarSyncService.queueSessionSync(req.user.userId, updatedAppointment.id, 'update');
+          console.log(`Calendar sync triggered for completed appointment ${id}`);
+        } catch (syncError) {
+          console.error(`Calendar sync failed for completed appointment ${id}:`, syncError);
+          // Don't fail the appointment completion if calendar sync fails
+        }
       }
     }
 

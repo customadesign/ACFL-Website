@@ -12,7 +12,7 @@ import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, Settings, CreditCard } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, Settings, CreditCard, CalendarDays } from 'lucide-react';
 
 export default function CoachLayout({
   children,
@@ -96,10 +96,10 @@ export default function CoachLayout({
     { name: 'Dashboard', href: '/coaches', icon: Home },
     { name: 'Calendar', href: '/coaches/availability', icon: Calendar },
     {
-      name: 'Appointments',
-      href: '/coaches/appointments',
+      name: 'Calendar & Appointments',
+      href: '/coaches/calendar',
       notificationCount: appointmentNotificationCount,
-      icon: Calendar
+      icon: CalendarDays
     },
     {
       name: 'Messages',
@@ -268,7 +268,7 @@ export default function CoachLayout({
                     // Mark notifications as read when navigating to respective pages
                     if (item.href === '/coaches/messages') {
                       markMessagesAsRead();
-                    } else if (item.href === '/coaches/appointments') {
+                    } else if (item.href === '/coaches/calendar') {
                       markAppointmentsAsRead();
                     }
                   }}
@@ -334,7 +334,7 @@ export default function CoachLayout({
                             setMobileMenuOpen(false);
                             if (item.href === '/coaches/messages') {
                               markMessagesAsRead();
-                            } else if (item.href === '/coaches/appointments') {
+                            } else if (item.href === '/coaches/calendar') {
                               markAppointmentsAsRead();
                             }
                           }}
@@ -379,7 +379,7 @@ export default function CoachLayout({
                     onClick={() => {
                       if (item.href === '/coaches/messages') {
                         markMessagesAsRead();
-                      } else if (item.href === '/coaches/appointments') {
+                      } else if (item.href === '/coaches/calendar') {
                         markAppointmentsAsRead();
                       }
                     }}
@@ -437,7 +437,7 @@ export default function CoachLayout({
                             setShowMobileMore(false);
                             if (item.href === '/coaches/messages') {
                               markMessagesAsRead();
-                            } else if (item.href === '/coaches/appointments') {
+                            } else if (item.href === '/coaches/calendar') {
                               markAppointmentsAsRead();
                             }
                           }}
