@@ -2191,6 +2191,215 @@ router.put('/appointments/:appointmentId/notes', async (req, res) => {
   }
 });
 
+// Appointment reports endpoint
+router.get('/appointments/reports', async (req, res) => {
+  try {
+    console.log('Admin appointment reports endpoint called');
+    const { startDate, endDate, status, coachId, groupBy = 'day' } = req.query;
+
+    // Build base query
+    let query = supabase
+      .from('sessions')
+      .select(`
+        id,
+        client_id,
+        coach_id,
+        starts_at,
+        ends_at,
+        duration_minutes,
+        status,
+        session_type,
+        notes,
+        admin_notes,
+        cancellation_reason,
+        created_at,
+        clients!sessions_client_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email
+        ),
+        coaches!sessions_coach_id_fkey (
+          id,
+          first_name,
+          last_name,
+          email
+        )
+      `)
+      .order('starts_at', { ascending: false });
+
+    // Apply filters
+    if (startDate) {
+      query = query.gte('starts_at', new Date(startDate as string).toISOString());
+    }
+    if (endDate) {
+      const endDateObj = new Date(endDate as string);
+      endDateObj.setHours(23, 59, 59, 999);
+      query = query.lte('starts_at', endDateObj.toISOString());
+    }
+    if (status && status !== 'all') {
+      query = query.eq('status', status);
+    }
+    if (coachId && coachId !== 'all') {
+      query = query.eq('coach_id', coachId);
+    }
+
+    const { data: sessions, error } = await query;
+
+    if (error) {
+      console.error('Reports query error:', error);
+      throw error;
+    }
+
+    // Calculate report statistics
+    const totalAppointments = sessions?.length || 0;
+    const completedAppointments = sessions?.filter(s => s.status === 'completed').length || 0;
+    const cancelledAppointments = sessions?.filter(s => s.status === 'cancelled').length || 0;
+    const noShowAppointments = sessions?.filter(s => s.status === 'no-show').length || 0;
+    const avgDuration = sessions?.length ? sessions.reduce((sum, s) => sum + (s.duration_minutes || 0), 0) / sessions.length : 0;
+
+    // Generate time-series data based on groupBy parameter
+    const timeSeriesData = generateTimeSeriesData(sessions || [], groupBy as string, startDate as string, endDate as string);
+
+    // Coach performance metrics
+    const coachMetrics = calculateCoachMetrics(sessions || []);
+
+    // Status distribution
+    const statusDistribution = [
+      { status: 'completed', count: completedAppointments },
+      { status: 'cancelled', count: cancelledAppointments },
+      { status: 'no-show', count: noShowAppointments },
+      { status: 'scheduled', count: sessions?.filter(s => s.status === 'scheduled').length || 0 },
+      { status: 'confirmed', count: sessions?.filter(s => s.status === 'confirmed').length || 0 }
+    ].filter(item => item.count > 0);
+
+    const reportData = {
+      summary: {
+        totalAppointments,
+        completedAppointments,
+        cancelledAppointments,
+        noShowAppointments,
+        avgDuration,
+        completionRate: totalAppointments > 0 ? (completedAppointments / totalAppointments) * 100 : 0,
+        cancellationRate: totalAppointments > 0 ? (cancelledAppointments / totalAppointments) * 100 : 0,
+        noShowRate: totalAppointments > 0 ? (noShowAppointments / totalAppointments) * 100 : 0
+      },
+      timeSeriesData,
+      coachMetrics,
+      statusDistribution,
+      rawData: sessions?.map((session: any) => ({
+        id: session.id,
+        clientName: session.clients ? `${session.clients.first_name || ''} ${session.clients.last_name || ''}`.trim() : 'Unknown',
+        clientEmail: session.clients?.email || 'N/A',
+        coachName: session.coaches ? `${session.coaches.first_name || ''} ${session.coaches.last_name || ''}`.trim() : 'Unknown',
+        coachEmail: session.coaches?.email || 'N/A',
+        date: new Date(session.starts_at).toISOString().split('T')[0],
+        time: new Date(session.starts_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+        duration: session.duration_minutes || 60,
+        status: session.status,
+        type: session.session_type || 'video',
+        notes: session.notes || '',
+        adminNotes: session.admin_notes || '',
+        cancellationReason: session.cancellation_reason || '',
+        created_at: session.created_at
+      })) || []
+    };
+
+    res.json(reportData);
+  } catch (error) {
+    console.error('Reports generation error:', error);
+    res.status(500).json({ error: 'Failed to generate reports' });
+  }
+});
+
+// Helper function to generate time series data
+function generateTimeSeriesData(sessions: any[], groupBy: string, startDate: string, endDate: string) {
+  const data: any[] = [];
+  const start = new Date(startDate || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000));
+  const end = new Date(endDate || new Date());
+
+  if (groupBy === 'day') {
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      const dateStr = date.toISOString().split('T')[0];
+      const daySessions = sessions.filter((s: any) => s.starts_at.startsWith(dateStr));
+      data.push({
+        date: dateStr,
+        total: daySessions.length,
+        completed: daySessions.filter((s: any) => s.status === 'completed').length,
+        cancelled: daySessions.filter((s: any) => s.status === 'cancelled').length,
+        noShow: daySessions.filter((s: any) => s.status === 'no-show').length
+      });
+    }
+  } else if (groupBy === 'week') {
+    // Weekly grouping logic
+    const weeks = Math.ceil((end.getTime() - start.getTime()) / (7 * 24 * 60 * 60 * 1000));
+    for (let i = 0; i < weeks; i++) {
+      const weekStart = new Date(start.getTime() + i * 7 * 24 * 60 * 60 * 1000);
+      const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
+      const weekSessions = sessions.filter((s: any) => {
+        const sessionDate = new Date(s.starts_at);
+        return sessionDate >= weekStart && sessionDate <= weekEnd;
+      });
+      data.push({
+        week: `Week ${i + 1}`,
+        startDate: weekStart.toISOString().split('T')[0],
+        endDate: weekEnd.toISOString().split('T')[0],
+        total: weekSessions.length,
+        completed: weekSessions.filter((s: any) => s.status === 'completed').length,
+        cancelled: weekSessions.filter((s: any) => s.status === 'cancelled').length,
+        noShow: weekSessions.filter((s: any) => s.status === 'no-show').length
+      });
+    }
+  }
+
+  return data;
+}
+
+// Helper function to calculate coach metrics
+function calculateCoachMetrics(sessions: any[]) {
+  const coachStats: Record<string, any> = {};
+
+  sessions.forEach((session: any) => {
+    const coachName = session.coaches ? `${session.coaches.first_name || ''} ${session.coaches.last_name || ''}`.trim() : 'Unknown';
+    const coachId = session.coach_id;
+
+    if (!coachStats[coachId]) {
+      coachStats[coachId] = {
+        coachName,
+        coachEmail: session.coaches?.email || 'N/A',
+        totalSessions: 0,
+        completedSessions: 0,
+        cancelledSessions: 0,
+        noShowSessions: 0,
+        totalDuration: 0
+      };
+    }
+
+    coachStats[coachId].totalSessions++;
+    coachStats[coachId].totalDuration += session.duration_minutes || 0;
+
+    switch (session.status) {
+      case 'completed':
+        coachStats[coachId].completedSessions++;
+        break;
+      case 'cancelled':
+        coachStats[coachId].cancelledSessions++;
+        break;
+      case 'no-show':
+        coachStats[coachId].noShowSessions++;
+        break;
+    }
+  });
+
+  return Object.values(coachStats).map((coach: any) => ({
+    ...coach,
+    completionRate: coach.totalSessions > 0 ? (coach.completedSessions / coach.totalSessions) * 100 : 0,
+    cancellationRate: coach.totalSessions > 0 ? (coach.cancelledSessions / coach.totalSessions) * 100 : 0,
+    noShowRate: coach.totalSessions > 0 ? (coach.noShowSessions / coach.totalSessions) * 100 : 0,
+    avgDuration: coach.totalSessions > 0 ? coach.totalDuration / coach.totalSessions : 0
+  })).sort((a, b) => b.totalSessions - a.totalSessions);
+}
+
 // Analytics endpoints
 router.get('/analytics', async (req, res) => {
   try {

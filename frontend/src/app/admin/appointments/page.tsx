@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Edit,
   Save,
-  FileText
+  FileText,
+  BarChart3
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
@@ -440,9 +441,18 @@ export default function AppointmentManagement() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Appointment Management</h1>
-        <p className="text-gray-600 dark:text-gray-400">Monitor and manage all platform appointments</p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Appointment Management</h1>
+          <p className="text-gray-600 dark:text-gray-400">Monitor and manage all platform appointments</p>
+        </div>
+        <button
+          onClick={() => router.push('/admin/appointments/reports')}
+          className="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <BarChart3 className="h-4 w-4 mr-2" />
+          Generate Reports
+        </button>
       </div>
 
       {/* Stats Cards */}

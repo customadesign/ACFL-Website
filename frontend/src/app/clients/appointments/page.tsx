@@ -8,7 +8,6 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeetingContainer from '@/components/MeetingContainer';
-import MockMeetingContainer from '@/components/MockMeetingContainer';
 import MeetingBlocker from '@/components/MeetingBlocker';
 import MeetingStatusDebug from '@/components/MeetingStatusDebug';
 import TestInstructions from '@/components/TestInstructions';
@@ -54,7 +53,6 @@ function AppointmentsContent() {
   const [error, setError] = useState('');
   const [nowMs, setNowMs] = useState<number>(Date.now());
   const [showMeeting, setShowMeeting] = useState(false);
-  const [showMockMeeting, setShowMockMeeting] = useState(false);
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null);
   const socketRef = useRef<Socket | null>(null);
 
@@ -423,61 +421,6 @@ function AppointmentsContent() {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
           </div>
-          {/* Test Button - Remove in production */}
-          <Button
-            onClick={async () => {
-              try {
-                // Generate proper UUIDs for test data
-                const generateUUID = () => {
-                  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                    const r = Math.random() * 16 | 0;
-                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
-                    return v.toString(16);
-                  });
-                };
-
-                // Create a test appointment that starts now
-                const now = new Date();
-                const endTime = new Date(now.getTime() + 60 * 60 * 1000); // 1 hour later
-                
-                const testAppointment: Appointment = {
-                  id: generateUUID(),
-                  coach_id: generateUUID(),
-                  starts_at: now.toISOString(),
-                  ends_at: endTime.toISOString(),
-                  status: 'confirmed',
-                  notes: 'Test appointment for meeting restrictions',
-                  meeting_id: `meeting_${Date.now()}_test`,
-                  created_at: now.toISOString(),
-                  coaches: {
-                    first_name: 'Test',
-                    last_name: 'Coach',
-                    email: 'test@coach.com',
-                    users: {
-                      email: 'test@coach.com'
-                    }
-                  }
-                };
-                
-                // Add to appointments list (frontend only - no backend call)
-                setAppointments(prev => [testAppointment, ...prev]);
-                
-                console.log('✅ Test appointment created (frontend only):', testAppointment.id);
-                
-                // Optionally, immediately open the mock meeting
-                if (confirm('Open test meeting now? (Note: This will test frontend restrictions only)')) {
-                  setMeetingAppointment(testAppointment);
-                  setShowMockMeeting(true);
-                }
-              } catch (error) {
-                console.error('Error creating test appointment:', error);
-              }
-            }}
-            className="bg-purple-600 hover:bg-purple-700 text-white"
-          >
-            <Video className="mr-2 h-4 w-4" />
-            Book Test Meeting (Dev Only)
-          </Button>
         </div>
       </div>
 
@@ -762,22 +705,6 @@ function AppointmentsContent() {
         />
       )}
 
-      {/* Mock Meeting Container for Testing */}
-      {showMockMeeting && meetingAppointment && (
-        <MockMeetingContainer
-          appointmentId={meetingAppointment.id}
-          appointmentData={{
-            coach_name: `${meetingAppointment.coaches?.first_name} ${meetingAppointment.coaches?.last_name}`,
-            starts_at: meetingAppointment.starts_at,
-            ends_at: meetingAppointment.ends_at
-          }}
-          isHost={false}
-          onClose={() => {
-            setShowMockMeeting(false);
-            setMeetingAppointment(null);
-          }}
-        />
-      )}
       
       {/* Debug Components - Remove in production */}
       <MeetingStatusDebug />

@@ -129,18 +129,17 @@ export default function MeetingContainer({
     try {
       // Create or get VideoSDK meeting
       const { meetingId, token } = await createOrGetMeeting(appointmentId, isHost)
-      
-      // Now that user is actually joining, mark them as in meeting
-      console.log('🔒 User joining meeting:', meetingId)
-      setMeetingState(true, meetingId)
-      
+
+      console.log('🔒 Meeting credentials ready:', meetingId)
+      // Don't set meeting state here - let VideoMeeting component handle it after successful join
+
       setMeetingConfig({
         meetingId,
         token,
         micEnabled: config.mic,
         webcamEnabled: config.camera
       })
-      
+
       setStage('meeting')
     } catch (error: any) {
       console.error('Failed to join meeting:', error)

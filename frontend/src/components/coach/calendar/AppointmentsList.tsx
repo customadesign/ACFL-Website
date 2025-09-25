@@ -25,10 +25,6 @@ const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), 
   ssr: false,
   loading: () => <div>Loading meeting...</div>
 })
-const MockMeetingContainer = dynamic(() => import('@/components/MockMeetingContainer'), {
-  ssr: false,
-  loading: () => <div>Loading meeting...</div>
-})
 
 interface Appointment {
   id: string

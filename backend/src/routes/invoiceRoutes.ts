@@ -5,11 +5,10 @@ import { requireAdminRole } from '../middleware/adminAuth';
 
 const router = express.Router();
 
-// Invoice CRUD operations
-router.post('/invoices', authenticate, invoiceController.createInvoice);
+// Invoice operations (read-only - invoices are auto-generated from sessions)
 router.get('/invoices/:id', authenticate, invoiceController.getInvoice);
-router.put('/invoices/:id', authenticate, invoiceController.updateInvoice);
-router.delete('/invoices/:id', authenticate, invoiceController.deleteInvoice);
+// Note: Invoice creation happens automatically when sessions are completed
+// Manual creation/update/delete is disabled to maintain data integrity
 
 // Invoice actions
 router.post('/invoices/:id/send', authenticate, invoiceController.sendInvoice);
@@ -24,16 +23,6 @@ router.get('/clients/:clientId/invoices', authenticate, invoiceController.getCli
 
 // Invoice metrics
 router.get('/invoice-metrics', authenticate, invoiceController.getInvoiceMetrics);
-
-// Recurring invoices
-router.post('/recurring-invoices', authenticate, invoiceController.createRecurringInvoice);
-
-// Admin only - process recurring invoices (usually called by cron)
-router.post('/invoices/process-recurring',
-  authenticate,
-  requireAdminRole,
-  invoiceController.processRecurringInvoices
-);
 
 // Admin only - check overdue invoices (usually called by cron)
 router.post('/invoices/check-overdue',

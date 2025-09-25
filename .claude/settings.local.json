@@ -30,7 +30,8 @@
       "Bash(cd:*)",
       "Bash(findstr:*)",
       "Bash(npm install:*)",
-      "Bash(npm start)"
+      "Bash(npm start)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []

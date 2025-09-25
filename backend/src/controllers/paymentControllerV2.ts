@@ -48,10 +48,39 @@ export class PaymentControllerV2 {
     }
   };
 
-  // Session Management - Simplified for now
+  // Session Management - Complete session and generate invoice
   completeSession = async (req: Request & { user?: any }, res: Response) => {
     try {
-      res.status(501).json({ error: 'Session management not implemented yet' });
+      const { session_id, session_notes, auto_capture_payment, generate_invoice } = req.body;
+
+      if (!session_id) {
+        return res.status(400).json({ error: 'Session ID is required' });
+      }
+
+      // Import session service
+      const { sessionService } = await import('../services/sessionService');
+
+      // Complete the session (user ID should come from auth middleware)
+      const userId = req.user?.id || 'system'; // Replace with actual user ID from auth
+
+      const result = await sessionService.completeSession(
+        {
+          session_id,
+          session_notes,
+          auto_capture_payment: auto_capture_payment !== false,
+          generate_invoice: generate_invoice !== false
+        },
+        userId
+      );
+
+      res.json({
+        success: true,
+        data: {
+          session: result.session,
+          invoice: result.invoice,
+          message: 'Session completed successfully. Invoice has been generated and sent to the client.'
+        }
+      });
     } catch (error) {
       console.error('Complete session error:', error);
       res.status(500).json({ error: (error as Error).message });
@@ -122,7 +151,24 @@ export class PaymentControllerV2 {
   // Session Management Endpoints
   getSessions = async (req: Request & { user?: any }, res: Response) => {
     try {
-      res.status(501).json({ error: 'Get sessions not implemented yet' });
+      const { coach_id, client_id, status } = req.query;
+
+      // Import session service
+      const { sessionService } = await import('../services/sessionService');
+
+      let sessions;
+      if (coach_id) {
+        sessions = await sessionService.getCoachSessions(coach_id as string, status as string);
+      } else if (client_id) {
+        sessions = await sessionService.getClientSessions(client_id as string, status as string);
+      } else {
+        return res.status(400).json({ error: 'Either coach_id or client_id is required' });
+      }
+
+      res.json({
+        success: true,
+        data: sessions
+      });
     } catch (error) {
       console.error('Get sessions error:', error);
       res.status(500).json({ error: (error as Error).message });
@@ -131,7 +177,21 @@ export class PaymentControllerV2 {
 
   getSessionById = async (req: Request & { user?: any }, res: Response) => {
     try {
-      res.status(501).json({ error: 'Get session by ID not implemented yet' });
+      const { sessionId } = req.params;
+
+      // Import session service
+      const { sessionService } = await import('../services/sessionService');
+
+      const session = await sessionService.getSessionWithInvoice(sessionId);
+
+      if (!session) {
+        return res.status(404).json({ error: 'Session not found' });
+      }
+
+      res.json({
+        success: true,
+        data: session
+      });
     } catch (error) {
       console.error('Get session by ID error:', error);
       res.status(500).json({ error: (error as Error).message });

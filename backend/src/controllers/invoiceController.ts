@@ -9,23 +9,12 @@ import {
 } from '../types/invoice';
 
 export class InvoiceController {
-  // Create a new invoice
+  // DISABLED: Manual invoice creation - invoices are auto-generated from completed sessions
+  /*
   async createInvoice(req: Request, res: Response): Promise<void> {
-    try {
-      const invoiceData: CreateInvoiceRequest = req.body;
-      const invoice = await invoiceService.createInvoice(invoiceData);
-      res.status(201).json({
-        success: true,
-        data: invoice
-      });
-    } catch (error: any) {
-      console.error('Error creating invoice:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to create invoice'
-      });
-    }
+    // Invoices are now automatically created when coaching sessions are completed
   }
+  */
 
   // Get invoice by ID
   async getInvoice(req: Request, res: Response): Promise<void> {
@@ -54,76 +43,29 @@ export class InvoiceController {
     }
   }
 
-  // Update invoice
+  // DISABLED: Manual invoice updates - invoices are auto-generated from sessions
+  /*
   async updateInvoice(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-      const updateData: UpdateInvoiceRequest = req.body;
-
-      const invoice = await invoiceService.updateInvoice(id, updateData);
-
-      res.json({
-        success: true,
-        data: invoice
-      });
-    } catch (error: any) {
-      console.error('Error updating invoice:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to update invoice'
-      });
-    }
+    // Invoice updates disabled for session-based billing
   }
+  */
 
-  // Delete invoice
+  // DISABLED: Manual invoice deletion - invoices are auto-generated from sessions
+  /*
   async deleteInvoice(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      // Check if invoice can be deleted (only draft or cancelled)
-      const invoice = await invoiceService.getInvoice(id);
-
-      if (!invoice) {
-        res.status(404).json({
-          success: false,
-          error: 'Invoice not found'
-        });
-        return;
-      }
-
-      if (!['draft', 'cancelled'].includes(invoice.status)) {
-        res.status(400).json({
-          success: false,
-          error: 'Only draft or cancelled invoices can be deleted'
-        });
-        return;
-      }
-
-      // Update status to cancelled instead of hard delete
-      await invoiceService.updateInvoice(id, { status: 'cancelled' });
-
-      res.json({
-        success: true,
-        message: 'Invoice cancelled successfully'
-      });
-    } catch (error: any) {
-      console.error('Error deleting invoice:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to delete invoice'
-      });
-    }
+    // Invoice deletion disabled for session-based billing
   }
+  */
 
   // Send invoice to client
   async sendInvoice(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const sendData: Omit<SendInvoiceRequest, 'invoice_id'> = req.body;
+      const sendData: SendInvoiceRequest = req.body;
 
       await invoiceService.sendInvoice({
-        invoice_id: id,
-        ...sendData
+        ...sendData,
+        invoice_id: id
       });
 
       res.json({
@@ -139,20 +81,20 @@ export class InvoiceController {
     }
   }
 
-  // Record payment for invoice
+  // Record payment against invoice
   async recordPayment(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const paymentData: Omit<RecordInvoicePaymentRequest, 'invoice_id'> = req.body;
+      const paymentData: RecordInvoicePaymentRequest = req.body;
 
-      const payment = await invoiceService.recordPayment({
-        invoice_id: id,
-        ...paymentData
+      await invoiceService.recordPayment({
+        ...paymentData,
+        invoice_id: id
       });
 
       res.json({
         success: true,
-        data: payment
+        message: 'Payment recorded successfully'
       });
     } catch (error: any) {
       console.error('Error recording payment:', error);
@@ -163,20 +105,29 @@ export class InvoiceController {
     }
   }
 
-  // Get coach invoices
+  // Download invoice PDF
+  async downloadInvoicePDF(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const pdfBuffer = await invoiceService.generateInvoicePDF(id);
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename=invoice-${id}.pdf`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('Error generating PDF:', error);
+      res.status(500).json({
+        success: false,
+        error: error.message || 'Failed to generate PDF'
+      });
+    }
+  }
+
+  // Get invoices for a coach
   async getCoachInvoices(req: Request, res: Response): Promise<void> {
     try {
       const { coachId } = req.params;
-      const { status, clientId, dateFrom, dateTo } = req.query;
-
-      const filters = {
-        status: status as string,
-        clientId: clientId as string,
-        dateFrom: dateFrom ? new Date(dateFrom as string) : undefined,
-        dateTo: dateTo ? new Date(dateTo as string) : undefined
-      };
-
-      const invoices = await invoiceService.getCoachInvoices(coachId, filters);
+      const invoices = await invoiceService.getCoachInvoices(coachId);
 
       res.json({
         success: true,
@@ -191,18 +142,15 @@ export class InvoiceController {
     }
   }
 
-  // Get client invoices
+  // Get invoices for a client
   async getClientInvoices(req: Request, res: Response): Promise<void> {
     try {
       const { clientId } = req.params;
-      const { status, coachId, dateFrom, dateTo } = req.query;
-
-      // Similar to getCoachInvoices but filtered by client
-      // Implementation would be similar with client filter
+      const invoices = await invoiceService.getClientInvoices(clientId);
 
       res.json({
         success: true,
-        data: []
+        data: invoices
       });
     } catch (error: any) {
       console.error('Error fetching client invoices:', error);
@@ -216,12 +164,12 @@ export class InvoiceController {
   // Get invoice metrics
   async getInvoiceMetrics(req: Request, res: Response): Promise<void> {
     try {
-      const { coachId, dateFrom, dateTo } = req.query;
+      const { coachId, startDate, endDate } = req.query;
 
       const metrics = await invoiceService.getInvoiceMetrics(
         coachId as string,
-        dateFrom ? new Date(dateFrom as string) : undefined,
-        dateTo ? new Date(dateTo as string) : undefined
+        startDate as string,
+        endDate as string
       );
 
       res.json({
@@ -237,88 +185,35 @@ export class InvoiceController {
     }
   }
 
-  // Create recurring invoice
+  // DISABLED: Recurring invoices not needed for session-based billing
+  /*
   async createRecurringInvoice(req: Request, res: Response): Promise<void> {
-    try {
-      const recurringData: CreateRecurringInvoiceRequest = req.body;
-      const recurringInvoice = await invoiceService.createRecurringInvoice(recurringData);
-
-      res.status(201).json({
-        success: true,
-        data: recurringInvoice
-      });
-    } catch (error: any) {
-      console.error('Error creating recurring invoice:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to create recurring invoice'
-      });
-    }
+    // Recurring invoices disabled - sessions are billed individually
   }
+  */
 
-  // Process recurring invoices (called by cron job)
+  // DISABLED: Process recurring invoices (not needed for session-based billing)
+  /*
   async processRecurringInvoices(req: Request, res: Response): Promise<void> {
-    try {
-      await invoiceService.processRecurringInvoices();
-
-      res.json({
-        success: true,
-        message: 'Recurring invoices processed successfully'
-      });
-    } catch (error: any) {
-      console.error('Error processing recurring invoices:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to process recurring invoices'
-      });
-    }
+    // Recurring invoice processing disabled
   }
+  */
 
-  // Check for overdue invoices
+  // Check overdue invoices (useful for session-based invoices too)
   async checkOverdueInvoices(req: Request, res: Response): Promise<void> {
     try {
-      await invoiceService.checkOverdueInvoices();
+      const overdueInvoices = await invoiceService.checkOverdueInvoices();
 
       res.json({
         success: true,
-        message: 'Overdue invoices checked successfully'
+        data: overdueInvoices,
+        message: `Found ${overdueInvoices.length} overdue invoices`
       });
     } catch (error: any) {
       console.error('Error checking overdue invoices:', error);
       res.status(500).json({
         success: false,
         error: error.message || 'Failed to check overdue invoices'
-      });
-    }
-  }
-
-  // Download invoice as PDF
-  async downloadInvoicePDF(req: Request, res: Response): Promise<void> {
-    try {
-      const { id } = req.params;
-
-      const invoice = await invoiceService.getInvoice(id);
-
-      if (!invoice) {
-        res.status(404).json({
-          success: false,
-          error: 'Invoice not found'
-        });
-        return;
-      }
-
-      // Generate PDF (implementation in pdfGenerator)
-      // This would use the generateInvoicePDF utility
-
-      res.json({
-        success: true,
-        message: 'PDF generation endpoint - implementation pending'
-      });
-    } catch (error: any) {
-      console.error('Error downloading invoice PDF:', error);
-      res.status(500).json({
-        success: false,
-        error: error.message || 'Failed to download invoice PDF'
       });
     }
   }

@@ -1,12 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiGet } from '@/lib/api-client'
 import { getApiUrl } from '@/lib/api'
 import { Clock, User, Video, Calendar } from 'lucide-react'
+
+// Dynamic imports for meeting components
+const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), {
+  ssr: false,
+  loading: () => <div>Loading meeting...</div>
+})
 
 interface TodaysAppointment {
   id: string
@@ -30,6 +37,8 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
   const [todaysAppointments, setTodaysAppointments] = useState<TodaysAppointment[]>([])
   const [loading, setLoading] = useState(true)
   const [currentTime, setCurrentTime] = useState(new Date())
+  const [showMeeting, setShowMeeting] = useState(false)
+  const [meetingAppointment, setMeetingAppointment] = useState<TodaysAppointment | null>(null)
 
   const API_URL = getApiUrl()
 
@@ -138,6 +147,16 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
     return `In ${diffHours}h ${remainingMinutes}m`
   }
 
+  const handleJoinMeeting = (appointment: TodaysAppointment) => {
+    setMeetingAppointment(appointment)
+    setShowMeeting(true)
+  }
+
+  const handleMeetingEnd = () => {
+    setShowMeeting(false)
+    setMeetingAppointment(null)
+  }
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -230,10 +249,7 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
               <Button
                 size="sm"
                 className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => {
-                  // This would typically open the meeting - for now just a placeholder
-                  console.log('Join meeting:', appointment.meeting_id)
-                }}
+                onClick={() => handleJoinMeeting(appointment)}
               >
                 <Video className="h-3 w-3 mr-1" />
                 {isAppointmentActive(appointment) ? 'Join Session' : 'Join Early'}
@@ -249,6 +265,22 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
             View All Appointments
           </Button>
         </div>
+      )}
+
+      {/* Meeting Interface */}
+      {showMeeting && meetingAppointment && (
+        <MeetingContainer
+          appointmentId={meetingAppointment.id}
+          appointmentData={{
+            client_name: meetingAppointment.clients ?
+              `${meetingAppointment.clients.first_name} ${meetingAppointment.clients.last_name}` :
+              'Client',
+            starts_at: meetingAppointment.starts_at,
+            ends_at: meetingAppointment.ends_at
+          }}
+          isHost={true}
+          onClose={handleMeetingEnd}
+        />
       )}
     </div>
   )

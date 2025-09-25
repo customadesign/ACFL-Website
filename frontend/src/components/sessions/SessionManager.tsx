@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { CalendarDays, Clock, User, CreditCard, CheckCircle, XCircle, AlertCircle, Star } from 'lucide-react';
+import { CalendarDays, Clock, User, CreditCard, CheckCircle, XCircle, AlertCircle, Star, FileText } from 'lucide-react';
 import { toast } from 'react-toastify';
 import CoachRating from '@/components/coach/CoachRating';
 import SessionProgressTracker from '@/components/progress/SessionProgressTracker';
@@ -113,9 +113,31 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
       });
 
       if (response.ok) {
-        const updatedSession = await response.json();
+        const result = await response.json();
+        const updatedSession = result.data.session;
+        const invoice = result.data.invoice;
+
         setSessions(prev => prev.map(s => s.id === sessionId ? updatedSession : s));
-        toast.success('Session completed! Payment has been processed.');
+
+        if (invoice) {
+          toast.success('Session completed! Invoice has been generated and sent to the client.');
+
+          // Offer to download invoice
+          if (invoice.id) {
+            const downloadInvoice = () => {
+              window.open(`/api/invoices/${invoice.id}/download`, '_blank');
+            };
+
+            // Add download button to the toast (or handle it in UI)
+            setTimeout(() => {
+              if (window.confirm('Would you like to download the invoice?')) {
+                downloadInvoice();
+              }
+            }, 1000);
+          }
+        } else {
+          toast.success('Session completed! Payment has been processed.');
+        }
 
         // Show rating modal for clients after session completion
         if (userRole === 'client') {
@@ -382,9 +404,47 @@ const SessionManager: React.FC<SessionManagerProps> = ({ userRole, userId }) => 
 
                 {session.status === 'completed' && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-2">
-                      <CheckCircle className="w-5 h-5 text-green-600" />
-                      <span className="font-medium text-green-800">Session Completed</span>
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                        <span className="font-medium text-green-800">Session Completed</span>
+                        {/* Debug info */}
+                        <span className="text-xs text-gray-500">
+                          (Session ID: {session.id.slice(0, 8)}...)
+                        </span>
+                      </div>
+                      {/* Invoice download button */}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          // Fetch session with invoice and download
+                          fetch(`/api/payments/v2/sessions/${session.id}`, {
+                            headers: {
+                              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                            },
+                          })
+                          .then(res => res.json())
+                          .then(data => {
+                            console.log('Session API response:', data); // Debug log
+                            if (data.success && data.data.invoices && data.data.invoices.length > 0) {
+                              const invoiceId = data.data.invoices[0].id;
+                              window.open(`/api/invoices/${invoiceId}/download`, '_blank');
+                            } else {
+                              console.log('No invoices found for session:', data); // Debug log
+                              toast.info('Invoice not available yet. Please check back later.');
+                            }
+                          })
+                          .catch(err => {
+                            console.error('Error fetching invoice:', err);
+                            toast.error('Failed to download invoice');
+                          });
+                        }}
+                        className="text-blue-600 hover:text-blue-800"
+                      >
+                        <FileText className="w-4 h-4 mr-1" />
+                        Download Invoice
+                      </Button>
                     </div>
                     <p className="text-sm text-green-700">
                       Payment has been captured and processed.
