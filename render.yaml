@@ -12,10 +12,7 @@ services:
       - key: PORT
         value: 10000
       - key: CORS_ORIGIN
-        fromService:
-          type: web
-          name: therapist-matcher-frontend
-          property: host
+        value: https://therapist-matcher-frontend.onrender.com
     autoDeploy: false
 
   # Frontend Web Service
@@ -31,10 +28,7 @@ services:
       - key: PORT
         value: 10000
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: therapist-matcher-backend
-          property: host
+        value: https://therapist-matcher-backend.onrender.com
     autoDeploy: false
 
   # Coaches Dashboard
@@ -50,10 +44,7 @@ services:
       - key: PORT
         value: 10000
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: therapist-matcher-backend
-          property: host
+        value: https://therapist-matcher-backend.onrender.com
     autoDeploy: false
 
   # Admin Dashboard
@@ -69,8 +60,5 @@ services:
       - key: PORT
         value: 10000
       - key: NEXT_PUBLIC_API_URL
-        fromService:
-          type: web
-          name: therapist-matcher-backend
-          property: host
+        value: https://therapist-matcher-backend.onrender.com
     autoDeploy: false

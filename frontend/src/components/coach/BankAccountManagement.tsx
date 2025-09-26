@@ -9,7 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { AlertCircle, Plus, Trash2, CreditCard, CheckCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { getApiUrl } from '@/lib/api';
 
 interface BankAccount {
   id: string;
@@ -56,7 +55,7 @@ export default function BankAccountManagement() {
 
   const fetchBankAccounts = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/billing/bank-accounts`, {
+      const response = await fetch('/api/billing/bank-accounts', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
@@ -82,7 +81,7 @@ export default function BankAccountManagement() {
     setError(null);
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/billing/bank-accounts`, {
+      const response = await fetch('/api/billing/bank-accounts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -118,7 +117,7 @@ export default function BankAccountManagement() {
     }
 
     try {
-      const response = await fetch(`${getApiUrl()}/api/billing/bank-accounts/${accountId}`, {
+      const response = await fetch(`/api/billing/bank-accounts/${accountId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -139,7 +138,7 @@ export default function BankAccountManagement() {
 
   const handleSetDefault = async (accountId: string) => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/billing/bank-accounts/${accountId}/set-default`, {
+      const response = await fetch(`/api/billing/bank-accounts/${accountId}/set-default`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
