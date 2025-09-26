@@ -1,15 +1,32 @@
 // Utility function to get API URL based on environment
 export const getApiUrl = () => {
+  // First check if there's an explicit production API URL set
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    console.log('Using explicit API URL from environment:', process.env.NEXT_PUBLIC_API_URL);
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+
   // Check multiple conditions to detect production environment
   const isProduction =
     process.env.NODE_ENV === 'production' ||
     process.env.VERCEL_ENV === 'production' ||
     process.env.NEXT_PUBLIC_VERCEL_ENV === 'production' ||
-    typeof window !== 'undefined' && (
+    (typeof window !== 'undefined' && (
       window.location.hostname !== 'localhost' &&
       window.location.hostname !== '127.0.0.1' &&
-      !window.location.hostname.includes('localhost')
-    );
+      !window.location.hostname.includes('localhost') &&
+      !window.location.hostname.includes('192.168') &&
+      window.location.protocol === 'https:'
+    ));
+
+  console.log('Production check details:', {
+    NODE_ENV: process.env.NODE_ENV,
+    VERCEL_ENV: process.env.VERCEL_ENV,
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    hostname: typeof window !== 'undefined' ? window.location.hostname : 'server',
+    protocol: typeof window !== 'undefined' ? window.location.protocol : 'server',
+    isProduction
+  });
 
   // Always use production URL if any production indicator is detected
   if (isProduction) {
@@ -19,7 +36,7 @@ export const getApiUrl = () => {
 
   // Development environment
   console.log('Using development API URL');
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+  return 'http://localhost:3001';
 };
 
 const API_BASE_URL = getApiUrl();
