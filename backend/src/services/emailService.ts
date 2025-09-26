@@ -346,6 +346,180 @@ class EmailService {
     });
   }
 
+  async sendPasswordResetOTP({ email, firstName, otp, role }: {
+    email: string;
+    firstName: string;
+    otp: string;
+    role: string;
+  }) {
+    const subject = 'Password Reset Code - ACT Coaching For Life';
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Password Reset Code</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+          }
+          .container {
+            max-width: 600px;
+            margin: 20px auto;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          }
+          .header {
+            background: linear-gradient(135deg, #FF6B6B 0%, #ff5722 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+          }
+          .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+          }
+          .content {
+            padding: 40px 30px;
+          }
+          .otp-box {
+            background: #f8f9fa;
+            border: 2px solid #FF6B6B;
+            border-radius: 10px;
+            padding: 30px;
+            margin: 25px 0;
+            text-align: center;
+          }
+          .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 8px;
+            color: #FF6B6B;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px dashed #FF6B6B;
+          }
+          .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+          }
+          .instructions {
+            background: #e3f2fd;
+            border: 1px solid #2196f3;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+          }
+          .instructions h4 {
+            margin-top: 0;
+            color: #1976d2;
+          }
+          .footer {
+            background: #f8f9fa;
+            padding: 30px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            border-top: 1px solid #e9ecef;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Password Reset Code</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${firstName}!</h2>
+            <p>We received a request to reset your password for your ${role} account. Here's your verification code:</p>
+
+            <div class="otp-box">
+              <h3 style="margin-top: 0; color: #333;">Your Reset Code</h3>
+              <div class="otp-code">${otp}</div>
+              <p style="margin-bottom: 0; color: #666; font-size: 14px;">Enter this code on the password reset page</p>
+            </div>
+
+            <div class="warning">
+              <span>⏰</span>
+              <strong>Important:</strong> This code will expire in 30 minutes for your security.
+            </div>
+
+            <div class="instructions">
+              <h4>📝 How to reset your password:</h4>
+              <ol style="margin: 10px 0; padding-left: 20px;">
+                <li>Return to the password reset page</li>
+                <li>Enter your email address</li>
+                <li>Enter the 6-digit code above</li>
+                <li>Create your new password</li>
+              </ol>
+            </div>
+
+            <p>If you didn't request this password reset, please ignore this email. Your account remains secure.</p>
+
+            <p>Need help? Contact our support team at <a href="mailto:support@actcoachingforlife.com">support@actcoachingforlife.com</a></p>
+
+            <p>Best regards,<br><strong>The ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p><strong>ACT Coaching For Life</strong></p>
+            <p>© ${new Date().getFullYear()} All rights reserved.</p>
+            <p>This email was sent to ${email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Password Reset Code - ACT Coaching For Life
+
+      Hi ${firstName}!
+
+      We received a request to reset your password for your ${role} account.
+
+      Your verification code: ${otp}
+
+      This code will expire in 30 minutes for your security.
+
+      How to reset your password:
+      1. Return to the password reset page
+      2. Enter your email address
+      3. Enter the 6-digit code above
+      4. Create your new password
+
+      If you didn't request this password reset, please ignore this email.
+
+      Need help? Contact support@actcoachingforlife.com
+
+      Best regards,
+      The ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: email,
+      subject,
+      text,
+      html
+    });
+  }
+
   async sendCoachApplicationConfirmation({ email, first_name, application_id }: { email: string; first_name: string; application_id: string }) {
     const subject = 'Application Received - ACT Coaching For Life';
 

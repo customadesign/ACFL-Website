@@ -12,7 +12,7 @@ import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
-import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, Settings, CreditCard, CalendarDays } from 'lucide-react';
+import { Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar, MessageSquare, Users, User, MoreHorizontal, TrendingUp, CreditCard, CalendarDays } from 'lucide-react';
 
 export default function CoachLayout({
   children,
@@ -157,14 +157,6 @@ export default function CoachLayout({
                   
                   {showDropdown && (
                     <div className="absolute right-0 mt-2 w-48 bg-popover rounded-md shadow-lg py-1 z-50 border border-border">
-                      <Link
-                        href="/coaches/settings"
-                        onClick={() => setShowDropdown(false)}
-                        className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2 block"
-                      >
-                        <Settings className="w-4 h-4" />
-                        <span>Settings</span>
-                      </Link>
                       <button
                         onClick={handleThemeToggle}
                         className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"
@@ -214,14 +206,7 @@ export default function CoachLayout({
                         {user?.first_name || 'Coach'}
                       </p>
                     </div>
-                    <Link
-                      href="/coaches/settings"
-                      onClick={() => setShowDropdown(false)}
-                      className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2 block"
-                    >
-                      <Settings className="w-4 h-4" />
-                      <span>Settings</span>
-                    </Link>
+                
                     <button
                       onClick={handleThemeToggle}
                       className="w-full px-4 py-2 text-left text-sm text-popover-foreground hover:bg-accent flex items-center space-x-2"

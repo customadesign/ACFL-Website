@@ -196,27 +196,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         // Otherwise redirect based on role
         console.log('User role:', user.role);
-        if (user.role === 'client') {
-          console.log('Redirecting client to /clients');
-          setTimeout(() => {
-            router.replace('/clients');
-          }, 100);
-        } else if (user.role === 'coach') {
-          console.log('Redirecting coach to /coaches');
-          setTimeout(() => {
-            router.replace('/coaches');
-          }, 100);
-        } else if (user.role === 'admin') {
-          console.log('Redirecting admin to /admin');
-          setTimeout(() => {
-            router.replace('/admin');
-          }, 100);
-        } else if (user.role === 'staff') {
-          console.log('Redirecting staff to /admin');
-          setTimeout(() => {
-            router.replace('/admin');
-          }, 100);
-        }
+
+        // Use window.location for more reliable redirect
+        const redirectUrl = (() => {
+          switch(user.role) {
+            case 'client':
+              console.log('Redirecting client to /clients');
+              return '/clients';
+            case 'coach':
+              console.log('Redirecting coach to /coaches');
+              return '/coaches';
+            case 'admin':
+            case 'staff':
+              console.log(`Redirecting ${user.role} to /admin`);
+              return '/admin';
+            default:
+              console.log('Unknown role, redirecting to home');
+              return '/';
+          }
+        })();
+
+        // Use a combination of router.push and window.location for reliable redirect
+        router.push(redirectUrl);
+        // Fallback to window.location if router doesn't work
+        setTimeout(() => {
+          if (window.location.pathname === '/login' || window.location.pathname === '/') {
+            window.location.href = redirectUrl;
+          }
+        }, 500);
       }
     } catch (error: any) {
       console.error('Login error:', error);
@@ -267,9 +274,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Set user
       setUser(user);
-      
-      // Redirect to client dashboard
+
+      // Redirect to client dashboard with fallback
       router.push('/clients');
+      setTimeout(() => {
+        if (window.location.pathname.includes('/register')) {
+          window.location.href = '/clients';
+        }
+      }, 500);
     } catch (error: any) {
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
@@ -292,9 +304,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Set user
       setUser(user);
-      
-      // Redirect to coach dashboard
+
+      // Redirect to coach dashboard with fallback
       router.push('/coaches');
+      setTimeout(() => {
+        if (window.location.pathname.includes('/register')) {
+          window.location.href = '/coaches';
+        }
+      }, 500);
     } catch (error: any) {
       console.error('Registration error:', error.response?.data);
       

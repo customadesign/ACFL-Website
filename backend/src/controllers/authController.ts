@@ -1070,3 +1070,438 @@ export const logout = async (req: Request & { user?: JWTPayload }, res: Response
     });
   }
 };
+
+export const forgotPassword = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('🔐 FORGOT PASSWORD REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Email:', req.body.email);
+
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('❌ Validation failed:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid email format',
+        errors: errors.array()
+      });
+    }
+
+    const { email } = req.body;
+
+    console.log('\n🔍 Step 1: Looking up user profile...');
+
+    // Check if user exists in any role (client, coach, admin, staff)
+    let userProfile = null;
+    let userRole: 'client' | 'coach' | 'admin' | 'staff' | null = null;
+
+    // Check admin
+    const { data: adminProfile } = await supabase
+      .from('admins')
+      .select('*')
+      .ilike('email', email)
+      .single();
+
+    if (adminProfile) {
+      userProfile = adminProfile;
+      userRole = 'admin';
+      console.log('✅ Found admin profile');
+    } else {
+      // Check staff
+      const { data: staffProfile } = await supabase
+        .from('staff')
+        .select('*')
+        .ilike('email', email)
+        .single();
+
+      if (staffProfile) {
+        userProfile = staffProfile;
+        userRole = 'staff';
+        console.log('✅ Found staff profile');
+      } else {
+        // Check client
+        const { data: clientProfile } = await supabase
+          .from('clients')
+          .select('*')
+          .ilike('email', email)
+          .single();
+
+        if (clientProfile) {
+          userProfile = clientProfile;
+          userRole = 'client';
+          console.log('✅ Found client profile');
+        } else {
+          // Check coach
+          const { data: coachProfile } = await supabase
+            .from('coaches')
+            .select('*')
+            .ilike('email', email)
+            .single();
+
+          if (coachProfile) {
+            userProfile = coachProfile;
+            userRole = 'coach';
+            console.log('✅ Found coach profile');
+          }
+        }
+      }
+    }
+
+    // Always return success to prevent email enumeration
+    if (!userProfile || !userRole) {
+      console.log('⚠️ User not found, but returning success to prevent enumeration');
+      return res.json({
+        success: true,
+        message: 'If an account with that email exists, we have sent a password reset code to your email.'
+      });
+    }
+
+    console.log('\n🎲 Step 2: Generating OTP...');
+
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now (extended for better UX)
+
+    console.log('OTP generated:', otp);
+    console.log('Current time:', new Date().toISOString());
+    console.log('OTP expires at:', otpExpiry.toISOString());
+
+    // Store OTP in database
+    const { error: otpError } = await supabase
+      .from('password_reset_otps')
+      .upsert({
+        email: email.toLowerCase(),
+        otp: otp,
+        expires_at: new Date(Date.now() + 30 * 60 * 1000).toISOString(), // Store as UTC
+        user_role: userRole,
+        user_id: userProfile.id,
+        created_at: new Date().toISOString()
+      }, {
+        onConflict: 'email'
+      });
+
+    if (otpError) {
+      console.error('❌ Failed to store OTP:', otpError);
+      throw otpError;
+    }
+    console.log('✅ OTP stored in database');
+
+    console.log('\n📧 Step 3: Sending OTP email...');
+
+    try {
+      const emailResult = await emailService.sendPasswordResetOTP({
+        email: email,
+        firstName: userProfile.first_name || userProfile.email,
+        otp: otp,
+        role: userRole
+      });
+
+      if (emailResult.success) {
+        console.log('✅ Password reset OTP email sent successfully');
+      } else {
+        console.error('⚠️ Failed to send OTP email:', emailResult.error);
+        // Don't fail the request - user might still be able to use the OTP
+      }
+    } catch (emailError) {
+      console.error('⚠️ Email service error:', emailError);
+      // Don't fail the request
+    }
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ FORGOT PASSWORD COMPLETED');
+    console.log(`Total time: ${duration}ms`);
+    console.log('========================================\n');
+
+    res.json({
+      success: true,
+      message: 'If an account with that email exists, we have sent a password reset code to your email.'
+    });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ FORGOT PASSWORD FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while processing your request. Please try again later.'
+    });
+  }
+};
+
+export const verifyResetOTP = async (req: Request, res: Response) => {
+  console.log('\n========================================');
+  console.log('🔍 VERIFY OTP REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Email:', req.body.email);
+  console.log('OTP:', req.body.otp);
+
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('❌ Validation failed:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input',
+        errors: errors.array()
+      });
+    }
+
+    const { email, otp } = req.body;
+
+    console.log('\n🔍 Step 1: Looking up OTP record...');
+
+    // Get OTP record
+    const { data: otpRecord, error: otpError } = await supabase
+      .from('password_reset_otps')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .eq('otp', otp)
+      .single();
+
+    console.log('OTP lookup result:', {
+      found: !!otpRecord,
+      error: otpError?.message || 'none'
+    });
+
+    if (otpError || !otpRecord) {
+      console.log('❌ OTP record not found or error occurred');
+
+      // Let's also check if there's an OTP for this email with any code
+      const { data: anyOtpRecord } = await supabase
+        .from('password_reset_otps')
+        .select('*')
+        .eq('email', email.toLowerCase())
+        .single();
+
+      if (anyOtpRecord) {
+        console.log('Found OTP record for email but wrong code. Expected:', anyOtpRecord.otp, 'Got:', otp);
+      } else {
+        console.log('No OTP record found for this email at all');
+      }
+
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    console.log('\n🔍 Step 2: Checking expiry...');
+    console.log('OTP record details:', {
+      created_at: otpRecord.created_at,
+      expires_at: otpRecord.expires_at,
+      otp: otpRecord.otp
+    });
+
+    // Check if OTP is expired - ensure we're working with UTC timestamps
+    const now = new Date();
+    const expiryTime = new Date(otpRecord.expires_at + (otpRecord.expires_at.includes('Z') ? '' : 'Z')); // Ensure UTC
+
+    console.log('Time check:', {
+      now: now.toISOString(),
+      expiry: expiryTime.toISOString(),
+      rawExpiry: otpRecord.expires_at,
+      isExpired: now > expiryTime,
+      minutesRemaining: Math.round((expiryTime.getTime() - now.getTime()) / (1000 * 60)),
+      timeDiffMs: expiryTime.getTime() - now.getTime()
+    });
+
+    if (now > expiryTime) {
+      console.log('❌ OTP has expired');
+      // Clean up expired OTP
+      await supabase
+        .from('password_reset_otps')
+        .delete()
+        .eq('id', otpRecord.id);
+
+      return res.status(400).json({
+        success: false,
+        message: 'OTP has expired. Please request a new one.'
+      });
+    }
+
+    console.log('✅ OTP verified successfully');
+
+    // Mark OTP as verified and extend expiry for password reset step
+    const extendedExpiry = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes for password reset
+    await supabase
+      .from('password_reset_otps')
+      .update({
+        expires_at: extendedExpiry.toISOString(),
+        // Add a verified flag if you want to track this
+      })
+      .eq('id', otpRecord.id);
+
+    console.log('✅ OTP expiry extended for password reset step');
+
+    res.json({
+      success: true,
+      message: 'OTP verified successfully. You can now reset your password.',
+      data: {
+        email: email,
+        otpValid: true
+      }
+    });
+
+  } catch (error) {
+    console.error('Verify OTP error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while verifying your OTP'
+    });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('🔐 RESET PASSWORD REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Email:', req.body.email);
+
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      console.log('❌ Validation failed:', errors.array());
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid input',
+        errors: errors.array()
+      });
+    }
+
+    const { email, otp, newPassword } = req.body;
+
+    console.log('\n🔍 Step 1: Verifying OTP...');
+
+    // Get and verify OTP
+    const { data: otpRecord, error: otpError } = await supabase
+      .from('password_reset_otps')
+      .select('*')
+      .eq('email', email.toLowerCase())
+      .eq('otp', otp)
+      .single();
+
+    if (otpError || !otpRecord) {
+      console.log('❌ Invalid OTP');
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired OTP'
+      });
+    }
+
+    // Check if OTP is expired (should be extended from verification step)
+    const now = new Date();
+    const expiryTime = new Date(otpRecord.expires_at + (otpRecord.expires_at.includes('Z') ? '' : 'Z'));
+
+    console.log('Password reset time check:', {
+      now: now.toISOString(),
+      expiry: expiryTime.toISOString(),
+      isExpired: now > expiryTime,
+      minutesRemaining: Math.round((expiryTime.getTime() - now.getTime()) / (1000 * 60))
+    });
+
+    if (now > expiryTime) {
+      console.log('❌ OTP expired during password reset');
+      // Clean up expired OTP
+      await supabase
+        .from('password_reset_otps')
+        .delete()
+        .eq('id', otpRecord.id);
+
+      return res.status(400).json({
+        success: false,
+        message: 'Session expired. Please start the password reset process again.'
+      });
+    }
+
+    console.log('✅ OTP still valid for password reset');
+
+    console.log('✅ OTP verified successfully');
+
+    console.log('\n🔐 Step 2: Hashing new password...');
+    const saltRounds = parseInt(process.env.BCRYPT_ROUNDS || '12');
+    const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+    console.log('✅ Password hashed');
+
+    console.log('\n💾 Step 3: Updating password in database...');
+
+    // Update password based on user role
+    const userRole = otpRecord.user_role;
+    const userId = otpRecord.user_id;
+    let updateError = null;
+
+    if (userRole === 'admin') {
+      const { error } = await supabase
+        .from('admins')
+        .update({ password_hash: hashedPassword })
+        .eq('id', userId);
+      updateError = error;
+    } else if (userRole === 'staff') {
+      const { error } = await supabase
+        .from('staff')
+        .update({ password_hash: hashedPassword })
+        .eq('id', userId);
+      updateError = error;
+    } else if (userRole === 'client') {
+      const { error } = await supabase
+        .from('clients')
+        .update({ password_hash: hashedPassword })
+        .eq('id', userId);
+      updateError = error;
+    } else if (userRole === 'coach') {
+      const { error } = await supabase
+        .from('coaches')
+        .update({ password_hash: hashedPassword })
+        .eq('id', userId);
+      updateError = error;
+    }
+
+    if (updateError) {
+      console.error('❌ Failed to update password:', updateError);
+      throw updateError;
+    }
+    console.log('✅ Password updated successfully');
+
+    console.log('\n🗑️ Step 4: Cleaning up OTP...');
+    // Clean up the used OTP
+    await supabase
+      .from('password_reset_otps')
+      .delete()
+      .eq('id', otpRecord.id);
+    console.log('✅ OTP cleaned up');
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ PASSWORD RESET COMPLETED SUCCESSFULLY');
+    console.log(`Total time: ${duration}ms`);
+    console.log('========================================\n');
+
+    res.json({
+      success: true,
+      message: 'Password reset successfully. You can now login with your new password.'
+    });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ PASSWORD RESET FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while resetting your password. Please try again.'
+    });
+  }
+};
