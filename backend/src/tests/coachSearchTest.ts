@@ -100,11 +100,12 @@ export async function runCoachSearchTests(): Promise<void> {
   let totalTests = 0;
   let passedTests = 0;
   let failedTests = 0;
+  let allCoaches: any[] = [];
 
   try {
     // First, test getting all coaches
     console.log('📋 Testing getAllCoaches...');
-    const allCoaches = await coachSearchService.getAllCoaches();
+    allCoaches = await coachSearchService.getAllCoaches();
     console.log(`✅ Found ${allCoaches.length} total coaches`);
     
     if (allCoaches.length === 0) {

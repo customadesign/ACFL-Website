@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { googleCalendarService } from './googleCalendarService';
 import { outlookCalendarService } from './outlookCalendarService';
+import { appointmentReminderService } from './appointmentReminderService';
 
 interface SyncJob {
   sync_id: string;
@@ -16,10 +17,10 @@ interface SyncJob {
 
 interface SessionData {
   id: string;
-  starts_at: string;
-  ends_at: string;
+  session_date: string;
+  duration_minutes: number;
   status: string;
-  notes?: string;
+  session_notes?: string;
   meeting_url?: string;
   clients: {
     first_name: string;
@@ -121,7 +122,10 @@ export class CalendarSyncService {
     // Get session data
     const session = await this.getSessionData(job.session_id);
     if (!session) {
-      throw new Error('Session not found');
+      console.log(`Session ${job.session_id} not found, marking sync job as failed`);
+      // Don't throw error, just mark job as failed and move on
+      await this.updateSyncJobStatus(job.sync_id, 'failed');
+      return;
     }
 
     // Skip if session is cancelled
@@ -167,6 +171,15 @@ export class CalendarSyncService {
       event
     );
 
+    // Schedule appointment reminders for the session
+    try {
+      await appointmentReminderService.scheduleSessionReminders(job.session_id);
+      console.log(`Scheduled reminders for session ${job.session_id}`);
+    } catch (reminderError) {
+      console.error(`Failed to schedule reminders for session ${job.session_id}:`, reminderError);
+      // Don't fail the calendar sync if reminder scheduling fails
+    }
+
     console.log(`Created calendar event ${externalEventId} for session ${job.session_id}`);
   }
 
@@ -181,7 +194,9 @@ export class CalendarSyncService {
     // Get session data
     const session = await this.getSessionData(job.session_id);
     if (!session) {
-      throw new Error('Session not found');
+      console.log(`Session ${job.session_id} not found, marking sync job as failed`);
+      await this.updateSyncJobStatus(job.sync_id, 'failed');
+      return;
     }
 
     // Get existing mapping
@@ -278,18 +293,17 @@ export class CalendarSyncService {
       .from('sessions')
       .select(`
         id,
-        starts_at,
-        ends_at,
+        session_date,
+        duration_minutes,
         status,
-        notes,
-        meeting_url,
+        session_notes,
         client_id,
         coach_id,
         clients!sessions_client_id_fkey(first_name, last_name, email),
         coaches!sessions_coach_id_fkey(first_name, last_name, email)
       `)
       .eq('coach_id', job.coach_id)
-      .gte('starts_at', new Date().toISOString())
+      .gte('session_date', new Date().toISOString())
       .in('status', ['scheduled', 'confirmed']);
 
     if (error) {
@@ -357,6 +371,13 @@ export class CalendarSyncService {
               job.calendar_id,
               event
             );
+
+            // Schedule appointment reminders for newly created sessions
+            try {
+              await appointmentReminderService.scheduleSessionReminders(session.id);
+            } catch (reminderError) {
+              console.error(`Failed to schedule reminders for session ${session.id} during full sync:`, reminderError);
+            }
           }
         }
       } catch (sessionError) {
@@ -391,6 +412,15 @@ export class CalendarSyncService {
         if (!checkError && existingJobs && existingJobs.length > 0) {
           console.log(`Sync job already exists for session ${sessionId}, connection ${connectionId}, operation ${operation} - skipping duplicate`);
           return existingJobs[0].id;
+        }
+
+        // For create operations, also check if event mapping already exists
+        if (operation === 'create') {
+          const existingMapping = await this.getEventMapping(sessionId, connectionId);
+          if (existingMapping) {
+            console.log(`Calendar event already exists for session ${sessionId} and connection ${connectionId}, skipping create queue`);
+            return null;
+          }
         }
       }
 
@@ -513,6 +543,137 @@ export class CalendarSyncService {
   }
 
   /**
+   * Clean up all duplicate calendar events for a coach
+   */
+  async cleanupAllDuplicateEvents(coachId: string): Promise<void> {
+    try {
+      console.log(`Cleaning up all duplicate events for coach ${coachId}`);
+
+      // Get all mappings for this coach's connections
+      const { data: mappings, error } = await supabase
+        .from('calendar_event_mappings')
+        .select(`
+          *,
+          coach_calendar_connections!inner(coach_id, provider)
+        `)
+        .eq('coach_calendar_connections.coach_id', coachId)
+        .order('session_id, connection_id, created_at', { ascending: true });
+
+      if (error || !mappings) {
+        console.error('Error fetching event mappings:', error);
+        return;
+      }
+
+      // Group mappings by session_id and connection_id
+      const mappingsBySessionAndConnection = mappings.reduce((acc: any, mapping: any) => {
+        const key = `${mapping.session_id}-${mapping.connection_id}`;
+        if (!acc[key]) {
+          acc[key] = [];
+        }
+        acc[key].push(mapping);
+        return acc;
+      }, {});
+
+      let totalDuplicatesFound = 0;
+      let totalDuplicatesDeleted = 0;
+
+      // For each session-connection pair, keep only the first mapping and delete duplicates
+      for (const key in mappingsBySessionAndConnection) {
+        const groupMappings = mappingsBySessionAndConnection[key];
+
+        if (groupMappings.length > 1) {
+          totalDuplicatesFound += groupMappings.length - 1;
+          console.log(`Found ${groupMappings.length - 1} duplicate mappings for ${key}`);
+
+          // Keep the first (oldest) mapping, delete the rest
+          const [keepMapping, ...duplicateMappings] = groupMappings;
+
+          for (const duplicateMapping of duplicateMappings) {
+            try {
+              // Delete the calendar event from external calendar
+              const connection = duplicateMapping.coach_calendar_connections;
+              const calendarService = connection.provider === 'google' ? googleCalendarService : outlookCalendarService;
+
+              await calendarService.deleteEvent(
+                duplicateMapping.connection_id,
+                duplicateMapping.external_calendar_id,
+                duplicateMapping.external_event_id
+              );
+
+              // Delete the mapping record
+              await supabase
+                .from('calendar_event_mappings')
+                .delete()
+                .eq('id', duplicateMapping.id);
+
+              totalDuplicatesDeleted++;
+              console.log(`Deleted duplicate event ${duplicateMapping.external_event_id} for ${key}`);
+            } catch (deleteError) {
+              console.error(`Failed to delete duplicate event ${duplicateMapping.external_event_id}:`, deleteError);
+            }
+          }
+        }
+      }
+
+      console.log(`Cleanup complete for coach ${coachId}: ${totalDuplicatesDeleted}/${totalDuplicatesFound} duplicates removed`);
+    } catch (error) {
+      console.error('Error cleaning up all duplicate events:', error);
+    }
+  }
+
+  /**
+   * Clean up failed sync jobs for non-existent sessions
+   */
+  async cleanupFailedSyncJobs(): Promise<void> {
+    try {
+      console.log('Cleaning up failed sync jobs for non-existent sessions...');
+
+      // Get all pending/processing sync jobs with session_id
+      const { data: syncJobs, error } = await supabase
+        .from('calendar_sync_queue')
+        .select('id, session_id, operation, attempts, error_message')
+        .not('session_id', 'is', null)
+        .in('status', ['pending', 'processing', 'failed'])
+        .gte('attempts', 2); // Only jobs that have failed at least twice
+
+      if (error || !syncJobs) {
+        console.error('Error fetching sync jobs:', error);
+        return;
+      }
+
+      let jobsRemoved = 0;
+
+      for (const job of syncJobs) {
+        // Check if session still exists
+        const { data: session } = await supabase
+          .from('sessions')
+          .select('id')
+          .eq('id', job.session_id)
+          .single();
+
+        if (!session) {
+          // Session doesn't exist, remove the sync job
+          await supabase
+            .from('calendar_sync_queue')
+            .update({
+              status: 'failed',
+              error_message: 'Session no longer exists',
+              completed_at: new Date().toISOString()
+            })
+            .eq('id', job.id);
+
+          jobsRemoved++;
+          console.log(`Marked sync job ${job.id} as failed - session ${job.session_id} no longer exists`);
+        }
+      }
+
+      console.log(`Cleaned up ${jobsRemoved} failed sync jobs for non-existent sessions`);
+    } catch (error) {
+      console.error('Error cleaning up failed sync jobs:', error);
+    }
+  }
+
+  /**
    * Helper methods
    */
 
@@ -521,11 +682,10 @@ export class CalendarSyncService {
       .from('sessions')
       .select(`
         id,
-        starts_at,
-        ends_at,
+        session_date,
+        duration_minutes,
         status,
-        notes,
-        meeting_url,
+        session_notes,
         client_id,
         coach_id,
         clients!sessions_client_id_fkey(first_name, last_name, email),
@@ -541,11 +701,11 @@ export class CalendarSyncService {
     // Transform the data to match our interface
     const sessionData: SessionData = {
       id: data.id,
-      starts_at: data.starts_at,
-      ends_at: data.ends_at,
+      session_date: data.session_date,
+      duration_minutes: data.duration_minutes,
       status: data.status,
-      notes: data.notes,
-      meeting_url: data.meeting_url,
+      session_notes: data.session_notes,
+      meeting_url: `${process.env.FRONTEND_URL}/meeting/${sessionId}`, // Generate meeting URL
       clients: Array.isArray(data.clients) ? data.clients[0] : data.clients,
       coaches: Array.isArray(data.coaches) ? data.coaches[0] : data.coaches
     };

@@ -8,6 +8,12 @@
     "clean": "rm -rf dist",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:unit": "jest --testPathPattern='.test.ts$' --testPathIgnorePatterns='integration'",
+    "test:integration": "jest --testPathPattern='integration.test.ts$'",
+    "test:auth": "jest --testPathPattern='auth.test.ts'",
+    "test:admin": "jest --testPathPattern='admin.test.ts'",
+    "test:verbose": "jest --verbose",
     "setup-admin": "node scripts/createDefaultAdmin.js"
   },
   "dependencies": {
@@ -57,24 +63,5 @@
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
-  },
-  "jest": {
-    "preset": "ts-jest",
-    "testEnvironment": "node",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js",
-      "jsx",
-      "json",
-      "node"
-    ],
-    "testMatch": [
-      "**/__tests__/**/*.[jt]s?(x)",
-      "**/?(*.)+(spec|test).[tj]s?(x)"
-    ],
-    "transform": {
-      "^.+\\.(ts|tsx)$": "ts-jest"
-    }
   }
 }

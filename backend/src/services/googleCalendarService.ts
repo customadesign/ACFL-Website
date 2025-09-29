@@ -24,6 +24,14 @@ export class GoogleCalendarService {
   private calendar: calendar_v3.Calendar;
 
   constructor() {
+    if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.GOOGLE_REDIRECT_URI) {
+      console.error('Google Calendar integration not configured. Missing required environment variables:', {
+        clientId: !!process.env.GOOGLE_CLIENT_ID,
+        clientSecret: !!process.env.GOOGLE_CLIENT_SECRET,
+        redirectUri: !!process.env.GOOGLE_REDIRECT_URI
+      });
+    }
+
     this.oauth2Client = new google.auth.OAuth2(
       process.env.GOOGLE_CLIENT_ID,
       process.env.GOOGLE_CLIENT_SECRET,
@@ -93,6 +101,11 @@ export class GoogleCalendarService {
    */
   private async setupAuth(connectionId: string): Promise<boolean> {
     try {
+      // Check if Google Calendar integration is properly configured
+      if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        console.error('Google Calendar integration not configured. Missing client ID or secret.');
+        return false;
+      }
       const { data: connection, error } = await supabase
         .from('coach_calendar_connections')
         .select('access_token, refresh_token, token_expires_at')
@@ -440,15 +453,19 @@ export class GoogleCalendarService {
     }
 
     let description = template.description;
-    if (session.notes) {
-      description += `\n\nSession Notes: ${session.notes}`;
+    if (session.session_notes) {
+      description += `\n\nSession Notes: ${session.session_notes}`;
     }
+
+    // Convert session_date and duration_minutes to start/end times
+    const sessionStart = new Date(session.session_date);
+    const sessionEnd = new Date(sessionStart.getTime() + (session.duration_minutes * 60 * 1000));
 
     return {
       title,
       description,
-      startTime: session.starts_at,
-      endTime: session.ends_at,
+      startTime: sessionStart.toISOString(),
+      endTime: sessionEnd.toISOString(),
       location: session.meeting_url || 'Virtual Session',
       attendees: includeClientDetails && session.clients?.email ? [session.clients.email] : []
     };

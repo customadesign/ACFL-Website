@@ -46,19 +46,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     
     // Determine correct theme
     let correctTheme: Theme;
-    
+
     if (storageConsent === 'granted' && savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
       correctTheme = savedTheme;
       console.log('ThemeContext: Using saved theme:', correctTheme);
-    } else if (storageConsent === 'denied') {
-      correctTheme = 'light';
-      console.log('ThemeContext: Using light theme (consent denied)');
     } else {
-      const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-      correctTheme = prefersDark ? 'dark' : 'light';
-      console.log('ThemeContext: Using system preference:', correctTheme);
+      // Default to light theme instead of system preference
+      correctTheme = 'light';
+      console.log('ThemeContext: Using default light theme');
     }
-    
+
     // Update theme state and DOM
     setThemeState(correctTheme);
     
@@ -93,21 +90,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const setTheme = (newTheme: Theme) => {
     const storageConsent = localStorage.getItem('theme-storage-consent');
     
-    // If user hasn't given consent yet and is trying to change theme, show modal
-    if (storageConsent === null && !hasStorageConsent) {
+    // If user hasn't granted consent (either null or denied), show modal
+    if (storageConsent !== 'granted') {
       setShowConsentModal(true);
       // Apply theme immediately but don't save
       applyTheme(newTheme);
       return;
     }
-    
+
     applyTheme(newTheme);
-    
-    // Only save to localStorage if user has given consent
-    if (hasStorageConsent && storageConsent === 'granted') {
-      localStorage.setItem('theme', newTheme);
-    }
-    // If consent was denied, theme still changes but isn't persisted
+
+    // Save to localStorage since consent is granted
+    localStorage.setItem('theme', newTheme);
   };
 
   const toggleTheme = () => {

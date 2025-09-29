@@ -27,16 +27,10 @@ export const ThemeScript = () => (
             if (savedTheme && (savedTheme === 'light' || savedTheme === 'dark')) {
               theme = savedTheme;
               console.log('ThemeScript: Using saved theme:', theme);
-            } else if (storageConsent === 'denied') {
-              theme = 'light';
-              console.log('ThemeScript: Consent denied, using light theme');
-            } else if (!savedTheme) {
-              // Only use system preference if no saved theme exists at all
-              var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-              theme = prefersDark ? 'dark' : 'light';
-              console.log('ThemeScript: No saved theme, using system preference:', theme);
             } else {
-              console.log('ThemeScript: Fallback to light theme');
+              // Always default to light theme instead of system preference
+              theme = 'light';
+              console.log('ThemeScript: Using default light theme');
             }
             
             console.log('ThemeScript: Final theme decision:', theme);

@@ -737,780 +737,438 @@ function SearchCoachesContent() {
     <MeetingBlocker blockMessage="You are currently in a meeting. Please end your current session before searching for coaches.">
       <div className="min-h-screen bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
-        {/* Page Header */}
-        <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white mb-2 sm:mb-4">
-            Find Your Perfect Coach
-          </h1>
-          <p className="text-sm sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto px-2">
-            Discover qualified coaches who match your needs and preferences
-          </p>
+        {/* Hero Section */}
+        <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12 overflow-hidden">
+          <div className="relative z-10 text-center max-w-4xl mx-auto">
+            <div className="inline-flex items-center bg-white/90 px-4 py-2 rounded-full text-sm font-medium text-brand-teal mb-6 border border-gray-200">
+              <Search className="w-4 h-4 mr-2" />
+              Find Your Perfect Match
+            </div>
+
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink-dark mb-4 sm:mb-6 leading-tight">
+              Discover Your Ideal Life Coach
+            </h1>
+
+            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+              Connect with certified coaches who understand your journey and can help you achieve your goals
+            </p>
+
+            {/* Quick Stats */}
+            <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm text-gray-600">
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-brand-leaf rounded-full mr-2"></div>
+                500+ Verified Coaches
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-brand-teal rounded-full mr-2"></div>
+                24/7 Support Available
+              </div>
+              <div className="flex items-center">
+                <div className="w-2 h-2 bg-brand-orange rounded-full mr-2"></div>
+                Personalized Matching
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Enhanced Search Bar - Always Visible */}
+        <div className="mb-8 sm:mb-12">
+          <div className="max-w-4xl mx-auto">
+            <div className="relative">
+              <div className="bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex items-center p-2">
+                  <div className="flex items-center flex-1">
+                    <Search className="w-6 h-6 text-gray-400 ml-4" />
+                    <input
+                      type="text"
+                      placeholder="Search by name, specialization, location, or any criteria..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleQuickSearch()}
+                      className="flex-1 px-4 py-4 text-lg bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
+                    />
+                  </div>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  )}
+                  <button
+                    onClick={handleQuickSearch}
+                    disabled={isLoading}
+                    className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    {isLoading ? (
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    ) : (
+                      <Search className="w-5 h-5 mr-2" />
+                    )}
+                    <span className="hidden sm:inline">Search</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex flex-col sm:flex-row justify-center items-center mb-6 sm:mb-8 gap-4">
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-full sm:w-auto">
-            <button
-              onClick={() => {
-                setActiveTab('saved');
-                // Show saved coaches when switching to saved tab
-                setFilteredCoaches(savedCoaches);
-                setHasSearched(false);
-              }}
-              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors touch-manipulation ${
-                activeTab === 'saved'
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
-              }`}
-            >
-              <Heart className="w-4 h-4 inline mr-2" />
-              <span className="hidden sm:inline">Saved Coaches ({savedCoaches.length})</span>
-              <span className="sm:hidden">Saved ({savedCoaches.length})</span>
-            </button>
+        <div className="flex justify-center mb-8 sm:mb-12">
+          <div className="inline-flex bg-white rounded-2xl p-1 shadow-lg border border-gray-200">
             <button
               onClick={() => {
                 setActiveTab('search');
-                // Load all coaches when switching to search tab
                 if (allCoaches.length === 0) {
                   loadAllCoaches();
                 }
                 setFilteredCoaches(allCoaches);
                 setHasSearched(false);
               }}
-              className={`flex-1 sm:flex-none px-4 sm:px-6 py-2 rounded-md font-medium transition-colors touch-manipulation ${
+              className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 activeTab === 'search'
-                  ? 'bg-white dark:bg-gray-700 text-blue-600 dark:text-blue-400 shadow-sm'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200'
+                  ? 'bg-brand-teal text-white shadow-md'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
-              <Search className="w-4 h-4 inline mr-2" />
-              <span className="hidden sm:inline">Search New Coaches</span>
-              <span className="sm:hidden">Search</span>
+              <Search className="w-5 h-5 mr-2" />
+              <span>Discover Coaches</span>
+            </button>
+            <button
+              onClick={() => {
+                setActiveTab('saved');
+                setFilteredCoaches(savedCoaches);
+                setHasSearched(false);
+              }}
+              className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+                activeTab === 'saved'
+                  ? 'bg-brand-teal text-white shadow-md'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
+              <Heart className="w-5 h-5 mr-2" />
+              <span>My Favorites ({savedCoaches.length})</span>
             </button>
           </div>
-          {/* Refresh button for saved coaches */}
-         
         </div>
 
-        {/* Loading State */}
+        {/* Enhanced Loading State */}
         {isLoading && (
-          <div className="text-center py-8 sm:py-12">
-            <div className="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-base sm:text-lg text-gray-600 dark:text-gray-400 px-4">
-              {hasSearched
-                ? "Finding your perfect coach matches..."
-                : "Loading coaches from database..."}
-            </p>
-            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-500 mt-2 px-4">
-              This may take a few moments
-            </p>
-          </div>
-        )}
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-4 sm:mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-md mx-2 sm:mx-0">
-            <div className="flex items-center">
-              <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              {error}
+          <div className="text-center py-12 sm:py-16">
+            <div className="max-w-md mx-auto">
+              <div className="bg-white rounded-full p-8 shadow-xl">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-brand-teal mx-auto"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-ink-dark mt-6 mb-2">
+                {hasSearched ? "Finding Perfect Matches" : "Loading Coaches"}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {hasSearched
+                  ? "Analyzing coach profiles to find your ideal matches..."
+                  : "Preparing our database of qualified coaches..."}
+              </p>
+              <div className="flex justify-center space-x-1">
+                <div className="w-2 h-2 bg-brand-teal rounded-full animate-bounce"></div>
+                <div className="w-2 h-2 bg-brand-orange rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-2 h-2 bg-brand-leaf rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Search Form - Only show when on search tab */}
-        {activeTab === 'search' && showForm && (
-          <Card className="mb-6 sm:mb-8 shadow-lg border-0 bg-white dark:bg-gray-800 mx-2 sm:mx-0">
-            <CardContent className="p-4 sm:p-6">
-              {/* Modern Search Header */}
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                    <SlidersHorizontal className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <h2 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white">Smart Search Filters</h2>
-                    <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Find coaches that match your preferences</p>
+        {/* Enhanced Error Message */}
+        {error && (
+          <div className="mb-8 mx-2 sm:mx-0">
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-6">
+              <div className="flex items-start">
+                <div className="flex-shrink-0">
+                  <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                    <X className="w-5 h-5 text-red-600" />
                   </div>
                 </div>
-                <div className="text-center">
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                    className="flex items-center space-x-3 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 px-6 py-3 rounded-xl font-semibold touch-manipulation"
-                  >
-                    {showAdvancedFilters ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
-                    <span>{showAdvancedFilters ? "Hide" : "Show"} Advanced Filters</span>
-                    <span className="text-sm text-gray-500 font-normal">(Optional)</span>
-                  </Button>
-                </div>
-              </div>
-
-              {/* Enhanced Search Bar */}
-              <div className="mb-8 sm:mb-10">
-                <div className="relative">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-500 w-6 h-6" />
-                  <Input
-                    type="text"
-                    placeholder="Search by coach name, specialization, location, or any criteria..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-14 pr-16 py-6 text-xl font-medium border-3 border-blue-300 dark:border-blue-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:border-blue-600 focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-800 rounded-2xl shadow-lg hover:shadow-xl transition-all"
-                  />
-                  {searchQuery && (
-                    <button
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors touch-manipulation"
-                    >
-                      <X className="w-6 h-6" />
-                    </button>
-                  )}
-                </div>
-                {/* Search action button */}
-                <div className="flex justify-center mt-6">
-                  <Button
-                    type="button"
-                    onClick={handleQuickSearch}
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-10 py-3 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all transform hover:-translate-y-1 touch-manipulation"
-                  >
-                    <Search className="w-5 h-5 mr-2" />
-                    Search Now
-                  </Button>
-                </div>
-              </div>
-
-              {/* Essential Filters Section */}
-              <div className="mb-8">
-                <div className="mb-6">
-                  <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 flex items-center">
-                    <SlidersHorizontal className="w-5 h-5 mr-2 text-green-600" />
-                    Essential Search Filters
+                <div className="ml-4 flex-1">
+                  <h3 className="text-lg font-semibold text-red-800 mb-1">
+                    Search Error
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Focus your search on the most important criteria</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  {/* Specialization */}
-                  <div className="bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 p-5 rounded-xl border border-purple-200 dark:border-purple-800">
-                    <Form {...form}>
-                      <FormField
-                        control={form.control}
-                        name="coachingExpertise"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2 font-semibold text-base mb-4">
-                              <Award className="w-5 h-5 text-purple-600" />
-                              <span>Specialization</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-40 overflow-y-auto">
-                                {['Life transitions', 'Career development', 'Relationship coaching', 'Stress management', 'Anxiety & worry', 'Depression & mood', 'Self-esteem & confidence', 'Work-life balance'].map((expertise) => (
-                                  <div key={expertise} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={`main-${expertise}`}
-                                      checked={field.value?.includes(expertise)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, expertise]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== expertise));
-                                        }
-                                      }}
-                                      className="w-4 h-4"
-                                    />
-                                    <label htmlFor={`main-${expertise}`} className="text-sm font-medium text-gray-800 dark:text-gray-200 cursor-pointer leading-tight">
-                                      {expertise}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                          </FormItem>
-                        )}
-                      />
-                    </Form>
-                  </div>
-
-                  {/* Experience Level */}
-                  <div className="bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20 p-5 rounded-xl border border-blue-200 dark:border-blue-800">
-                    <Form {...form}>
-                      <FormField
-                        control={form.control}
-                        name="coachingExperienceYears"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2 font-semibold text-base mb-4">
-                              <Calendar className="w-5 h-5 text-blue-600" />
-                              <span>Experience Level</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700 border-2 border-blue-200 dark:border-blue-700 h-12">
-                                  <SelectValue placeholder="Any experience" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any experience</SelectItem>
-                                <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
-                                <SelectItem value="1-2 years">1-2 years</SelectItem>
-                                <SelectItem value="3-5 years">3-5 years</SelectItem>
-                                <SelectItem value="6-10 years">6-10 years</SelectItem>
-                                <SelectItem value="More than 10 years">More than 10 years</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </FormItem>
-                        )}
-                      />
-                    </Form>
-                  </div>
-
-                  {/* Price Range */}
-                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 p-5 rounded-xl border border-green-200 dark:border-green-800">
-                    <label className="flex items-center space-x-2 font-semibold text-base mb-4">
-                      <DollarSign className="w-5 h-5 text-green-600" />
-                      <span>Price Range</span>
-                    </label>
-                    <div className="space-y-4">
-                      <div className="text-center p-3 bg-white dark:bg-gray-700 rounded-lg border">
-                        <div className="text-lg font-semibold text-green-600 dark:text-green-400">
-                          ${priceRange[0]} - ${priceRange[1]}
-                        </div>
-                        <div className="text-xs text-gray-600 dark:text-gray-400">per session</div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Input
-                          type="number"
-                          placeholder="Min"
-                          value={priceRange[0]}
-                          onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                          className="bg-white dark:bg-gray-700 text-center border border-green-200 dark:border-green-700 h-10 text-sm"
-                        />
-                        <Input
-                          type="number"
-                          placeholder="Max"
-                          value={priceRange[1]}
-                          onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
-                          className="bg-white dark:bg-gray-700 text-center border border-green-200 dark:border-green-700 h-10 text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <p className="text-red-700 mb-4">
+                    {error}
+                  </p>
+                  <button
+                    onClick={() => {
+                      setError(null);
+                      if (activeTab === 'search') {
+                        loadAllCoaches();
+                      } else {
+                        loadSavedCoaches();
+                      }
+                    }}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Try Again
+                  </button>
                 </div>
               </div>
+            </div>
+          </div>
+        )}
 
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-                  {/* Coach Registration Based Filters */}
-                  {/* Main Search Button */}
-                  <div className="text-center py-6 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white px-12 py-4 text-xl font-bold rounded-xl shadow-xl hover:shadow-2xl transition-all transform hover:-translate-y-1 touch-manipulation"
-                    >
-                      <Search className="w-6 h-6 mr-3" />
-                      Find Perfect Matches
-                    </Button>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                      Search with your selected criteria above
-                    </p>
-                  </div>
+        {/* Advanced Filters - Only show when on search tab */}
+        {activeTab === 'search' && (
+          <div className="mb-8 sm:mb-12">
+            <div className="text-center mb-6">
+              <button
+                onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
+                className="inline-flex items-center bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-2xl px-6 py-3 font-semibold text-gray-700 shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <SlidersHorizontal className="w-5 h-5 mr-3" />
+                <span>{showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters</span>
+                {showAdvancedFilters ? <ChevronUp className="w-5 h-5 ml-3" /> : <ChevronDown className="w-5 h-5 ml-3" />}
+              </button>
+            </div>
 
-                  {/* Advanced Filters */}
-                  {showAdvancedFilters && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 pt-4 sm:pt-6 border-t border-gray-200 dark:border-gray-700">
-
-
-
-
-                      <FormField
-                        control={form.control}
-                        name="educationalBackground"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Award className="w-4 h-4 text-blue-600" />
-                              <span>Educational Background</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any education" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any education</SelectItem>
-                                <SelectItem value="High School Diploma">High School</SelectItem>
-                                <SelectItem value="Associate's Degree">Associate's</SelectItem>
-                                <SelectItem value="Bachelor's Degree">Bachelor's</SelectItem>
-                                <SelectItem value="Master's Degree">Master's</SelectItem>
-                                <SelectItem value="Doctoral Degree">Doctoral</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="coachingExperienceYears"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                              <span>Coaching Experience</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any experience" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any experience</SelectItem>
-                                <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
-                                <SelectItem value="1-2 years">1-2 years</SelectItem>
-                                <SelectItem value="3-5 years">3-5 years</SelectItem>
-                                <SelectItem value="6-10 years">6-10 years</SelectItem>
-                                <SelectItem value="More than 10 years">More than 10 years</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="actTrainingLevel"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Award className="w-4 h-4 text-blue-600" />
-                              <span>ACT Training Level</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any ACT level" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any level</SelectItem>
-                                <SelectItem value="Yes, formal ACT training/certification">Formal ACT Certification</SelectItem>
-                                <SelectItem value="Yes, workshop or seminar attendance">Workshop/Seminar</SelectItem>
-                                <SelectItem value="Self-study of ACT principles">Self-study</SelectItem>
-                                <SelectItem value="No, but willing to learn">Willing to learn</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="sessionStructure"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                              <span>Session Structure</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any structure" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any structure</SelectItem>
-                                <SelectItem value="Highly structured with specific agendas">Highly structured</SelectItem>
-                                <SelectItem value="Semi-structured with flexibility">Semi-structured</SelectItem>
-                                <SelectItem value="Client-led and organic">Client-led</SelectItem>
-                                <SelectItem value="Varies based on client needs">Varies by needs</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="ageGroupsComfortable"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Users className="w-4 h-4 text-blue-600" />
-                              <span>Age Groups</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {[
-                                  { id: 'children', label: 'Children (6-12)' },
-                                  { id: 'adolescents', label: 'Adolescents (13-17)' },
-                                  { id: 'young-adults', label: 'Young adults (18-25)' },
-                                  { id: 'adults', label: 'Adults (26-64)' },
-                                  { id: 'seniors', label: 'Seniors (65+)' },
-                                ].map((ageGroup) => (
-                                  <div key={ageGroup.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={ageGroup.id}
-                                      checked={field.value?.includes(ageGroup.label)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, ageGroup.label]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== ageGroup.label));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={ageGroup.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
-                                    >
-                                      {ageGroup.label}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="coachingTechniques"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Award className="w-4 h-4 text-blue-600" />
-                              <span>Coaching Techniques</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-32 overflow-y-auto">
-                                {[
-                                  { id: 'cbt', label: 'Cognitive Behavioral Techniques' },
-                                  { id: 'mindfulness', label: 'Mindfulness practices' },
-                                  { id: 'goal-setting', label: 'Goal setting & action planning' },
-                                  { id: 'values', label: 'Values clarification' },
-                                  { id: 'solution-focused', label: 'Solution-focused techniques' },
-                                  { id: 'motivational', label: 'Motivational interviewing' },
-                                  { id: 'positive-psych', label: 'Positive psychology' },
-                                  { id: 'somatic', label: 'Somatic/body-based approaches' },
-                                  { id: 'visualization', label: 'Visualization & imagery' },
-                                  { id: 'journaling', label: 'Journaling exercises' },
-                                ].map((technique) => (
-                                  <div key={technique.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={technique.id}
-                                      checked={field.value?.includes(technique.label)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, technique.label]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== technique.label));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={technique.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-gray-700 dark:text-gray-300"
-                                    >
-                                      {technique.label}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="comfortableWithSuicidalThoughts"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Heart className="w-4 h-4 text-blue-600" />
-                              <span>Crisis Management Experience</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any experience" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any experience</SelectItem>
-                                <SelectItem value="Yes, I have training and experience">Training & experience</SelectItem>
-                                <SelectItem value="Yes, but would need additional support">Would need support</SelectItem>
-                                <SelectItem value="No, I would immediately refer">Would refer</SelectItem>
-                                <SelectItem value="Prefer not to work with high-risk clients">Prefer not to work with high-risk</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="languagesFluent"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Languages className="w-4 h-4 text-blue-600" />
-                              <span>Languages Spoken</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                                {[
-                                  'English',
-                                  'Spanish', 
-                                  'French',
-                                  'Mandarin',
-                                  'Other'
-                                ].map((language) => (
-                                  <div key={language} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={language}
-                                      checked={field.value?.includes(language)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, language]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== language));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={language}
-                                      className="text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                      {language}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="weeklyHoursAvailable"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Clock className="w-4 h-4 text-blue-600" />
-                              <span>Weekly Hours Available</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any hours" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any hours</SelectItem>
-                                <SelectItem value="5-10 hours">5-10 hours</SelectItem>
-                                <SelectItem value="11-20 hours">11-20 hours</SelectItem>
-                                <SelectItem value="21-30 hours">21-30 hours</SelectItem>
-                                <SelectItem value="31-40 hours">31-40 hours</SelectItem>
-                                <SelectItem value="More than 40 hours">More than 40 hours</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="preferredSessionLength"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Timer className="w-4 h-4 text-blue-600" />
-                              <span>Preferred Session Length</span>
-                            </FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                <SelectTrigger className="bg-white dark:bg-gray-700">
-                                  <SelectValue placeholder="Any length" />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <SelectItem value="any">Any length</SelectItem>
-                                <SelectItem value="30 minutes">30 minutes</SelectItem>
-                                <SelectItem value="45 minutes">45 minutes</SelectItem>
-                                <SelectItem value="60 minutes">60 minutes</SelectItem>
-                                <SelectItem value="90 minutes">90 minutes</SelectItem>
-                                <SelectItem value="Flexible based on client needs">Flexible based on client needs</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="availabilityTimes"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Calendar className="w-4 h-4 text-blue-600" />
-                              <span>Availability Times</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-32 overflow-y-auto border rounded-md p-3">
-                                {[
-                                  'Weekday mornings (6am-12pm)',
-                                  'Weekday afternoons (12pm-5pm)',
-                                  'Weekday evenings (5pm-10pm)',
-                                  'Weekend mornings',
-                                  'Weekend afternoons', 
-                                  'Weekend evenings',
-                                  'Late night (10pm-12am)'
-                                ].map((timeSlot) => (
-                                  <div key={timeSlot} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={timeSlot}
-                                      checked={field.value?.includes(timeSlot)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, timeSlot]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== timeSlot));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={timeSlot}
-                                      className="text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                      {timeSlot}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="coachingExpertise"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="flex items-center space-x-2">
-                              <Award className="w-4 h-4 text-blue-600" />
-                              <span>Areas of Coaching Expertise</span>
-                            </FormLabel>
-                            <FormControl>
-                              <div className="space-y-2 max-h-40 overflow-y-auto border rounded-md p-3">
-                                {[
-                                  'Life transitions',
-                                  'Career development', 
-                                  'Relationship coaching',
-                                  'Stress management',
-                                  'Anxiety & worry',
-                                  'Depression & mood',
-                                  'Self-esteem & confidence',
-                                  'Work-life balance',
-                                  'Parenting & family',
-                                  'Grief & loss',
-                                  'Trauma & PTSD',
-                                  'Addiction recovery',
-                                  'LGBTQ+ issues',
-                                  'Cultural/diversity issues',
-                                  'Executive coaching',
-                                  'Health & wellness',
-                                  'Financial coaching',
-                                  'Spiritual growth'
-                                ].map((expertise) => (
-                                  <div key={expertise} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={expertise}
-                                      checked={field.value?.includes(expertise)}
-                                      onCheckedChange={(checked) => {
-                                        const current = field.value || [];
-                                        if (checked) {
-                                          field.onChange([...current, expertise]);
-                                        } else {
-                                          field.onChange(current.filter((item) => item !== expertise));
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={expertise}
-                                      className="text-sm text-gray-700 dark:text-gray-300"
-                                    >
-                                      {expertise}
-                                    </label>
-                                  </div>
-                                ))}
-                              </div>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+            {showAdvancedFilters && (
+              <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
+                <div className="bg-gray-lite p-6 border-b border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-xl font-bold text-ink-dark mb-1">Refine Your Search</h3>
+                      <p className="text-gray-600">Use these filters to find coaches that perfectly match your needs</p>
                     </div>
-                  )}
-
-                  {/* Advanced Filters Reset */}
-                  <div className="text-center pt-6 border-t border-gray-200 dark:border-gray-700">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        form.reset();
-                        setSearchQuery('');
-                        setPriceRange([0, 500]);
-                        setSelectedFilters(new Set());
-                        setFilteredCoaches(allCoaches);
-                      }}
-                      className="flex items-center space-x-2 px-6 py-2 border-2 rounded-lg touch-manipulation"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      <span>Reset All Filters</span>
-                    </Button>
+                    <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+                      <div className="w-2 h-2 bg-brand-teal rounded-full"></div>
+                      <span>Optional filters</span>
+                    </div>
                   </div>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
+                </div>
+
+                {/* Quick Filters */}
+                <div className="p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Specialization Filter */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-brand-coral/10 rounded-xl flex items-center justify-center">
+                          <Award className="w-5 h-5 text-brand-coral" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-ink-dark">Specialization</h4>
+                          <p className="text-sm text-gray-600">What area do you need help with?</p>
+                        </div>
+                      </div>
+
+                      <Form {...form}>
+                        <FormField
+                          control={form.control}
+                          name="coachingExpertise"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <div className="space-y-2 max-h-48 overflow-y-auto">
+                                  {['Life transitions', 'Career development', 'Relationship coaching', 'Stress management', 'Anxiety & worry', 'Depression & mood', 'Self-esteem & confidence', 'Work-life balance'].map((expertise) => (
+                                    <label key={expertise} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                      <Checkbox
+                                        checked={field.value?.includes(expertise)}
+                                        onCheckedChange={(checked) => {
+                                          const current = field.value || [];
+                                          if (checked) {
+                                            field.onChange([...current, expertise]);
+                                          } else {
+                                            field.onChange(current.filter((item) => item !== expertise));
+                                          }
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm text-gray-700">{expertise}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </Form>
+                    </div>
+
+                    {/* Experience & Price */}
+                    <div className="space-y-6">
+                      {/* Experience Level */}
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-brand-teal/10 rounded-xl flex items-center justify-center">
+                            <Clock className="w-5 h-5 text-brand-teal" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-ink-dark">Experience</h4>
+                            <p className="text-sm text-gray-600">Coach experience level</p>
+                          </div>
+                        </div>
+
+                        <Form {...form}>
+                          <FormField
+                            control={form.control}
+                            name="coachingExperienceYears"
+                            render={({ field }) => (
+                              <FormItem>
+                                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                    <SelectTrigger className="bg-white border-2 border-gray-200 rounded-xl h-12">
+                                      <SelectValue placeholder="Any experience level" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    <SelectItem value="any">Any experience level</SelectItem>
+                                    <SelectItem value="Less than 1 year">Less than 1 year</SelectItem>
+                                    <SelectItem value="1-2 years">1-2 years</SelectItem>
+                                    <SelectItem value="3-5 years">3-5 years</SelectItem>
+                                    <SelectItem value="6-10 years">6-10 years</SelectItem>
+                                    <SelectItem value="More than 10 years">More than 10 years</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </FormItem>
+                            )}
+                          />
+                        </Form>
+                      </div>
+
+                      {/* Price Range */}
+                      <div className="space-y-4">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-10 h-10 bg-brand-leaf/10 rounded-xl flex items-center justify-center">
+                            <DollarSign className="w-5 h-5 text-brand-leaf" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-ink-dark">Budget</h4>
+                            <p className="text-sm text-gray-600">Price per session</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-3">
+                          <div className="bg-brand-leaf/10 p-4 rounded-xl text-center">
+                            <div className="text-2xl font-bold text-brand-leaf">
+                              ${priceRange[0]} - ${priceRange[1]}
+                            </div>
+                            <div className="text-sm text-gray-600">per session</div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Min Price</label>
+                              <Input
+                                type="number"
+                                value={priceRange[0]}
+                                onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
+                                className="bg-white text-center border-2 border-gray-200 rounded-lg h-10"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium text-gray-700 mb-1">Max Price</label>
+                              <Input
+                                type="number"
+                                value={priceRange[1]}
+                                onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
+                                className="bg-white text-center border-2 border-gray-200 rounded-lg h-10"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Additional Filters */}
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-brand-orange/10 rounded-xl flex items-center justify-center">
+                          <Languages className="w-5 h-5 text-brand-orange" />
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-ink-dark">Languages</h4>
+                          <p className="text-sm text-gray-600">Preferred language</p>
+                        </div>
+                      </div>
+
+                      <Form {...form}>
+                        <FormField
+                          control={form.control}
+                          name="languagesFluent"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormControl>
+                                <div className="space-y-2">
+                                  {['English', 'Spanish', 'French', 'Mandarin', 'Other'].map((language) => (
+                                    <label key={language} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                      <Checkbox
+                                        checked={field.value?.includes(language)}
+                                        onCheckedChange={(checked) => {
+                                          const current = field.value || [];
+                                          if (checked) {
+                                            field.onChange([...current, language]);
+                                          } else {
+                                            field.onChange(current.filter((item) => item !== language));
+                                          }
+                                        }}
+                                        className="w-4 h-4"
+                                      />
+                                      <span className="text-sm text-gray-700">{language}</span>
+                                    </label>
+                                  ))}
+                                </div>
+                              </FormControl>
+                            </FormItem>
+                          )}
+                        />
+                      </Form>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="p-6 bg-gray-50 border-t border-gray-200">
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          form.reset();
+                          setSearchQuery('');
+                          setPriceRange([0, 500]);
+                          setSelectedFilters(new Set());
+                          setFilteredCoaches(allCoaches);
+                        }}
+                        className="flex items-center px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Reset Filters
+                      </button>
+
+                      <button
+                        type="submit"
+                        disabled={isLoading}
+                        className="flex items-center px-8 py-4 bg-brand-teal hover:bg-brand-teal/90 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLoading ? (
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                        ) : (
+                          <Search className="w-5 h-5 mr-3" />
+                        )}
+                        Apply Filters & Search
+                      </button>
+                    </form>
+                  </Form>
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {/* Results Section */}
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
             <div className="px-2 sm:px-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">
+              <h2 className="text-xl sm:text-2xl font-bold text-ink-dark">
                 {activeTab === 'saved' ? 'Your Saved Coaches' : 'Available Coaches'}
               </h2>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
-                {activeTab === 'saved' 
+              <p className="text-sm sm:text-base text-gray-600">
+                {activeTab === 'saved'
                   ? `${savedCoaches.length} saved coach${savedCoaches.length !== 1 ? 'es' : ''}`
                   : `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''} found`
                 }
@@ -1522,21 +1180,21 @@ function SearchCoachesContent() {
                 onClick={() => setShowForm(!showForm)}
                 className="flex items-center justify-center space-x-2 w-full sm:w-auto mx-2 sm:mx-0 touch-manipulation"
               >
-                {showForm ? <X className="w-4 h-4 dark:text-white" /> : <Filter className="w-4 h-4 dark:text-white" />}
-                <span className="text-gray-900 dark:text-white">{showForm ? 'Hide' : 'Show'} Filters</span>
+                {showForm ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                <span className="text-gray-900">{showForm ? 'Hide' : 'Show'} Filters</span>
               </Button>
             )}
           </div>
 
           {/* No Results Message */}
           {filteredCoaches.length === 0 && !isLoading && (
-            <Card className="p-6 sm:p-12 text-center bg-white dark:bg-gray-800 mx-2 sm:mx-0">
+            <Card className="p-6 sm:p-12 text-center bg-white mx-2 sm:mx-0">
               <div className="max-w-md mx-auto">
                 {activeTab === 'saved' ? (
                   <>
                     <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Saved Coaches Yet</h3>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark mb-2">No Saved Coaches Yet</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">
                       You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
                     </p>
                     <Button
@@ -1555,8 +1213,8 @@ function SearchCoachesContent() {
                 ) : (
                   <>
                     <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">No Coaches Found</h3>
-                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4">
+                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark mb-2">No Coaches Found</h3>
+                    <p className="text-sm sm:text-base text-gray-600 mb-4">
                       Try adjusting your search criteria or filters to find more matches.
                     </p>
                     <Button
@@ -1576,7 +1234,7 @@ function SearchCoachesContent() {
             </Card>
           )}
 
-                    {/* Coaches Grid */}
+          {/* Coaches Grid */}
           {filteredCoaches.length > 0 && (
             <div className="grid grid-cols-1 gap-4 sm:gap-6 px-2 sm:px-0">
               {getCurrentCoaches().map((coach) => (

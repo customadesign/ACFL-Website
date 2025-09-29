@@ -574,14 +574,14 @@ export default function CoachAvailabilityPage() {
 
   if (loading) {
     return (
-      <CoachPageWrapper>
+      <CoachPageWrapper title="Availability" description="Manage your coaching schedule and availability">
         <CalendarSkeleton />
       </CoachPageWrapper>
     );
   }
 
   return (
-    <CoachPageWrapper>
+    <CoachPageWrapper title="Availability" description="Manage your coaching schedule and availability">
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -608,7 +608,7 @@ export default function CoachAvailabilityPage() {
           </TabsTrigger>
           <TabsTrigger value="settings" className="flex items-center gap-2">
             <Settings className="h-4 w-4" />
-            <span className="hidden sm:inline">Quick Setup</span>
+            <span className="hidden sm:inline dark:text-white">Quick Setup</span>
           </TabsTrigger>
         </TabsList>
 
@@ -622,8 +622,8 @@ export default function CoachAvailabilityPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => setActiveTab('settings')} variant="outline" size="sm">
-                <Settings className="w-4 h-4 mr-2" />
+              <Button onClick={() => setActiveTab('settings')} variant="outline" size="sm" className='text-white'>
+                <Settings className="w-4 h-4 mr-2 dark:text-white" />
                 Quick Setup
               </Button>
             </div>

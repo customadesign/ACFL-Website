@@ -207,7 +207,7 @@ export default function AdminDashboard() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+      <div className="w-full">
         {/* Header Skeleton */}
         <div className="mb-8">
           <div className="h-8 sm:h-9 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3 sm:w-1/3 animate-pulse mb-3"></div>
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-16">
+    <div className="w-full">
       {/* Enhanced Header with View Mode Controls */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

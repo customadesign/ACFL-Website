@@ -460,7 +460,8 @@ function CoachProfileContent() {
         const data = await response.json()
         console.log('Saved coaches data:', data)
         // Check if this coach is in the saved coaches list
-        const isCoachSaved = data.savedCoaches?.some((savedCoach: any) => savedCoach.id === params.id || savedCoach.coach_id === params.id)
+        // The API returns data directly, not data.savedCoaches
+        const isCoachSaved = data.data?.some((savedCoach: any) => savedCoach.id === params.id || savedCoach.coach_id === params.id)
         setIsSaved(isCoachSaved || false)
       } else {
         setIsSaved(false)
@@ -498,6 +499,8 @@ function CoachProfileContent() {
 
         if (response.ok) {
           setIsSaved(false)
+          // Re-check the saved state to ensure synchronization
+          checkIfCoachIsSaved()
         } else {
           console.error('Failed to remove saved coach')
         }
@@ -516,6 +519,8 @@ function CoachProfileContent() {
 
         if (response.ok) {
           setIsSaved(true)
+          // Re-check the saved state to ensure synchronization
+          checkIfCoachIsSaved()
         } else {
           console.error('Failed to save coach')
         }

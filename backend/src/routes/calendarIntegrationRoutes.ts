@@ -19,11 +19,11 @@ router.get('/callback', async (req: Request, res: Response) => {
 
     if (oauthError) {
       console.error('OAuth error:', oauthError);
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=oauth_error`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=oauth_error`);
     }
 
     if (!code || !state) {
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=missing_parameters`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=missing_parameters`);
     }
 
     // Parse state to get coach ID and provider
@@ -32,7 +32,7 @@ router.get('/callback', async (req: Request, res: Response) => {
       stateData = JSON.parse(state as string);
     } catch (parseError) {
       console.error('Error parsing OAuth state:', parseError);
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=invalid_state`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=invalid_state`);
     }
 
     const { coachId, provider } = stateData;
@@ -50,7 +50,7 @@ router.get('/callback', async (req: Request, res: Response) => {
     } else if (provider === 'outlook') {
       tokenData = await outlookCalendarService.exchangeCodeForTokens(code as string);
     } else {
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=invalid_provider`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=invalid_provider`);
     }
 
     // Get calendar info
@@ -73,7 +73,7 @@ router.get('/callback', async (req: Request, res: Response) => {
 
     if (tempError) {
       console.error('Error saving temporary connection:', tempError);
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=save_failed`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=save_failed`);
     }
 
     // Get primary calendar info
@@ -86,7 +86,7 @@ router.get('/callback', async (req: Request, res: Response) => {
         .delete()
         .eq('id', tempConnection.id);
 
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=calendar_access_failed`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=calendar_access_failed`);
     }
 
     // Update connection with calendar info and activate it
@@ -102,18 +102,18 @@ router.get('/callback', async (req: Request, res: Response) => {
 
     if (updateError) {
       console.error('Error updating connection:', updateError);
-      return res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=update_failed`);
+      return res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=update_failed`);
     }
 
     // Queue initial full sync
     await calendarSyncService.queueSync(tempConnection.id, 'full_sync', undefined, 1);
 
     console.log(`Successfully connected ${provider} calendar for coach ${coachId}`);
-    res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?success=connected&provider=${provider}`);
+    res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?success=connected&provider=${provider}`);
 
   } catch (error) {
     console.error('Error handling OAuth callback:', error);
-    res.redirect(`${process.env.FRONTEND_URL}/coach/calendar?error=callback_failed`);
+    res.redirect(`${process.env.FRONTEND_URL}/coaches/calendar?error=callback_failed`);
   }
 });
 

@@ -188,30 +188,16 @@ function SettingsContent() {
 
   return (
     <ProtectedRoute allowedRoles={['coach']}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-        {/* Header */}
-        <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="ghost"
-                  onClick={() => router.back()}
-                  className="flex items-center space-x-2"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Back</span>
-                </Button>
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Account Settings</h1>
-                  <p className="text-gray-600 dark:text-gray-300">Manage your data and account preferences</p>
-                </div>
-              </div>
-            </div>
+      <div className="min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+          {/* Page Header */}
+          <div className="mb-8">
+           
+            <h1 className="text-3xl font-bold text-foreground">Account Settings</h1>
+            <p className="text-muted-foreground mt-2">Manage your data and account preferences</p>
           </div>
-        </div>
 
-        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="max-w-7xl mx-auto">
           {/* Alerts */}
           {error && (
             <Alert className="mb-6 border-red-200 bg-red-50 text-red-800">
@@ -420,6 +406,7 @@ function SettingsContent() {
               </CardContent>
             </Card>
           )}
+          </div>
         </div>
       </div>
     </ProtectedRoute>

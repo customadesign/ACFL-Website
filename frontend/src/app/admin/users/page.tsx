@@ -38,6 +38,8 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getApiUrl } from '@/lib/api';
+import SearchInput from '@/components/ui/search-input';
+import Pagination from '@/components/ui/pagination';
 
 interface User {
   id: string;
@@ -96,9 +98,22 @@ export default function UserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeTab, setActiveTab] = useState<'all' | 'client' | 'coach' | 'staff'>('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [roleCounts, setRoleCounts] = useState({
+    all: 0,
+    client: 0,
+    coach: 0,
+    staff: 0
+  });
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showActionMenu, setShowActionMenu] = useState<string | null>(null);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -248,11 +263,21 @@ export default function UserManagement() {
 
   useEffect(() => {
     fetchUsers();
+  }, [currentPage, itemsPerPage, statusFilter, activeTab, startDate, endDate]);
+
+  // Fetch role counts separately when filters change (but not when tab changes)
+  useEffect(() => {
+    fetchRoleCounts();
+  }, [statusFilter, startDate, endDate]);
+
+  // Initial fetch of role counts on component mount
+  useEffect(() => {
+    fetchRoleCounts();
   }, []);
 
   useEffect(() => {
     filterUsers();
-  }, [users, searchTerm, statusFilter, activeTab]);
+  }, [users, searchTerm]);
 
   const fetchUsers = async () => {
     try {
@@ -265,9 +290,18 @@ export default function UserManagement() {
       }
 
       const API_URL = getApiUrl();
-      console.log('Fetching users from:', `${API_URL}/api/admin/users`);
-      
-      const response = await fetch(`${API_URL}/api/admin/users`, {
+      const queryParams = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: itemsPerPage.toString(),
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(activeTab !== 'all' && { role: activeTab }),
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate })
+      });
+      const url = `${API_URL}/api/admin/users?${queryParams}`;
+      console.log('Fetching users from:', url);
+
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -289,12 +323,20 @@ export default function UserManagement() {
 
       const data = await response.json();
       console.log('Raw response data:', data);
-      
+
       const usersArray = Array.isArray(data) ? data : (data.users || data.data || []);
+      const pagination = data.pagination || {};
+
       console.log('Processed users array:', usersArray);
+      console.log('Pagination info:', pagination);
       console.log('Number of users:', usersArray.length);
-      
+
+      // Update pagination state
+      setTotalPages(pagination.totalPages || 1);
+      setTotalItems(pagination.total || 0);
+
       setUsers(usersArray);
+      setFilteredUsers(usersArray); // Set filtered users directly from server response
     } catch (error) {
       console.error('Failed to fetch users:', error);
       showError(
@@ -306,37 +348,71 @@ export default function UserManagement() {
     }
   };
 
+  const fetchRoleCounts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // Build query parameters (same filters but without role restriction)
+      const baseParams = new URLSearchParams({
+        page: '1',
+        limit: '1', // We only need the count, not the data
+        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(startDate && { startDate }),
+        ...(endDate && { endDate })
+      });
+
+      // Fetch counts for each role
+      const [allResponse, clientsResponse, coachesResponse, staffResponse] = await Promise.all([
+        fetch(`${getApiUrl()}/api/admin/users?${baseParams.toString()}`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch(`${getApiUrl()}/api/admin/users?${baseParams.toString()}&role=client`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch(`${getApiUrl()}/api/admin/users?${baseParams.toString()}&role=coach`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch(`${getApiUrl()}/api/admin/users?${baseParams.toString()}&role=staff`, {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        })
+      ]);
+
+      const [allData, clientsData, coachesData, staffData] = await Promise.all([
+        allResponse.ok ? allResponse.json() : { pagination: { total: 0 } },
+        clientsResponse.ok ? clientsResponse.json() : { pagination: { total: 0 } },
+        coachesResponse.ok ? coachesResponse.json() : { pagination: { total: 0 } },
+        staffResponse.ok ? staffResponse.json() : { pagination: { total: 0 } }
+      ]);
+
+      setRoleCounts({
+        all: allData.pagination?.total || 0,
+        client: clientsData.pagination?.total || 0,
+        coach: coachesData.pagination?.total || 0,
+        staff: staffData.pagination?.total || 0
+      });
+    } catch (error) {
+      console.error('Failed to fetch role counts:', error);
+      // Keep existing counts on error
+    }
+  };
+
   const filterUsers = () => {
     if (!Array.isArray(users)) {
       setFilteredUsers([]);
       return;
     }
 
-    let filtered = users;
-
-    // Filter by active tab first
-    if (activeTab !== 'all') {
-      filtered = filtered.filter(user => user.role === activeTab);
-    }
-
+    // Only apply search term filtering (client-side) since status and role are handled server-side
     if (searchTerm) {
-      filtered = filtered.filter(user => {
+      const filtered = users.filter(user => {
         const fullName = user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim();
         return fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                user.email?.toLowerCase().includes(searchTerm.toLowerCase());
       });
+      setFilteredUsers(filtered);
     }
-
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(user => user.status === statusFilter);
-    }
-
-    // Remove roleFilter as it's now handled by tabs
-    // if (roleFilter !== 'all') {
-    //   filtered = filtered.filter(user => user.role === roleFilter);
-    // }
-
-    setFilteredUsers(filtered);
+    // If no search term, filteredUsers should already be set from server response in fetchUsers()
   };
 
   const handleUserAction = async (userId: string, action: string, userType: string) => {
@@ -449,6 +525,64 @@ export default function UserManagement() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       showError(
         'Action Failed',
+        errorMessage
+      );
+    }
+  };
+
+  const handleStatusChange = async (userId: string, newStatus: string) => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        window.location.href = '/login';
+        return;
+      }
+
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/admin/users/${userId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ status: newStatus })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to update user status to ${newStatus}`);
+      }
+
+      // Update the user status in the local state
+      setUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, status: newStatus as any } : user
+        )
+      );
+
+      setFilteredUsers(prevUsers =>
+        prevUsers.map(user =>
+          user.id === userId ? { ...user, status: newStatus as any } : user
+        )
+      );
+
+      const statusMessages = {
+        active: 'User has been activated successfully.',
+        inactive: 'User has been deactivated successfully.',
+        suspended: 'User has been suspended successfully.'
+      };
+
+      showInfo(
+        'Status Updated',
+        statusMessages[newStatus as keyof typeof statusMessages] || `User status updated to ${newStatus} successfully.`
+      );
+
+    } catch (error) {
+      console.error(`Failed to change user status to ${newStatus}:`, error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      showError(
+        'Status Update Failed',
         errorMessage
       );
     }
@@ -1150,16 +1284,16 @@ export default function UserManagement() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+        <div className="w-full">
           {/* Enhanced Header Skeleton */}
           <div className="mb-6 lg:mb-8">
-            <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-start lg:justify-between">
+            <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-start">
               <div className="flex-1">
                 <div className="h-8 sm:h-10 lg:h-12 bg-gray-200 dark:bg-gray-700 rounded-lg w-2/3 animate-pulse mb-3"></div>
                 <div className="h-4 sm:h-5 bg-gray-200 dark:bg-gray-700 rounded w-3/4 animate-pulse mb-2"></div>
                 <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4 animate-pulse"></div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 lg:gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex gap-2 lg:gap-3 w-full lg:w-auto lg:ml-auto">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg w-24 animate-pulse"></div>
                 ))}
@@ -1181,10 +1315,12 @@ export default function UserManagement() {
           </div>
 
           {/* Enhanced Filter Skeleton */}
-          <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <div className="p-4 sm:p-6 lg:p-8">
             <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1 max-w-md h-11 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
               <div className="w-full sm:w-40 h-11 bg-gray-200 dark:bg-gray-700 rounded-lg animate-pulse"></div>
+            </div>
             </div>
           </div>
 
@@ -1253,10 +1389,10 @@ export default function UserManagement() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+      <div className="w-full">
         {/* Header */}
         <div className="mb-6 lg:mb-8">
-          <div className="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex flex-col space-y-4 lg:flex-col">
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
                 User Management
@@ -1266,12 +1402,12 @@ export default function UserManagement() {
               </p>
               <div className="mt-3 flex items-center text-sm text-gray-500 dark:text-gray-400">
                 <Users className="h-4 w-4 mr-1.5" />
-                <span>{users.length} total users</span>
+                <span>{totalItems} {activeTab === 'all' ? 'total users' : `${activeTab}${totalItems !== 1 ? 's' : ''}`}</span>
               </div>
             </div>
 
             {/* Action Buttons - Mobile First Design */}
-            <div className="flex-shrink-0 w-full lg:w-auto">
+            <div className="flex-shrink-0 w-full lg:w-auto lg:ml-auto">
               {/* Mobile: Stack buttons vertically, Desktop: Horizontal layout */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2 lg:gap-3">
                 {/* Primary Actions */}
@@ -1294,7 +1430,7 @@ export default function UserManagement() {
                     >
                       <Upload className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Import</span>
-                      <span className="sm:hidden">CSV</span>
+                      <span className="sm:hidden">Import</span>
                     </button>
                   </PermissionGate>
 
@@ -1305,7 +1441,7 @@ export default function UserManagement() {
                     >
                       <Download className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Export</span>
-                      <span className="sm:hidden">CSV</span>
+                      <span className="sm:hidden">Export</span>
                     </button>
                   </PermissionGate>
                 </div>
@@ -1319,7 +1455,7 @@ export default function UserManagement() {
                     >
                       <Send className="h-4 w-4 mr-2" />
                       <span className="hidden sm:inline">Invite</span>
-                      <span className="sm:hidden">Staff</span>
+                      <span className="sm:hidden">Invite</span>
                     </button>
                   </PermissionGate>
 
@@ -1329,7 +1465,7 @@ export default function UserManagement() {
                   >
                     <Users className="h-4 w-4 mr-2" />
                     <span className="hidden lg:inline">{showStaffManagement ? 'Hide' : 'Manage'} Invitations</span>
-                    <span className="lg:hidden">Invites</span>
+                    <span className="lg:hidden">Manage</span>
                   </button>
                 </div>
               </div>
@@ -1346,7 +1482,7 @@ export default function UserManagement() {
 
             {/* Desktop: Grid layout, Mobile: Horizontal scroll */}
             <nav
-              className="flex lg:grid lg:grid-cols-4 lg:gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory lg:snap-none lg:overflow-visible scroll-smooth"
+              className="hidden sm:flex lg:grid lg:grid-cols-4 lg:gap-1 overflow-x-auto scrollbar-hide snap-x snap-mandatory lg:snap-none lg:overflow-visible scroll-smooth"
               role="tablist"
               aria-label="User type filters"
               style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
@@ -1384,17 +1520,20 @@ export default function UserManagement() {
               }}
             >
               {[
-                { key: 'all', label: 'All Users', count: users.length, icon: Users },
-                { key: 'client', label: 'Clients', count: users.filter(u => u.role === 'client').length, icon: User },
-                { key: 'coach', label: 'Coaches', count: users.filter(u => u.role === 'coach').length, icon: CircleUserRound },
-                { key: 'staff', label: 'Staff', count: users.filter(u => u.role === 'staff').length, icon: Users }
+                { key: 'all', label: 'All Users', count: roleCounts.all, icon: Users },
+                { key: 'client', label: 'Clients', count: roleCounts.client, icon: User },
+                { key: 'coach', label: 'Coaches', count: roleCounts.coach, icon: CircleUserRound },
+                { key: 'staff', label: 'Staff', count: roleCounts.staff, icon: Users }
               ].map((tab, index) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.key;
                 return (
                   <button
                     key={tab.key}
-                    onClick={() => setActiveTab(tab.key as any)}
+                    onClick={() => {
+                      setActiveTab(tab.key as any);
+                      setCurrentPage(1); // Reset to first page when tab changes
+                    }}
                     role="tab"
                     aria-selected={isActive}
                     aria-controls={`tabpanel-${tab.key}`}
@@ -1445,21 +1584,24 @@ export default function UserManagement() {
               })}
             </nav>
 
-            {/* Alternative: Two-row layout for very small screens (xs breakpoint) - currently hidden */}
-            <div className="hidden">
+            {/* Alternative: Two-row layout for very small screens (xs breakpoint) */}
+            <div className="sm:hidden">
               <div className="grid grid-cols-2 gap-1">
                 {[
-                  { key: 'all', label: 'All Users', count: users.length, icon: Users },
-                  { key: 'client', label: 'Clients', count: users.filter(u => u.role === 'client').length, icon: User },
-                  { key: 'coach', label: 'Coaches', count: users.filter(u => u.role === 'coach').length, icon: CircleUserRound },
-                  { key: 'staff', label: 'Staff', count: users.filter(u => u.role === 'staff').length, icon: Users }
+                  { key: 'all', label: 'All Users', count: roleCounts.all, icon: Users },
+                  { key: 'client', label: 'Clients', count: roleCounts.client, icon: User },
+                  { key: 'coach', label: 'Coaches', count: roleCounts.coach, icon: CircleUserRound },
+                  { key: 'staff', label: 'Staff', count: roleCounts.staff, icon: Users }
                 ].map((tab) => {
                   const Icon = tab.icon;
                   const isActive = activeTab === tab.key;
                   return (
                     <button
                       key={`alt-${tab.key}`}
-                      onClick={() => setActiveTab(tab.key as any)}
+                      onClick={() => {
+                      setActiveTab(tab.key as any);
+                      setCurrentPage(1); // Reset to first page when tab changes
+                    }}
                       role="tab"
                       aria-selected={isActive}
                       aria-controls={`tabpanel-${tab.key}`}
@@ -1501,7 +1643,10 @@ export default function UserManagement() {
             <div className="hidden">
               <select
                 value={activeTab}
-                onChange={(e) => setActiveTab(e.target.value as any)}
+                onChange={(e) => {
+                  setActiveTab(e.target.value as any);
+                  setCurrentPage(1); // Reset to first page when tab changes
+                }}
                 className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 aria-label="Select user type filter"
               >
@@ -1515,86 +1660,154 @@ export default function UserManagement() {
         </div>
 
         {/* Enhanced Filters Section */}
-        <div className="bg-white dark:bg-gray-800 p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search Input */}
-            <div className="flex-1 max-w-md">
-              <label htmlFor="user-search" className="sr-only">Search users</label>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
-                <input
-                  id="user-search"
-                  type="text"
-                  placeholder="Search by name or email..."
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-4 sm:p-6 lg:p-8">
+          <div className="space-y-4">
+            {/* First row: Search and Status filter */}
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search Input */}
+              <div className="flex-1 max-w-md">
+                <label htmlFor="user-search" className="sr-only">Search users</label>
+                <SearchInput
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+                  onChange={(value) => {
+                    setSearchTerm(value);
+                    if (value) {
+                      setSearchLoading(true);
+                      setTimeout(() => setSearchLoading(false), 300);
+                    } else {
+                      setSearchLoading(false);
+                    }
+                  }}
+                  placeholder="Search users by name, email, or role..."
+                  isLoading={searchLoading}
+                  size="md"
+                  className="w-full"
                 />
-                {searchTerm && (
-                  <button
-                    onClick={() => setSearchTerm('')}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    aria-label="Clear search"
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4">
+                {/* Status Filter */}
+                <div className="flex-shrink-0">
+                  <label htmlFor="status-filter" className="sr-only">Filter by status</label>
+                  <select
+                    id="status-filter"
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[140px]"
                   >
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
+                    <option value="all">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="suspended">Suspended</option>
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="rejected">Rejected</option>
+                  </select>
+                </div>
+
+                {/* Items per page */}
+                <div className="flex-shrink-0">
+                  <label htmlFor="items-per-page" className="sr-only">Items per page</label>
+                  <select
+                    id="items-per-page"
+                    value={itemsPerPage}
+                    onChange={(e) => {
+                      setItemsPerPage(parseInt(e.target.value));
+                      setCurrentPage(1); // Reset to first page when limit changes
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[120px]"
+                  >
+                    <option value={10}>10 per page</option>
+                    <option value={20}>20 per page</option>
+                    <option value={50}>50 per page</option>
+                    <option value={100}>100 per page</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* Status Filter */}
-            <div className="flex-shrink-0">
-              <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-              <select
-                id="status-filter"
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[140px]"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-                <option value="suspended">Suspended</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="rejected">Rejected</option>
-              </select>
+            {/* Second row: Date range filters */}
+            <div className="flex flex-col sm:flex-row gap-4 items-end">
+              <div className="flex flex-col sm:flex-row gap-4 flex-1">
+                <div className="flex-1 max-w-xs">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Joined After
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+                <div className="flex-1 max-w-xs">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Joined Before
+                  </label>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setCurrentPage(1); // Reset to first page when filter changes
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                </div>
+              </div>
+
+              {/* Clear filters button */}
+              {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
+                <button
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                    setStatusFilter('all');
+                    setSearchTerm('');
+                    setCurrentPage(1);
+                  }}
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
+                >
+                  Clear Filters
+                </button>
+              )}
             </div>
 
             {/* Results Summary */}
-            {(searchTerm || statusFilter !== 'all') && (
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-                <span>Showing {filteredUsers.length} of {users.length} users</span>
-                {(searchTerm || statusFilter !== 'all') && (
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setStatusFilter('all');
-                    }}
-                    className="ml-2 text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            )}
+            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+              <span>
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} users
+                {searchTerm && ` (filtered by search)`}
+              </span>
+            </div>
+          </div>
           </div>
         </div>
 
       {/* Staff Management Section */}
       {showStaffManagement && (
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+          <div className="p-6 lg:p-8">
           <StaffInvitationManager
             onError={showError}
             onSuccess={showInfo}
             onWarning={showWarning}
           />
+          </div>
         </div>
       )}
 
-      {/* Users Table */}
+      {/* Users Table - Desktop & Mobile Responsive */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Desktop Table View */}
+        <div className="hidden xl:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
@@ -1642,14 +1855,14 @@ export default function UserManagement() {
                         <div className="text-sm font-medium text-gray-900 dark:text-white">
                           {user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
                         </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                          <Mail className="h-3 w-3 mr-1" />
-                          {user.email}
+                        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center max-w-[200px]" title={user.email}>
+                          <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                          <span className="truncate">{user.email}</span>
                         </div>
                         {user.phone && (
-                          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                            <Phone className="h-3 w-3 mr-1" />
-                            {user.phone}
+                          <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center max-w-[200px]">
+                            <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+                            <span className="truncate">{user.phone}</span>
                           </div>
                         )}
                       </div>
@@ -1680,24 +1893,30 @@ export default function UserManagement() {
                       {showActionMenu === user.id && (
                         <div
                           data-action-menu
-                          className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-700"
+                          className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden"
                           style={{
                             zIndex: 9999,
-                            backgroundColor: 'white',
                             position: 'absolute',
                             top: '100%',
                             right: 0,
-                            boxShadow: '0 10px 15px rgba(0, 0, 0, 0.3)'
+                            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
                           }}>
+
+                          {/* Information & Profile Section */}
                           <div className="py-1">
+                            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Profile & Info
+                              </p>
+                            </div>
                             <button
                               onClick={() => {
                                 openEditModal(user);
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                              className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-400 w-full text-left transition-colors duration-150"
                             >
-                              <Eye className="h-4 w-4 mr-2" />
+                              <Eye className="h-4 w-4 mr-3 text-blue-500" />
                               View Details
                             </button>
                             {/* <PermissionGate permission={PERMISSIONS.USERS_EDIT}> */}
@@ -1706,17 +1925,26 @@ export default function UserManagement() {
                                   openEditModal(user);
                                   setShowActionMenu(null);
                                 }}
-                                className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 w-full text-left"
+                                className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-700 dark:hover:text-blue-400 w-full text-left transition-colors duration-150"
                               >
-                                <Edit className="h-4 w-4 mr-2" />
+                                <Edit className="h-4 w-4 mr-3 text-blue-500" />
                                 Edit Profile
                               </button>
                             {/* </PermissionGate> */}
+                          </div>
+
+                          {/* Communication & Access Section */}
+                          <div className="py-1 border-t border-gray-100 dark:border-gray-700">
+                            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Communication & Access
+                              </p>
+                            </div>
                             <button
                               onClick={() => handleMessageUser(user)}
-                              className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                              className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:text-purple-700 dark:hover:text-purple-400 w-full text-left transition-colors duration-150"
                             >
-                              <MessageSquare className="h-4 w-4 mr-2" />
+                              <MessageSquare className="h-4 w-4 mr-3 text-purple-500" />
                               Send Message
                             </button>
                             {/* <PermissionGate permission={PERMISSIONS.USERS_IMPERSONATE}> */}
@@ -1725,50 +1953,50 @@ export default function UserManagement() {
                                   handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
                                   setShowActionMenu(null);
                                 }}
-                                className="flex items-center px-4 py-2 text-sm text-blue-700 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                                className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-700 dark:hover:text-indigo-400 w-full text-left transition-colors duration-150"
                               >
-                                <LogIn className="h-4 w-4 mr-2" />
+                                <LogIn className="h-4 w-4 mr-3 text-indigo-500" />
                                 Login As User
                               </button>
                             {/* </PermissionGate> */}
+                          </div>
+
+                          {/* Account Management Section */}
+                          <div className="py-1 border-t border-gray-100 dark:border-gray-700">
+                            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Account Management
+                              </p>
+                            </div>
                             <button
                               onClick={() => {
                                 handleResetPassword(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
                                 setShowActionMenu(null);
                               }}
-                              className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
+                              className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 hover:text-orange-700 dark:hover:text-orange-400 w-full text-left transition-colors duration-150"
                             >
-                              <Key className="h-4 w-4 mr-2" />
+                              <Key className="h-4 w-4 mr-3 text-orange-500" />
                               Reset Password
                             </button>
+
+                            {/* Status Management Actions */}
                             {user.status === 'active' ? (
-                              <>
-                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
-                                  <button
-                                    onClick={() => handleUserAction(user.id, 'deactivate', user.role)}
-                                    className="flex items-center px-4 py-2 text-sm text-orange-700 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
-                                  >
-                                    <UserX className="h-4 w-4 mr-2" />
-                                    Deactivate User
-                                  </button>
-                                </PermissionGate>
-                                <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
-                                  <button
-                                    onClick={() => handleUserAction(user.id, 'suspend', user.role)}
-                                    className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
-                                  >
-                                    <Ban className="h-4 w-4 mr-2" />
-                                    Suspend User
-                                  </button>
-                                </PermissionGate>
-                              </>
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'deactivate', user.role)}
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 hover:text-yellow-700 dark:hover:text-yellow-400 w-full text-left transition-colors duration-150"
+                                >
+                                  <UserX className="h-4 w-4 mr-3 text-yellow-500" />
+                                  Deactivate User
+                                </button>
+                              </PermissionGate>
                             ) : user.status === 'inactive' ? (
                               <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-400 w-full text-left transition-colors duration-150"
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  <CheckCircle className="h-4 w-4 mr-3 text-green-500" />
                                   Activate User
                                 </button>
                               </PermissionGate>
@@ -1776,9 +2004,9 @@ export default function UserManagement() {
                               <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-400 w-full text-left transition-colors duration-150"
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  <CheckCircle className="h-4 w-4 mr-3 text-green-500" />
                                   Reactivate User
                                 </button>
                               </PermissionGate>
@@ -1786,31 +2014,57 @@ export default function UserManagement() {
                               <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'activate', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-green-50 dark:hover:bg-green-900/20 hover:text-green-700 dark:hover:text-green-400 w-full text-left transition-colors duration-150"
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  <CheckCircle className="h-4 w-4 mr-3 text-green-500" />
                                   Activate User
                                 </button>
                               </PermissionGate>
                             )}
+
+                            {/* Coach Approval */}
                             {user.role === 'coach' && user.status === 'pending' && (
                               <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
                                 <button
                                   onClick={() => handleUserAction(user.id, 'approve', user.role)}
-                                  className="flex items-center px-4 py-2 text-sm text-green-700 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 hover:text-emerald-700 dark:hover:text-emerald-400 w-full text-left transition-colors duration-150"
                                 >
-                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  <CheckCircle className="h-4 w-4 mr-3 text-emerald-500" />
                                   Approve Coach
                                 </button>
                               </PermissionGate>
                             )}
+                          </div>
+
+                          {/* Security Actions Section */}
+                          <div className="py-1 border-t border-gray-100 dark:border-gray-700">
+                            <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                Security Actions
+                              </p>
+                            </div>
+
+                            {/* Suspend Action (only for active users) */}
+                            {user.status === 'active' && (
+                              <PermissionGate permission={PERMISSIONS.USERS_STATUS}>
+                                <button
+                                  onClick={() => handleUserAction(user.id, 'suspend', user.role)}
+                                  className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-400 w-full text-left transition-colors duration-150"
+                                >
+                                  <Ban className="h-4 w-4 mr-3 text-red-500" />
+                                  Suspend User
+                                </button>
+                              </PermissionGate>
+                            )}
+
+                            {/* Delete Action */}
                             <PermissionGate permission={PERMISSIONS.USERS_DELETE}>
                               <button
                                 onClick={() => handleDeleteUser(user.id, user.role)}
-                                className="flex items-center px-4 py-2 text-sm text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                                className="flex items-center px-4 py-2.5 text-sm text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-700 dark:hover:text-red-400 w-full text-left transition-colors duration-150 border-t border-red-100 dark:border-red-900/30"
                               >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete User
+                                <Trash2 className="h-4 w-4 mr-3 text-red-600" />
+                                <span className="font-medium">Delete User</span>
                               </button>
                             </PermissionGate>
                           </div>
@@ -1828,6 +2082,229 @@ export default function UserManagement() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="xl:hidden divide-y divide-gray-200 dark:divide-gray-700">
+          {Array.isArray(filteredUsers) && filteredUsers.length > 0 ? filteredUsers.map((user) => (
+            <div key={`mobile-${user.id}`} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <div className="space-y-3">
+                {/* Header with Role and Status */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    {getRoleBadge(user.role)}
+                    {getStatusBadge(user.status)}
+                  </div>
+                  <div className="relative">
+                    <button
+                      data-action-menu
+                      onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
+                      className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors"
+                      aria-label="More actions"
+                    >
+                      <MoreVertical className="h-5 w-5" />
+                    </button>
+
+                    {showActionMenu === user.id && (
+                      <div
+                        data-action-menu
+                        className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
+                      >
+                        {/* Information & Profile Section */}
+                        <div className="py-1">
+                          <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              User Actions
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setShowActionMenu(null);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
+                          >
+                            <Eye className="h-4 w-4 mr-3" />
+                            View Profile
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setIsEditMode(true);
+                              // Pre-populate form with user data
+                              setFormData({
+                                firstName: user.first_name || user.name?.split(' ')[0] || '',
+                                lastName: user.last_name || user.name?.split(' ').slice(1).join(' ') || '',
+                                email: user.email || '',
+                                phone: user.phone || '',
+                                userType: user.role || 'client',
+                                status: user.status || 'active'
+                              });
+                              setShowUserModal(true);
+                              setShowActionMenu(null);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-full text-left"
+                          >
+                            <Edit className="h-4 w-4 mr-3" />
+                            Edit User
+                          </button>
+
+                          <button
+                            onClick={() => handleMessageUser(user)}
+                            className="flex items-center px-4 py-2 text-sm text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/20 w-full text-left"
+                          >
+                            <Mail className="h-4 w-4 mr-3" />
+                            Send Message
+                          </button>
+                        </div>
+
+                        {/* Status Actions */}
+                        <div className="border-t border-gray-100 dark:border-gray-700 py-1">
+                          <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              Status Actions
+                            </p>
+                          </div>
+
+                          {user.status === 'suspended' ? (
+                            <button
+                              onClick={() => handleStatusChange(user.id, 'active')}
+                              className="flex items-center px-4 py-2 text-sm text-green-600 dark:text-green-400 hover:bg-green-50 dark:hover:bg-green-900/20 w-full text-left"
+                            >
+                              <CheckCircle className="h-4 w-4 mr-3" />
+                              Activate User
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setAlertData({
+                                  type: 'warning',
+                                  title: 'Suspend User',
+                                  message: `Are you sure you want to suspend ${user.name || user.email}? They will not be able to access their account.`,
+                                  onConfirm: () => handleStatusChange(user.id, 'suspended'),
+                                  confirmText: 'Suspend User',
+                                  showCancel: true
+                                });
+                                setShowAlertModal(true);
+                                setShowActionMenu(null);
+                              }}
+                              className="flex items-center px-4 py-2 text-sm text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20 w-full text-left"
+                            >
+                              <Ban className="h-4 w-4 mr-3" />
+                              Suspend User
+                            </button>
+                          )}
+
+                          {user.status !== 'inactive' && (
+                            <button
+                              onClick={() => handleStatusChange(user.id, 'inactive')}
+                              className="flex items-center px-4 py-2 text-sm text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left"
+                            >
+                              <XCircle className="h-4 w-4 mr-3" />
+                              Deactivate User
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Danger Zone */}
+                        <div className="border-t border-gray-100 dark:border-gray-700 py-1">
+                          <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
+                            <p className="text-xs font-semibold text-red-500 dark:text-red-400 uppercase tracking-wider">
+                              Danger Zone
+                            </p>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setAlertData({
+                                type: 'error',
+                                title: 'Delete User',
+                                message: `Are you sure you want to permanently delete ${user.name || user.email}? This action cannot be undone and will remove all associated data.`,
+                                onConfirm: () => handleDeleteUser(user.id, user.role),
+                                confirmText: 'Delete User',
+                                showCancel: true
+                              });
+                              setShowAlertModal(true);
+                              setShowActionMenu(null);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left"
+                          >
+                            <Trash2 className="h-4 w-4 mr-3" />
+                            Delete User
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* User Information */}
+                <div className="flex items-center gap-3">
+                  <div className="flex-shrink-0 h-10 w-10">
+                    {user.profile_photo ? (
+                      <img
+                        src={user.profile_photo}
+                        alt={`${user.name || user.first_name || 'User'} profile`}
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {user.name ? user.name.charAt(0).toUpperCase() : (user.first_name ? user.first_name.charAt(0).toUpperCase() : 'U')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim() || 'Unnamed User'}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center" title={user.email}>
+                      <Mail className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="break-words">{user.email}</span>
+                    </div>
+                    {user.phone && (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center">
+                        <Phone className="h-3 w-3 mr-1 flex-shrink-0" />
+                        <span className="break-words">{user.phone}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Dates Information */}
+                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-700">
+                  <div>
+                    <span className="font-medium">Joined:</span> {new Date(user.created_at).toLocaleDateString()}
+                  </div>
+                  <div>
+                    <span className="font-medium">Last Login:</span> {user.last_login ? new Date(user.last_login).toLocaleDateString() : 'Never'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )) : (
+            <div className="p-8 text-center">
+              <User className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
+              <p className="text-gray-600 dark:text-gray-400">
+                {isLoading ? 'Loading users...' : 'No users found'}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Enhanced Pagination */}
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            showItemsRange={true}
+          />
         </div>
       </div>
 

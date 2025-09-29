@@ -106,22 +106,22 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
   const getTransactionTypeColor = (type: string) => {
     switch (type.toLowerCase()) {
       case 'payment':
-        return 'text-green-600';
+        return 'text-green-600 dark:text-green-400';
       case 'payout':
-        return 'text-blue-600';
+        return 'text-blue-600 dark:text-blue-400';
       case 'refund':
-        return 'text-red-600';
+        return 'text-red-600 dark:text-red-400';
       case 'fee':
-        return 'text-orange-600';
+        return 'text-orange-600 dark:text-orange-400';
       default:
-        return 'text-gray-600';
+        return 'text-gray-600 dark:text-gray-400';
     }
   };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
+        <RefreshCw className="h-8 w-8 animate-spin dark:text-white" />
       </div>
     );
   }
@@ -130,7 +130,7 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
     return (
       <Card className="p-6">
         <div className="text-center">
-          <p className="text-red-600 mb-4">Error: {error}</p>
+          <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
           <Button onClick={fetchDashboardData}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Try Again
@@ -200,19 +200,19 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Total Refunds</p>
-              <p className="text-lg font-semibold text-red-600">
+              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
                 {formatCurrency(dashboardData.monthly_summary.total_refunds_cents)}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Platform Fees</p>
-              <p className="text-lg font-semibold text-orange-600">
+              <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
                 {formatCurrency(dashboardData.monthly_summary.total_fees_cents)}
               </p>
             </div>
             <div>
               <p className="text-sm text-muted-foreground">Net Earnings</p>
-              <p className="text-lg font-semibold text-green-600">
+              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
                 {formatCurrency(dashboardData.monthly_summary.net_revenue_cents)}
               </p>
             </div>
@@ -234,7 +234,7 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
         <CardContent>
           <div className="space-y-4">
             {dashboardData.recent_transactions.map((transaction) => (
-              <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg">
+              <div key={transaction.id} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg bg-white dark:bg-gray-800 transition-colors">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <span className={`font-medium capitalize ${getTransactionTypeColor(transaction.transaction_type)}`}>
@@ -253,9 +253,9 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
                 </div>
                 <div className="text-right">
                   <p className={`font-bold ${
-                    transaction.transaction_type === 'payment' ? 'text-green-600' :
-                    transaction.transaction_type === 'refund' ? 'text-red-600' :
-                    'text-gray-600'
+                    transaction.transaction_type === 'payment' ? 'text-green-600 dark:text-green-400' :
+                    transaction.transaction_type === 'refund' ? 'text-red-600 dark:text-red-400' :
+                    'text-gray-600 dark:text-gray-400'
                   }`}>
                     {transaction.transaction_type === 'refund' ? '-' : '+'}
                     {formatCurrency(transaction.amount_cents)}

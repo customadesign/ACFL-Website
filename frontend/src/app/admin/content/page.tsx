@@ -941,9 +941,9 @@ export default function ContentManagement() {
               onChange={(e) => handleSectionChange(sectionId, field.name, e.target.value.split('\n').filter(line => line.trim()))}
               placeholder="Enter each item on a new line"
               rows={6}
-              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
+              className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white mb-1"
             />
-            <p className="text-sm text-gray-500 mt-1">Enter one item per line</p>
+            <p className="text-sm text-gray-500 mt-1 mb-2">Enter one item per line</p>
           </div>
         );
 
@@ -956,7 +956,7 @@ export default function ContentManagement() {
   const currentTemplate = PAGE_TEMPLATES[selectedPage];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -985,9 +985,9 @@ export default function ContentManagement() {
       </div>
 
       {/* Page Selector */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Select Page to Edit</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 mb-4">
           {Object.entries(PAGE_TEMPLATES).map(([key, template]) => {
             const IconComponent = template.icon;
             return (
@@ -1016,11 +1016,11 @@ export default function ContentManagement() {
 
       {/* Content Editor */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
+        <div className="flex items-center justify-center py-12 mb-6">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-6 mb-6">
           {currentTemplate.sections.map((section) => {
             const isEditing = editingSections.has(section.id);
 
@@ -1078,13 +1078,16 @@ export default function ContentManagement() {
                   </div>
 
                   {isEditing ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       {section.fields.map((field) => (
-                        <div key={field.name}>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        <div key={field.name} className="pb-2">
+                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-1">
                             {field.label}
                           </label>
                           {renderField(section.id, field)}
+                          {field.description && (
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -1098,13 +1101,16 @@ export default function ContentManagement() {
                           </p>
                         </div>
                       )}
-                      <div className="space-y-4">
+                      <div className="space-y-6">
                         {section.fields.map((field) => (
-                          <div key={field.name}>
-                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                          <div key={field.name} className="pb-2">
+                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 mt-1">
                               {field.label}
                             </label>
                             {renderReadOnlyField(section.id, field)}
+                            {field.description && (
+                              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{field.description}</p>
+                            )}
                           </div>
                         ))}
                       </div>
@@ -1119,7 +1125,7 @@ export default function ContentManagement() {
 
       {/* Page Status */}
       {pageContent && (
-        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4">
+        <div className="bg-gray-50 dark:bg-gray-800/50 rounded-lg p-4 mb-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Last updated: {new Date(pageContent.updated_at).toLocaleString()}
           </p>

@@ -198,7 +198,7 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
   if (loading && !transactions.length) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
+        <RefreshCw className="h-8 w-8 animate-spin dark:text-white" />
       </div>
     );
   }
@@ -207,12 +207,12 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Billing History</h2>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Billing History</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
             <Filter className="h-4 w-4" />
             Filters
@@ -220,7 +220,7 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
           <Button
             variant="outline"
             onClick={exportTransactions}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
             <Download className="h-4 w-4" />
             Export
@@ -229,7 +229,7 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
             variant="outline"
             onClick={fetchTransactions}
             disabled={loading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
             Refresh
@@ -368,7 +368,7 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
         <CardContent>
           {error && (
             <div className="text-center py-8">
-              <p className="text-red-600 mb-4">Error: {error}</p>
+              <p className="text-red-600 dark:text-red-400 mb-4">Error: {error}</p>
               <Button onClick={fetchTransactions}>
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Try Again
@@ -379,34 +379,34 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
           {!error && (
             <div className="space-y-4">
               {sortedTransactions.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-muted-foreground dark:text-gray-400">
                   No transactions found
                 </div>
               ) : (
                 sortedTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div key={transaction.id} className="flex items-center justify-between p-4 border dark:border-gray-700 rounded-lg hover:bg-muted/50 dark:hover:bg-gray-800/50 transition-colors bg-white dark:bg-gray-800/30">
                     <div className="flex items-center gap-3 flex-1">
                       <div className="text-2xl">
                         {getTransactionIcon(transaction.transaction_type)}
                       </div>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium capitalize">
+                          <span className="font-medium capitalize text-gray-900 dark:text-gray-100">
                             {transaction.transaction_type.replace('_', ' ')}
                           </span>
                           <Badge variant={getStatusBadgeVariant(transaction.status)}>
                             {transaction.status}
                           </Badge>
                         </div>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground dark:text-gray-300">
                           {transaction.description}
                         </p>
                         <div className="flex items-center gap-4 mt-1">
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground dark:text-gray-400">
                             {format(new Date(transaction.created_at), 'PPP p')}
                           </p>
                           {transaction.reference_id && (
-                            <p className="text-xs text-muted-foreground">
+                            <p className="text-xs text-muted-foreground dark:text-gray-400">
                               Ref: {transaction.reference_id.slice(-8)}
                             </p>
                           )}
@@ -416,10 +416,10 @@ export default function CoachBillingHistory({ coachId }: CoachBillingHistoryProp
                     <div className="text-right">
                       <p className={cn(
                         "text-lg font-bold",
-                        transaction.transaction_type === 'payment' ? 'text-green-600' :
-                        transaction.transaction_type === 'refund' ? 'text-red-600' :
-                        transaction.transaction_type === 'payout' ? 'text-blue-600' :
-                        'text-gray-600'
+                        transaction.transaction_type === 'payment' ? 'text-green-600 dark:text-green-400' :
+                        transaction.transaction_type === 'refund' ? 'text-red-600 dark:text-red-400' :
+                        transaction.transaction_type === 'payout' ? 'text-blue-600 dark:text-blue-400' :
+                        'text-gray-600 dark:text-gray-400'
                       )}>
                         {['refund', 'payout', 'debit', 'fee'].includes(transaction.transaction_type) ? '-' : '+'}
                         {formatCurrency(transaction.amount_cents)}

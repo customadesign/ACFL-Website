@@ -1,294 +1,27 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
-import { getClientActivity } from '@/lib/api'
-import { 
-  Search, 
-  Heart, 
-  Calendar, 
-  MessageCircle, 
-  User,
-  ArrowRight,
-  Clock,
-  Star,
-  RefreshCw
-} from 'lucide-react'
 
-interface ActivityItem {
-  id: string
-  type: 'appointment' | 'message' | 'saved' | 'search'
-  title: string
-  subtitle: string
-  date: string
-  time: string
-  timestamp: number
-  data: any
-}
-
-function DashboardContent() {
-  const { user, logout } = useAuth()
+function ClientRedirect() {
   const router = useRouter()
-  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([])
-  const [page, setPage] = useState(1)
-  const pageSize = 3
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const loadActivity = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const activityData = await getClientActivity()
-      setRecentActivity(activityData)
-    } catch (error) {
-      console.error('Error loading activity:', error)
-      setError('Failed to load recent activity')
-      // Fallback to empty array
-      setRecentActivity([])
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  const { user } = useAuth()
 
   useEffect(() => {
-    loadActivity()
-  }, [loadActivity])
-
-  const handleLogout = () => {
-    logout()
-  }
-
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case 'appointment':
-        return <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-      case 'message':
-        return <MessageCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-      case 'saved':
-        return <Heart className="w-5 h-5 text-red-600 dark:text-red-400" />
-      case 'search':
-        return <Search className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-      default:
-        return <Clock className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+    // Redirect authenticated clients to search coaches page
+    if (user) {
+      router.replace('/clients/search-coaches')
     }
-  }
+  }, [user, router])
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    const now = new Date()
-    const diff = now.getTime() - date.getTime()
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24))
-
-    if (days === 0) {
-      return 'Today'
-    } else if (days === 1) {
-      return 'Yesterday'
-    } else if (days < 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'short' })
-    } else {
-      return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-    }
-  }
-
-  const handleActivityClick = (activity: ActivityItem) => {
-    switch (activity.type) {
-      case 'appointment':
-        router.push('/clients/appointments')
-        break
-      case 'message':
-        router.push('/clients/messages')
-        break
-      case 'saved':
-        router.push('/clients/search-coaches')
-        break
-      case 'search':
-        router.push('/clients/search-coaches')
-        break
-      default:
-        break
-    }
-  }
-
+  // Show loading while redirecting
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
-        {/* Welcome Section */}
-        <div className="mb-6 sm:mb-8">
-          <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
-            Welcome back, {user?.first_name || 'Client'}!
-          </h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            Ready to continue your coaching journey? Here's what you can do today.
-          </p>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/search-coaches')}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 sm:p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
-                  <Search className="w-6 h-6 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Find Coaches</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Search for new coaches</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/saved-coaches')}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 sm:p-2 bg-red-100 dark:bg-red-900/30 rounded-lg">
-                  <Heart className="w-6 h-6 sm:w-6 sm:h-6 text-red-600 dark:text-red-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Saved Coaches</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">View your favorites</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/appointments')}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 sm:p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
-                  <Calendar className="w-6 h-6 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Appointments</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Manage your sessions</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-lg transition-shadow cursor-pointer touch-manipulation" onClick={() => router.push('/clients/messages')}>
-            <CardContent className="p-4 sm:p-6">
-              <div className="flex items-center space-x-3">
-                <div className="p-3 sm:p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
-                  <MessageCircle className="w-6 h-6 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm sm:text-base text-foreground">Messages</h3>
-                  <p className="text-xs sm:text-sm text-muted-foreground">Chat with coaches</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8">
-          <Card className="flex flex-col h-[60vh] sm:h-[50vh]">
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center space-x-2">
-                  <Clock className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-sm sm:text-base">Recent Activity</span>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadActivity}
-                  disabled={loading}
-                  className="h-8 px-2 sm:px-3 touch-manipulation"
-                >
-                  <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto px-3 sm:px-6">
-              {loading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex items-center space-x-3 animate-pulse">
-                      <div className="w-10 h-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
-                      <div className="flex-1">
-                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
-                        <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : error ? (
-                <div className="text-center text-red-600">
-                  {error}
-                  <Button variant="outline" onClick={loadActivity} className="mt-4">
-                    <RefreshCw className="mr-2" />
-                    Retry
-                  </Button>
-                </div>
-              ) : (
-                  <div className="space-y-4">
-                    {recentActivity.length === 0 ? (
-                      <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                        <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300 dark:text-gray-600" />
-                        <p>No recent activity yet</p>
-                        <p className="text-sm">Start by searching for coaches or scheduling sessions</p>
-                      </div>
-                    ) : (
-                      recentActivity
-                        .slice((page - 1) * pageSize, page * pageSize)
-                        .map((activity) => (
-                        <div key={activity.id} className="flex items-center space-x-3 p-3 sm:p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer touch-manipulation" onClick={() => handleActivityClick(activity)}>
-                          {getActivityIcon(activity.type)}
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm sm:text-base text-gray-900 dark:text-gray-100 truncate">{activity.title}</p>
-                            <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 truncate">{activity.subtitle}</p>
-                            <p className="text-[10px] sm:text-xs text-gray-400 dark:text-gray-500">{formatDate(activity.date)} at {activity.time}</p>
-                          </div>
-                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 flex-shrink-0" />
-                        </div>
-                        ))
-                    )}
-                    {/* Pagination Controls */}
-                    {recentActivity.length > pageSize && (
-                      <div className="flex flex-col sm:flex-row justify-between items-center pt-4 border-t border-gray-200 dark:border-gray-700 gap-2 sm:gap-0">
-                        <span className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400">Page {page} of {Math.ceil(recentActivity.length / pageSize)}</span>
-                        <div className="flex space-x-2">
-                          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))} className="text-xs px-2 sm:px-3 touch-manipulation">Previous</Button>
-                          <Button variant="outline" size="sm" disabled={page * pageSize >= recentActivity.length} onClick={() => setPage(p => p + 1)} className="text-xs px-2 sm:px-3 touch-manipulation">Next</Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Quick Assessment */}
-          <Card className="h-auto">
-            <CardHeader className="pb-3 sm:pb-6">
-              <CardTitle className="flex items-center space-x-2">
-                <Star className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-sm sm:text-base">Get Started</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-3 sm:px-6">
-              <div className="text-center">
-                <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mb-4 sm:mb-4">
-                  Haven't found your perfect coach yet? Take our quick assessment to get personalized matches.
-                </p>
-                <Button 
-                  onClick={() => router.push('/')}
-                  className="bg-blue-600 hover:bg-blue-700 dark:text-white w-full sm:w-auto px-6 py-3 sm:px-4 sm:py-2 touch-manipulation"
-                >
-                  Start Assessment
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-gray-600 dark:text-gray-400">Taking you to find coaches...</p>
       </div>
     </div>
   )
@@ -297,7 +30,7 @@ function DashboardContent() {
 export default function ClientDashboard() {
   return (
     <ProtectedRoute allowedRoles={['client']}>
-      <DashboardContent />
+      <ClientRedirect />
     </ProtectedRoute>
   )
 }

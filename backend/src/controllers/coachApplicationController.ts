@@ -337,7 +337,7 @@ export const submitCoachApplication = async (req: Request, res: Response) => {
 
 export const getCoachApplications = async (req: Request, res: Response) => {
   try {
-    const { status, page = 1, limit = 10 } = req.query;
+    const { status, page = 1, limit = 10, startDate, endDate, date } = req.query;
     
     let query = supabase
       .from('coach_applications')
@@ -362,6 +362,31 @@ export const getCoachApplications = async (req: Request, res: Response) => {
     // Apply status filter if provided
     if (status && status !== 'all') {
       query = query.eq('status', status);
+    }
+
+    // Apply date filters
+    if (date) {
+      // Filter by specific date
+      const filterStartDate = new Date(date as string);
+      filterStartDate.setHours(0, 0, 0, 0);
+      const filterEndDate = new Date(date as string);
+      filterEndDate.setHours(23, 59, 59, 999);
+
+      query = query
+        .gte('submitted_at', filterStartDate.toISOString())
+        .lte('submitted_at', filterEndDate.toISOString());
+    } else if (startDate || endDate) {
+      // Filter by date range
+      if (startDate) {
+        const filterStartDate = new Date(startDate as string);
+        filterStartDate.setHours(0, 0, 0, 0);
+        query = query.gte('submitted_at', filterStartDate.toISOString());
+      }
+      if (endDate) {
+        const filterEndDate = new Date(endDate as string);
+        filterEndDate.setHours(23, 59, 59, 999);
+        query = query.lte('submitted_at', filterEndDate.toISOString());
+      }
     }
 
     // Apply pagination
@@ -408,6 +433,29 @@ export const getCoachApplications = async (req: Request, res: Response) => {
 
     if (status && status !== 'all') {
       countQuery = countQuery.eq('status', status);
+    }
+
+    // Apply same date filters to count query
+    if (date) {
+      const filterStartDate = new Date(date as string);
+      filterStartDate.setHours(0, 0, 0, 0);
+      const filterEndDate = new Date(date as string);
+      filterEndDate.setHours(23, 59, 59, 999);
+
+      countQuery = countQuery
+        .gte('submitted_at', filterStartDate.toISOString())
+        .lte('submitted_at', filterEndDate.toISOString());
+    } else if (startDate || endDate) {
+      if (startDate) {
+        const filterStartDate = new Date(startDate as string);
+        filterStartDate.setHours(0, 0, 0, 0);
+        countQuery = countQuery.gte('submitted_at', filterStartDate.toISOString());
+      }
+      if (endDate) {
+        const filterEndDate = new Date(endDate as string);
+        filterEndDate.setHours(23, 59, 59, 999);
+        countQuery = countQuery.lte('submitted_at', filterEndDate.toISOString());
+      }
     }
 
     const { count, error: countError } = await countQuery;

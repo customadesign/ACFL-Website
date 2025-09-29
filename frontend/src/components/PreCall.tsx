@@ -307,11 +307,11 @@ export default function PreCall({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <Card className="w-full max-w-4xl bg-white p-6">
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[20000] p-4">
+      <Card className="w-full max-w-4xl bg-white dark:bg-gray-800 p-6">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold mb-2">Ready to join?</h2>
-          <p className="text-gray-600">
+          <h2 className="text-2xl font-bold mb-2 text-gray-900 dark:text-white">Ready to join?</h2>
+          <p className="text-gray-600 dark:text-gray-300">
             {coachName ? `Session with ${coachName}` : meetingTitle}
           </p>
         </div>

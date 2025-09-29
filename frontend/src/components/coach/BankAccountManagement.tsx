@@ -292,9 +292,9 @@ export default function BankAccountManagement() {
 
           {bankAccounts.length === 0 ? (
             <div className="text-center py-8">
-              <CreditCard className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No bank accounts</h3>
-              <p className="text-gray-500 mb-4">
+              <CreditCard className="h-12 w-12 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">No bank accounts</h3>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
                 Add a bank account to receive direct payments from your coaching sessions
               </p>
               <Button onClick={() => setShowAddForm(true)}>
@@ -315,19 +315,19 @@ export default function BankAccountManagement() {
                               <Badge variant="secondary">Default</Badge>
                             )}
                             {account.is_verified ? (
-                              <Badge variant="default" className="bg-green-100 text-green-800">
+                              <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-200">
                                 <CheckCircle className="h-3 w-3 mr-1" />
                                 Verified
                               </Badge>
                             ) : (
-                              <Badge variant="outline" className="text-yellow-600 border-yellow-300">
+                              <Badge variant="outline" className="text-yellow-600 border-yellow-300 dark:text-yellow-400 dark:border-yellow-600">
                                 <AlertCircle className="h-3 w-3 mr-1" />
                                 {account.verification_status === 'pending' ? 'Pending' : 'Failed'}
                               </Badge>
                             )}
                           </div>
                         </div>
-                        <div className="text-sm text-gray-600">
+                        <div className="text-sm text-gray-600 dark:text-gray-300">
                           <p>{account.account_holder_name}</p>
                           <p>
                             {account.account_type.charAt(0).toUpperCase() + account.account_type.slice(1)}
@@ -350,15 +350,15 @@ export default function BankAccountManagement() {
                           variant="outline"
                           size="sm"
                           onClick={() => handleDelete(account.id)}
-                          className="text-red-600 hover:text-red-700"
+                          className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
                     {!account.is_verified && (
-                      <div className="mt-3 p-3 bg-yellow-50 rounded-md">
-                        <p className="text-sm text-yellow-800">
+                      <div className="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md">
+                        <p className="text-sm text-yellow-800 dark:text-yellow-200">
                           This account needs to be verified before you can receive payouts.
                           {account.verification_method === 'micro_deposits' &&
                             ' Check for micro deposits in your account and verify them.'}
@@ -372,8 +372,8 @@ export default function BankAccountManagement() {
           )}
 
           {bankAccounts.length > 0 && (
-            <div className="mt-6 p-4 bg-blue-50 rounded-md">
-              <p className="text-sm text-blue-800">
+            <div className="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-md">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
                 <strong>Note:</strong> Payments are automatically sent to your default verified bank account
                 when a coaching session is completed. Transfers typically arrive within 1-3 business days.
               </p>

@@ -54,21 +54,21 @@ export default function MeetingBlocker({
 
   // Block access - show warning message
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 text-center max-w-md mx-4">
-        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <AlertTriangle className="w-8 h-8 text-orange-600" />
+    <div className="fixed inset-0 bg-black/50 dark:bg-black/70 flex items-center justify-center z-[20000]">
+      <div className="bg-white dark:bg-gray-800 rounded-lg p-8 text-center max-w-md mx-4">
+        <div className="w-16 h-16 bg-orange-100 dark:bg-orange-900/50 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertTriangle className="w-8 h-8 text-orange-600 dark:text-orange-400" />
         </div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Meeting in Progress</h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">Meeting in Progress</h2>
+        <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
           {blockMessage}
         </p>
         {contextMeetingId && (
-          <p className="text-xs text-orange-600 bg-orange-50 rounded px-3 py-2 mb-4">
+          <p className="text-xs text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 rounded px-3 py-2 mb-4">
             Active meeting: {contextMeetingId.substring(0, 12)}...
           </p>
         )}
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           Please end your current meeting to continue.
         </p>
       </div>

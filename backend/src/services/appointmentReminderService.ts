@@ -46,6 +46,7 @@ export class AppointmentReminderService {
           client_id,
           coach_id,
           starts_at,
+          status,
           meeting_id,
           clients!sessions_client_id_fkey (
             id,
@@ -65,6 +66,12 @@ export class AppointmentReminderService {
 
       if (error || !session) {
         console.error('Failed to get session details:', error);
+        return;
+      }
+
+      // Only schedule reminders for scheduled or confirmed sessions
+      if (!['scheduled', 'confirmed'].includes(session.status)) {
+        console.log(`Skipping reminder scheduling for session ${sessionId} with status: ${session.status}`);
         return;
       }
 
@@ -213,7 +220,7 @@ export class AppointmentReminderService {
         `)
         .gte('starts_at', now.toISOString())
         .lte('starts_at', oneHourFromNow.toISOString())
-        .eq('status', 'confirmed');
+        .in('status', ['scheduled', 'confirmed']);
 
       if (error) {
         console.error('Error fetching upcoming sessions:', error);
@@ -396,22 +403,14 @@ export class AppointmentReminderService {
 
     const messageBody = `Hi ${data.clientName}! This is a friendly reminder that we have a coaching session scheduled in ${hoursText} on ${timeString}. Looking forward to our session together! If you need to reschedule, please let me know as soon as possible.`;
 
-    // Insert message into messages table (coach as sender)
-    const { error } = await supabase
-      .from('messages')
-      .insert({
-        sender_id: data.coachId,
-        recipient_id: data.clientId,
-        body: messageBody,
-        created_at: new Date().toISOString(),
-        is_system_message: true,
-        system_message_type: 'appointment_reminder'
-      });
-
-    if (error) {
-      console.error('Error sending message reminder:', error);
-      throw error;
-    }
+    // Auto-create conversation and send message
+    await this.createConversationAndSendMessage({
+      senderId: data.coachId,
+      recipientId: data.clientId,
+      sessionId: data.sessionId,
+      messageBody,
+      messageType: 'appointment_reminder'
+    });
   }
 
   /**
@@ -487,25 +486,92 @@ export class AppointmentReminderService {
     const messageBody = `⏰ URGENT: Hi ${data.clientName}! Your coaching session starts in ${minutesUntilSession} minutes! Please join the session now. Looking forward to meeting with you! - ${data.coachName}`;
 
     try {
-      // Insert urgent message into messages table (coach as sender)
-      const { error } = await supabase
-        .from('messages')
-        .insert({
-          sender_id: data.coachId,
-          recipient_id: data.clientId,
-          body: messageBody,
-          created_at: new Date().toISOString(),
-          is_system_message: true,
-          system_message_type: 'urgent_session_reminder'
-        });
-
-      if (error) {
-        throw error;
-      }
+      // Auto-create conversation and send urgent message
+      await this.createConversationAndSendMessage({
+        senderId: data.coachId,
+        recipientId: data.clientId,
+        sessionId: data.sessionId,
+        messageBody,
+        messageType: 'urgent_session_reminder'
+      });
 
       console.log(`Sent immediate message reminder for session ${data.sessionId}`);
     } catch (error) {
       console.error('Failed to send immediate message reminder:', error);
+    }
+  }
+
+  /**
+   * Create conversation and send message (auto-creates conversation if needed)
+   */
+  private async createConversationAndSendMessage(params: {
+    senderId: string;
+    recipientId: string;
+    sessionId: string;
+    messageBody: string;
+    messageType: string;
+  }): Promise<void> {
+    const { senderId, recipientId, sessionId, messageBody, messageType } = params;
+
+    try {
+      // Check if conversation already exists between coach and client
+      const { data: existingMessages } = await supabase
+        .from('messages')
+        .select('id')
+        .or(
+          `and(sender_id.eq.${senderId},recipient_id.eq.${recipientId}),and(sender_id.eq.${recipientId},recipient_id.eq.${senderId})`
+        )
+        .limit(1);
+
+      // Insert the reminder message
+      const { data: messageData, error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          sender_id: senderId,
+          recipient_id: recipientId,
+          session_id: sessionId,
+          body: messageBody,
+          created_at: new Date().toISOString(),
+          is_system_message: true,
+          system_message_type: messageType
+        })
+        .select()
+        .single();
+
+      if (messageError) {
+        console.error('Error sending reminder message:', messageError);
+        throw messageError;
+      }
+
+      // If this is the first message between them, log conversation creation
+      if (!existingMessages || existingMessages.length === 0) {
+        console.log(`Created new conversation between coach ${senderId} and client ${recipientId} via appointment reminder`);
+      }
+
+      // Emit real-time message if socket.io is available
+      await this.emitRealTimeMessage(messageData, recipientId);
+
+      console.log(`Reminder message sent for session ${sessionId}: ${messageType}`);
+    } catch (error) {
+      console.error('Error creating conversation and sending message:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Emit real-time message via Socket.IO
+   */
+  private async emitRealTimeMessage(messageData: any, recipientId: string): Promise<void> {
+    try {
+      // Import socket.io instance if available
+      const { io } = require('../index');
+      if (io) {
+        io.to(`user:${recipientId}`).emit('message:new', messageData);
+        console.log(`Real-time message emitted to user ${recipientId}`);
+      }
+    } catch (error) {
+      // Socket.io not available or error occurred, continue without real-time
+      console.log('Socket.io not available for real-time messaging');
     }
   }
 

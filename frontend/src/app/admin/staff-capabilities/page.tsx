@@ -380,7 +380,7 @@ export default function StaffCapabilities() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+      <div className="w-full">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
           <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-8"></div>
@@ -457,7 +457,7 @@ export default function StaffCapabilities() {
       </div>
 
       {/* Desktop Header */}
-      <div className="hidden lg:block max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="hidden lg:block w-full">
         <div className="mb-8">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Staff Capabilities</h1>
@@ -471,7 +471,7 @@ export default function StaffCapabilities() {
       </div>
 
       {/* Alert Messages */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full">
         {/* Read-only notice for staff */}
         {isReadOnly && (
           <div className="mb-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
@@ -506,7 +506,7 @@ export default function StaffCapabilities() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div className="w-full">
         {/* Desktop Layout */}
         <div className="hidden lg:grid lg:grid-cols-3 gap-6">
           {/* Staff Members List - Desktop */}

@@ -266,7 +266,7 @@ export default function StaffProfilePage() {
 
   if (!user || user.role !== 'staff') {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="w-full">
         <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
           <div className="flex items-center">
             <AlertCircle className="h-5 w-5 text-yellow-600 dark:text-yellow-400 mr-2" />
@@ -281,7 +281,7 @@ export default function StaffProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="w-full">
         <div className="animate-pulse">
           <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
           <div className="space-y-4">
@@ -295,7 +295,7 @@ export default function StaffProfilePage() {
 
   if (error && !profile) {
     return (
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+      <div className="w-full">
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
           <p className="text-red-800 dark:text-red-200">{error}</p>
         </div>
@@ -304,7 +304,7 @@ export default function StaffProfilePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between">

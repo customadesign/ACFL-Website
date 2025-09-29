@@ -45,12 +45,12 @@ export default function VideoSDKMeeting({
 
   if (!isConnected) {
     return (
-      <Card className="p-8 text-center">
+      <Card className="p-8 text-center bg-white dark:bg-gray-800">
         <div className="animate-pulse">
-          <Video className="w-16 h-16 mx-auto mb-4 text-blue-500" />
-          <h3 className="text-lg font-semibold mb-2">Connecting to {coachName}...</h3>
-          <p className="text-gray-600 mb-4">Setting up secure video session</p>
-          <div className="text-sm text-gray-500">
+          <Video className="w-16 h-16 mx-auto mb-4 text-blue-500 dark:text-blue-400" />
+          <h3 className="text-lg font-semibold mb-2 text-gray-900 dark:text-white">Connecting to {coachName}...</h3>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">Setting up secure video session</p>
+          <div className="text-sm text-gray-500 dark:text-gray-400">
             Session ID: {meetingId}
           </div>
         </div>
@@ -59,42 +59,42 @@ export default function VideoSDKMeeting({
   }
 
   return (
-    <div className="h-screen bg-gray-900 flex flex-col">
+    <div className="h-screen bg-gray-900 dark:bg-gray-950 flex flex-col" style={{ position: 'relative', zIndex: 20000 }}>
       {/* Header */}
-      <div className="bg-black bg-opacity-50 text-white p-4 flex justify-between items-center">
+      <div className="bg-black dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 text-white p-4 flex justify-between items-center">
         <div>
           <h2 className="text-lg font-semibold">{sessionType}</h2>
-          <p className="text-sm text-gray-300">with {coachName}</p>
+          <p className="text-sm text-gray-300 dark:text-gray-400">with {coachName}</p>
         </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center text-sm">
             <Users className="w-4 h-4 mr-1" />
             {participantCount}
           </div>
-          <div className="text-xs text-green-400">• SECURE CONNECTION</div>
+          <div className="text-xs text-green-400 dark:text-green-300">• SECURE CONNECTION</div>
         </div>
       </div>
 
       {/* Video Area */}
-      <div className="flex-1 relative bg-gradient-to-br from-gray-800 to-gray-900">
+      <div className="flex-1 relative bg-gradient-to-br from-gray-800 to-gray-900 dark:from-gray-900 dark:to-gray-950">
         {/* Main Video (Coach) */}
         <div className="w-full h-full flex items-center justify-center">
-          <div className="bg-blue-600 rounded-lg p-8 text-white text-center">
+          <div className="bg-blue-600 dark:bg-blue-700 rounded-lg p-8 text-white text-center">
             <Video className="w-16 h-16 mx-auto mb-4" />
             <h3 className="text-xl font-semibold">{coachName}</h3>
-            <p className="text-blue-200">Coach Video Feed</p>
+            <p className="text-blue-200 dark:text-blue-300">Coach Video Feed</p>
           </div>
         </div>
 
         {/* Picture-in-Picture (You) */}
-        <div className="absolute top-4 right-4 w-48 h-36 bg-gray-700 rounded-lg border-2 border-gray-600 flex items-center justify-center">
+        <div className="absolute top-4 right-4 w-48 h-36 bg-gray-700 dark:bg-gray-800 rounded-lg border-2 border-gray-600 dark:border-gray-500 flex items-center justify-center">
           {isVideoOn ? (
             <div className="text-white text-center">
               <Video className="w-8 h-8 mx-auto mb-2" />
               <p className="text-sm">You</p>
             </div>
           ) : (
-            <div className="text-gray-400 text-center">
+            <div className="text-gray-400 dark:text-gray-500 text-center">
               <VideoOff className="w-8 h-8 mx-auto mb-2" />
               <p className="text-sm">Video Off</p>
             </div>
@@ -102,7 +102,7 @@ export default function VideoSDKMeeting({
         </div>
 
         {/* Session Info Overlay */}
-        <div className="absolute top-4 left-4 bg-black bg-opacity-50 text-white p-3 rounded-lg">
+        <div className="absolute top-4 left-4 bg-black dark:bg-gray-900 bg-opacity-50 dark:bg-opacity-70 text-white p-3 rounded-lg">
           <div className="text-xs space-y-1">
             <div>📹 HD Quality • 150ms Latency</div>
             <div>🔒 End-to-End Encrypted</div>
@@ -112,13 +112,13 @@ export default function VideoSDKMeeting({
       </div>
 
       {/* Controls */}
-      <div className="bg-black bg-opacity-80 p-4">
+      <div className="bg-black dark:bg-gray-900 bg-opacity-80 dark:bg-opacity-90 p-4">
         <div className="flex justify-center space-x-4">
           <Button
             onClick={() => setIsAudioOn(!isAudioOn)}
             className={`rounded-full p-3 ${
               isAudioOn 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                ? 'bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-white' 
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
           >
@@ -129,7 +129,7 @@ export default function VideoSDKMeeting({
             onClick={() => setIsVideoOn(!isVideoOn)}
             className={`rounded-full p-3 ${
               isVideoOn 
-                ? 'bg-gray-700 hover:bg-gray-600 text-white' 
+                ? 'bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-white' 
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
           >
@@ -137,7 +137,7 @@ export default function VideoSDKMeeting({
           </Button>
 
           <Button
-            className="rounded-full p-3 bg-gray-700 hover:bg-gray-600 text-white"
+            className="rounded-full p-3 bg-gray-700 dark:bg-gray-600 hover:bg-gray-600 dark:hover:bg-gray-500 text-white"
           >
             <Settings className="w-5 h-5" />
           </Button>
@@ -151,7 +151,7 @@ export default function VideoSDKMeeting({
         </div>
 
         <div className="text-center mt-3">
-          <div className="text-xs text-gray-400">
+          <div className="text-xs text-gray-400 dark:text-gray-500">
             Powered by VideoSDK • Meeting ID: {meetingId}
           </div>
         </div>

@@ -608,15 +608,19 @@ export class OutlookCalendarService {
     }
 
     let description = template.description;
-    if (session.notes) {
-      description += `\n\nSession Notes: ${session.notes}`;
+    if (session.session_notes) {
+      description += `\n\nSession Notes: ${session.session_notes}`;
     }
+
+    // Convert session_date and duration_minutes to start/end times
+    const sessionStart = new Date(session.session_date);
+    const sessionEnd = new Date(sessionStart.getTime() + (session.duration_minutes * 60 * 1000));
 
     return {
       title,
       description,
-      startTime: session.starts_at,
-      endTime: session.ends_at,
+      startTime: sessionStart.toISOString(),
+      endTime: sessionEnd.toISOString(),
       location: session.meeting_url || 'Virtual Session',
       attendees: includeClientDetails && session.clients?.email ? [session.clients.email] : []
     };

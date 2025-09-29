@@ -311,7 +311,7 @@ export default function AdminSettings() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="w-full">
           {/* Mobile-First Header Skeleton */}
           <div className="pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6">
             <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
@@ -326,7 +326,7 @@ export default function AdminSettings() {
           </div>
           
           {/* Mobile-First Tabs Skeleton */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mx-3 sm:mx-0 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700  mb-6">
             <div className="border-b border-gray-200 dark:border-gray-700">
               <div className="flex overflow-x-auto px-3 sm:px-6">
                 {[...Array(5)].map((_, i) => (
@@ -339,7 +339,7 @@ export default function AdminSettings() {
           </div>
           
           {/* Mobile-First Settings Content Skeleton */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mx-3 sm:mx-0">
+          <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 ">
             <div className="p-4 sm:p-6 lg:p-8 space-y-6">
               {[...Array(4)].map((_, i) => (
                 <div key={i} className="animate-pulse space-y-2">
@@ -381,10 +381,9 @@ export default function AdminSettings() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
-        {/* Mobile-First Responsive Header */}
-        <div className="pt-4 sm:pt-6 lg:pt-8 pb-4 sm:pb-6">
+    <div className="w-full">
+        {/* Header */}
+        <div className="pb-4 sm:pb-6">
           <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
             <div className="flex-1 min-w-0">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2 truncate">
@@ -413,7 +412,7 @@ export default function AdminSettings() {
 
         {/* Mobile-Optimized Save Message */}
         {saveMessage && (
-          <div className={`mx-3 sm:mx-0 mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl flex items-start space-x-3 shadow-sm ${
+          <div className={` mb-4 sm:mb-6 p-3 sm:p-4 rounded-xl flex items-start space-x-3 shadow-sm ${
             saveMessage.type === 'success' 
               ? 'bg-green-50 text-green-800 border border-green-200 dark:bg-green-900/20 dark:text-green-300 dark:border-green-800' 
               : 'bg-red-50 text-red-800 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-800'
@@ -430,7 +429,7 @@ export default function AdminSettings() {
         )}
 
         {/* Mobile-First Tab Navigation */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 mx-3 sm:mx-0">
+        <div className="bg-white dark:bg-gray-800 rounded-xl sm:rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 ">
           <div className="border-b border-gray-200 dark:border-gray-700">
             <nav className="flex overflow-x-auto scrollbar-hide px-3 sm:px-6" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {tabs.map((tab) => (
@@ -453,7 +452,7 @@ export default function AdminSettings() {
           <div className="p-4 sm:p-6 lg:p-8">
           {/* Profile Settings */}
           {activeTab === 'profile' && (
-            <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+            <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
               <div className="space-y-6">
                 {/* Profile Photo Section */}
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6">
@@ -594,7 +593,7 @@ export default function AdminSettings() {
 
           {/* General Settings */}
           {activeTab === 'general' && (
-            <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+            <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
               <div className="space-y-6">
                 <div className="space-y-2">
                   <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-200">
@@ -731,7 +730,7 @@ export default function AdminSettings() {
 
             {/* Notification Settings */}
             {activeTab === 'notifications' && (
-              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
                 <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 sm:p-6">
                   <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white mb-4 sm:mb-6">
                     Notification Preferences
@@ -827,7 +826,7 @@ export default function AdminSettings() {
 
             {/* Security Settings */}
             {activeTab === 'security' && (
-              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-200">
@@ -897,7 +896,7 @@ export default function AdminSettings() {
 
             {/* Payment Settings */}
             {activeTab === 'payment' && (
-              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-200">
@@ -937,7 +936,7 @@ export default function AdminSettings() {
 
             {/* Scheduling Settings */}
             {activeTab === 'scheduling' && (
-              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-2xl">
+              <div className="space-y-6 sm:space-y-8 max-w-none sm:max-w-xl">
                 <div className="space-y-6">
                   <div className="space-y-2">
                     <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-gray-200">
@@ -993,9 +992,6 @@ export default function AdminSettings() {
           </div>
         </div>
         
-        {/* Mobile-Specific Bottom Padding for Better UX */}
-        <div className="h-8 sm:h-16"></div>
-      </div>
     </div>
   );
 }

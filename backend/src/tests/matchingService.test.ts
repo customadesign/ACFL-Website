@@ -17,7 +17,7 @@ describe('Matching Service', () => {
         ethnicity: "Asian",
         religious_background: "Buddhist"
       },
-      availability: 5,
+      availability_options: 5,
       languages: ["English", "Mandarin"],
       bio: "Test bio",
       sexualOrientation: "Straight / heterosexual",
@@ -34,7 +34,7 @@ describe('Matching Service', () => {
         ethnicity: "White",
         religious_background: "Christian"
       },
-      availability: 3,
+      availability_options: 3,
       languages: ["English", "Spanish"],
       bio: "Test bio 2",
       sexualOrientation: "Straight / heterosexual",
@@ -53,7 +53,7 @@ describe('Matching Service', () => {
       therapistReligion: "No preference",
       language: "English",
       paymentMethod: "Aetna",
-      availability: ["Weekday Mornings"]
+      availability_options: ["Weekday Mornings"]
     };
 
     const matches = matchProviders(preferences, mockProviders);
@@ -72,7 +72,7 @@ describe('Matching Service', () => {
       therapistReligion: "No preference",
       language: "English",
       paymentMethod: "Anthem",
-      availability: ["Weekday Evenings"]
+      availability_options: ["Weekday Evenings"]
     };
 
     const matches = matchProviders(preferences, mockProviders);
@@ -91,7 +91,7 @@ describe('Matching Service', () => {
       therapistReligion: "Buddhist",
       language: "Mandarin",
       paymentMethod: "Aetna",
-      availability: ["Weekday Mornings"]
+      availability_options: ["Weekday Mornings"]
     };
 
     const matches = matchProviders(preferences, mockProviders);

@@ -458,7 +458,7 @@ export default function FinancialManagement() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-16">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-8">
         <div>
@@ -576,8 +576,9 @@ export default function FinancialManagement() {
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Recent Transactions</h2>
         </div>
-        
-        <div className="overflow-x-auto">
+
+        {/* Desktop Table View */}
+        <div className="hidden xl:block overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-900/50">
               <tr>
@@ -618,27 +619,27 @@ export default function FinancialManagement() {
               ) : (
                 filteredTransactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white font-medium">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 dark:text-white font-medium truncate max-w-[120px]">
                         {transaction.id.slice(0, 8)}...
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
                         {transaction.payment_method}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white font-medium">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 dark:text-white font-medium truncate max-w-[150px]">
                         {transaction.client.first_name} {transaction.client.last_name}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={transaction.client.email}>
                         {transaction.client.email}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white font-medium">
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900 dark:text-white font-medium truncate max-w-[150px]">
                         {transaction.coach.first_name} {transaction.coach.last_name}
                       </div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-[150px]" title={transaction.coach.email}>
                         {transaction.coach.email}
                       </div>
                     </td>
@@ -679,6 +680,93 @@ export default function FinancialManagement() {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="xl:hidden divide-y divide-gray-200 dark:divide-gray-700">
+          {filteredTransactions.length === 0 ? (
+            <div className="p-8 text-center">
+              <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">No transactions found</h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          ) : (
+            filteredTransactions.map((transaction) => (
+              <div key={`mobile-${transaction.id}`} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                <div className="space-y-3">
+                  {/* Header with Status and Amount */}
+                  <div className="flex items-center justify-between">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      statusColors[transaction.status] || statusColors.pending
+                    }`}>
+                      {transaction.status}
+                    </span>
+                    <div className="text-right">
+                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {formatCurrency(transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount)}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        {transaction.currency} • {transaction.payment_method}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Transaction ID */}
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Transaction ID</div>
+                    <div className="text-sm font-mono text-gray-900 dark:text-white break-all">
+                      {transaction.id.slice(0, 12)}...
+                    </div>
+                  </div>
+
+                  {/* Client Information */}
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Client</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {transaction.client.first_name} {transaction.client.last_name}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                      {transaction.client.email}
+                    </div>
+                  </div>
+
+                  {/* Coach Information */}
+                  <div>
+                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Coach</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                      {transaction.coach.first_name} {transaction.coach.last_name}
+                    </div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                      {transaction.coach.email}
+                    </div>
+                  </div>
+
+                  {/* Footer with Date and Actions */}
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-gray-700">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {new Date(transaction.created_at).toLocaleDateString()}
+                    </div>
+                    <div>
+                      {(transaction.status === 'completed' || transaction.status === 'succeeded' || transaction.status === 'captured') && (
+                        <button
+                          onClick={() => setRefundModal({
+                            isOpen: true,
+                            transaction
+                          })}
+                          className="inline-flex items-center px-3 py-1 text-xs font-medium text-red-600 hover:text-red-700 bg-red-50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/30 dark:text-red-400 dark:hover:text-red-300 rounded-full transition-colors"
+                        >
+                          <RotateCcw className="w-3 h-3 mr-1" />
+                          Refund
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Pagination */}

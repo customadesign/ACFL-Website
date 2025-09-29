@@ -21,6 +21,7 @@ export default function ForgotPasswordPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  
   const [error, setError] = useState('')
 
   const handleEmailSubmit = async (e: React.FormEvent) => {
@@ -381,7 +382,7 @@ export default function ForgotPasswordPage() {
                 <p className="text-gray-600 mb-6">
                   Your password has been successfully updated. You can now login with your new password.
                 </p>
-                <Link href="/login">
+                <Link href="/(public)/login">
                   <Button className="w-full">
                     Continue to Login
                   </Button>

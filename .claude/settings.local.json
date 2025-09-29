@@ -31,7 +31,11 @@
       "Bash(findstr:*)",
       "Bash(npm install:*)",
       "Bash(npm start)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "WebSearch",
+      "mcp__playwright__browser_take_screenshot",
+      "mcp__playwright__browser_evaluate",
+      "mcp__playwright__browser_resize"
     ],
     "deny": [],
     "ask": []

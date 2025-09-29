@@ -275,102 +275,150 @@ function getTimeAgo(date: Date): string {
 // User management endpoints
 router.get('/users', async (req, res) => {
   try {
-    const { status, role } = req.query;
-    console.log('Admin users endpoint called with query:', { status, role });
+    const { status, role, page = 1, limit = 20, startDate, endDate, date } = req.query;
+    console.log('Admin users endpoint called with query:', { status, role, page, limit, startDate, endDate, date });
 
-    let users = [];
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
 
-    // Test database connection first
-    try {
-      const { data: testData, error: testError } = await supabase
-        .from('clients')
-        .select('count', { count: 'exact' });
-      console.log('Database connection test - clients count:', testData, testError);
-    } catch (testErr) {
-      console.error('Database connection test failed:', testErr);
-    }
+    let allUsers = [];
+    let totalCount = 0;
 
-    // Get clients with error handling
-    try {
-      const { data: clients, error: clientsError } = await supabase
-        .from('clients')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at');
+    // Helper function to build date filter conditions
+    const buildDateFilter = (query: any, dateField: string = 'created_at') => {
+      if (date) {
+        const filterStartDate = new Date(date as string);
+        filterStartDate.setHours(0, 0, 0, 0);
+        const filterEndDate = new Date(date as string);
+        filterEndDate.setHours(23, 59, 59, 999);
 
-      if (clientsError) {
-        console.error('Clients fetch error:', clientsError);
-      } else if (clients && clients.length > 0) {
-        console.log(`Found ${clients.length} clients`);
-        users.push(...clients.map(client => ({
-          ...client,
-          name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Unnamed User',
-          role: 'client',
-          status: client.is_active === false ? 'inactive' : (client.status || 'active')
-        })));
+        query = query
+          .gte(dateField, filterStartDate.toISOString())
+          .lte(dateField, filterEndDate.toISOString());
+      } else if (startDate || endDate) {
+        if (startDate) {
+          const filterStartDate = new Date(startDate as string);
+          filterStartDate.setHours(0, 0, 0, 0);
+          query = query.gte(dateField, filterStartDate.toISOString());
+        }
+        if (endDate) {
+          const filterEndDate = new Date(endDate as string);
+          filterEndDate.setHours(23, 59, 59, 999);
+          query = query.lte(dateField, filterEndDate.toISOString());
+        }
       }
-    } catch (clientError) {
-      console.error('Client query error:', clientError);
-    }
+      return query;
+    };
 
-    // Get coaches with error handling
-    try {
-      const { data: coaches, error: coachesError } = await supabase
-        .from('coaches')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at');
+    // Build queries for each user type
+    const getUsersFromTable = async (tableName: string, userRole: string) => {
+      try {
+        // Build base query with filters
+        let query = supabase
+          .from(tableName)
+          .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at' +
+                  (tableName === 'staff' ? ', department, role_level' : ''))
+          .order('created_at', { ascending: false });
 
-      if (coachesError) {
-        console.error('Coaches fetch error:', coachesError);
-      } else if (coaches && coaches.length > 0) {
-        console.log(`Found ${coaches.length} coaches`);
-        users.push(...coaches.map(coach => ({
-          ...coach,
-          name: `${coach.first_name || ''} ${coach.last_name || ''}`.trim() || 'Unnamed Coach',
-          role: 'coach',
-          status: coach.is_active === false ? 'inactive' : (coach.status || 'active')
-        })));
+        // Apply status filter
+        if (status && status !== 'all') {
+          if (status === 'inactive') {
+            query = query.eq('is_active', false);
+          } else {
+            query = query.eq('status', status);
+          }
+        }
+
+        // Apply date filters
+        query = buildDateFilter(query);
+
+        // Get count for this table with same filters
+        let countQuery = supabase
+          .from(tableName)
+          .select('*', { count: 'exact', head: true });
+
+        if (status && status !== 'all') {
+          if (status === 'inactive') {
+            countQuery = countQuery.eq('is_active', false);
+          } else {
+            countQuery = countQuery.eq('status', status);
+          }
+        }
+
+        countQuery = buildDateFilter(countQuery);
+
+        const [{ data: users, error }, { count, error: countError }] = await Promise.all([
+          query,
+          countQuery
+        ]);
+
+        if (error || countError) {
+          console.error(`Error fetching ${tableName}:`, error || countError);
+          return { users: [], count: 0 };
+        }
+
+        const formattedUsers = (users || []).map((user: any) => ({
+          ...user,
+          name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || `Unnamed ${userRole}`,
+          role: userRole,
+          status: user.is_active === false ? 'inactive' : (user.status || 'active'),
+          ...(tableName === 'staff' && {
+            department: user.department,
+            role_level: user.role_level
+          })
+        }));
+
+        return { users: formattedUsers, count: count || 0 };
+      } catch (error) {
+        console.error(`Error fetching from ${tableName}:`, error);
+        return { users: [], count: 0 };
       }
-    } catch (coachError) {
-      console.error('Coach query error:', coachError);
+    };
+
+    // Fetch users based on role filter
+    if (!role || role === 'all') {
+      // Fetch from all tables
+      const [clientResult, coachResult, staffResult] = await Promise.all([
+        getUsersFromTable('clients', 'client'),
+        getUsersFromTable('coaches', 'coach'),
+        getUsersFromTable('staff', 'staff')
+      ]);
+
+      allUsers = [...clientResult.users, ...coachResult.users, ...staffResult.users];
+      totalCount = clientResult.count + coachResult.count + staffResult.count;
+    } else if (role === 'client') {
+      const result = await getUsersFromTable('clients', 'client');
+      allUsers = result.users;
+      totalCount = result.count;
+    } else if (role === 'coach') {
+      const result = await getUsersFromTable('coaches', 'coach');
+      allUsers = result.users;
+      totalCount = result.count;
+    } else if (role === 'staff') {
+      const result = await getUsersFromTable('staff', 'staff');
+      allUsers = result.users;
+      totalCount = result.count;
     }
 
-    // Get staff with error handling
-    try {
-      const { data: staff, error: staffError } = await supabase
-        .from('staff')
-        .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, department, role_level');
+    // Sort all users by created_at descending
+    allUsers.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-      if (staffError) {
-        console.error('Staff fetch error:', staffError);
-      } else if (staff && staff.length > 0) {
-        console.log(`Found ${staff.length} staff members`);
-        users.push(...staff.map(staffMember => ({
-          ...staffMember,
-          name: `${staffMember.first_name || ''} ${staffMember.last_name || ''}`.trim() || 'Unnamed Staff',
-          role: 'staff',
-          status: staffMember.status || 'active',
-          department: staffMember.department,
-          role_level: staffMember.role_level
-        })));
+    // Apply pagination
+    const paginatedUsers = allUsers.slice(offset, offset + limitNum);
+
+    console.log(`Total users found: ${totalCount}, returning: ${paginatedUsers.length}`);
+
+    // Return paginated response
+    res.json({
+      users: paginatedUsers,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: totalCount,
+        totalPages: Math.ceil(totalCount / limitNum)
       }
-    } catch (staffError) {
-      console.error('Staff query error:', staffError);
-    }
-
-    console.log(`Total users found: ${users.length}`);
-    console.log('Users data:', JSON.stringify(users, null, 2));
-
-    // Apply filters
-    let filteredUsers = users;
-    if (role && role !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.role === role);
-    }
-    if (status && status !== 'all') {
-      filteredUsers = filteredUsers.filter(user => user.status === status);
-    }
-
-    console.log(`Filtered users: ${filteredUsers.length}`);
-
-    // Return array of users wrapped in an object with 'users' key
-    res.json({ users: filteredUsers });
+    });
   } catch (error) {
     console.error('Users fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch users' });
@@ -1833,8 +1881,8 @@ router.get('/appointments', async (req, res) => {
     console.log('Admin appointments endpoint called');
     console.log('User:', (req as AuthRequest).user);
     console.log('Query params:', req.query);
-    
-    const { status, date } = req.query;
+
+    const { status, date, startDate, endDate, page = 1, limit = 20 } = req.query;
 
     // Build query for sessions (appointments) with related data
     let query = supabase
@@ -1875,17 +1923,74 @@ router.get('/appointments', async (req, res) => {
       query = query.eq('status', status);
     }
 
+    // Apply date filters
     if (date) {
       // Filter by specific date
-      const startDate = new Date(date as string);
-      startDate.setHours(0, 0, 0, 0);
-      const endDate = new Date(date as string);
-      endDate.setHours(23, 59, 59, 999);
-      
+      const filterStartDate = new Date(date as string);
+      filterStartDate.setHours(0, 0, 0, 0);
+      const filterEndDate = new Date(date as string);
+      filterEndDate.setHours(23, 59, 59, 999);
+
       query = query
-        .gte('starts_at', startDate.toISOString())
-        .lte('starts_at', endDate.toISOString());
+        .gte('starts_at', filterStartDate.toISOString())
+        .lte('starts_at', filterEndDate.toISOString());
+    } else if (startDate || endDate) {
+      // Filter by date range
+      if (startDate) {
+        const filterStartDate = new Date(startDate as string);
+        filterStartDate.setHours(0, 0, 0, 0);
+        query = query.gte('starts_at', filterStartDate.toISOString());
+      }
+      if (endDate) {
+        const filterEndDate = new Date(endDate as string);
+        filterEndDate.setHours(23, 59, 59, 999);
+        query = query.lte('starts_at', filterEndDate.toISOString());
+      }
     }
+
+    // Get total count for pagination before applying pagination
+    let countQuery = supabase
+      .from('sessions')
+      .select('*', { count: 'exact', head: true });
+
+    // Apply same filters to count query
+    if (status && status !== 'all') {
+      countQuery = countQuery.eq('status', status);
+    }
+
+    if (date) {
+      const filterStartDate = new Date(date as string);
+      filterStartDate.setHours(0, 0, 0, 0);
+      const filterEndDate = new Date(date as string);
+      filterEndDate.setHours(23, 59, 59, 999);
+
+      countQuery = countQuery
+        .gte('starts_at', filterStartDate.toISOString())
+        .lte('starts_at', filterEndDate.toISOString());
+    } else if (startDate || endDate) {
+      if (startDate) {
+        const filterStartDate = new Date(startDate as string);
+        filterStartDate.setHours(0, 0, 0, 0);
+        countQuery = countQuery.gte('starts_at', filterStartDate.toISOString());
+      }
+      if (endDate) {
+        const filterEndDate = new Date(endDate as string);
+        filterEndDate.setHours(23, 59, 59, 999);
+        countQuery = countQuery.lte('starts_at', filterEndDate.toISOString());
+      }
+    }
+
+    const { count, error: countError } = await countQuery;
+    if (countError) {
+      console.error('Count query error:', countError);
+    }
+
+    // Apply pagination
+    const pageNum = parseInt(page as string);
+    const limitNum = parseInt(limit as string);
+    const offset = (pageNum - 1) * limitNum;
+
+    query = query.range(offset, offset + limitNum - 1);
 
     const { data: sessions, error } = await query;
     console.log('Sessions query result:', { 
@@ -1950,7 +2055,15 @@ router.get('/appointments', async (req, res) => {
         });
       }
       
-      res.json({ appointments: formattedSimple });
+      res.json({
+        appointments: formattedSimple,
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: count || 0,
+          totalPages: Math.ceil((count || 0) / limitNum)
+        }
+      });
       return;
     }
 
@@ -1979,12 +2092,20 @@ router.get('/appointments', async (req, res) => {
       };
     }) || [];
 
-    console.log('Returning appointments:', { 
+    console.log('Returning appointments:', {
       appointmentsCount: formattedAppointments?.length || 0,
       sample: formattedAppointments?.[0] || 'No appointments'
     });
-    
-    res.json({ appointments: formattedAppointments });
+
+    res.json({
+      appointments: formattedAppointments,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: count || 0,
+        totalPages: Math.ceil((count || 0) / limitNum)
+      }
+    });
   } catch (error) {
     console.error('Sessions fetch error:', error);
     res.status(500).json({ error: 'Failed to fetch appointments' });

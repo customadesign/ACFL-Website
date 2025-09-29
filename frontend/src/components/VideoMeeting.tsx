@@ -376,14 +376,32 @@ function MeetingView({
         console.log('🔄 VideoSDK failed, trying manual permission request...')
 
         try {
-          const stream = await navigator.mediaDevices.getDisplayMedia({
-            video: {
-              width: { ideal: 1920, max: 1920 },
-              height: { ideal: 1080, max: 1080 },
-              frameRate: { ideal: 15, max: 30 }
-            },
-            audio: true
-          })
+          // Try with audio first, fallback to video only if it fails
+          let stream
+          try {
+            stream = await navigator.mediaDevices.getDisplayMedia({
+              video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 15, max: 30 }
+              },
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+              }
+            })
+          } catch (audioError) {
+            console.log('🔄 Audio capture failed, trying video only...')
+            stream = await navigator.mediaDevices.getDisplayMedia({
+              video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 15, max: 30 }
+              },
+              audio: false
+            })
+          }
 
           console.log('✅ Manual screen sharing permissions granted')
 
@@ -479,14 +497,14 @@ function MeetingView({
   // Loading screen with connection status
   if (isConnecting && !isMeetingJoined) {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-gray-900 dark:bg-gray-950 flex items-center justify-center z-[20000]">
         <div className="text-center text-white max-w-md mx-auto px-6">
           {connectionQuality === 'disconnected' ? (
             // Connection failed state
             <>
               <WifiOff className="w-16 h-16 mx-auto mb-4 text-red-400" />
               <h2 className="text-xl font-semibold mb-2 text-red-400">Connection Failed</h2>
-              <p className="text-gray-400 mb-6">
+              <p className="text-gray-400 dark:text-gray-500 mb-6">
                 Unable to join the meeting. Please check your internet connection and try again.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -552,7 +570,7 @@ function MeetingView({
   }
 
   return (
-    <div className="fixed inset-0 bg-gray-900 flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-gray-900 dark:bg-gray-950 flex flex-col overflow-hidden z-[20000]">
       {/* Connection Status Bar */}
       <div className={`h-1 transition-colors duration-300 ${
         connectionQuality === 'good' ? 'bg-green-500' :
@@ -560,7 +578,7 @@ function MeetingView({
       }`} />
 
       {/* Top Bar - Meeting Info */}
-      <div className="bg-gray-800/90 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-gray-700">
+      <div className="bg-gray-800/90 dark:bg-gray-900/90 backdrop-blur-sm px-4 py-3 flex items-center justify-between border-b border-gray-700 dark:border-gray-600">
         <div className="flex items-center gap-3">
           <div className={`w-3 h-3 rounded-full ${
             connectionQuality === 'good' ? 'bg-green-500' :
@@ -588,9 +606,13 @@ function MeetingView({
             onClick={handleToggleChat}
             size="sm"
             variant={isChatVisible ? "default" : "ghost"}
-            className="hidden md:flex rounded-full h-9 w-9 p-0"
+            className={`hidden md:flex rounded-full h-9 w-9 p-0 ${
+              isChatVisible
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+            }`}
           >
-            <MessageSquare size={16} />
+            <MessageSquare size={16} className="text-white" />
           </Button>
         </div>
       </div>
@@ -630,8 +652,12 @@ function MeetingView({
         </div>
 
         {/* Desktop Chat Sidebar */}
-        {isChatVisible && !isScreenSharing && (
-          <div className="hidden lg:block w-80 bg-white border-l border-gray-200">
+        {isChatVisible && (
+          <div className={`hidden lg:block ${
+            isScreenSharing
+              ? 'absolute right-4 top-20 w-96 h-[500px] z-[20002] bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-xl'
+              : 'w-80 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-600'
+          }`}>
             <MeetingChatComponent
               meetingId={meetingId}
               participantName={participantName}
@@ -645,17 +671,21 @@ function MeetingView({
       </div>
 
       {/* Bottom Controls */}
-      <div className="bg-gray-800/95 backdrop-blur-sm px-4 py-3 sm:py-4 border-t border-gray-700">
+      <div className="bg-gray-800/95 dark:bg-gray-900/95 backdrop-blur-sm px-4 py-3 sm:py-4 border-t border-gray-700 dark:border-gray-600">
         <div className="flex items-center justify-center gap-2 sm:gap-4 max-w-md mx-auto">
           {/* Mic Control */}
           <Button
             onClick={handleToggleMic}
             size="sm"
             variant={localMicOn ? "default" : "destructive"}
-            className="rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110"
+            className={`rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ${
+              localMicOn
+                ? 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
             disabled={isConnecting}
           >
-            {localMicOn ? <Mic size={18} className="sm:size-5" /> : <MicOff size={18} className="sm:size-5" />}
+            {localMicOn ? <Mic size={18} className="sm:size-5 text-white" /> : <MicOff size={18} className="sm:size-5 text-white" />}
           </Button>
 
           {/* Camera Control */}
@@ -663,10 +693,14 @@ function MeetingView({
             onClick={handleToggleWebcam}
             size="sm"
             variant={localWebcamOn ? "default" : "destructive"}
-            className="rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110"
+            className={`rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ${
+              localWebcamOn
+                ? 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+                : 'bg-red-600 hover:bg-red-700 text-white'
+            }`}
             disabled={isConnecting}
           >
-            {localWebcamOn ? <Video size={18} className="sm:size-5" /> : <VideoOff size={18} className="sm:size-5" />}
+            {localWebcamOn ? <Video size={18} className="sm:size-5 text-white" /> : <VideoOff size={18} className="sm:size-5 text-white" />}
           </Button>
 
           {/* Screen Share Control */}
@@ -676,6 +710,10 @@ function MeetingView({
             variant={presenterId ? "default" : "ghost"}
             className={`rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ${
               !isScreenShareSupported ? 'opacity-50 cursor-not-allowed' : ''
+            } ${
+              presenterId
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
             }`}
             disabled={isConnecting || !isScreenShareSupported}
             title={!isScreenShareSupported
@@ -685,17 +723,21 @@ function MeetingView({
                 : 'Share your screen'
             }
           >
-            {presenterId ? <MonitorStop size={18} className="sm:size-5" /> : <Monitor size={18} className="sm:size-5" />}
+            {presenterId ? <MonitorStop size={18} className="sm:size-5 text-white" /> : <Monitor size={18} className="sm:size-5 text-white" />}
           </Button>
 
-          {/* Mobile Chat Toggle */}
+          {/* Chat Toggle */}
           <Button
             onClick={handleToggleChat}
             size="sm"
             variant={isChatVisible ? "default" : "ghost"}
-            className="md:hidden rounded-full h-11 w-11 p-0 transition-all duration-200 hover:scale-110"
+            className={`rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ${
+              isChatVisible
+                ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
+            }`}
           >
-            <MessageSquare size={18} />
+            <MessageSquare size={18} className="sm:size-5 text-white" />
           </Button>
 
           {/* Leave Meeting */}
@@ -703,9 +745,9 @@ function MeetingView({
             onClick={handleLeaveMeeting}
             size="sm"
             variant="destructive"
-            className="rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ml-2"
+            className="rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ml-2 bg-red-600 hover:bg-red-700 text-white"
           >
-            <PhoneOff size={18} className="sm:size-5" />
+            <PhoneOff size={18} className="sm:size-5 text-white" />
           </Button>
         </div>
 
@@ -718,7 +760,7 @@ function MeetingView({
 
       {/* Screen Share Error Toast */}
       {screenShareError && (
-        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50 max-w-md mx-auto">
+        <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[20001] max-w-md mx-auto">
           <div className="bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg border border-red-500 flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
               <WifiOff size={16} className="text-red-200" />
@@ -739,7 +781,7 @@ function MeetingView({
 
       {/* Screen Sharing Status Indicator */}
       {presenterId && (
-        <div className="absolute top-4 right-4 z-50">
+        <div className="absolute top-4 right-4 z-[20001]">
           <div className="bg-green-600 text-white px-3 py-2 rounded-full shadow-lg flex items-center gap-2">
             <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
             <Monitor size={14} />
@@ -1126,7 +1168,7 @@ export default function VideoMeeting({
   // Show error if missing required props
   if (!meetingId || !token) {
     return (
-      <div className="fixed inset-0 bg-gray-900 flex items-center justify-center z-50">
+      <div className="fixed inset-0 bg-gray-900 dark:bg-gray-950 flex items-center justify-center z-[20000]">
         <div className="text-center text-white max-w-md mx-auto px-6">
           <div className="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
             <X size={32} className="text-white" />

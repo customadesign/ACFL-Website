@@ -5,9 +5,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
-import { X, User, Users, Check, AlertTriangle, FileCheck, MessageSquare } from 'lucide-react';
+import { X, User, Users, Check, AlertTriangle, FileCheck, MessageSquare, Search, Filter } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import CoachApplicationSkeleton from '@/components/CoachApplicationSkeleton';
+import SearchInput from '@/components/ui/search-input';
+import Pagination from '@/components/ui/pagination';
 
 // Simple Badge component since ui/badge doesn't exist
 const Badge = ({ children, className = '', variant = 'default' }: {
@@ -81,11 +83,18 @@ export default function CoachApplicationsPage() {
   const [applications, setApplications] = useState<CoachApplication[]>([]);
   const [selectedApplication, setSelectedApplication] = useState<ApplicationDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
   const [experienceFilter, setExperienceFilter] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('submitted_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
   const [showModal, setShowModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const { user } = useAuth();
@@ -113,12 +122,41 @@ export default function CoachApplicationsPage() {
     router.push(`/admin/messages?${params.toString()}`);
   };
 
+  // Debounce search term
+  useEffect(() => {
+    if (searchTerm === '') {
+      // If search is cleared, fetch immediately
+      setSearchLoading(false);
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        fetchApplications(storedToken);
+      }
+      return;
+    }
+
+    // Show search loading when user starts typing
+    setSearchLoading(true);
+
+    // Debounce search requests
+    const timeoutId = setTimeout(() => {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
+        fetchApplications(storedToken).finally(() => {
+          setSearchLoading(false);
+        });
+      }
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm]);
+
+  // Fetch for other filters immediately
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       fetchApplications(storedToken);
     }
-  }, [statusFilter, searchTerm, experienceFilter, sortBy, sortOrder]);
+  }, [statusFilter, experienceFilter, sortBy, sortOrder, currentPage, itemsPerPage, startDate, endDate]);
 
   const fetchApplications = async (authToken?: string) => {
     try {
@@ -135,12 +173,16 @@ export default function CoachApplicationsPage() {
       
       // Build query parameters
       const params = new URLSearchParams();
+      params.append('page', currentPage.toString());
+      params.append('limit', itemsPerPage.toString());
       if (statusFilter !== 'all') params.append('status', statusFilter);
-      if (searchTerm) params.append('search', searchTerm);
       if (experienceFilter !== 'all') params.append('experience', experienceFilter);
+      if (searchTerm) params.append('search', searchTerm);
+      if (startDate) params.append('startDate', startDate);
+      if (endDate) params.append('endDate', endDate);
       params.append('sortBy', sortBy);
       params.append('sortOrder', sortOrder);
-      
+
       const url = `${getApiUrl()}/api/coach-applications/applications?${params.toString()}`;
       
       const response = await fetch(url, {
@@ -155,21 +197,16 @@ export default function CoachApplicationsPage() {
       }
 
       const data = await response.json();
-      
-      // Apply client-side filtering for search term if backend doesn't support it
-      let filteredApplications = data.applications || [];
-      
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        filteredApplications = filteredApplications.filter((app: CoachApplication) =>
-          app.first_name.toLowerCase().includes(term) ||
-          app.last_name.toLowerCase().includes(term) ||
-          app.email.toLowerCase().includes(term) ||
-          app.coaching_expertise.some(expertise => expertise.toLowerCase().includes(term))
-        );
-      }
-      
-      setApplications(filteredApplications);
+
+      const applicationsArray = data.applications || [];
+      const pagination = data.pagination || {};
+
+      // Update pagination state
+      setTotalPages(pagination.totalPages || 1);
+      setTotalItems(pagination.total || 0);
+
+      // Set applications directly since search is handled server-side
+      setApplications(applicationsArray);
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {
@@ -276,43 +313,231 @@ export default function CoachApplicationsPage() {
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
-      <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-center sm:space-y-0">
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex justify-between items-start">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Coach Applications</h1>
-          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Review and manage coach verification applications</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Coach Applications</h1>
+          <p className="text-gray-600 dark:text-gray-400 mt-1">
+            Review and manage coach verification applications
+          </p>
         </div>
-        
-        <div className="flex flex-col space-y-3 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm focus-ring-inset"
-          >
-            <option value="all">All Applications</option>
-            <option value="pending">Pending</option>
-            <option value="under_review">Under Review</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="suspended">Suspended</option>
-          </select>
-          
-          <Button
-            onClick={() => fetchApplications()}
-            variant="outline"
-            className="w-full sm:w-auto min-h-[44px] dark:text-white"
-          >
-            Refresh
-          </Button>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Total Applications</p>
+              <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalItems}</p>
+            </div>
+            <FileCheck className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
+              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{applications.filter(app => app.status === 'pending').length}</p>
+            </div>
+            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
+              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{applications.filter(app => app.status === 'approved').length}</p>
+            </div>
+            <Check className="w-8 h-8 text-green-500" />
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Under Review</p>
+              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{applications.filter(app => app.status === 'under_review').length}</p>
+            </div>
+            <User className="w-8 h-8 text-blue-500" />
+          </div>
+        </div>
+      </div>
+
+      {/* Filters - Mobile Responsive */}
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="space-y-4">
+          {/* Search Input - Full Width */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Search Applications
+            </label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search by name, email, or expertise..."
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              />
+            </div>
+          </div>
+
+          {/* Filter Selects - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  setStatusFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">All Applications</option>
+                <option value="pending">Pending</option>
+                <option value="under_review">Under Review</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+                <option value="suspended">Suspended</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Per Page
+              </label>
+              <select
+                value={itemsPerPage}
+                onChange={(e) => {
+                  setItemsPerPage(parseInt(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value={5}>5 per page</option>
+                <option value={10}>10 per page</option>
+                <option value={20}>20 per page</option>
+                <option value={50}>50 per page</option>
+              </select>
+            </div>
+
+            {/* Apply Button - Full Width on Mobile */}
+            <div className="sm:col-span-2 lg:col-span-1 flex items-end">
+              <button
+                onClick={() => {
+                  const storedToken = localStorage.getItem('token');
+                  if (storedToken) {
+                    fetchApplications(storedToken);
+                  }
+                }}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                <Filter className="w-4 h-4" />
+                {loading ? 'Loading...' : 'Refresh'}
+              </button>
+            </div>
+          </div>
+
+          {/* Second row: Date range filters */}
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="flex flex-col sm:flex-row gap-4 flex-1">
+              <div className="flex-1 max-w-xs">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Submitted After
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
+                />
+              </div>
+              <div className="flex-1 max-w-xs">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Submitted Before
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
+                />
+              </div>
+            </div>
+
+            {/* Clear filters button */}
+            {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+              >
+                Clear All Filters
+              </button>
+            )}
+          </div>
+
+          {/* Results summary */}
+          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
+            <span>
+              Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} applications
+              {searchTerm && ` (filtered by search)`}
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Applications List */}
       <div className="grid gap-3 sm:gap-4">
-        {applications.length === 0 ? (
+        {loading ? (
           <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
             <CardContent className="text-center py-8">
-              <p className="text-gray-600 dark:text-gray-400">No applications found</p>
+              <div className="flex items-center justify-center space-x-2">
+                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+                <p className="text-gray-600 dark:text-gray-400">Loading applications...</p>
+              </div>
+            </CardContent>
+          </Card>
+        ) : applications.length === 0 ? (
+          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+            <CardContent className="text-center py-8">
+              <div className="space-y-2">
+                <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto" />
+                <p className="text-gray-600 dark:text-gray-400 font-medium">No applications found</p>
+                {(searchTerm || statusFilter !== 'all' || startDate || endDate) ? (
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    Try adjusting your filters or search terms
+                  </p>
+                ) : (
+                  <p className="text-sm text-gray-500 dark:text-gray-500">
+                    No coach applications have been submitted yet
+                  </p>
+                )}
+              </div>
             </CardContent>
           </Card>
         ) : (
@@ -397,6 +622,20 @@ export default function CoachApplicationsPage() {
           ))
         )}
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="bg-white dark:bg-gray-800 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            showItemsRange={true}
+          />
+        </div>
+      )}
 
       {/* Application Details Modal */}
       {showModal && selectedApplication && (

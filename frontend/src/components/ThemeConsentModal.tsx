@@ -33,7 +33,7 @@ export default function ThemeConsentModal({ isOpen, onAccept, onDecline }: Theme
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[9999] p-4">
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[10003] p-4">
       <Card className="w-full max-w-md mx-auto bg-white dark:bg-gray-800 shadow-2xl border-0">
         <CardHeader className="text-center pb-3">
           <div className="flex justify-center mb-3">

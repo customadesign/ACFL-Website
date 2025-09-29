@@ -35,22 +35,18 @@ interface AnalyticsData {
     activeUsers: number;
     userRetentionRate: number;
     averageSessionsPerUser: number;
-    clientToCoachRatio: number;
   };
   coachMetrics: {
     averageRating: number;
     totalCoachHours: number;
     averageSessionDuration: number;
     coachUtilizationRate: number;
-    approvalRate: number;
-    averageApprovalTime: number;
   };
   financialMetrics: {
     monthlyRecurringRevenue: number;
     averageSessionValue: number;
     revenuePerUser: number;
     conversionRate: number;
-    refundRate: number;
   };
   sessionMetrics: {
     completionRate: number;
@@ -148,7 +144,7 @@ export default function Analytics() {
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-8 sm:pb-16">
+      <div className="w-full">
         {/* Header Skeleton - Mobile-optimized */}
         <div className="mb-6 sm:mb-8">
           <div className="text-center sm:text-left">
@@ -235,7 +231,7 @@ export default function Analytics() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-8 sm:pb-16">
+    <div className="w-full">
       {/* Header */}
       <div className="mb-6 sm:mb-8">
         <div className="flex flex-col gap-4">
@@ -383,10 +379,6 @@ export default function Analytics() {
               <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Avg Sessions Per User</span>
               <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-right">{analyticsData.userMetrics.averageSessionsPerUser}</span>
             </div>
-            <div className="flex justify-between items-start gap-2">
-              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Client-to-Coach Ratio</span>
-              <span className="text-xs sm:text-sm font-medium text-blue-600 dark:text-blue-400 text-right">{analyticsData.userMetrics.clientToCoachRatio}:1</span>
-            </div>
           </div>
         </div>
 
@@ -401,7 +393,7 @@ export default function Analytics() {
               <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Average Rating</span>
               <div className="flex items-center text-right">
                 <Star className="h-3 w-3 sm:h-4 sm:w-4 text-yellow-400 mr-1 flex-shrink-0" />
-                <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{analyticsData.coachMetrics.averageRating || 0}</span>
+                <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white">{analyticsData.coachMetrics.averageRating}</span>
               </div>
             </div>
             <div className="flex justify-between items-start gap-2">
@@ -415,14 +407,6 @@ export default function Analytics() {
             <div className="flex justify-between items-start gap-2">
               <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Coach Utilization Rate</span>
               <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-right">{analyticsData.coachMetrics.coachUtilizationRate}%</span>
-            </div>
-            <div className="flex justify-between items-start gap-2">
-              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Coach Approval Rate</span>
-              <span className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 text-right">{analyticsData.coachMetrics.approvalRate}%</span>
-            </div>
-            <div className="flex justify-between items-start gap-2">
-              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Avg Approval Time</span>
-              <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-right">{analyticsData.coachMetrics.averageApprovalTime} days</span>
             </div>
           </div>
         </div>
@@ -449,10 +433,6 @@ export default function Analytics() {
             <div className="flex justify-between items-start gap-2">
               <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Conversion Rate</span>
               <span className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white text-right">{analyticsData.financialMetrics.conversionRate}%</span>
-            </div>
-            <div className="flex justify-between items-start gap-2">
-              <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 leading-tight">Refund Rate</span>
-              <span className="text-xs sm:text-sm font-medium text-red-600 dark:text-red-400 text-right">{analyticsData.financialMetrics.refundRate}%</span>
             </div>
           </div>
         </div>

@@ -458,7 +458,7 @@ export default function MeetingChatComponent({
     <div className={`fixed ${
       isEmbedded ? 'hidden' :
       isScreenSharing ? 'bottom-20 md:bottom-20' : 'bottom-20'
-    } right-2 sm:right-4 z-50`}>
+    } right-2 sm:right-4 z-[20001]`}>
       {/* Chat Toggle Button - Only show when not embedded */}
       {!isEmbedded && (
         <Button
@@ -479,7 +479,7 @@ export default function MeetingChatComponent({
       {isVisible && !isEmbedded && (
         <>
           {/* Mobile: Full screen overlay */}
-          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-50 sm:hidden">
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[20000] sm:hidden">
             <Card className="w-full h-[85vh] flex flex-col shadow-xl rounded-t-xl rounded-b-none border-t">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-xl">

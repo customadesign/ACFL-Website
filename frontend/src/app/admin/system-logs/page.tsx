@@ -274,13 +274,14 @@ export default function SystemLogs() {
             Monitor system activity and audit trails
           </p>
         </div>
-        <div className="flex gap-3">
+      </div>
+      <div className="flex gap-3">
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
+            className="flex items-center gap-2 px-4 py-2 bg-white dark:text-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''} dark:text-white`} />
             Refresh
           </button>
           <button
@@ -290,9 +291,7 @@ export default function SystemLogs() {
             <Download className="w-4 h-4" />
             Export
           </button>
-        </div>
       </div>
-
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
@@ -336,10 +335,11 @@ export default function SystemLogs() {
         </div>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Mobile Responsive */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-wrap gap-4 items-end">
-          <div className="flex-1 min-w-64">
+        <div className="space-y-4">
+          {/* Search Input - Full Width */}
+          <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Search Actions
             </label>
@@ -356,50 +356,56 @@ export default function SystemLogs() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Level
-            </label>
-            <select
-              value={levelFilter}
-              onChange={(e) => setLevelFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Levels</option>
-              <option value="INFO">Info</option>
-              <option value="WARN">Warning</option>
-              <option value="ERROR">Error</option>
-            </select>
-          </div>
+          {/* Filter Selects - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Level
+              </label>
+              <select
+                value={levelFilter}
+                onChange={(e) => setLevelFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">All Levels</option>
+                <option value="INFO">Info</option>
+                <option value="WARN">Warning</option>
+                <option value="ERROR">Error</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              User Type
-            </label>
-            <select
-              value={userTypeFilter}
-              onChange={(e) => setUserTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Users</option>
-              <option value="admin">Admin</option>
-              <option value="staff">Staff</option>
-              <option value="coach">Coach</option>
-              <option value="client">Client</option>
-            </select>
-          </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                User Type
+              </label>
+              <select
+                value={userTypeFilter}
+                onChange={(e) => setUserTypeFilter(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="all">All Users</option>
+                <option value="admin">Admin</option>
+                <option value="staff">Staff</option>
+                <option value="coach">Coach</option>
+                <option value="client">Client</option>
+              </select>
+            </div>
 
-          <button
-            onClick={handleSearch}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Filter className="w-4 h-4" />
-            Apply Filters
-          </button>
+            {/* Apply Button - Full Width on Mobile */}
+            <div className="sm:col-span-2 lg:col-span-1 flex items-end">
+              <button
+                onClick={handleSearch}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                <Filter className="w-4 h-4" />
+                Apply Filters
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Logs Table */}
+      {/* System Logs - Desktop & Mobile Responsive */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
@@ -413,7 +419,8 @@ export default function SystemLogs() {
           </div>
         ) : (
           <>
-            <div className="overflow-x-auto">
+            {/* Desktop Table View */}
+            <div className="hidden 2xl:block overflow-x-auto">
               <table className="w-full">
                 <thead className="bg-gray-50 dark:bg-gray-700">
                   <tr>
@@ -473,7 +480,8 @@ export default function SystemLogs() {
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <button
                           onClick={() => viewLogDetails(log)}
-                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300"
+                          className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors"
+                          aria-label="View log details"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -482,6 +490,74 @@ export default function SystemLogs() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            {/* Mobile Card View */}
+            <div className="2xl:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {logs.map((log) => (
+                <div key={`mobile-${log.id}`} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <div className="space-y-3">
+                    {/* Header with Level and Timestamp */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {getLevelIcon(log.level)}
+                        <span className={getLevelBadge(log.level)}>
+                          {log.level}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => viewLogDetails(log)}
+                        className="text-blue-600 dark:text-blue-400 hover:text-blue-900 dark:hover:text-blue-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors"
+                        aria-label="View log details"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </div>
+
+                    {/* Action and Timestamp */}
+                    <div className="space-y-2">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {log.action}
+                      </div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {formatTimestamp(log.timestamp)}
+                      </div>
+                    </div>
+
+                    {/* User Information */}
+                    <div className="flex items-center gap-2 py-2 border-t border-gray-100 dark:border-gray-700">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                          {log.user_name}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 capitalize">
+                          {log.user_type}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Details */}
+                    {log.details && (
+                      <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+                        <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">
+                          Details
+                        </div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                          {log.details}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Source */}
+                    <div className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+                      <span className="font-medium">Source:</span>
+                      <span>{log.source}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
 
             {/* Pagination */}
