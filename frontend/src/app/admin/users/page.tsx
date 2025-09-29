@@ -2095,10 +2095,13 @@ export default function UserManagement() {
                     {getRoleBadge(user.role)}
                     {getStatusBadge(user.status)}
                   </div>
-                  <div className="relative">
+                  <div className="relative" data-user-action-container>
                     <button
                       data-action-menu
-                      onClick={() => setShowActionMenu(showActionMenu === user.id ? null : user.id)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowActionMenu(showActionMenu === user.id ? null : user.id);
+                      }}
                       className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 p-2 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-full transition-colors"
                       aria-label="More actions"
                     >
@@ -2106,10 +2109,21 @@ export default function UserManagement() {
                     </button>
 
                     {showActionMenu === user.id && (
-                      <div
-                        data-action-menu
-                        className="absolute right-0 top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50"
-                      >
+                      <>
+                        {/* Mobile backdrop */}
+                        <div
+                          className="fixed inset-0 bg-black/20 sm:hidden z-[9998]"
+                          onClick={() => setShowActionMenu(null)}
+                        />
+                        <div
+                          data-action-menu
+                          className="fixed sm:absolute right-2 sm:right-0 sm:top-full mt-1 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-[9999]"
+                          style={{
+                            bottom: typeof window !== 'undefined' && window.innerWidth < 640 ? '20px' : 'auto',
+                            maxHeight: typeof window !== 'undefined' && window.innerWidth < 640 ? 'calc(100vh - 100px)' : 'auto',
+                            overflowY: typeof window !== 'undefined' && window.innerWidth < 640 ? 'auto' : 'visible'
+                          }}
+                        >
                         {/* Information & Profile Section */}
                         <div className="py-1">
                           <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700">
@@ -2157,6 +2171,28 @@ export default function UserManagement() {
                           >
                             <Mail className="h-4 w-4 mr-3" />
                             Send Message
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleLoginAsUser(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
+                              setShowActionMenu(null);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 w-full text-left"
+                          >
+                            <LogIn className="h-4 w-4 mr-3" />
+                            Login As User
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              handleResetPassword(user.id, user.role, user.name || `${user.first_name || ''} ${user.last_name || ''}`.trim());
+                              setShowActionMenu(null);
+                            }}
+                            className="flex items-center px-4 py-2 text-sm text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20 w-full text-left"
+                          >
+                            <Key className="h-4 w-4 mr-3" />
+                            Reset Password
                           </button>
                         </div>
 
@@ -2236,6 +2272,7 @@ export default function UserManagement() {
                           </button>
                         </div>
                       </div>
+                      </>
                     )}
                   </div>
                 </div>
