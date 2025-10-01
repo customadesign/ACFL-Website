@@ -463,9 +463,9 @@ useEffect(() => {
 			{initialLoad ? (
 				<MessagesSkeleton />
 			) : (
-			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden px-4 sm:px-0">
+			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden px-4 sm:px-0 sm:h-[500px] lg:h-[500px]">
 					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
-					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col sm:h-[500px] w-full max-w-full`}>
+					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col h-full w-full max-w-full`}>
 						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
 							<span>Conversations ({filteredConversations.length})</span>
 							<MessageCircle className="w-4 h-4 text-gray-500" />
@@ -513,7 +513,7 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full h-[680px]`}>
 					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
 						{/* Back button for mobile */}
 						<button
