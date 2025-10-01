@@ -49,7 +49,11 @@ export default function ClientBillingManagement({ clientId }: ClientBillingManag
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
-          <ClientBillingDashboard clientId={clientId} />
+          <ClientBillingDashboard
+            clientId={clientId}
+            onNavigateToRefunds={() => setActiveTab('refunds')}
+            onNavigateToHistory={() => setActiveTab('history')}
+          />
         </TabsContent>
 
         <TabsContent value="history" className="space-y-6">

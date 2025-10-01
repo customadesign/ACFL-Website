@@ -301,6 +301,7 @@ export class BillingService {
       .select('*')
       .eq('user_id', userId)
       .eq('user_type', userType)
+      .eq('status', 'completed')
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString());
 

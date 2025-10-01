@@ -738,73 +738,75 @@ function SearchCoachesContent() {
       <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
         {/* Hero Section */}
-        <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 mb-6 sm:mb-8 lg:mb-12 overflow-hidden mx-2 sm:mx-0">
           <div className="relative z-10 text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-full text-sm font-medium text-brand-teal dark:text-brand-teal mb-6 border border-gray-200 dark:border-gray-700">
-              <Search className="w-4 h-4 mr-2" />
-              Find Your Perfect Match
+            <div className="inline-flex items-center bg-white/90 dark:bg-gray-800/90 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium text-brand-teal dark:text-brand-teal mb-4 sm:mb-6 border border-gray-200 dark:border-gray-700">
+              <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <span>Find Your Perfect Match</span>
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink-dark dark:text-white mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-ink-dark dark:text-white mb-3 sm:mb-4 lg:mb-6 leading-tight px-2">
               Discover Your Ideal Life Coach
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
+            <p className="text-base sm:text-lg lg:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-6 sm:mb-8 px-4">
               Connect with certified coaches who understand your journey and can help you achieve your goals
             </p>
 
             {/* Quick Stats */}
-            <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm text-gray-600 dark:text-gray-300">
+            <div className="flex flex-wrap justify-center gap-4 sm:gap-6 lg:gap-8 text-xs sm:text-sm text-gray-600 dark:text-gray-300 px-2">
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-brand-leaf rounded-full mr-2"></div>
-                500+ Verified Coaches
+                <div className="w-2 h-2 bg-brand-leaf rounded-full mr-1 sm:mr-2 flex-shrink-0"></div>
+                <span className="whitespace-nowrap">500+ Verified Coaches</span>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-brand-teal rounded-full mr-2"></div>
-                24/7 Support Available
+                <div className="w-2 h-2 bg-brand-teal rounded-full mr-1 sm:mr-2 flex-shrink-0"></div>
+                <span className="whitespace-nowrap">24/7 Support Available</span>
               </div>
               <div className="flex items-center">
-                <div className="w-2 h-2 bg-brand-orange rounded-full mr-2"></div>
-                Personalized Matching
+                <div className="w-2 h-2 bg-brand-orange rounded-full mr-1 sm:mr-2 flex-shrink-0"></div>
+                <span className="whitespace-nowrap">Personalized Matching</span>
               </div>
             </div>
           </div>
         </div>
 
         {/* Enhanced Search Bar - Always Visible */}
-        <div className="mb-8 sm:mb-12">
+        <div className="mb-6 sm:mb-8 lg:mb-12 px-2">
           <div className="max-w-4xl mx-auto">
             <div className="relative">
               <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
-                <div className="flex items-center p-2">
-                  <div className="flex items-center flex-1">
-                    <Search className="w-6 h-6 text-gray-400 dark:text-gray-500 ml-4" />
+                <div className="flex items-center p-1 sm:p-2">
+                  <div className="flex items-center flex-1 min-w-0">
+                    <Search className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 dark:text-gray-500 ml-2 sm:ml-4 flex-shrink-0" />
                     <input
                       type="text"
-                      placeholder="Search by name, specialization, location, or any criteria..."
+                      placeholder="Search coaches..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleQuickSearch()}
-                      className="flex-1 px-4 py-4 text-lg bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none"
+                      className="flex-1 px-2 sm:px-4 py-3 sm:py-4 text-base sm:text-lg bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none min-w-0"
                     />
                   </div>
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
+                      aria-label="Clear search"
                     >
-                      <X className="w-5 h-5" />
+                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                   <button
                     onClick={handleQuickSearch}
                     disabled={isLoading}
-                    className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                    className="bg-brand-teal hover:bg-brand-teal/90 text-white px-3 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center flex-shrink-0 min-w-fit"
+                    aria-label="Search"
                   >
                     {isLoading ? (
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white sm:mr-2"></div>
                     ) : (
-                      <Search className="w-5 h-5 mr-2" />
+                      <Search className="w-5 h-5 sm:mr-2" />
                     )}
                     <span className="hidden sm:inline">Search</span>
                   </button>
@@ -815,8 +817,8 @@ function SearchCoachesContent() {
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex justify-center mb-8 sm:mb-12">
-          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 shadow-lg border border-gray-200 dark:border-gray-700">
+        <div className="flex justify-center mb-8 sm:mb-12 px-2">
+          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 shadow-lg border border-gray-200 dark:border-gray-700 w-full sm:w-auto max-w-md sm:max-w-none">
             <button
               onClick={() => {
                 setActiveTab('search');
@@ -826,14 +828,14 @@ function SearchCoachesContent() {
                 setFilteredCoaches(allCoaches);
                 setHasSearched(false);
               }}
-              className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base ${
                 activeTab === 'search'
                   ? 'bg-brand-teal text-white shadow-md'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              <Search className="w-5 h-5 mr-2" />
-              <span>Discover Coaches</span>
+              <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">Discover</span>
             </button>
             <button
               onClick={() => {
@@ -841,14 +843,14 @@ function SearchCoachesContent() {
                 setFilteredCoaches(savedCoaches);
                 setHasSearched(false);
               }}
-              className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
+              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base ${
                 activeTab === 'saved'
                   ? 'bg-brand-teal text-white shadow-md'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              <Heart className="w-5 h-5 mr-2" />
-              <span>My Favorites ({savedCoaches.length})</span>
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
+              <span className="truncate">Favorites ({savedCoaches.length})</span>
             </button>
           </div>
         </div>
@@ -915,15 +917,15 @@ function SearchCoachesContent() {
 
         {/* Advanced Filters - Only show when on search tab */}
         {activeTab === 'search' && (
-          <div className="mb-8 sm:mb-12">
+          <div className="mb-8 sm:mb-12 px-2">
             <div className="text-center mb-6">
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="inline-flex items-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700 rounded-2xl px-6 py-3 font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:shadow-xl transition-all duration-200"
+                className="inline-flex items-center justify-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700 rounded-2xl px-4 sm:px-6 py-3 font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto max-w-md sm:max-w-none text-sm sm:text-base"
               >
-                <SlidersHorizontal className="w-5 h-5 mr-3" />
+                <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
                 <span>{showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters</span>
-                {showAdvancedFilters ? <ChevronUp className="w-5 h-5 ml-3" /> : <ChevronDown className="w-5 h-5 ml-3" />}
+                {showAdvancedFilters ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" />}
               </button>
             </div>
 
@@ -943,17 +945,17 @@ function SearchCoachesContent() {
                 </div>
 
                 {/* Quick Filters */}
-                <div className="p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="p-4 sm:p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
                     {/* Specialization Filter */}
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-brand-coral/10 dark:bg-brand-coral/20 rounded-xl flex items-center justify-center">
-                          <Award className="w-5 h-5 text-brand-coral" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-coral/10 dark:bg-brand-coral/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Award className="w-4 h-4 sm:w-5 sm:h-5 text-brand-coral" />
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-ink-dark dark:text-white">Specialization</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">What area do you need help with?</p>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Specialization</h4>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">What area do you need help with?</p>
                         </div>
                       </div>
 
@@ -991,16 +993,16 @@ function SearchCoachesContent() {
                     </div>
 
                     {/* Experience & Price */}
-                    <div className="space-y-6">
+                    <div className="space-y-4 sm:space-y-6">
                       {/* Experience Level */}
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-xl flex items-center justify-center">
-                            <Clock className="w-5 h-5 text-brand-teal" />
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-brand-teal" />
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-ink-dark dark:text-white">Experience</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Coach experience level</p>
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Experience</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Coach experience level</p>
                           </div>
                         </div>
 
@@ -1032,14 +1034,14 @@ function SearchCoachesContent() {
                       </div>
 
                       {/* Price Range */}
-                      <div className="space-y-4">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-brand-leaf/10 dark:bg-brand-leaf/20 rounded-xl flex items-center justify-center">
-                            <DollarSign className="w-5 h-5 text-brand-leaf" />
+                      <div className="space-y-3 sm:space-y-4">
+                        <div className="flex items-center space-x-2 sm:space-x-3">
+                          <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-leaf/10 dark:bg-brand-leaf/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf" />
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-ink-dark dark:text-white">Budget</h4>
-                            <p className="text-sm text-gray-600 dark:text-gray-400">Price per session</p>
+                          <div className="min-w-0">
+                            <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Budget</h4>
+                            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Price per session</p>
                           </div>
                         </div>
 
@@ -1075,14 +1077,14 @@ function SearchCoachesContent() {
                     </div>
 
                     {/* Additional Filters */}
-                    <div className="space-y-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-xl flex items-center justify-center">
-                          <Languages className="w-5 h-5 text-brand-orange" />
+                    <div className="space-y-3 sm:space-y-4">
+                      <div className="flex items-center space-x-2 sm:space-x-3">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-xl flex items-center justify-center flex-shrink-0">
+                          <Languages className="w-4 h-4 sm:w-5 sm:h-5 text-brand-orange" />
                         </div>
-                        <div>
-                          <h4 className="font-semibold text-ink-dark dark:text-white">Languages</h4>
-                          <p className="text-sm text-gray-600 dark:text-gray-400">Preferred language</p>
+                        <div className="min-w-0">
+                          <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Languages</h4>
+                          <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 truncate">Preferred language</p>
                         </div>
                       </div>
 
@@ -1122,9 +1124,9 @@ function SearchCoachesContent() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                <div className="p-4 sm:p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                   <Form {...form}>
-                    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4">
                       <button
                         type="button"
                         onClick={() => {
@@ -1134,23 +1136,23 @@ function SearchCoachesContent() {
                           setSelectedFilters(new Set());
                           setFilteredCoaches(allCoaches);
                         }}
-                        className="flex items-center px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                        className="flex items-center justify-center px-4 sm:px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base order-2 sm:order-1"
                       >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Reset Filters
+                        <RefreshCw className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <span>Reset Filters</span>
                       </button>
 
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex items-center px-8 py-4 bg-brand-teal hover:bg-brand-teal/90 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-brand-teal hover:bg-brand-teal/90 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base order-1 sm:order-2"
                       >
                         {isLoading ? (
-                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2 sm:mr-3 flex-shrink-0"></div>
                         ) : (
-                          <Search className="w-5 h-5 mr-3" />
+                          <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
                         )}
-                        Apply Filters & Search
+                        <span>Apply Filters & Search</span>
                       </button>
                     </form>
                   </Form>

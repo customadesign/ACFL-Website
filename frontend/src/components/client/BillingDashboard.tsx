@@ -12,7 +12,8 @@ import {
   Download,
   Filter,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  History
 } from 'lucide-react';
 
 interface BillingTransaction {
@@ -58,9 +59,11 @@ interface BillingDashboardData {
 
 interface ClientBillingDashboardProps {
   clientId: string;
+  onNavigateToRefunds?: () => void;
+  onNavigateToHistory?: () => void;
 }
 
-export default function ClientBillingDashboard({ clientId }: ClientBillingDashboardProps) {
+export default function ClientBillingDashboard({ clientId, onNavigateToRefunds, onNavigateToHistory }: ClientBillingDashboardProps) {
   const [dashboardData, setDashboardData] = useState<BillingDashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -126,6 +129,49 @@ export default function ClientBillingDashboard({ clientId }: ClientBillingDashbo
         return 'text-gray-600';
     }
   };
+
+  const handleExportMonthlySummary = () => {
+    if (!dashboardData) return;
+
+    const summary = dashboardData.monthly_summary;
+    const now = new Date();
+    const monthYear = `${now.toLocaleString('default', { month: 'long' })} ${now.getFullYear()}`;
+
+    // Create CSV content
+    const csvContent = [
+      ['Monthly Billing Summary', monthYear],
+      [''],
+      ['Metric', 'Value'],
+      ['Total Payments', formatCurrency(summary.total_revenue_cents)],
+      ['Refunds Received', formatCurrency(summary.total_refunds_cents)],
+      ['Net Spending', formatCurrency(summary.total_revenue_cents - summary.total_refunds_cents)],
+      ['Average Payment', formatCurrency(summary.average_transaction_cents)],
+      ['Transaction Count', summary.transaction_count.toString()],
+      ['Refund Count', summary.refund_count.toString()],
+      [''],
+      ['Recent Transactions'],
+      ['Date', 'Type', 'Description', 'Amount', 'Status'],
+      ...dashboardData.recent_transactions.map(t => [
+        new Date(t.created_at).toLocaleDateString(),
+        t.transaction_type,
+        t.description,
+        formatCurrency(t.amount_cents),
+        t.status
+      ])
+    ].map(row => row.join(',')).join('\n');
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `billing-summary-${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  };
+
 
   if (loading) {
     return (
@@ -199,7 +245,7 @@ export default function ClientBillingDashboard({ clientId }: ClientBillingDashbo
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Monthly Summary
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" onClick={handleExportMonthlySummary}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
@@ -335,11 +381,19 @@ export default function ClientBillingDashboard({ clientId }: ClientBillingDashbo
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button className="h-16 flex flex-col items-center justify-center gap-2" variant="outline">
-              <Download className="h-5 w-5" />
-              <span>Download Statements</span>
+            <Button
+              className="h-16 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+              onClick={onNavigateToHistory}
+            >
+              <History className="h-5 w-5" />
+              <span>View All Transactions</span>
             </Button>
-            <Button className="h-16 flex flex-col items-center justify-center gap-2" variant="outline">
+            <Button
+              className="h-16 flex flex-col items-center justify-center gap-2"
+              variant="outline"
+              onClick={onNavigateToRefunds}
+            >
               <AlertCircle className="h-5 w-5" />
               <span>Request Refund</span>
             </Button>

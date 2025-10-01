@@ -204,7 +204,7 @@ export default function ClientLayout({
       name: 'Dashboard',
       icon: Home,
       items: [
-        { name: 'Overview', href: '/clients/search-coaches', icon: Home },
+        { name: 'Overview', href: '/clients', icon: Home },
       ]
     },
     {

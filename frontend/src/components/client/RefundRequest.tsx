@@ -73,7 +73,6 @@ export default function ClientRefundRequest({ clientId }: ClientRefundRequestPro
 
   const refundMethods = [
     { value: 'original_payment', label: 'Original Payment Method' },
-    { value: 'store_credit', label: 'Store Credit' },
     { value: 'manual', label: 'Manual Processing' }
   ];
 

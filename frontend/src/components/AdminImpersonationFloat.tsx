@@ -56,7 +56,7 @@ export default function AdminImpersonationFloat() {
   return (
     <>
       {/* Floating Admin Switch Button */}
-      <div className="fixed bottom-4 right-4 z-[99999] flex flex-col gap-2">
+      <div className="fixed bottom-20 right-4 lg:bottom-4 z-[99999] flex flex-col gap-2">
         {/* Minimized state when not visible */}
         {!isVisible && (
           <button
