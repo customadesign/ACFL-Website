@@ -271,7 +271,7 @@ const CalendarIntegration: React.FC<CalendarIntegrationProps> = ({ coachId, comp
     if (connections.length === 0) {
       return (
         <div className="text-center space-y-3">
-          <div className="text-sm text-gray-600 dark:text-gray-300 mb-2">
+          <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 mb-2">
             No calendars connected
           </div>
           <div className="flex gap-2 justify-center">
@@ -280,14 +280,14 @@ const CalendarIntegration: React.FC<CalendarIntegrationProps> = ({ coachId, comp
               disabled={connecting === 'google'}
               variant="outline"
               size="sm"
-              className="flex items-center gap-1 text-xs"
+              className="flex items-center gap-1 text-[10px] sm:text-xs px-2 py-1 h-auto min-w-[60px]"
             >
               {connecting === 'google' ? (
                 <RefreshCw className="w-3 h-3 animate-spin" />
               ) : (
                 '🔵'
               )}
-              Google
+              <span className="truncate">Google</span>
             </Button>
           </div>
         </div>
@@ -301,20 +301,20 @@ const CalendarIntegration: React.FC<CalendarIntegrationProps> = ({ coachId, comp
             key={connection.connection_id}
             className="flex items-center justify-between p-2 rounded border border-gray-200 dark:border-gray-700"
           >
-            <div className="flex items-center gap-2">
-              <span className="text-sm">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <span className="text-sm flex-shrink-0">
                 {getProviderIcon(connection.provider)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-medium capitalize truncate">
+                <p className="text-[10px] sm:text-xs font-medium capitalize truncate">
                   {connection.provider}
                 </p>
-                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                <p className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
                   {connection.is_sync_enabled ? 'Active' : 'Disabled'}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {getStatusBadge(connection.last_sync_status)}
             </div>
           </div>

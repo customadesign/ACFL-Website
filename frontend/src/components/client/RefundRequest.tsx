@@ -250,7 +250,7 @@ export default function ClientRefundRequest({ clientId }: ClientRefundRequestPro
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
+        <RefreshCw className="h-8 w-8 animate-spin dark:text-white" />
       </div>
     );
   }
@@ -260,7 +260,7 @@ export default function ClientRefundRequest({ clientId }: ClientRefundRequestPro
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold">Refund Requests</h2>
+          <h2 className="text-2xl font-bold dark:text-white">Refund Requests</h2>
           <p className="text-muted-foreground">Request refunds for your payments</p>
         </div>
         <Button

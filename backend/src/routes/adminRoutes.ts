@@ -3942,8 +3942,16 @@ router.post('/payments/:paymentId/refund', authorize('admin'), async (req, res) 
       message: 'Refund processed successfully'
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Admin refund error:', error);
+
+    // Extract detailed error message
+    let errorMessage = (error as Error).message || 'Failed to process refund';
+
+    // Log full error details for debugging
+    if (error.result?.errors) {
+      console.error('Square API Errors:', JSON.stringify(error.result.errors, null, 2));
+    }
 
     // Log the failed action
     const auditReq = req as AuditRequest;
@@ -3951,16 +3959,18 @@ router.post('/payments/:paymentId/refund', authorize('admin'), async (req, res) 
       action: 'PAYMENT_REFUND_FAILED',
       resource_type: 'payment',
       resource_id: req.params.paymentId,
-      details: `Failed to process refund: ${(error as Error).message}`,
+      details: `Failed to process refund: ${errorMessage}`,
       metadata: {
-        error: (error as Error).message,
-        request_body: req.body
+        error: errorMessage,
+        request_body: req.body,
+        square_errors: error.result?.errors || error.errors
       }
     });
 
     res.status(500).json({
-      error: (error as Error).message || 'Failed to process refund',
-      success: false
+      error: errorMessage,
+      success: false,
+      details: error.result?.errors || error.errors
     });
   }
 });

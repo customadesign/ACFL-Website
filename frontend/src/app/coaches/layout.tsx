@@ -310,7 +310,7 @@ export default function CoachLayout({
 
   return (
     <ProtectedRoute allowedRoles={['coach']}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex overflow-x-hidden">
         {/* Admin Impersonation Float */}
         <AdminImpersonationFloat />
 
@@ -657,7 +657,7 @@ export default function CoachLayout({
         )}
 
         {/* Main Content Area */}
-        <div className={`flex-1 ${isInMeeting ? '' : (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72')} transition-all duration-300 ease-in-out relative z-[1]`}>
+        <div className={`flex-1 ${isInMeeting ? '' : (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72')} transition-all duration-300 ease-in-out relative z-[1] min-w-0 overflow-x-hidden`}>
           {/* Mobile Header */}
           {!isInMeeting && (
             <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
@@ -1149,8 +1149,8 @@ export default function CoachLayout({
           )}
 
           {/* Main Content */}
-          <main className={`p-4 lg:p-8 ${navigationGroups.flatMap(g => g.items).length > 4 ? 'pb-20 lg:pb-8' : 'pb-4 lg:pb-8'}`}>
-            <div className="max-w-7xl mx-auto">
+          <main className={`p-4 lg:p-8 ${navigationGroups.flatMap(g => g.items).length > 4 ? 'pb-20 lg:pb-8' : 'pb-4 lg:pb-8'} overflow-x-hidden`}>
+            <div className="max-w-7xl mx-auto w-full min-w-0">
               <DeactivatedAccountBanner />
               {children}
             </div>

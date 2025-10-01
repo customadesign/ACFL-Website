@@ -735,26 +735,26 @@ function SearchCoachesContent() {
 
   return (
     <MeetingBlocker blockMessage="You are currently in a meeting. Please end your current session before searching for coaches.">
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-8 pb-20 sm:pb-16">
         {/* Hero Section */}
-        <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12 overflow-hidden">
+        <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-3xl p-8 sm:p-12 mb-8 sm:mb-12 overflow-hidden">
           <div className="relative z-10 text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center bg-white/90 px-4 py-2 rounded-full text-sm font-medium text-brand-teal mb-6 border border-gray-200">
+            <div className="inline-flex items-center bg-white/90 dark:bg-gray-800/90 px-4 py-2 rounded-full text-sm font-medium text-brand-teal dark:text-brand-teal mb-6 border border-gray-200 dark:border-gray-700">
               <Search className="w-4 h-4 mr-2" />
               Find Your Perfect Match
             </div>
 
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink-dark mb-4 sm:mb-6 leading-tight">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-ink-dark dark:text-white mb-4 sm:mb-6 leading-tight">
               Discover Your Ideal Life Coach
             </h1>
 
-            <p className="text-lg sm:text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+            <p className="text-lg sm:text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto mb-8">
               Connect with certified coaches who understand your journey and can help you achieve your goals
             </p>
 
             {/* Quick Stats */}
-            <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm text-gray-600">
+            <div className="flex flex-wrap justify-center gap-6 sm:gap-8 text-sm text-gray-600 dark:text-gray-300">
               <div className="flex items-center">
                 <div className="w-2 h-2 bg-brand-leaf rounded-full mr-2"></div>
                 500+ Verified Coaches
@@ -775,23 +775,23 @@ function SearchCoachesContent() {
         <div className="mb-8 sm:mb-12">
           <div className="max-w-4xl mx-auto">
             <div className="relative">
-              <div className="bg-white rounded-2xl border-2 border-gray-100 shadow-lg hover:shadow-xl transition-shadow">
+              <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
                 <div className="flex items-center p-2">
                   <div className="flex items-center flex-1">
-                    <Search className="w-6 h-6 text-gray-400 ml-4" />
+                    <Search className="w-6 h-6 text-gray-400 dark:text-gray-500 ml-4" />
                     <input
                       type="text"
                       placeholder="Search by name, specialization, location, or any criteria..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleQuickSearch()}
-                      className="flex-1 px-4 py-4 text-lg bg-transparent text-gray-900 placeholder-gray-500 focus:outline-none"
+                      className="flex-1 px-4 py-4 text-lg bg-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none"
                     />
                   </div>
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                      className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                     >
                       <X className="w-5 h-5" />
                     </button>
@@ -816,7 +816,7 @@ function SearchCoachesContent() {
 
         {/* Tab Navigation */}
         <div className="flex justify-center mb-8 sm:mb-12">
-          <div className="inline-flex bg-white rounded-2xl p-1 shadow-lg border border-gray-200">
+          <div className="inline-flex bg-white dark:bg-gray-800 rounded-2xl p-1 shadow-lg border border-gray-200 dark:border-gray-700">
             <button
               onClick={() => {
                 setActiveTab('search');
@@ -829,7 +829,7 @@ function SearchCoachesContent() {
               className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 activeTab === 'search'
                   ? 'bg-brand-teal text-white shadow-md'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               <Search className="w-5 h-5 mr-2" />
@@ -844,7 +844,7 @@ function SearchCoachesContent() {
               className={`flex items-center px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 activeTab === 'saved'
                   ? 'bg-brand-teal text-white shadow-md'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
               <Heart className="w-5 h-5 mr-2" />
@@ -857,13 +857,13 @@ function SearchCoachesContent() {
         {isLoading && (
           <div className="text-center py-12 sm:py-16">
             <div className="max-w-md mx-auto">
-              <div className="bg-white rounded-full p-8 shadow-xl">
-                <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 border-t-brand-teal mx-auto"></div>
+              <div className="bg-white dark:bg-gray-800 rounded-full p-8 shadow-xl">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-gray-200 dark:border-gray-700 border-t-brand-teal mx-auto"></div>
               </div>
-              <h3 className="text-xl font-semibold text-ink-dark mt-6 mb-2">
+              <h3 className="text-xl font-semibold text-ink-dark dark:text-white mt-6 mb-2">
                 {hasSearched ? "Finding Perfect Matches" : "Loading Coaches"}
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 {hasSearched
                   ? "Analyzing coach profiles to find your ideal matches..."
                   : "Preparing our database of qualified coaches..."}
@@ -919,7 +919,7 @@ function SearchCoachesContent() {
             <div className="text-center mb-6">
               <button
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
-                className="inline-flex items-center bg-white hover:bg-gray-50 border-2 border-gray-200 rounded-2xl px-6 py-3 font-semibold text-gray-700 shadow-lg hover:shadow-xl transition-all duration-200"
+                className="inline-flex items-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700 rounded-2xl px-6 py-3 font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 <SlidersHorizontal className="w-5 h-5 mr-3" />
                 <span>{showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters</span>
@@ -928,14 +928,14 @@ function SearchCoachesContent() {
             </div>
 
             {showAdvancedFilters && (
-              <div className="bg-white rounded-3xl shadow-2xl border border-gray-200 overflow-hidden">
-                <div className="bg-gray-lite p-6 border-b border-gray-200">
+              <div className="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+                <div className="bg-gray-lite dark:bg-gray-900 p-6 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-xl font-bold text-ink-dark mb-1">Refine Your Search</h3>
-                      <p className="text-gray-600">Use these filters to find coaches that perfectly match your needs</p>
+                      <h3 className="text-xl font-bold text-ink-dark dark:text-white mb-1">Refine Your Search</h3>
+                      <p className="text-gray-600 dark:text-gray-300">Use these filters to find coaches that perfectly match your needs</p>
                     </div>
-                    <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500">
+                    <div className="hidden sm:flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                       <div className="w-2 h-2 bg-brand-teal rounded-full"></div>
                       <span>Optional filters</span>
                     </div>
@@ -948,12 +948,12 @@ function SearchCoachesContent() {
                     {/* Specialization Filter */}
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-brand-coral/10 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-brand-coral/10 dark:bg-brand-coral/20 rounded-xl flex items-center justify-center">
                           <Award className="w-5 h-5 text-brand-coral" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-ink-dark">Specialization</h4>
-                          <p className="text-sm text-gray-600">What area do you need help with?</p>
+                          <h4 className="font-semibold text-ink-dark dark:text-white">Specialization</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">What area do you need help with?</p>
                         </div>
                       </div>
 
@@ -966,7 +966,7 @@ function SearchCoachesContent() {
                               <FormControl>
                                 <div className="space-y-2 max-h-48 overflow-y-auto">
                                   {['Life transitions', 'Career development', 'Relationship coaching', 'Stress management', 'Anxiety & worry', 'Depression & mood', 'Self-esteem & confidence', 'Work-life balance'].map((expertise) => (
-                                    <label key={expertise} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <label key={expertise} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                       <Checkbox
                                         checked={field.value?.includes(expertise)}
                                         onCheckedChange={(checked) => {
@@ -979,7 +979,7 @@ function SearchCoachesContent() {
                                         }}
                                         className="w-4 h-4"
                                       />
-                                      <span className="text-sm text-gray-700">{expertise}</span>
+                                      <span className="text-sm text-gray-700 dark:text-gray-300">{expertise}</span>
                                     </label>
                                   ))}
                                 </div>
@@ -995,12 +995,12 @@ function SearchCoachesContent() {
                       {/* Experience Level */}
                       <div className="space-y-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-brand-teal/10 rounded-xl flex items-center justify-center">
+                          <div className="w-10 h-10 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-xl flex items-center justify-center">
                             <Clock className="w-5 h-5 text-brand-teal" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-ink-dark">Experience</h4>
-                            <p className="text-sm text-gray-600">Coach experience level</p>
+                            <h4 className="font-semibold text-ink-dark dark:text-white">Experience</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Coach experience level</p>
                           </div>
                         </div>
 
@@ -1012,7 +1012,7 @@ function SearchCoachesContent() {
                               <FormItem>
                                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                                   <FormControl>
-                                    <SelectTrigger className="bg-white border-2 border-gray-200 rounded-xl h-12">
+                                    <SelectTrigger className="bg-white dark:bg-gray-700 dark:text-white border-2 border-gray-200 dark:border-gray-600 rounded-xl h-12">
                                       <SelectValue placeholder="Any experience level" />
                                     </SelectTrigger>
                                   </FormControl>
@@ -1034,39 +1034,39 @@ function SearchCoachesContent() {
                       {/* Price Range */}
                       <div className="space-y-4">
                         <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-brand-leaf/10 rounded-xl flex items-center justify-center">
+                          <div className="w-10 h-10 bg-brand-leaf/10 dark:bg-brand-leaf/20 rounded-xl flex items-center justify-center">
                             <DollarSign className="w-5 h-5 text-brand-leaf" />
                           </div>
                           <div>
-                            <h4 className="font-semibold text-ink-dark">Budget</h4>
-                            <p className="text-sm text-gray-600">Price per session</p>
+                            <h4 className="font-semibold text-ink-dark dark:text-white">Budget</h4>
+                            <p className="text-sm text-gray-600 dark:text-gray-400">Price per session</p>
                           </div>
                         </div>
 
                         <div className="space-y-3">
-                          <div className="bg-brand-leaf/10 p-4 rounded-xl text-center">
+                          <div className="bg-brand-leaf/10 dark:bg-brand-leaf/20 p-4 rounded-xl text-center">
                             <div className="text-2xl font-bold text-brand-leaf">
                               ${priceRange[0]} - ${priceRange[1]}
                             </div>
-                            <div className="text-sm text-gray-600">per session</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-400">per session</div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Min Price</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Min Price</label>
                               <Input
                                 type="number"
                                 value={priceRange[0]}
                                 onChange={(e) => setPriceRange([parseInt(e.target.value) || 0, priceRange[1]])}
-                                className="bg-white text-center border-2 border-gray-200 rounded-lg h-10"
+                                className="bg-white dark:bg-gray-700 dark:text-white text-center border-2 border-gray-200 dark:border-gray-600 rounded-lg h-10"
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium text-gray-700 mb-1">Max Price</label>
+                              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Max Price</label>
                               <Input
                                 type="number"
                                 value={priceRange[1]}
                                 onChange={(e) => setPriceRange([priceRange[0], parseInt(e.target.value) || 500])}
-                                className="bg-white text-center border-2 border-gray-200 rounded-lg h-10"
+                                className="bg-white dark:bg-gray-700 dark:text-white text-center border-2 border-gray-200 dark:border-gray-600 rounded-lg h-10"
                               />
                             </div>
                           </div>
@@ -1077,12 +1077,12 @@ function SearchCoachesContent() {
                     {/* Additional Filters */}
                     <div className="space-y-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-brand-orange/10 rounded-xl flex items-center justify-center">
+                        <div className="w-10 h-10 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-xl flex items-center justify-center">
                           <Languages className="w-5 h-5 text-brand-orange" />
                         </div>
                         <div>
-                          <h4 className="font-semibold text-ink-dark">Languages</h4>
-                          <p className="text-sm text-gray-600">Preferred language</p>
+                          <h4 className="font-semibold text-ink-dark dark:text-white">Languages</h4>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">Preferred language</p>
                         </div>
                       </div>
 
@@ -1095,7 +1095,7 @@ function SearchCoachesContent() {
                               <FormControl>
                                 <div className="space-y-2">
                                   {['English', 'Spanish', 'French', 'Mandarin', 'Other'].map((language) => (
-                                    <label key={language} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+                                    <label key={language} className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer">
                                       <Checkbox
                                         checked={field.value?.includes(language)}
                                         onCheckedChange={(checked) => {
@@ -1108,7 +1108,7 @@ function SearchCoachesContent() {
                                         }}
                                         className="w-4 h-4"
                                       />
-                                      <span className="text-sm text-gray-700">{language}</span>
+                                      <span className="text-sm text-gray-700 dark:text-gray-300">{language}</span>
                                     </label>
                                   ))}
                                 </div>
@@ -1122,7 +1122,7 @@ function SearchCoachesContent() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="p-6 bg-gray-50 border-t border-gray-200">
+                <div className="p-6 bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(handleSubmit)} className="flex flex-col sm:flex-row items-center justify-between gap-4">
                       <button
@@ -1134,7 +1134,7 @@ function SearchCoachesContent() {
                           setSelectedFilters(new Set());
                           setFilteredCoaches(allCoaches);
                         }}
-                        className="flex items-center px-6 py-3 bg-white border border-gray-300 rounded-xl font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+                        className="flex items-center px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                       >
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Reset Filters
@@ -1164,10 +1164,10 @@ function SearchCoachesContent() {
         <div className="mb-6 sm:mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-6 gap-4">
             <div className="px-2 sm:px-0">
-              <h2 className="text-xl sm:text-2xl font-bold text-ink-dark">
+              <h2 className="text-xl sm:text-2xl font-bold text-ink-dark dark:text-white">
                 {activeTab === 'saved' ? 'Your Saved Coaches' : 'Available Coaches'}
               </h2>
-              <p className="text-sm sm:text-base text-gray-600">
+              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300">
                 {activeTab === 'saved'
                   ? `${savedCoaches.length} saved coach${savedCoaches.length !== 1 ? 'es' : ''}`
                   : `${filteredCoaches.length} coach${filteredCoaches.length !== 1 ? 'es' : ''} found`
@@ -1188,13 +1188,13 @@ function SearchCoachesContent() {
 
           {/* No Results Message */}
           {filteredCoaches.length === 0 && !isLoading && (
-            <Card className="p-6 sm:p-12 text-center bg-white mx-2 sm:mx-0">
+            <Card className="p-6 sm:p-12 text-center bg-white dark:bg-gray-800 mx-2 sm:mx-0">
               <div className="max-w-md mx-auto">
                 {activeTab === 'saved' ? (
                   <>
-                    <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark mb-2">No Saved Coaches Yet</h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4">
+                    <Heart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark dark:text-white mb-2">No Saved Coaches Yet</h3>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                       You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
                     </p>
                     <Button
@@ -1212,9 +1212,9 @@ function SearchCoachesContent() {
                   </>
                 ) : (
                   <>
-                    <Search className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark mb-2">No Coaches Found</h3>
-                    <p className="text-sm sm:text-base text-gray-600 mb-4">
+                    <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <h3 className="text-lg sm:text-xl font-semibold text-ink-dark dark:text-white mb-2">No Coaches Found</h3>
+                    <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                       Try adjusting your search criteria or filters to find more matches.
                     </p>
                     <Button

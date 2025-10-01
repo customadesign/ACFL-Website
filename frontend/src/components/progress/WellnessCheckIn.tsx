@@ -27,6 +27,7 @@ import {
   Save
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import { getApiUrl } from '@/lib/api';
 
 interface WellnessData {
   mood_rating: number;
@@ -86,7 +87,8 @@ const WellnessCheckInComponent: React.FC<WellnessCheckInProps> = ({
 
   const fetchRecentCheckIns = async () => {
     try {
-      const response = await fetch(`/api/progress/wellness?client_id=${clientId}&limit=5`, {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/progress/wellness?client_id=${clientId}&limit=5`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -133,7 +135,8 @@ const WellnessCheckInComponent: React.FC<WellnessCheckInProps> = ({
         checkin_date: new Date().toISOString().split('T')[0]
       };
 
-      const response = await fetch('/api/progress/wellness', {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/progress/wellness`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

@@ -9,8 +9,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ProtectedRoute from '@/components/ProtectedRoute';
 import MeetingContainer from '@/components/MeetingContainer';
 import MeetingBlocker from '@/components/MeetingBlocker';
-import MeetingStatusDebug from '@/components/MeetingStatusDebug';
-import TestInstructions from '@/components/TestInstructions';
 import AppointmentCardSkeleton from '@/components/AppointmentCardSkeleton';
 import { getApiUrl } from '@/lib/api';
 import { useAuth } from '@/contexts/AuthContext';
@@ -704,11 +702,6 @@ function AppointmentsContent() {
           }}
         />
       )}
-
-      
-      {/* Debug Components - Remove in production */}
-      <MeetingStatusDebug />
-      <TestInstructions />
     </div>
   );
 }

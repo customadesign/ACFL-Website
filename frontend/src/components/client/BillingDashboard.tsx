@@ -130,7 +130,7 @@ export default function ClientBillingDashboard({ clientId }: ClientBillingDashbo
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
+        <RefreshCw className="h-8 w-8 animate-spin dark:text-white" />
       </div>
     );
   }

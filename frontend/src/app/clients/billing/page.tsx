@@ -19,7 +19,7 @@ export default function ClientBillingPage() {
       <div className="container mx-auto p-6">
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-muted-foreground">Loading...</p>
+            <p className="dark:text-white">Loading...</p>
           </div>
         </div>
       </div>

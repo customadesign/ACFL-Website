@@ -36,6 +36,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import WellnessCheckInComponent from './WellnessCheckIn';
+import { getApiUrl } from '@/lib/api';
 
 interface ProgressGoal {
   id: string;
@@ -119,7 +120,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
   const fetchGoals = async () => {
     try {
-      const response = await fetch(`/api/progress/goals?client_id=${clientId}`, {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/progress/goals?client_id=${clientId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -186,7 +188,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
   const fetchWellnessHistory = async () => {
     try {
-      const response = await fetch(`/api/progress/wellness?client_id=${clientId}&limit=30`, {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/progress/wellness?client_id=${clientId}&limit=30`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -222,7 +225,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
   const fetchMilestones = async () => {
     try {
-      const response = await fetch(`/api/progress/milestones?client_id=${clientId}`, {
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/progress/milestones?client_id=${clientId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json',
@@ -302,18 +306,18 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-green-100 text-green-800';
+      case 'high': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
+      case 'medium': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+      default: return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
     }
   };
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'active': return 'bg-blue-100 text-blue-800';
-      case 'paused': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'completed': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+      case 'active': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
+      case 'paused': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400';
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300';
     }
   };
 
@@ -348,8 +352,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Total Goals</p>
-                <p className="text-2xl font-bold">{progressStats.totalGoals}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Total Goals</p>
+                <p className="text-2xl font-bold dark:text-white">{progressStats.totalGoals}</p>
               </div>
               <Target className="w-8 h-8 text-blue-600" />
             </div>
@@ -360,8 +364,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Completed</p>
-                <p className="text-2xl font-bold text-green-600">{progressStats.completedGoals}</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Completed</p>
+                <p className="text-2xl font-bold text-green-600 dark:text-green-400">{progressStats.completedGoals}</p>
               </div>
               <CheckCircle className="w-8 h-8 text-green-600" />
             </div>
@@ -372,8 +376,8 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Success Rate</p>
-                <p className="text-2xl font-bold text-purple-600">{Math.round(progressStats.completionRate)}%</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Success Rate</p>
+                <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">{Math.round(progressStats.completionRate)}%</p>
               </div>
               <Star className="w-8 h-8 text-purple-600" />
             </div>
@@ -384,9 +388,9 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">Wellness Trend</p>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Wellness Trend</p>
                 <div className="flex items-center gap-1">
-                  <p className="text-2xl font-bold">{Math.round(progressStats.avgWellness * 10) / 10}</p>
+                  <p className="text-2xl font-bold dark:text-white">{Math.round(progressStats.avgWellness * 10) / 10}</p>
                   {(() => {
                     const { icon: Icon, color } = getTrendIcon(progressStats.improvementTrend);
                     return <Icon className={`w-6 h-6 ${color}`} />;
@@ -422,7 +426,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
         <TabsContent value="goals" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Progress Goals</h3>
+            <h3 className="text-lg font-semibold dark:text-white">Progress Goals</h3>
             {userRole === 'client' && (
               <WellnessCheckInComponent
                 clientId={clientId}
@@ -439,7 +443,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <h4 className="font-semibold">{goal.title}</h4>
+                        <h4 className="font-semibold dark:text-white">{goal.title}</h4>
                         <Badge className={getStatusColor(goal.status)}>
                           {goal.status}
                         </Badge>
@@ -448,25 +452,25 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
                         </Badge>
                       </div>
                       {goal.description && (
-                        <p className="text-sm text-gray-600 mb-3">{goal.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-3">{goal.description}</p>
                       )}
                     </div>
                   </div>
 
                   {goal.target_value && goal.current_progress !== undefined && (
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-sm dark:text-gray-300">
                         <span>Progress</span>
                         <span>{goal.current_progress} / {goal.target_value} {goal.target_unit}</span>
                       </div>
                       <Progress value={goal.progress_percentage || 0} className="h-2" />
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {goal.progress_percentage || 0}% complete
                       </p>
                     </div>
                   )}
 
-                  <div className="flex items-center gap-4 mt-4 text-sm text-gray-600">
+                  <div className="flex items-center gap-4 mt-4 text-sm text-gray-600 dark:text-gray-300">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-4 h-4" />
                       <span>
@@ -489,7 +493,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
         <TabsContent value="wellness" className="space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold">Wellness Tracking</h3>
+            <h3 className="text-lg font-semibold dark:text-white">Wellness Tracking</h3>
             {userRole === 'client' && (
               <WellnessCheckInComponent
                 clientId={clientId}
@@ -503,7 +507,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Wellness Trends (14 Days)</CardTitle>
+                  <CardTitle className="text-sm dark:text-white">Wellness Trends (14 Days)</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <ResponsiveContainer width="100%" height={250}>
@@ -545,7 +549,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-sm">Latest Wellness Snapshot</CardTitle>
+                  <CardTitle className="text-sm dark:text-white">Latest Wellness Snapshot</CardTitle>
                 </CardHeader>
                 <CardContent>
                   {wellnessHistory.length > 0 && (
@@ -595,7 +599,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
         </TabsContent>
 
         <TabsContent value="milestones" className="space-y-4">
-          <h3 className="text-lg font-semibold">Achievements & Milestones</h3>
+          <h3 className="text-lg font-semibold dark:text-white">Achievements & Milestones</h3>
 
           <div className="space-y-4">
             {milestones.map((milestone) => (
@@ -603,36 +607,36 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className={`p-2 rounded-full ${
-                      milestone.significance === 'high' ? 'bg-yellow-100' :
-                      milestone.significance === 'medium' ? 'bg-blue-100' :
-                      'bg-gray-100'
+                      milestone.significance === 'high' ? 'bg-yellow-100 dark:bg-yellow-900/30' :
+                      milestone.significance === 'medium' ? 'bg-blue-100 dark:bg-blue-900/30' :
+                      'bg-gray-100 dark:bg-gray-700'
                     }`}>
                       <Award className={`w-6 h-6 ${
-                        milestone.significance === 'high' ? 'text-yellow-600' :
-                        milestone.significance === 'medium' ? 'text-blue-600' :
-                        'text-gray-600'
+                        milestone.significance === 'high' ? 'text-yellow-600 dark:text-yellow-400' :
+                        milestone.significance === 'medium' ? 'text-blue-600 dark:text-blue-400' :
+                        'text-gray-600 dark:text-gray-300'
                       }`} />
                     </div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{milestone.title}</h4>
+                        <h4 className="font-semibold dark:text-white">{milestone.title}</h4>
                         <Badge className={
-                          milestone.significance === 'high' ? 'bg-yellow-100 text-yellow-800' :
-                          milestone.significance === 'medium' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
+                          milestone.significance === 'high' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                          milestone.significance === 'medium' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'
                         }>
                           {milestone.significance} impact
                         </Badge>
                       </div>
                       {milestone.description && (
-                        <p className="text-sm text-gray-600 mb-2">{milestone.description}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">{milestone.description}</p>
                       )}
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mb-3">
+                      <div className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 mb-3">
                         <Calendar className="w-3 h-3" />
                         <span>{new Date(milestone.achievement_date).toLocaleDateString()}</span>
                       </div>
                       {milestone.client_reflection && (
-                        <blockquote className="text-sm italic text-gray-700 border-l-4 border-blue-200 pl-3 py-1">
+                        <blockquote className="text-sm italic text-gray-700 dark:text-gray-300 border-l-4 border-blue-200 pl-3 py-1">
                           "{milestone.client_reflection}"
                         </blockquote>
                       )}
@@ -645,12 +649,12 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
         </TabsContent>
 
         <TabsContent value="insights" className="space-y-4">
-          <h3 className="text-lg font-semibold">Progress Insights</h3>
+          <h3 className="text-lg font-semibold dark:text-white">Progress Insights</h3>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Goal Categories Progress</CardTitle>
+                <CardTitle className="text-sm dark:text-white">Goal Categories Progress</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
@@ -681,7 +685,7 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-sm">Weekly Wellness Average</CardTitle>
+                <CardTitle className="text-sm dark:text-white">Weekly Wellness Average</CardTitle>
               </CardHeader>
               <CardContent>
                 <ResponsiveContainer width="100%" height={250}>
@@ -733,10 +737,10 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-blue-600">
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                     {goals.filter(g => g.status === 'active').length}
                   </p>
-                  <p className="text-sm text-gray-600">Active Goals</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Active Goals</p>
                 </div>
               </CardContent>
             </Card>
@@ -744,10 +748,10 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-green-600">
+                  <p className="text-2xl font-bold text-green-600 dark:text-green-400">
                     {wellnessHistory.length}
                   </p>
-                  <p className="text-sm text-gray-600">Wellness Check-ins</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Wellness Check-ins</p>
                 </div>
               </CardContent>
             </Card>
@@ -755,10 +759,10 @@ const ClientProgressDashboard: React.FC<ClientProgressDashboardProps> = ({
             <Card>
               <CardContent className="p-4">
                 <div className="text-center">
-                  <p className="text-2xl font-bold text-purple-600">
+                  <p className="text-2xl font-bold text-purple-600 dark:text-purple-400">
                     {milestones.length}
                   </p>
-                  <p className="text-sm text-gray-600">Milestones Achieved</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">Milestones Achieved</p>
                 </div>
               </CardContent>
             </Card>

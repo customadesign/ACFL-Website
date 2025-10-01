@@ -420,54 +420,54 @@ useEffect(() => {
 
 
 	return (
-		<div className="flex flex-col h-screen sm:max-w-7xl sm:mx-auto sm:px-4  lg:px-8 sm:pt-8 sm:pb-16 sm:h-auto">
+		<div className="flex flex-col h-screen sm:h-auto w-full overflow-x-hidden">
 			{/* Page Header - Hidden on mobile when in chat view */}
 			<div className={`mb-4 sm:mb-8 px-4 pt-4 sm:px-0 sm:pt-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
 				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">My Messages</h1>
 				<p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400">Send and receive messages with your clients</p>
 			</div>
+
+			{/* Filters and Search */}
+			<div className={`mb-4 px-4 sm:px-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
+				<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+					{/* Search */}
+					<div className="relative flex-1 min-w-0">
+						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+						<Input
+							placeholder="Search conversations..."
+							value={searchTerm}
+							onChange={(e) => setSearchTerm(e.target.value)}
+							className="pl-10 dark:text-white w-full"
+						/>
+					</div>
+
+					{/* Unread Filter */}
+					<Button
+						variant={showUnreadOnly ? "default" : "outline"}
+						onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+						className={`flex items-center gap-2 flex-shrink-0 ${
+							showUnreadOnly
+								? 'dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700'
+								: 'dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
+						}`}
+					>
+						<MessageCircle className="w-4 h-4" />
+						Unread Only
+					</Button>
+				</div>
+			</div>
 			{/* Main Content */}
 			{initialLoad ? (
 				<MessagesSkeleton />
 			) : (
-			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
+			<div className="flex-1 flex flex-col md:grid md:grid-cols-3 md:gap-4 overflow-hidden px-4 sm:px-0 max-w-full">
 					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
-					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col`}>
+					<div className={`${showMobileChat ? 'hidden md:block' : 'flex-1 md:flex-none'} md:border md:dark:border-gray-700 md:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col md:h-[500px] w-full min-w-0`}>
 						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
 							<span>Conversations ({filteredConversations.length})</span>
 							<MessageCircle className="w-4 h-4 text-gray-500" />
 						</div>
-
-						{/* Filter Controls */}
-						<div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-3">
-							{/* Search */}
-							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-								<Input
-									placeholder="Search conversations..."
-									value={searchTerm}
-									onChange={(e) => setSearchTerm(e.target.value)}
-									className="pl-10"
-								/>
-							</div>
-
-							{/* Unread Filter */}
-							<Button
-								variant={showUnreadOnly ? "default" : "outline"}
-								onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-								size="sm"
-								className={`w-full flex items-center justify-center gap-2 ${
-									showUnreadOnly
-										? 'dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700'
-										: 'dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
-								}`}
-							>
-								<Filter className="w-4 h-4" />
-								{showUnreadOnly ? 'Show All' : 'Unread Only'}
-							</Button>
-						</div>
-
-						<div className="flex-1 overflow-y-auto">
+						<div className="flex-1 overflow-y-auto overflow-x-hidden">
 							{filteredConversations.map(c => (
 								<div key={c.partnerId} className="relative group">
 									<button
@@ -477,12 +477,12 @@ useEffect(() => {
 										}}
 										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center justify-between touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
 									>
-										<div className="min-w-0 flex-1">
-											<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
-											<div className="text-xs sm:text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages yet'}</div>
+										<div className="min-w-0 flex-1 overflow-hidden pr-2">
+											<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white truncate">{c.partnerName}</div>
+											<div className="text-xs text-gray-500 dark:text-gray-400 truncate break-words">{c.lastBody || 'No messages yet'}</div>
 										</div>
 										{c.unreadCount > 0 && (
-											<span className="ml-2 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
+											<span className="ml-2 flex-shrink-0 inline-flex items-center justify-center text-xs bg-blue-600 text-white rounded-full h-5 w-5 min-w-[20px]">{c.unreadCount}</span>
 										)}
 									</button>
 									<button
@@ -510,21 +510,25 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden`}>
-					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 md:relative md:inset-auto' : 'hidden md:flex'} md:col-span-2 md:border md:dark:border-gray-700 md:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full min-w-0`}>
+					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
 						{/* Back button for mobile */}
 						<button
 							onClick={() => setShowMobileChat(false)}
-							className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full touch-manipulation"
+							className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full touch-manipulation flex-shrink-0"
 						>
 							<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
 						</button>
-						<div className="font-semibold text-gray-900 dark:text-white">{activePartner?.partnerName || 'Select a conversation'}</div>
+						<div className="font-semibold text-gray-900 dark:text-white truncate flex-1 min-w-0">{activePartner?.partnerName || 'Select a conversation'}</div>
 					</div>
-						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900 min-h-0">
+						<div ref={scrollerRef} className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900 min-h-0">
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-								<p>Select a conversation to start messaging</p>
+								<div className="text-center px-4">
+									<MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+									<p className="text-lg font-medium mb-2">Select a conversation</p>
+									<p className="text-sm">Choose a conversation from the list to start messaging</p>
+								</div>
 							</div>
 						)}
 						{activePartnerId && messages.map(m => {
@@ -532,24 +536,24 @@ useEffect(() => {
 								const hasAttachment = m.attachment_url && m.attachment_name && !m.deleted_for_everyone
 								const isDeleted = m.deleted_for_everyone
 								return (
-									<div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''} group relative w-fit`}>
-										<div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${
-											isDeleted 
-												? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic' 
-												: isMine 
-													? 'bg-blue-600 text-white' 
+									<div key={m.id} className={`max-w-[85%] sm:max-w-[75%] min-w-0 ${isMine ? 'ml-auto' : ''} group relative`}>
+										<div className={`px-3 py-2 rounded-lg text-sm shadow-sm break-words overflow-hidden ${
+											isDeleted
+												? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic'
+												: isMine
+													? 'bg-blue-600 text-white'
 													: 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
 										}`}>
-											{m.body && <div>{m.body}</div>}
+											{m.body && <div className="break-words overflow-wrap-anywhere word-break-break-word">{m.body}</div>}
 											{hasAttachment && (
 												<div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-500' : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600'}`}>
-													<div className="flex items-center gap-2">
-														<Paperclip size={16} />
-														<span className="truncate">{m.attachment_name}</span>
+													<div className="flex items-center gap-2 min-w-0">
+														<Paperclip size={16} className="flex-shrink-0" />
+														<span className="truncate flex-1 min-w-0">{m.attachment_name}</span>
 														<a
 															href={m.attachment_url || '#'}
 															download={m.attachment_name || undefined}
-															className={`p-1 hover:opacity-80 ${isMine ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}
+															className={`p-1 hover:opacity-80 flex-shrink-0 ${isMine ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}
 															title="Download"
 															target="_blank"
 															rel="noopener noreferrer"
@@ -614,11 +618,11 @@ useEffect(() => {
 						</div>
 						<div className="p-3 sm:p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
 							{selectedFile && (
-								<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
-									<div className="flex items-center gap-2">
-										<Paperclip size={16} />
-										<span className="text-sm text-gray-900 dark:text-gray-100">{selectedFile.name}</span>
-										<span className="text-xs text-gray-500 dark:text-gray-400">
+								<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between min-w-0">
+									<div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
+										<Paperclip size={16} className="flex-shrink-0" />
+										<span className="text-sm text-gray-900 dark:text-gray-100 truncate">{selectedFile.name}</span>
+										<span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">
 											({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
 										</span>
 									</div>
@@ -629,13 +633,13 @@ useEffect(() => {
 												fileInputRef.current.value = ''
 											}
 										}}
-										className="text-red-500 hover:text-red-700"
+										className="text-red-500 hover:text-red-700 flex-shrink-0 ml-2"
 									>
 										<X size={16} />
 									</button>
 								</div>
 							)}
-							<div className="flex gap-2 items-end">
+							<div className="flex gap-2 items-end min-w-0 w-full">
 								<input
 									ref={fileInputRef}
 									type="file"
@@ -645,7 +649,7 @@ useEffect(() => {
 								/>
 								<button
 									onClick={() => fileInputRef.current?.click()}
-									className="p-3 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+									className="p-3 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation flex-shrink-0"
 									title={activePartnerId ? "Attach file" : "Select a conversation first"}
 									disabled={!activePartnerId}
 								>
@@ -655,7 +659,7 @@ useEffect(() => {
 									value={text}
 									onChange={e => setText(e.target.value)}
 									placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-									className="flex-1 dark:text-white text-base sm:text-sm py-3 sm:py-2"
+									className="flex-1 min-w-0 dark:text-white dark:placeholder-gray-400 text-base sm:text-sm py-3 sm:py-2 max-w-full"
 									disabled={!activePartnerId}
 									onKeyDown={e => {
 										if (e.key === 'Enter' && !e.shiftKey) {
@@ -664,10 +668,10 @@ useEffect(() => {
 										}
 									}}
 								/>
-								<Button 
-									onClick={handleSend} 
-									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)} 
-									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white px-6 sm:px-4 py-3 sm:py-2 touch-manipulation"
+								<Button
+									onClick={handleSend}
+									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)}
+									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white px-6 sm:px-4 py-3 sm:py-2 touch-manipulation flex-shrink-0"
 								>
 									<Send className="w-5 h-5 sm:hidden" />
 									<span className="hidden sm:inline">{uploading ? 'Uploading...' : sending ? 'Sending...' : 'Send'}</span>

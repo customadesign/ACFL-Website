@@ -193,8 +193,20 @@ export class SquarePaymentService {
       throw new Error(`Payment not found: ${error.message}`);
     }
 
+    console.log('Payment record retrieved:', {
+      id: payment.id,
+      status: payment.status,
+      amount_cents: payment.amount_cents,
+      square_payment_id: payment.square_payment_id,
+      has_square_payment_id: !!payment.square_payment_id
+    });
+
+    if (!payment.square_payment_id) {
+      throw new Error('Payment does not have a Square payment ID. This payment may have been created with a different payment provider or the payment was not completed through Square.');
+    }
+
     if (payment.status !== 'succeeded') {
-      throw new Error('Can only refund successful payments');
+      throw new Error(`Can only refund successful payments. Current status: ${payment.status}`);
     }
 
     const refundAmount = request.amount_cents || payment.amount_cents;
@@ -213,6 +225,12 @@ export class SquarePaymentService {
 
     try {
       // Create Square refund
+      console.log('Creating Square refund with params:', {
+        paymentId: payment.square_payment_id,
+        amount: formatSquareAmount(refundAmount),
+        reason: request.reason
+      });
+
       const { result: refundResult } = await refundsApi.refundPayment({
         idempotencyKey: generateIdempotencyKey(),
         amountMoney: {
@@ -228,6 +246,7 @@ export class SquarePaymentService {
       }
 
       const squareRefund = refundResult.refund;
+      console.log('Square refund created successfully:', squareRefund.id);
 
       // Calculate refund distribution
       const { coachPenalty, platformRefund } = this.calculateRefundDistribution(
@@ -285,8 +304,25 @@ export class SquarePaymentService {
         amount_cents: refundAmount,
         status: squareRefund.status === 'COMPLETED' ? 'succeeded' : 'processing',
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating refund:', error);
+
+      // Extract detailed error information from Square API
+      if (error.errors && Array.isArray(error.errors)) {
+        const errorDetails = error.errors.map((e: any) =>
+          `${e.category}: ${e.detail || e.code}`
+        ).join(', ');
+        throw new Error(`Square API Error: ${errorDetails}`);
+      }
+
+      // If it's an ApiError from Square SDK
+      if (error.result?.errors) {
+        const errorDetails = error.result.errors.map((e: any) =>
+          `${e.category}: ${e.detail || e.code}`
+        ).join(', ');
+        throw new Error(`Square API Error: ${errorDetails}`);
+      }
+
       throw error;
     }
   }

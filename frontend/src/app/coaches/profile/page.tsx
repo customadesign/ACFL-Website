@@ -576,80 +576,80 @@ export default function CoachProfilePage() {
 
       {/* Stats Overview with Refresh Button */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-semibold text-foreground">Profile Overview</h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+          <h2 className="text-lg sm:text-xl font-semibold text-foreground">Profile Overview</h2>
           <Button
             variant="outline"
-            size="sm"
+            size="default"
             onClick={refreshData}
             disabled={loading}
-            className="h-10 sm:h-8 px-3 dark:text-white touch-manipulation"
+            className="min-h-[44px] px-4 dark:text-white touch-manipulation w-full sm:w-auto"
           >
             <RefreshCw className={`w-4 h-4 mr-2 dark:text-white ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           <Card className="bg-card border-border">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-2 sm:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 lg:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
+                  <svg className="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                   </svg>
                 </div>
-                <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Clients</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.totalClients}</p>
+                <div className="ml-4 min-w-0 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Clients</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalClients}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 lg:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
+                  <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Sessions</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.totalSessions}</p>
+                <div className="ml-4 min-w-0 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Sessions</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.totalSessions}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 lg:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
+                  <svg className="w-6 h-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
                   </svg>
                 </div>
-                <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Average Rating</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.averageRating}</p>
+                <div className="ml-4 min-w-0 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Average Rating</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.averageRating}</p>
                 </div>
               </div>
             </CardContent>
           </Card>
           
           <Card className="bg-card border-border">
-            <CardContent className="p-4 sm:p-6">
+            <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
-                  <svg className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="p-3 lg:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <svg className="w-6 h-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                   </svg>
                 </div>
-                <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Completion</p>
-                  <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.completionRate || 0}%</p>
+                <div className="ml-4 min-w-0 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Completion</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.completionRate || 0}%</p>
                 </div>
               </div>
             </CardContent>
@@ -673,21 +673,21 @@ export default function CoachProfilePage() {
               <CardDescription>Upload a professional photo for your profile</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="flex flex-col sm:flex-row items-center space-y-6 sm:space-y-0 sm:space-x-8">
                 <div className="relative flex-shrink-0">
                   {profileData.profilePhoto ? (
                     <img
                       src={profileData.profilePhoto}
                       alt="Profile"
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-gray-200"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200"
                     />
                   ) : (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-200 flex items-center justify-center">
+                      <User className="w-12 h-12 sm:w-14 sm:h-14 text-gray-400" />
                     </div>
                   )}
-                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation">
-                    <Upload className="w-4 h-4" />
+                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-3 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <Upload className="w-5 h-5" />
                     <input
                       type="file"
                       accept="image/*"
@@ -696,10 +696,10 @@ export default function CoachProfilePage() {
                     />
                   </label>
                 </div>
-                <div className="text-center sm:text-left">
-                  <h3 className="text-lg font-semibold">{profileData.firstName} {profileData.lastName}</h3>
-                  <p className="text-gray-600 break-words">{profileData.email}</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                <div className="text-center sm:text-left flex-1">
+                  <h3 className="text-xl font-semibold">{profileData.firstName} {profileData.lastName}</h3>
+                  <p className="text-gray-600 break-words text-base mt-1">{profileData.email}</p>
+                  <p className="text-sm text-gray-500 mt-3">
                     Click the upload button to change your profile photo
                   </p>
                 </div>
@@ -710,21 +710,21 @@ export default function CoachProfilePage() {
           {/* Tabbed Profile Sections */}
           <Card className="bg-card border-border">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>Professional Profile</CardTitle>
-                  <CardDescription>Comprehensive profile management based on your application</CardDescription>
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div className="flex-1">
+                  <CardTitle className="text-lg sm:text-xl">Professional Profile</CardTitle>
+                  <CardDescription className="text-sm sm:text-base mt-1">Comprehensive profile management based on your application</CardDescription>
                 </div>
                 {!editing ? (
-                  <Button onClick={() => setEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white min-h-[44px] touch-manipulation">
+                  <Button onClick={() => setEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white min-h-[44px] touch-manipulation w-full lg:w-auto px-6 text-base">
                     Edit Profile
                   </Button>
                 ) : (
-                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
                     <Button
                       onClick={handleSave}
                       disabled={saving}
-                      className="bg-green-600 hover:bg-green-700 flex items-center dark:text-white min-h-[44px] touch-manipulation"
+                      className="bg-green-600 hover:bg-green-700 flex items-center dark:text-white min-h-[44px] touch-manipulation px-6 text-base justify-center"
                     >
                       {saving ? (
                         <>
@@ -751,7 +751,7 @@ export default function CoachProfilePage() {
                       }}
                       variant="outline"
                       disabled={saving}
-                      className="dark:text-white min-h-[44px] touch-manipulation"
+                      className="dark:text-white min-h-[44px] touch-manipulation px-6 text-base"
                     >
                       Cancel
                     </Button>
@@ -761,8 +761,8 @@ export default function CoachProfilePage() {
             </CardHeader>
             <CardContent>
               {/* Tab Navigation */}
-              <div className="border-b border-gray-200 mb-6">
-                <nav className="-mb-px flex space-x-4 sm:space-x-8 overflow-x-auto pb-2 sm:pb-0" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
+              <div className="border-b border-gray-200 mb-8">
+                <nav className="-mb-px flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto pb-3 sm:pb-0" style={{scrollbarWidth: 'none', msOverflowStyle: 'none'}}>
                   {[
                     { id: 'basic', label: 'Basic Info', icon: User },
                     { id: 'professional', label: 'Professional', icon: Award },
@@ -776,7 +776,7 @@ export default function CoachProfilePage() {
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`py-2 px-2 sm:px-3 border-b-2 font-medium text-xs sm:text-sm flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 touch-manipulation min-h-[44px] ${
+                      className={`py-3 px-3 sm:px-4 border-b-2 font-medium text-sm flex items-center gap-2 whitespace-nowrap flex-shrink-0 touch-manipulation min-h-[48px] transition-colors ${
                         activeTab === tab.id
                           ? 'border-blue-500 text-blue-600'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -784,7 +784,7 @@ export default function CoachProfilePage() {
                     >
                       <tab.icon className="w-4 h-4 flex-shrink-0" />
                       <span className="hidden sm:inline">{tab.label}</span>
-                      <span className="sm:hidden text-xs">{tab.label.split(' ')[0]}</span>
+                      <span className="sm:hidden text-xs font-medium">{tab.label.split(' ')[0]}</span>
                     </button>
                   ))}
                 </nav>
@@ -795,9 +795,9 @@ export default function CoachProfilePage() {
                 <div className="space-y-6">
                   <h3 className="text-lg font-semibold">Basic Information</h3>
                   
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                         First Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -807,11 +807,11 @@ export default function CoachProfilePage() {
                         onChange={handleChange}
                         disabled={!editing}
                         required
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                         Last Name <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -821,11 +821,11 @@ export default function CoachProfilePage() {
                         onChange={handleChange}
                         disabled={!editing}
                         required
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                         Email <span className="text-red-500">*</span>
                       </label>
                       <input
@@ -835,56 +835,56 @@ export default function CoachProfilePage() {
                         onChange={handleChange}
                         disabled={!editing}
                         required
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Phone</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Phone</label>
                       <input
                         type="tel"
                         name="phone"
                         value={profileData.phone}
                         onChange={handleChange}
                         disabled={!editing}
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Bio / Coaching Philosophy</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Bio / Coaching Philosophy</label>
                     <textarea
                       name="bio"
-                      rows={4}
+                      rows={5}
                       value={profileData.bio}
                       onChange={handleChange}
                       disabled={!editing}
-                      className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation resize-vertical"
+                      className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation resize-vertical min-h-[120px]"
                       placeholder="Describe your coaching philosophy and approach..."
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Years of Experience</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Years of Experience</label>
                       <input
                         type="number"
                         name="experience"
                         value={profileData.experience}
                         onChange={handleChange}
                         disabled={!editing}
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Hourly Rate ($)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Hourly Rate ($)</label>
                       <input
                         type="number"
                         name="hourlyRate"
                         value={profileData.hourlyRate}
                         onChange={handleChange}
                         disabled={!editing}
-                        className="w-full px-3 py-3 text-base border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation"
+                        className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground touch-manipulation min-h-[48px]"
                       />
                     </div>
                   </div>
@@ -1072,9 +1072,9 @@ export default function CoachProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Professional Certifications</label>
                     {editing ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border border-gray-300 rounded-md p-4">
+                      <div className="grid grid-cols-1 gap-4 border border-gray-300 rounded-lg p-6">
                         {PROFESSIONAL_CERTIFICATIONS.map((cert) => (
-                          <div key={cert} className="flex items-center space-x-3">
+                          <div key={cert} className="flex items-center space-x-4">
                             <Checkbox
                               id={cert}
                               checked={profileData.professionalCertifications.includes(cert)}
@@ -1091,9 +1091,9 @@ export default function CoachProfilePage() {
                                   }));
                                 }
                               }}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5"
                             />
-                            <label htmlFor={cert} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <label htmlFor={cert} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {cert}
                             </label>
                           </div>
@@ -1170,17 +1170,17 @@ export default function CoachProfilePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                       Specialties <span className="text-red-500">*</span>
                     </label>
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ${editing ? 'max-h-48' : ''} overflow-y-auto border border-gray-300 rounded-md p-4`}>
+                    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-4 ${editing ? 'max-h-64' : ''} overflow-y-auto border border-gray-300 rounded-lg p-6`}>
                       {editing ? (
                         SPECIALTIES.map((specialty) => (
-                          <div key={specialty} className="flex items-center space-x-3 min-h-[44px]">
+                          <div key={specialty} className="flex items-center space-x-4 min-h-[48px] py-2">
                             <Checkbox
                               id={specialty}
                               checked={selectedSpecialties.includes(specialty)}
                               onCheckedChange={(checked) => handleSpecialtyChange(specialty, checked as boolean)}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5 flex-shrink-0"
                             />
-                            <label htmlFor={specialty} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed">
+                            <label htmlFor={specialty} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {specialty}
                             </label>
                           </div>
@@ -1201,17 +1201,17 @@ export default function CoachProfilePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                       Languages <span className="text-red-500">*</span>
                     </label>
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 ${editing ? 'max-h-32' : ''} overflow-y-auto border border-gray-300 rounded-md p-4`}>
+                    <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 ${editing ? 'max-h-48' : ''} overflow-y-auto border border-gray-300 rounded-lg p-6`}>
                       {editing ? (
                         LANGUAGES.map((language) => (
-                          <div key={language} className="flex items-center space-x-3 min-h-[44px]">
+                          <div key={language} className="flex items-center space-x-4 min-h-[48px] py-2">
                             <Checkbox
                               id={language}
                               checked={selectedLanguages.includes(language)}
                               onCheckedChange={(checked) => handleLanguageChange(language, checked as boolean)}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5 flex-shrink-0"
                             />
-                            <label htmlFor={language} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed">
+                            <label htmlFor={language} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {language}
                             </label>
                           </div>
@@ -1231,9 +1231,9 @@ export default function CoachProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Age Groups Comfortable Working With</label>
                     {editing ? (
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 border border-gray-300 rounded-md p-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border border-gray-300 rounded-lg p-6">
                         {['Children (5-12)', 'Teenagers (13-17)', 'Young Adults (18-25)', 'Adults (26-65)', 'Seniors (65+)'].map((ageGroup) => (
-                          <div key={ageGroup} className="flex items-center space-x-3">
+                          <div key={ageGroup} className="flex items-center space-x-4 min-h-[48px] py-2">
                             <Checkbox
                               id={ageGroup}
                               checked={profileData.ageGroupsComfortable.includes(ageGroup)}
@@ -1250,9 +1250,9 @@ export default function CoachProfilePage() {
                                   }));
                                 }
                               }}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5 flex-shrink-0"
                             />
-                            <label htmlFor={ageGroup} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <label htmlFor={ageGroup} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {ageGroup}
                             </label>
                           </div>
@@ -1278,9 +1278,9 @@ export default function CoachProfilePage() {
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Areas of Coaching Expertise</label>
                     {editing ? (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 border border-gray-300 rounded-md p-4">
+                      <div className="grid grid-cols-1 gap-4 border border-gray-300 rounded-lg p-6">
                         {COACHING_TECHNIQUES.map((technique) => (
-                          <div key={technique} className="flex items-center space-x-3">
+                          <div key={technique} className="flex items-center space-x-4 min-h-[48px] py-2">
                             <Checkbox
                               id={technique}
                               checked={profileData.coachingExpertise.includes(technique)}
@@ -1297,9 +1297,9 @@ export default function CoachProfilePage() {
                                   }));
                                 }
                               }}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5 flex-shrink-0"
                             />
-                            <label htmlFor={technique} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer">
+                            <label htmlFor={technique} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {technique}
                             </label>
                           </div>
@@ -1366,10 +1366,10 @@ export default function CoachProfilePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                       Therapy Modalities
                     </label>
-                    <div className={`grid grid-cols-1 sm:grid-cols-2 gap-3 ${editing ? 'max-h-40' : ''} overflow-y-auto border border-gray-300 rounded-md p-4`}>
+                    <div className={`grid grid-cols-1 gap-4 ${editing ? 'max-h-64' : ''} overflow-y-auto border border-gray-300 rounded-lg p-6`}>
                       {editing ? (
                         therapyModalityOptions.map((modality) => (
-                          <div key={modality.id} className="flex items-center space-x-3 min-h-[44px]">
+                          <div key={modality.id} className="flex items-center space-x-4 min-h-[48px] py-2">
                             <Checkbox
                               id={modality.id}
                               checked={selectedTherapyModalities.includes(modality.id)}
@@ -1380,9 +1380,9 @@ export default function CoachProfilePage() {
                                   setSelectedTherapyModalities(prev => prev.filter(id => id !== modality.id));
                                 }
                               }}
-                              className="touch-manipulation"
+                              className="touch-manipulation w-5 h-5 flex-shrink-0"
                             />
-                            <label htmlFor={modality.id} className="text-sm text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed">
+                            <label htmlFor={modality.id} className="text-base text-gray-700 dark:text-gray-300 cursor-pointer leading-relaxed flex-1">
                               {modality.label}
                             </label>
                           </div>
@@ -1465,7 +1465,7 @@ export default function CoachProfilePage() {
                         {availabilityOptions.map((option) => {
                           const isChecked = profileData.availability_options.includes(option.id);
                           return (
-                            <div key={option.id} className="flex items-center space-x-3 min-h-[44px]">
+                            <div key={option.id} className="flex items-center space-x-4 min-h-[48px] py-2">
                               <Checkbox
                                 id={option.id}
                                 checked={isChecked}
@@ -1483,11 +1483,11 @@ export default function CoachProfilePage() {
                                   }
                                 }}
                                 disabled={!editing}
-                                className="touch-manipulation"
+                                className="touch-manipulation w-5 h-5 flex-shrink-0"
                               />
                               <label
                                 htmlFor={option.id}
-                                className="text-sm font-medium text-gray-700 cursor-pointer dark:text-gray-300 leading-relaxed"
+                                className="text-base font-medium text-gray-700 cursor-pointer dark:text-gray-300 leading-relaxed flex-1"
                               >
                                 {option.label}
                               </label>
@@ -1501,11 +1501,11 @@ export default function CoachProfilePage() {
                           profileData.availability_options.map((availabilityId) => {
                             const option = availabilityOptions.find(opt => opt.id === availabilityId);
                             return option ? (
-                              <div key={availabilityId} className="flex items-center space-x-3 p-3 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800 min-h-[44px]">
+                              <div key={availabilityId} className="flex items-center space-x-4 p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800 min-h-[52px]">
                                 <svg className="w-5 h-5 text-green-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                                 </svg>
-                                <span className="text-sm font-medium text-gray-700 dark:text-green-100 leading-relaxed">{option.label}</span>
+                                <span className="text-base font-medium text-gray-700 dark:text-green-100 leading-relaxed">{option.label}</span>
                               </div>
                             ) : null;
                           })

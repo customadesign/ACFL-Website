@@ -146,16 +146,17 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
         <div className="lg:col-span-2">
           <Card>
             <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center gap-2">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
                   <CalendarIcon className="h-5 w-5" />
-                  {monthName}
+                  <span className="truncate">{monthName}</span>
                 </CardTitle>
-                <div className="flex gap-2">
+                <div className="flex gap-1 sm:gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigateMonth('prev')}
+                    className="p-2 min-w-[36px]"
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </Button>
@@ -163,13 +164,16 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentDate(new Date())}
+                    className="px-2 sm:px-3"
                   >
-                    Today
+                    <span className="hidden sm:inline">Today</span>
+                    <span className="sm:hidden text-xs">•</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigateMonth('next')}
+                    className="p-2 min-w-[36px]"
                   >
                     <ChevronRight className="h-4 w-4" />
                   </Button>
@@ -178,16 +182,17 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
             </CardHeader>
             <CardContent>
               {/* Days of week header */}
-              <div className="grid grid-cols-7 gap-2 mb-4">
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-center text-sm font-medium text-gray-500 dark:text-gray-400 py-2">
-                    {day}
+                  <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 py-2">
+                    <span className="hidden sm:inline">{day}</span>
+                    <span className="sm:hidden">{day.charAt(0)}</span>
                   </div>
                 ))}
               </div>
 
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-2">
+              <div className="grid grid-cols-7 gap-1 sm:gap-2">
                 {monthData.map((date, index) => {
                   const dayAppointments = getAppointmentsForDate(date)
                   const isCurrentMonthDate = isCurrentMonth(date)
@@ -199,37 +204,52 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                       key={index}
                       onClick={() => handleDateClick(date)}
                       className={`
-                        min-h-[100px] p-2 rounded-lg border transition-all hover:shadow-md text-left relative
+                        min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 rounded border sm:rounded-lg transition-all hover:shadow-md text-left relative
                         ${isTodayDate ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700' : ''}
-                        ${isSelected ? 'ring-2 ring-blue-500' : ''}
+                        ${isSelected ? 'ring-1 sm:ring-2 ring-blue-500' : ''}
                         ${isCurrentMonthDate ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-400'}
                         ${dayAppointments.length > 0 ? 'hover:bg-gray-50 dark:hover:bg-gray-750' : ''}
                       `}
                     >
-                      <div className={`text-sm font-medium mb-1 ${isTodayDate ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                      <div className={`text-xs sm:text-sm font-medium mb-1 ${isTodayDate ? 'text-blue-600 dark:text-blue-400' : ''}`}>
                         {date.getDate()}
                       </div>
 
-                      <div className="space-y-1">
-                        {dayAppointments.slice(0, 3).map(appointment => (
+                      <div className="space-y-0.5 sm:space-y-1">
+                        {dayAppointments.slice(0, 2).map(appointment => (
                           <div
                             key={appointment.id}
-                            className={`text-xs p-1 rounded border ${getStatusColor(appointment.status)}`}
+                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded border ${getStatusColor(appointment.status)}`}
                           >
                             <div className="font-medium truncate">
-                              {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
+                              {appointment.clients ? (
+                                <span className="hidden sm:inline">
+                                  {`${appointment.clients.first_name} ${appointment.clients.last_name}`}
+                                </span>
+                              ) : (
+                                <span className="hidden sm:inline">Client</span>
+                              )}
+                              <span className="sm:hidden">•</span>
                             </div>
                             <div className="truncate">
-                              {new Date(appointment.starts_at).toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
+                              <span className="hidden sm:inline">
+                                {new Date(appointment.starts_at).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              <span className="sm:hidden text-[8px]">
+                                {new Date(appointment.starts_at).toLocaleTimeString([], {
+                                  hour: 'numeric'
+                                })}
+                              </span>
                             </div>
                           </div>
                         ))}
-                        {dayAppointments.length > 3 && (
-                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                            +{dayAppointments.length - 3} more
+                        {dayAppointments.length > 2 && (
+                          <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400">
+                            <span className="hidden sm:inline">+{dayAppointments.length - 2} more</span>
+                            <span className="sm:hidden">+{dayAppointments.length - 2}</span>
                           </div>
                         )}
                       </div>
@@ -245,9 +265,11 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
         <div className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="h-5 w-5" />
-                {selectedDate ? selectedDate.toLocaleDateString() : 'Select a Date'}
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="text-sm sm:text-lg truncate">
+                  {selectedDate ? selectedDate.toLocaleDateString() : 'Select a Date'}
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -257,42 +279,44 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                     {todayAppointments.map(appointment => (
                       <div
                         key={appointment.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-3"
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 sm:p-3"
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <User className="h-4 w-4 text-gray-400" />
-                            <span className="font-medium text-sm">
+                        <div className="flex items-start justify-between mb-2 gap-2">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            <User className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                            <span className="font-medium text-xs sm:text-sm truncate">
                               {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                             </span>
                           </div>
-                          <Badge variant="outline" className={getStatusColor(appointment.status)}>
+                          <Badge variant="outline" className={`${getStatusColor(appointment.status)} text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 flex-shrink-0`}>
                             {appointment.status}
                           </Badge>
                         </div>
 
-                        <div className="text-sm text-gray-600 dark:text-gray-300 space-y-1">
+                        <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-1">
                           <div className="flex items-center gap-2">
-                            <Clock className="h-3 w-3" />
-                            {new Date(appointment.starts_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })} - {new Date(appointment.ends_at).toLocaleTimeString([], {
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
+                            <Clock className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {new Date(appointment.starts_at).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })} - {new Date(appointment.ends_at).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </span>
                           </div>
 
                           {appointment.meeting_id && (
                             <div className="flex items-center gap-2">
-                              <Video className="h-3 w-3" />
-                              Virtual Session
+                              <Video className="h-3 w-3 flex-shrink-0" />
+                              <span className="text-xs sm:text-sm">Virtual Session</span>
                             </div>
                           )}
 
                           {appointment.notes && (
-                            <div className="text-xs text-gray-500 dark:text-gray-400 mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
-                              {appointment.notes}
+                            <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 mt-2 p-2 bg-gray-50 dark:bg-gray-800 rounded">
+                              <div className="line-clamp-3">{appointment.notes}</div>
                             </div>
                           )}
                         </div>
@@ -300,15 +324,15 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                     ))}
                   </div>
                 ) : (
-                  <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                    <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>No appointments scheduled for this date.</p>
+                  <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+                    <CalendarIcon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm sm:text-base">No appointments scheduled for this date.</p>
                   </div>
                 )
               ) : (
-                <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-                  <CalendarIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Click on a date to view appointments.</p>
+                <div className="text-center py-6 sm:py-8 text-gray-500 dark:text-gray-400">
+                  <CalendarIcon className="h-8 w-8 sm:h-12 sm:w-12 mx-auto mb-4 opacity-50" />
+                  <p className="text-sm sm:text-base">Click on a date to view appointments.</p>
                 </div>
               )}
             </CardContent>

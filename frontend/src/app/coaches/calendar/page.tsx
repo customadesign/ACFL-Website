@@ -148,8 +148,8 @@ export default function UnifiedCalendarPage() {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Calendar & Appointments</h1>
-            <p className="text-gray-600 dark:text-gray-300 mt-1">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white">Calendar & Appointments</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mt-1">
               Manage your appointments and calendar integrations in one place.
             </p>
           </div>
@@ -157,35 +157,39 @@ export default function UnifiedCalendarPage() {
 
         {/* Unified Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:grid-cols-4">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
-              <Clock className="h-4 w-4" />
+          <TabsList className="grid w-full grid-cols-4 h-auto p-1">
+            <TabsTrigger value="overview" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-2 py-2 sm:py-1.5 text-xs sm:text-sm">
+              <Clock className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">Today</span>
+              <span className="sm:hidden text-[10px] leading-tight">Today</span>
             </TabsTrigger>
-            <TabsTrigger value="appointments" className="flex items-center gap-2">
-              <List className="h-4 w-4" />
+            <TabsTrigger value="appointments" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-2 py-2 sm:py-1.5 text-xs sm:text-sm">
+              <List className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">All Appointments</span>
+              <span className="sm:hidden text-[10px] leading-tight text-center">All</span>
             </TabsTrigger>
-            <TabsTrigger value="integration" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
+            <TabsTrigger value="integration" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-2 py-2 sm:py-1.5 text-xs sm:text-sm">
+              <Settings className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">Integration</span>
+              <span className="sm:hidden text-[10px] leading-tight text-center">Setup</span>
             </TabsTrigger>
-            <TabsTrigger value="calendar" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
+            <TabsTrigger value="calendar" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 px-2 py-2 sm:py-1.5 text-xs sm:text-sm">
+              <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
               <span className="hidden sm:inline">Calendar View</span>
+              <span className="sm:hidden text-[10px] leading-tight text-center">View</span>
             </TabsTrigger>
           </TabsList>
 
           {/* Today's Overview Tab */}
-          <TabsContent value="overview" className="space-y-6 mt-6">
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6 mt-4 sm:mt-6">
+            <div className="grid gap-4 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="h-5 w-5 text-blue-600" />
-                    Today's Schedule
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                    <span className="text-sm sm:text-lg">Today's Schedule</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     Your appointments for today
                   </CardDescription>
                 </CardHeader>
@@ -196,49 +200,49 @@ export default function UnifiedCalendarPage() {
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5 text-green-600" />
-                    Quick Actions
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                    <span className="text-sm sm:text-lg">Quick Actions</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     Common calendar tasks
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2 sm:space-y-3">
                   <Button
                     onClick={() => setActiveTab('appointments')}
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs sm:text-sm p-2 sm:p-3 h-auto"
                   >
-                    <List className="h-4 w-4 mr-2" />
-                    View All Appointments
+                    <List className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">View All Appointments</span>
                   </Button>
                   <Button
                     onClick={() => setActiveTab('integration')}
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs sm:text-sm p-2 sm:p-3 h-auto"
                   >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Calendar Settings
+                    <Settings className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Calendar Settings</span>
                   </Button>
                   <Button
                     onClick={() => setActiveTab('calendar')}
                     variant="outline"
-                    className="w-full justify-start"
+                    className="w-full justify-start text-xs sm:text-sm p-2 sm:p-3 h-auto"
                   >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Calendar View
+                    <Calendar className="h-3 w-3 sm:h-4 sm:w-4 mr-2 flex-shrink-0" />
+                    <span className="truncate">Calendar View</span>
                   </Button>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-purple-600" />
-                    Integration Status
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Calendar className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                    <span className="text-sm sm:text-lg">Integration Status</span>
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-xs sm:text-sm">
                     External calendar connections
                   </CardDescription>
                 </CardHeader>
@@ -250,16 +254,16 @@ export default function UnifiedCalendarPage() {
           </TabsContent>
 
           {/* All Appointments Tab */}
-          <TabsContent value="appointments" className="mt-6">
+          <TabsContent value="appointments" className="mt-4 sm:mt-6">
             <AppointmentsList coachId={coachId} />
           </TabsContent>
 
           {/* Calendar Integration Tab */}
-          <TabsContent value="integration" className="mt-6">
-            <div className="space-y-6">
+          <TabsContent value="integration" className="mt-4 sm:mt-6">
+            <div className="space-y-4 sm:space-y-6">
               <div>
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">External Calendar Integration</h2>
-                <p className="text-gray-600 dark:text-gray-300 text-sm">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white mb-2">External Calendar Integration</h2>
+                <p className="text-gray-600 dark:text-gray-300 text-xs sm:text-sm">
                   Connect your Google Calendar to automatically sync your coaching appointments.
                 </p>
               </div>
@@ -269,7 +273,7 @@ export default function UnifiedCalendarPage() {
           </TabsContent>
 
           {/* Calendar View Tab */}
-          <TabsContent value="calendar" className="mt-6">
+          <TabsContent value="calendar" className="mt-4 sm:mt-6">
             <CalendarView coachId={coachId} />
           </TabsContent>
         </Tabs>

@@ -203,7 +203,7 @@ export default function ClientBillingHistory({ clientId }: ClientBillingHistoryP
   if (loading && !transactions.length) {
     return (
       <div className="flex items-center justify-center h-64">
-        <RefreshCw className="h-8 w-8 animate-spin" />
+        <RefreshCw className="h-8 w-8 animate-spin dark:text-white" />
       </div>
     );
   }
@@ -212,31 +212,31 @@ export default function ClientBillingHistory({ clientId }: ClientBillingHistoryP
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h2 className="text-2xl font-bold">Payment History</h2>
+        <h2 className="text-2xl font-bold dark:text-white">Payment History</h2>
         <div className="flex gap-2">
           <Button
             variant="outline"
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
-            <Filter className="h-4 w-4" />
+            <Filter className="h-4 w-4 dark:text-white" />
             Filters
           </Button>
           <Button
             variant="outline"
             onClick={exportTransactions}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
-            <Download className="h-4 w-4" />
+            <Download className="h-4 w-4 dark:text-white" />
             Export
           </Button>
           <Button
             variant="outline"
             onClick={fetchTransactions}
             disabled={loading}
-            className="flex items-center gap-2"
+            className="flex items-center gap-2 dark:text-white"
           >
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
+            <RefreshCw className={cn("h-4 w-4 dark:text-white", loading && "animate-spin")} />
             Refresh
           </Button>
         </div>

@@ -25,7 +25,7 @@ export default function ClientBillingManagement({ clientId }: ClientBillingManag
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Billing & Payments</h1>
+          <h1 className="text-3xl font-bold dark:text-white">Billing & Payments</h1>
           <p className="text-muted-foreground">
             Manage your payments, credits, and refund requests
           </p>
@@ -33,7 +33,7 @@ export default function ClientBillingManagement({ clientId }: ClientBillingManag
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="dashboard" className="flex items-center gap-2">
             <TrendingDown className="h-4 w-4" />
             Dashboard

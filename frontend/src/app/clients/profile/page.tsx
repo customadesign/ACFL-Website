@@ -515,16 +515,7 @@ function ProfileContent() {
               <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Profile</h1>
               <p className="text-lg text-gray-600 dark:text-gray-300">Manage your personal information and preferences</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={refreshData}
-              disabled={isLoading}
-              className="h-8 px-3 dark:bg-gray-800 dark:text-gray-100"
-            >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-              Refresh
-            </Button>
+            
           </div>
         </div>
 
