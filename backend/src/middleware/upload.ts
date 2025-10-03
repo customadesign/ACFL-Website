@@ -6,10 +6,24 @@ const storage = multer.memoryStorage();
 
 // File filter to restrict file types and size
 const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Blocked file types for security reasons
+  const blockedTypes = [
+    'image/svg+xml',           // SVG files can contain XSS payloads
+    'text/html',               // HTML files
+    'application/x-httpd-php', // PHP files
+    'application/x-sh',        // Shell scripts
+    'application/javascript',  // JavaScript files
+    'text/javascript'
+  ];
+
+  // Check file extension as additional security layer
+  const fileExtension = file.originalname.toLowerCase().split('.').pop();
+  const blockedExtensions = ['svg', 'html', 'htm', 'php', 'sh', 'js', 'exe', 'bat', 'cmd'];
+
   // Allowed file types
   const allowedTypes = [
     'image/jpeg',
-    'image/jpg', 
+    'image/jpg',
     'image/png',
     'image/gif',
     'image/webp',
@@ -28,10 +42,16 @@ const fileFilter = (req: any, file: Express.Multer.File, cb: multer.FileFilterCa
     'application/x-zip-compressed'
   ];
 
+  // Block dangerous file types
+  if (blockedTypes.includes(file.mimetype) || blockedExtensions.includes(fileExtension || '')) {
+    cb(new Error(`File type ${file.mimetype} is not allowed for security reasons. SVG and executable files are blocked.`));
+    return;
+  }
+
   if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
-    cb(new Error(`File type ${file.mimetype} is not allowed. Allowed types: images, PDFs, documents, audio, video, and zip files.`));
+    cb(new Error(`File type ${file.mimetype} is not allowed. Allowed types: images (JPG, PNG, GIF, WebP), PDFs, documents, audio, video, and zip files.`));
   }
 };
 
