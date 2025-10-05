@@ -36,6 +36,27 @@ interface DashboardStats {
   recentActivity: any[];
 }
 
+interface SystemStatus {
+  status: string;
+  message: string;
+  responseTime?: string;
+}
+
+interface SystemHealth {
+  systemStatus: {
+    api: SystemStatus;
+    database: SystemStatus;
+    services: SystemStatus;
+  };
+  platformHealth: {
+    uptime: string;
+    responseTime: string;
+    successRate: string;
+    activeIssues: number;
+  };
+  timestamp: string;
+}
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalUsers: 0,
@@ -47,7 +68,9 @@ export default function AdminDashboard() {
     monthlyRevenue: 0,
     recentActivity: []
   });
+  const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isHealthLoading, setIsHealthLoading] = useState(true);
   const [activityPage, setActivityPage] = useState(1);
   const activityPageSize = 3;
   
@@ -62,12 +85,13 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     fetchDashboardData();
+    fetchSystemHealth();
   }, []);
 
   const fetchDashboardData = async () => {
     try {
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         window.location.href = '/login';
         return;
@@ -92,7 +116,7 @@ export default function AdminDashboard() {
       }
 
       const data = await response.json();
-      
+
       // Map the activity data to include icons
       const activityWithIcons = data.recentActivity.map((activity: any) => ({
         ...activity,
@@ -110,6 +134,52 @@ export default function AdminDashboard() {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchSystemHealth = async () => {
+    try {
+      const token = localStorage.getItem('token');
+
+      if (!token) {
+        return;
+      }
+
+      const API_URL = getApiUrl();
+      const response = await fetch(`${API_URL}/api/admin/system-health`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('System health fetch failed:', response.status, errorText);
+        throw new Error(`Failed to fetch system health data: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setSystemHealth(data);
+    } catch (error) {
+      console.error('Failed to fetch system health data:', error);
+      // Set a fallback error state so UI doesn't break
+      setSystemHealth({
+        systemStatus: {
+          api: { status: 'unknown', message: 'Unable to fetch status' },
+          database: { status: 'unknown', message: 'Unable to fetch status' },
+          services: { status: 'unknown', message: 'Unable to fetch status' }
+        },
+        platformHealth: {
+          uptime: 'N/A',
+          responseTime: 'N/A',
+          successRate: 'N/A',
+          activeIssues: 0
+        },
+        timestamp: new Date().toISOString()
+      });
+    } finally {
+      setIsHealthLoading(false);
     }
   };
 
@@ -710,29 +780,49 @@ export default function AdminDashboard() {
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">System Status</h3>
           </div>
           <div className="p-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">API</span>
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
-                </div>
+            {isHealthLoading ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex items-center flex-1 p-3 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse">
+                    <div className="w-3 h-3 bg-gray-300 dark:bg-gray-600 rounded-full flex-shrink-0 mr-3"></div>
+                    <div className="flex-1 min-w-0">
+                      <div className="h-4 bg-gray-300 dark:bg-gray-600 rounded w-16 mb-1"></div>
+                      <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-20"></div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Database</span>
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
-                </div>
+            ) : systemHealth ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                {Object.entries(systemHealth.systemStatus).map(([key, service]) => {
+                  const isOperational = service.status === 'operational';
+                  const isDegraded = service.status === 'degraded';
+                  const bgColor = isOperational ? 'bg-green-50 dark:bg-green-900/10' :
+                                isDegraded ? 'bg-yellow-50 dark:bg-yellow-900/10' :
+                                'bg-red-50 dark:bg-red-900/10';
+                  const dotColor = isOperational ? 'bg-green-500' :
+                                 isDegraded ? 'bg-yellow-500' :
+                                 'bg-red-500';
+                  const textColor = isOperational ? 'text-green-600 dark:text-green-400' :
+                                  isDegraded ? 'text-yellow-600 dark:text-yellow-400' :
+                                  'text-red-600 dark:text-red-400';
+
+                  return (
+                    <div key={key} className={`flex items-center flex-1 p-3 rounded-lg ${bgColor}`}>
+                      <div className={`w-3 h-3 ${dotColor} rounded-full flex-shrink-0 ${isOperational ? 'animate-pulse' : ''} mr-3`}></div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block capitalize">{key}</span>
+                        <span className={`text-xs font-semibold ${textColor} capitalize`}>{service.status}</span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-              <div className="flex items-center flex-1 p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                <div className="w-3 h-3 bg-green-500 rounded-full flex-shrink-0 animate-pulse mr-3"></div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300 block">Services</span>
-                  <span className="text-xs font-semibold text-green-600 dark:text-green-400">Operational</span>
-                </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <p className="text-sm">Failed to load system status</p>
               </div>
-            </div>
+            )}
           </div>
         </div>
 
@@ -742,40 +832,63 @@ export default function AdminDashboard() {
             <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">Platform Health</h3>
           </div>
           <div className="p-4">
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
-                <div className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 mb-1">
-                  98.5%
+            {isHealthLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} className="text-center p-3 rounded-lg bg-gray-100 dark:bg-gray-700 animate-pulse">
+                    <div className="h-6 bg-gray-300 dark:bg-gray-600 rounded w-16 mx-auto mb-2"></div>
+                    <div className="h-3 bg-gray-300 dark:bg-gray-600 rounded w-12 mx-auto"></div>
+                  </div>
+                ))}
+              </div>
+            ) : systemHealth ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="text-center p-3 rounded-lg bg-green-50 dark:bg-green-900/10">
+                  <div className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400 mb-1">
+                    {systemHealth.platformHealth.uptime}
+                  </div>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Uptime
+                  </div>
                 </div>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Uptime
+                <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
+                  <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">
+                    {systemHealth.platformHealth.responseTime}
+                  </div>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Response
+                  </div>
+                </div>
+                <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
+                  <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">
+                    {systemHealth.platformHealth.successRate}
+                  </div>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Success
+                  </div>
+                </div>
+                <div className={`text-center p-3 rounded-lg ${
+                  systemHealth.platformHealth.activeIssues === 0
+                    ? 'bg-green-50 dark:bg-green-900/10'
+                    : 'bg-orange-50 dark:bg-orange-900/10'
+                }`}>
+                  <div className={`text-lg sm:text-xl font-bold mb-1 ${
+                    systemHealth.platformHealth.activeIssues === 0
+                      ? 'text-green-600 dark:text-green-400'
+                      : 'text-orange-600 dark:text-orange-400'
+                  }`}>
+                    {systemHealth.platformHealth.activeIssues}
+                  </div>
+                  <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    Issues
+                  </div>
                 </div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-blue-50 dark:bg-blue-900/10">
-                <div className="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 mb-1">
-                  1.2s
-                </div>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Response
-                </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500 dark:text-gray-400">
+                <p className="text-sm">Failed to load platform health</p>
               </div>
-              <div className="text-center p-3 rounded-lg bg-purple-50 dark:bg-purple-900/10">
-                <div className="text-lg sm:text-xl font-bold text-purple-600 dark:text-purple-400 mb-1">
-                  99.2%
-                </div>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Success
-                </div>
-              </div>
-              <div className="text-center p-3 rounded-lg bg-orange-50 dark:bg-orange-900/10">
-                <div className="text-lg sm:text-xl font-bold text-orange-600 dark:text-orange-400 mb-1">
-                  0
-                </div>
-                <div className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                  Issues
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
