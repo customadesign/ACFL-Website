@@ -12,6 +12,7 @@ import NotificationBadge from '@/components/NotificationBadge';
 import Footer from '@/components/Footer';
 import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
+import BankAccountSetupBanner from '@/components/coach/BankAccountSetupBanner';
 import ThemeConsentModal from '@/components/ThemeConsentModal';
 import {
   Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar,
@@ -1152,6 +1153,7 @@ export default function CoachLayout({
           <main className={`p-4 lg:p-8 ${navigationGroups.flatMap(g => g.items).length > 4 ? 'pb-20 lg:pb-8' : 'pb-4 lg:pb-8'} overflow-x-hidden`}>
             <div className="max-w-7xl mx-auto w-full min-w-0">
               <DeactivatedAccountBanner />
+              <BankAccountSetupBanner />
               {children}
             </div>
           </main>

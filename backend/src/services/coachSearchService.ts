@@ -157,6 +157,28 @@ class CoachSearchService {
 
       console.log(`✅ Found ${coaches?.length || 0} available coaches`);
 
+      // Filter out coaches without bank accounts
+      if (coaches && coaches.length > 0) {
+        const coachIds = coaches.map(c => c.id);
+
+        // Get coaches who have at least one verified bank account
+        const { data: bankAccounts, error: bankError } = await supabase
+          .from('coach_bank_accounts')
+          .select('coach_id')
+          .in('coach_id', coachIds)
+          .eq('is_verified', true);
+
+        if (!bankError && bankAccounts) {
+          const coachesWithBankAccounts = new Set(bankAccounts.map(ba => ba.coach_id));
+          const filteredCoaches = coaches.filter(coach => coachesWithBankAccounts.has(coach.id));
+
+          console.log(`💳 Filtered to ${filteredCoaches.length} coaches with verified bank accounts (removed ${coaches.length - filteredCoaches.length})`);
+
+          // Replace coaches array with filtered version
+          coaches.splice(0, coaches.length, ...filteredCoaches);
+        }
+      }
+
       // Get coach application data separately for approved coaches
       let applicationData: any[] = [];
       if (coaches && coaches.length > 0) {
