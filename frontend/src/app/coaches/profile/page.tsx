@@ -415,16 +415,16 @@ export default function CoachProfilePage() {
     }
 
     // Character limit validations
-    if (profileData.educationalBackground && profileData.educationalBackground.length > 1000) {
-      validationErrors.push(`❌ Educational Background is too long (${profileData.educationalBackground.length} characters). Maximum is 1000 characters.`);
+    if (profileData.educationalBackground && profileData.educationalBackground.length > 100) {
+      validationErrors.push(`❌ Educational Background is too long (${profileData.educationalBackground.length} characters). Maximum is 100 characters.`);
     }
 
     if (profileData.coachingExperienceYears && profileData.coachingExperienceYears.length > 100) {
       validationErrors.push(`❌ Coaching Experience is too long (${profileData.coachingExperienceYears.length} characters). Maximum is 100 characters.`);
     }
 
-    if (profileData.actTrainingLevel && profileData.actTrainingLevel.length > 200) {
-      validationErrors.push(`❌ ACT Training Level is too long (${profileData.actTrainingLevel.length} characters). Maximum is 200 characters.`);
+    if (profileData.actTrainingLevel && profileData.actTrainingLevel.length > 100) {
+      validationErrors.push(`❌ ACT Training Level is too long (${profileData.actTrainingLevel.length} characters). Maximum is 100 characters.`);
     }
     
     if (validationErrors.length > 0) {
@@ -1088,8 +1088,8 @@ export default function CoachProfilePage() {
                     <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
                       Educational Background
                       {editing && (
-                        <span className={`ml-2 text-xs ${profileData.educationalBackground.length > 1000 ? 'text-red-600' : 'text-gray-500'}`}>
-                          ({profileData.educationalBackground.length}/1000 characters)
+                        <span className={`ml-2 text-xs ${profileData.educationalBackground.length > 100 ? 'text-red-600' : 'text-gray-500'}`}>
+                          ({profileData.educationalBackground.length}/100 characters)
                         </span>
                       )}
                     </label>
@@ -1100,15 +1100,15 @@ export default function CoachProfilePage() {
                           value={profileData.educationalBackground}
                           onChange={handleChange}
                           rows={3}
-                          maxLength={1000}
+                          maxLength={100}
                           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground"
-                          placeholder="Describe your educational background (max 1000 characters)..."
+                          placeholder="Describe your educational background (max 100 characters)..."
                         />
-                        {profileData.educationalBackground.length > 900 && (
-                          <p className={`text-xs mt-1 ${profileData.educationalBackground.length > 1000 ? 'text-red-600' : 'text-yellow-600'}`}>
-                            {profileData.educationalBackground.length > 1000
-                              ? `⚠️ Text exceeds limit by ${profileData.educationalBackground.length - 1000} characters`
-                              : `⚠️ ${1000 - profileData.educationalBackground.length} characters remaining`
+                        {profileData.educationalBackground.length > 80 && (
+                          <p className={`text-xs mt-1 ${profileData.educationalBackground.length > 100 ? 'text-red-600' : 'text-yellow-600'}`}>
+                            {profileData.educationalBackground.length > 100
+                              ? `⚠️ Text exceeds limit by ${profileData.educationalBackground.length - 100} characters`
+                              : `⚠️ ${100 - profileData.educationalBackground.length} characters remaining`
                             }
                           </p>
                         )}
