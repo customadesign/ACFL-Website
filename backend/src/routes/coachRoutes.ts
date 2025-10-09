@@ -112,6 +112,13 @@ router.put('/coach/profile', [
   body('inPersonAvailable').optional().isBoolean(),
   body('phoneAvailable').optional().isBoolean(),
   body('availability_options').optional().isArray(),
+  body('educationalBackground').optional({ nullable: true }),
+  body('coachingExperienceYears').optional({ nullable: true }),
+  body('professionalCertifications').optional({ nullable: true }),
+  body('coachingExpertise').optional({ nullable: true }),
+  body('ageGroupsComfortable').optional({ nullable: true }),
+  body('actTrainingLevel').optional({ nullable: true }),
+  body('email').optional(),
   body('location').optional().isString().custom((value) => {
     if (!value) return true; // Allow empty/optional
     
@@ -173,7 +180,13 @@ router.put('/coach/profile', [
       isAvailable,
       videoAvailable,
       availability_options,
-      location
+      location,
+      educationalBackground,
+      coachingExperienceYears,
+      professionalCertifications,
+      coachingExpertise,
+      ageGroupsComfortable,
+      actTrainingLevel
     } = req.body;
 
     console.log('Request body received:', req.body);
@@ -298,6 +311,38 @@ router.put('/coach/profile', [
       }
     } else {
       console.log('No demographics updates needed');
+    }
+
+    // Update coach_applications table if application-specific fields are provided
+    if (educationalBackground !== undefined || coachingExperienceYears !== undefined ||
+        professionalCertifications !== undefined || coachingExpertise !== undefined ||
+        ageGroupsComfortable !== undefined || actTrainingLevel !== undefined) {
+
+      const applicationUpdates: any = {
+        updated_at: new Date().toISOString()
+      };
+
+      if (educationalBackground !== undefined) applicationUpdates.educational_background = educationalBackground;
+      if (coachingExperienceYears !== undefined) applicationUpdates.coaching_experience_years = coachingExperienceYears;
+      if (professionalCertifications !== undefined) applicationUpdates.professional_certifications = professionalCertifications;
+      if (coachingExpertise !== undefined) applicationUpdates.coaching_expertise = coachingExpertise;
+      if (ageGroupsComfortable !== undefined) applicationUpdates.age_groups_comfortable = ageGroupsComfortable;
+      if (actTrainingLevel !== undefined) applicationUpdates.act_training_level = actTrainingLevel;
+
+      // Update coach_applications table using email as the key
+      // Note: coach_applications uses email field, not coach_id or user_id
+      const { error: appError } = await supabase
+        .from('coach_applications')
+        .update(applicationUpdates)
+        .eq('email', req.user.email);
+
+      if (appError) {
+        // Database error updating application
+        console.error('Failed to update coach application:', appError);
+        // Don't fail the whole request if application update fails
+      } else {
+        console.log('Coach application updated successfully');
+      }
     }
 
     // Get updated profile with demographics

@@ -222,6 +222,46 @@ export class BillingController {
     }
   }
 
+  // Approve payout (admin only)
+  async approvePayout(req: Request, res: Response) {
+    try {
+      const { payout_id } = req.params;
+      const { admin_id, notes } = req.body;
+
+      if (!admin_id) {
+        return res.status(400).json({ error: 'admin_id is required' });
+      }
+
+      const payout = await billingService.approvePayout(payout_id, admin_id, notes);
+      res.json(payout);
+    } catch (error) {
+      console.error('Error approving payout:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to approve payout' });
+    }
+  }
+
+  // Reject payout (admin only)
+  async rejectPayout(req: Request, res: Response) {
+    try {
+      const { payout_id } = req.params;
+      const { admin_id, rejection_reason } = req.body;
+
+      if (!admin_id) {
+        return res.status(400).json({ error: 'admin_id is required' });
+      }
+
+      if (!rejection_reason) {
+        return res.status(400).json({ error: 'rejection_reason is required' });
+      }
+
+      const payout = await billingService.rejectPayout(payout_id, admin_id, rejection_reason);
+      res.json(payout);
+    } catch (error) {
+      console.error('Error rejecting payout:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to reject payout' });
+    }
+  }
+
   // Delete bank account
   async deleteBankAccount(req: AuthRequest, res: Response) {
     try {

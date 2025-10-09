@@ -28,5 +28,7 @@ router.get('/refunds', requireAdminRole, billingController.getAllRefundRequests)
 // Payout management routes (admin only)
 router.post('/payouts', requireAdminRole, billingController.createPayout);
 router.get('/payouts', requireAdminRole, billingController.getAllPayouts);
+router.put('/payouts/:payout_id/approve', requireAdminRole, billingController.approvePayout);
+router.put('/payouts/:payout_id/reject', requireAdminRole, billingController.rejectPayout);
 
 export default router;

@@ -18,6 +18,12 @@ export const {
 
 // Helper function to get location ID
 export async function getLocationId(): Promise<string> {
+  // Check if location ID is set in environment variable first
+  if (process.env.SQUARE_LOCATION_ID) {
+    return process.env.SQUARE_LOCATION_ID;
+  }
+
+  // Otherwise, auto-detect from API
   try {
     const response = await locationsApi.listLocations();
 
@@ -29,7 +35,7 @@ export async function getLocationId(): Promise<string> {
   } catch (error) {
     console.error('Error fetching Square location:', error);
     // Return default sandbox location ID as fallback
-    return process.env.SQUARE_LOCATION_ID || 'LH2N1E5NBGA79';
+    return 'LH2N1E5NBGA79';
   }
 }
 

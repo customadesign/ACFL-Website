@@ -403,6 +403,122 @@ export class BillingService {
     if (error) throw error;
     return data || [];
   }
+
+  // Approve payout
+  async approvePayout(payoutId: string, adminId: string, notes?: string): Promise<Payout> {
+    // Get payout details
+    const { data: payout, error: payoutError } = await supabase
+      .from('payouts')
+      .select('*')
+      .eq('id', payoutId)
+      .single();
+
+    if (payoutError) throw payoutError;
+
+    if (payout.status !== 'pending') {
+      throw new Error(`Payout cannot be approved. Current status: ${payout.status}`);
+    }
+
+    // Import SquarePaymentService to initiate bank transfer
+    const { SquarePaymentService } = await import('./squarePaymentService');
+    const squareService = new SquarePaymentService();
+
+    try {
+      // Initiate bank transfer via Square
+      await squareService.initiateCoachTransfer(
+        payout.coach_id,
+        payout.payment_id,
+        payout.net_amount_cents
+      );
+
+      // Update payout status to completed
+      const { data: updatedPayout, error: updateError } = await supabase
+        .from('payouts')
+        .update({
+          status: 'completed',
+          processed_at: new Date().toISOString(),
+          processed_by: adminId,
+          metadata: {
+            ...payout.metadata,
+            admin_notes: notes,
+            approved_at: new Date().toISOString()
+          }
+        })
+        .eq('id', payoutId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Update billing transaction
+      await supabase
+        .from('billing_transactions')
+        .update({ status: 'completed' })
+        .eq('reference_id', payoutId)
+        .eq('reference_type', 'payout');
+
+      return updatedPayout;
+    } catch (error) {
+      // If bank transfer fails, mark payout as failed
+      await supabase
+        .from('payouts')
+        .update({
+          status: 'failed',
+          metadata: {
+            ...payout.metadata,
+            failure_reason: error instanceof Error ? error.message : 'Bank transfer failed',
+            failed_at: new Date().toISOString()
+          }
+        })
+        .eq('id', payoutId);
+
+      throw new Error(`Failed to process bank transfer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Reject payout
+  async rejectPayout(payoutId: string, adminId: string, rejectionReason: string): Promise<Payout> {
+    // Get payout details
+    const { data: payout, error: payoutError } = await supabase
+      .from('payouts')
+      .select('*')
+      .eq('id', payoutId)
+      .single();
+
+    if (payoutError) throw payoutError;
+
+    if (payout.status !== 'pending') {
+      throw new Error(`Payout cannot be rejected. Current status: ${payout.status}`);
+    }
+
+    // Update payout status to rejected
+    const { data: updatedPayout, error: updateError } = await supabase
+      .from('payouts')
+      .update({
+        status: 'rejected',
+        processed_at: new Date().toISOString(),
+        processed_by: adminId,
+        metadata: {
+          ...payout.metadata,
+          rejection_reason: rejectionReason,
+          rejected_at: new Date().toISOString()
+        }
+      })
+      .eq('id', payoutId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update billing transaction
+    await supabase
+      .from('billing_transactions')
+      .update({ status: 'failed' })
+      .eq('reference_id', payoutId)
+      .eq('reference_type', 'payout');
+
+    return updatedPayout;
+  }
 }
 
 export const billingService = new BillingService();
