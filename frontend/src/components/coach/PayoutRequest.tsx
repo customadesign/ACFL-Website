@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
-import { Input } from '../ui/input';
 import { Label } from '../ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Textarea } from '../ui/textarea';
 import { Alert, AlertDescription } from '../ui/alert';
 import { Badge } from '../ui/badge';
@@ -30,15 +28,15 @@ interface PayoutRequest {
   net_amount_cents: number;
   failure_reason?: string;
   created_at: string;
+  metadata?: {
+    payment_count?: number;
+    rejection_reason?: string;
+  };
 }
 
-interface UserCredit {
-  id: string;
-  user_id: string;
-  user_type: string;
-  balance_cents: number;
-  currency: string;
-  updated_at: string;
+interface PendingEarnings {
+  totalEarnings: number;
+  paymentCount: number;
 }
 
 interface CoachPayoutRequestProps {
@@ -46,54 +44,42 @@ interface CoachPayoutRequestProps {
 }
 
 export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps) {
-  const [availableBalance, setAvailableBalance] = useState<UserCredit | null>(null);
+  const [pendingEarnings, setPendingEarnings] = useState<PendingEarnings>({ totalEarnings: 0, paymentCount: 0 });
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-
-  // Form states
-  const [requestAmount, setRequestAmount] = useState('');
-  const [payoutMethod, setPayoutMethod] = useState('');
   const [notes, setNotes] = useState('');
-
-  const payoutMethods = [
-    { value: 'bank_transfer', label: 'Bank Transfer' },
-    { value: 'paypal', label: 'PayPal' },
-    { value: 'square_payout', label: 'Square Payout' },
-    { value: 'manual', label: 'Manual Processing' }
-  ];
 
   const fetchData = async () => {
     try {
       setLoading(true);
       const API_URL = getApiUrl();
+      const token = localStorage.getItem('token');
 
-      // Fetch available balance
-      const balanceResponse = await fetch(`${API_URL}/api/billing/credits/${coachId}/coach`, {
+      // Fetch pending earnings
+      const earningsResponse = await fetch(`${API_URL}/api/billing/payouts/pending-earnings`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
-      if (balanceResponse.ok) {
-        const balanceData = await balanceResponse.json();
-        setAvailableBalance(balanceData);
+      if (earningsResponse.ok) {
+        const earningsData = await earningsResponse.json();
+        setPendingEarnings(earningsData);
       }
 
-      // Fetch recent payout requests
-      const payoutsResponse = await fetch(`${API_URL}/api/billing/payouts?status=pending,processing,completed`, {
+      // Fetch payout requests
+      const payoutsResponse = await fetch(`${API_URL}/api/billing/payouts/my-requests`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         }
       });
 
       if (payoutsResponse.ok) {
         const payoutsData = await payoutsResponse.json();
-        // Filter for current coach's payouts
-        const coachPayouts = payoutsData.filter((p: PayoutRequest) => p.coach_id === coachId);
-        setPayoutRequests(coachPayouts);
+        setPayoutRequests(payoutsData);
       }
 
     } catch (err) {
@@ -110,15 +96,8 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
   const handleSubmitPayout = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!payoutMethod) {
-      setError('Please select a payout method');
-      return;
-    }
-
-    const amountCents = requestAmount ? Math.round(parseFloat(requestAmount) * 100) : undefined;
-
-    if (amountCents && availableBalance && amountCents > availableBalance.balance_cents) {
-      setError('Requested amount exceeds available balance');
+    if (pendingEarnings.totalEarnings <= 0) {
+      setError('No earnings available for payout');
       return;
     }
 
@@ -128,16 +107,15 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
       setSuccess(null);
 
       const API_URL = getApiUrl();
-      const response = await fetch(`${API_URL}/api/billing/payouts`, {
+      const token = localStorage.getItem('token');
+
+      const response = await fetch(`${API_URL}/api/billing/payouts/request`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          coach_id: coachId,
-          amount_cents: amountCents,
-          payout_method: payoutMethod,
           notes: notes || undefined
         })
       });
@@ -147,12 +125,10 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
         throw new Error(errorData.error || 'Failed to submit payout request');
       }
 
-      const payout = await response.json();
-      setSuccess('Payout request submitted successfully!');
+      const payoutData = await response.json();
+      setSuccess(`Payout request submitted successfully! Amount: ${formatCurrency(payoutData.amount_cents)}`);
 
       // Reset form
-      setRequestAmount('');
-      setPayoutMethod('');
       setNotes('');
 
       // Refresh data
@@ -180,7 +156,7 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
       case 'processing':
         return 'secondary';
       case 'failed':
-      case 'cancelled':
+      case 'rejected':
         return 'destructive';
       default:
         return 'outline';
@@ -195,7 +171,7 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
       case 'processing':
         return <Clock className="h-4 w-4 text-yellow-600" />;
       case 'failed':
-      case 'cancelled':
+      case 'rejected':
         return <AlertCircle className="h-4 w-4 text-red-600" />;
       default:
         return <Clock className="h-4 w-4 text-gray-600" />;
@@ -217,14 +193,17 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Available Balance
+            Pending Earnings
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="text-3xl font-bold text-green-600">
-            {formatCurrency(availableBalance?.balance_cents || 0)}
+            {formatCurrency(pendingEarnings.totalEarnings)}
           </div>
           <p className="text-sm text-muted-foreground mt-1">
+            From {pendingEarnings.paymentCount} completed payment{pendingEarnings.paymentCount !== 1 ? 's' : ''}
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
             Available for withdrawal
           </p>
         </CardContent>
@@ -251,46 +230,23 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
           )}
 
           <form onSubmit={handleSubmitPayout} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="amount">Amount (USD)</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={availableBalance ? (availableBalance.balance_cents / 100) : undefined}
-                  placeholder="Enter amount or leave blank for full balance"
-                  value={requestAmount}
-                  onChange={(e) => setRequestAmount(e.target.value)}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Leave blank to request full available balance
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="method">Payout Method</Label>
-                <Select value={payoutMethod} onValueChange={setPayoutMethod}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select payout method" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {payoutMethods.map((method) => (
-                      <SelectItem key={method.value} value={method.value}>
-                        {method.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm font-medium text-blue-900">
+                You will request a payout for your full pending balance:
+              </p>
+              <p className="text-2xl font-bold text-blue-900 mt-2">
+                {formatCurrency(pendingEarnings.totalEarnings)}
+              </p>
+              <p className="text-xs text-blue-700 mt-1">
+                {pendingEarnings.paymentCount} payment{pendingEarnings.paymentCount !== 1 ? 's' : ''} will be included
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="notes">Notes (Optional)</Label>
               <Textarea
                 id="notes"
-                placeholder="Additional notes for the payout request..."
+                placeholder="Add any notes about this payout request..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={3}
@@ -299,7 +255,7 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
 
             <Button
               type="submit"
-              disabled={submitting || !payoutMethod || (availableBalance?.balance_cents || 0) <= 0}
+              disabled={submitting || pendingEarnings.totalEarnings <= 0}
               className="w-full"
             >
               {submitting ? (
@@ -311,6 +267,12 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
                 'Submit Payout Request'
               )}
             </Button>
+
+            {pendingEarnings.totalEarnings <= 0 && (
+              <p className="text-sm text-muted-foreground text-center">
+                No earnings available. Complete sessions to earn money.
+              </p>
+            )}
           </form>
         </CardContent>
       </Card>
@@ -334,7 +296,7 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="font-medium">
-                          {payout.payout_method.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          Bank Transfer
                         </span>
                         <Badge variant={getStatusBadgeVariant(payout.status)}>
                           {payout.status}
@@ -343,14 +305,14 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
                       <p className="text-sm text-muted-foreground">
                         Requested: {new Date(payout.created_at).toLocaleDateString()}
                       </p>
-                      {payout.payout_date && (
+                      {payout.metadata?.payment_count && (
                         <p className="text-sm text-muted-foreground">
-                          Processed: {new Date(payout.payout_date).toLocaleDateString()}
+                          {payout.metadata.payment_count} payment{payout.metadata.payment_count !== 1 ? 's' : ''}
                         </p>
                       )}
-                      {payout.failure_reason && (
-                        <p className="text-sm text-red-600">
-                          Reason: {payout.failure_reason}
+                      {payout.status === 'rejected' && payout.metadata?.rejection_reason && (
+                        <p className="text-sm text-red-600 mt-1">
+                          Reason: {payout.metadata.rejection_reason}
                         </p>
                       )}
                     </div>

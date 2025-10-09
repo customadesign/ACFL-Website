@@ -2566,10 +2566,11 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
     // Mock on-time performance (would need actual meeting start/end times)
     const onTimeRate = 95; // Placeholder
 
-    // Recent activity (last 10 payment transactions)
+    // Recent activity (last 10 payment transactions including refunded)
     const { data: recentPayments, error: activityError } = await supabase
       .from('payments')
       .select(`
+        id,
         amount_cents,
         created_at,
         status,
@@ -2577,15 +2578,31 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
         clients(first_name, last_name)
       `)
       .eq('coach_id', coachId)
-      .eq('status', 'succeeded')
+      .in('status', ['succeeded', 'refunded', 'partially_refunded'])
       .order('created_at', { ascending: false })
       .limit(10);
 
+    // Get refund information for refunded payments
+    const paymentIds = recentPayments?.map(p => p.id) || [];
+    const { data: refunds } = await supabase
+      .from('refunds')
+      .select('payment_id, amount_cents, status')
+      .in('payment_id', paymentIds)
+      .eq('status', 'succeeded');
+
+    const refundMap = new Map();
+    refunds?.forEach(refund => {
+      refundMap.set(refund.payment_id, refund.amount_cents);
+    });
+
     const formattedActivity = recentPayments?.map((payment: any) => {
+      const refundAmount = refundMap.get(payment.id) || 0;
       return {
         clientName: payment.clients ? `${payment.clients.first_name} ${payment.clients.last_name}` : 'Client',
         date: payment.created_at,
         amount: (payment.amount_cents / 100).toFixed(2),
+        status: payment.status,
+        refundAmount: (refundAmount / 100).toFixed(2),
         duration: 60 // This could be pulled from session data if needed
       };
     }) || [];

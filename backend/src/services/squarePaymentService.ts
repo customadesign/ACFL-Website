@@ -135,7 +135,11 @@ export class SquarePaymentService {
       // If successful, initiate fund transfer to coach
       if (paymentStatus === 'succeeded') {
         try {
-          await this.initiateCoachTransfer(payment);
+          await this.initiateCoachTransfer(
+            payment.coach_id,
+            payment.id,
+            payment.coach_earnings_cents
+          );
         } catch (error) {
           console.error('Failed to initiate coach transfer:', error);
           // Don't throw error as payment is still successful
