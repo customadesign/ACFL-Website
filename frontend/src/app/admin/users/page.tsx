@@ -931,6 +931,8 @@ export default function UserManagement() {
 
       const result = await response.json();
 
+      console.log('Update user response:', { status: response.status, result });
+
       if (!response.ok) {
         // Handle specific error cases
         if (response.status === 409) {
@@ -938,18 +940,22 @@ export default function UserManagement() {
           const existingType = result.existingUserType || 'user';
           const title = `Email Already in Use`;
           const message = result.message || `A ${existingType} with this email already exists in the system. Please use a different email address or check if you need to modify the existing ${existingType} instead.`;
-          
+
           showError(title, message);
           return;
         } else if (response.status === 400) {
           // Validation error
+          const errorMsg = result.error || result.message || 'Please check your input and ensure all required fields are filled correctly.';
+          console.error('Validation error details:', result);
           showError(
             'Invalid Input',
-            result.error || 'Please check your input and ensure all required fields are filled correctly.'
+            errorMsg
           );
           return;
         } else {
-          throw new Error(result.error || 'Failed to update user');
+          const errorMsg = result.error || result.message || 'Failed to update user';
+          console.error('Update error details:', result);
+          throw new Error(errorMsg);
         }
       }
       

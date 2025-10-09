@@ -72,6 +72,7 @@ function ProfileContent() {
   const [success, setSuccess] = useState<string | null>(null)
   const [openLocation, setOpenLocation] = useState(false)
   const [locationQuery, setLocationQuery] = useState('')
+  const [originalFormData, setOriginalFormData] = useState<ProfileFormData | null>(null)
   const [stats, setStats] = useState({
     totalSessions: 0,
     upcomingSessions: 0,
@@ -131,30 +132,38 @@ function ProfileContent() {
         const data = await response.json()
         if (data.success && data.data) {
           const userData = data.data
-          form.setValue('firstName', userData.firstName || userData.first_name || '')
-          form.setValue('lastName', userData.lastName || userData.last_name || '')
-          form.setValue('email', userData.email || '')
-          form.setValue('phone', userData.phone || '')
-          form.setValue('location', userData.location || userData.preferences?.location || '')
-          form.setValue('genderIdentity', userData.genderIdentity || userData.preferences?.genderIdentity || '')
-          form.setValue('ethnicIdentity', userData.ethnicIdentity || userData.preferences?.ethnicIdentity || '')
-          form.setValue('religiousBackground', userData.religiousBackground || userData.preferences?.religiousBackground || '')
-          form.setValue('language', userData.language || userData.preferences?.language || '')
-          form.setValue('areaOfConcern', userData.areaOfConcern || userData.preferences?.areaOfConcern || [])
-          form.setValue('availability', userData.availability || userData.preferences?.availability || [])
-          form.setValue('therapistGender', userData.therapistGender || userData.preferences?.therapistGender || '')
-          form.setValue('bio', userData.bio || '')
-          form.setValue('profilePhoto', userData.profilePhoto || '')
 
-          // Load notification preferences (with defaults if not set)
-          const notificationPrefs = userData.notificationPreferences || {}
-          form.setValue('pushNotifications', notificationPrefs.pushNotifications ?? true)
-          form.setValue('soundNotifications', notificationPrefs.soundNotifications ?? true)
-          form.setValue('messageNotifications', notificationPrefs.messageNotifications ?? true)
-          form.setValue('appointmentNotifications', notificationPrefs.appointmentNotifications ?? true)
-          form.setValue('appointmentReminders', notificationPrefs.appointmentReminders ?? true)
-          form.setValue('marketingEmails', notificationPrefs.marketingEmails ?? false)
-          
+          const formData: ProfileFormData = {
+            firstName: userData.firstName || userData.first_name || '',
+            lastName: userData.lastName || userData.last_name || '',
+            email: userData.email || '',
+            phone: userData.phone || '',
+            location: userData.location || userData.preferences?.location || '',
+            genderIdentity: userData.genderIdentity || userData.preferences?.genderIdentity || '',
+            ethnicIdentity: userData.ethnicIdentity || userData.preferences?.ethnicIdentity || '',
+            religiousBackground: userData.religiousBackground || userData.preferences?.religiousBackground || '',
+            language: userData.language || userData.preferences?.language || '',
+            areaOfConcern: userData.areaOfConcern || userData.preferences?.areaOfConcern || [],
+            availability: userData.availability || userData.preferences?.availability || [],
+            therapistGender: userData.therapistGender || userData.preferences?.therapistGender || '',
+            bio: userData.bio || '',
+            profilePhoto: userData.profilePhoto || '',
+            pushNotifications: userData.notificationPreferences?.pushNotifications ?? true,
+            soundNotifications: userData.notificationPreferences?.soundNotifications ?? true,
+            messageNotifications: userData.notificationPreferences?.messageNotifications ?? true,
+            appointmentNotifications: userData.notificationPreferences?.appointmentNotifications ?? true,
+            appointmentReminders: userData.notificationPreferences?.appointmentReminders ?? true,
+            marketingEmails: userData.notificationPreferences?.marketingEmails ?? false,
+          }
+
+          // Save original data for cancel functionality
+          setOriginalFormData(formData)
+
+          // Set form values
+          Object.keys(formData).forEach((key) => {
+            form.setValue(key as keyof ProfileFormData, formData[key as keyof ProfileFormData])
+          })
+
           // Set member since date
           if (userData.created_at) {
             setStats(prev => ({
@@ -228,8 +237,13 @@ function ProfileContent() {
     setIsEditing(false)
     setError(null)
     setSuccess(null)
-    // Reset form to original values by reloading from server
-    loadProfileAndStats(true)
+
+    // Reset form to original values
+    if (originalFormData) {
+      Object.keys(originalFormData).forEach((key) => {
+        form.setValue(key as keyof ProfileFormData, originalFormData[key as keyof ProfileFormData])
+      })
+    }
   }
 
   const handleNotificationSubmit = async () => {
@@ -279,8 +293,16 @@ function ProfileContent() {
     setIsEditingNotifications(false)
     setError(null)
     setSuccess(null)
-    // Reload profile to reset notification preferences
-    loadProfileAndStats()
+
+    // Reset notification preferences to original values
+    if (originalFormData) {
+      form.setValue('pushNotifications', originalFormData.pushNotifications ?? true)
+      form.setValue('soundNotifications', originalFormData.soundNotifications ?? true)
+      form.setValue('messageNotifications', originalFormData.messageNotifications ?? true)
+      form.setValue('appointmentNotifications', originalFormData.appointmentNotifications ?? true)
+      form.setValue('appointmentReminders', originalFormData.appointmentReminders ?? true)
+      form.setValue('marketingEmails', originalFormData.marketingEmails ?? false)
+    }
   }
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {

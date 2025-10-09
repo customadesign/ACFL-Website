@@ -147,7 +147,8 @@ export default function CoachProfilePage() {
     totalClients: 0,
     totalSessions: 0,
     averageRating: 0,
-    completionRate: 0
+    completionRate: 0,
+    savedByCount: 0
   });
 
   const API_URL = getApiUrl();
@@ -155,6 +156,13 @@ export default function CoachProfilePage() {
   useEffect(() => {
     loadProfile();
     loadStats();
+
+    // Poll stats every 30 seconds to keep saved count in sync
+    const statsInterval = setInterval(() => {
+      loadStats(true);
+    }, 30000);
+
+    return () => clearInterval(statsInterval);
   }, []);
 
   const refreshData = async () => {
@@ -168,7 +176,7 @@ export default function CoachProfilePage() {
       if (!isRefresh) {
         setLoadingProfile(true);
       }
-      
+
       // Load coach profile
       const response = await axios.get(`${API_URL}/api/coach/profile`, {
         headers: {
@@ -179,24 +187,30 @@ export default function CoachProfilePage() {
       if (response.data.success) {
         const data = response.data.data;
         console.log('Profile data received:', data);
-        
+
         // Try to get application data if available
         let applicationData = null;
         try {
+          console.log('Fetching application data from:', `${API_URL}/api/coach/application-data`);
           const appResponse = await axios.get(`${API_URL}/api/coach/application-data`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('token')}`
             }
           });
-          
+
+          console.log('Application data response:', appResponse.data);
           if (appResponse.data.success && appResponse.data.data) {
             applicationData = appResponse.data.data;
+            console.log('Application data received:', applicationData);
+          } else {
+            console.log('No application data in response or not successful');
           }
         } catch (appError) {
-          console.log('Could not load application data:', appError);
+          console.error('Error loading application data:', appError);
         }
 
-        setProfileData({
+        // Build new profile data object
+        const newProfileData = {
           // Basic Information
           firstName: data.first_name || '',
           lastName: data.last_name || '',
@@ -204,14 +218,14 @@ export default function CoachProfilePage() {
           phone: data.phone || '',
           bio: data.bio || applicationData?.coaching_philosophy || '',
           profilePhoto: data.profile_photo || '',
-          
+
           // Professional Information
           experience: data.years_experience?.toString() || '',
           hourlyRate: data.hourly_rate_usd?.toString() || '',
           qualifications: (() => {
             try {
-              const quals = typeof data.qualifications === 'string' 
-                ? JSON.parse(data.qualifications) 
+              const quals = typeof data.qualifications === 'string'
+                ? JSON.parse(data.qualifications)
                 : data.qualifications;
               return Array.isArray(quals) ? quals.join(', ') : (data.qualifications || '');
             } catch {
@@ -221,71 +235,79 @@ export default function CoachProfilePage() {
           isAvailable: data.is_available ?? true,
           videoAvailable: data.videoAvailable ?? false,
           availability_options: data.demographics?.availability_options || [],
-          location: 'none',
-          customLocation: '',
+          location: (() => {
+            if (data.demographics && data.demographics.location) {
+              const validLocationCodes = [
+                'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+                'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
+              ];
+              return validLocationCodes.includes(data.demographics.location) ? data.demographics.location : 'custom';
+            }
+            return 'none';
+          })(),
+          customLocation: (() => {
+            if (data.demographics && data.demographics.location) {
+              const validLocationCodes = [
+                'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
+                'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
+              ];
+              return !validLocationCodes.includes(data.demographics.location) ? data.demographics.location : '';
+            }
+            return '';
+          })(),
           genderIdentity: data.demographics?.gender_identity || '',
-          
+
           // Application Data - Professional Background
           educationalBackground: applicationData?.educational_background || '',
           coachingExperienceYears: applicationData?.coaching_experience_years || '',
           professionalCertifications: applicationData?.professional_certifications || [],
-          
+
           // Specialization & Expertise
           coachingExpertise: applicationData?.coaching_expertise || [],
           ageGroupsComfortable: applicationData?.age_groups_comfortable || [],
           actTrainingLevel: applicationData?.act_training_level || '',
-          
+
           // Approach & Methodology
           coachingPhilosophy: applicationData?.coaching_philosophy || data.bio || '',
           coachingTechniques: applicationData?.coaching_techniques || [],
           sessionStructure: applicationData?.session_structure || '',
-          
+
           // Professional Boundaries & Ethics
           scopeHandlingApproach: applicationData?.scope_handling_approach || '',
           professionalDisciplineHistory: applicationData?.professional_discipline_history || false,
           disciplineExplanation: applicationData?.discipline_explanation || '',
           boundaryMaintenanceApproach: applicationData?.boundary_maintenance_approach || '',
-          
+
           // Crisis Management
           comfortableWithSuicidalThoughts: applicationData?.comfortable_with_suicidal_thoughts || '',
           selfHarmProtocol: applicationData?.self_harm_protocol || '',
-          
+
           // Availability & Commitment
           weeklyHoursAvailable: applicationData?.weekly_hours_available || '',
           preferredSessionLength: applicationData?.preferred_session_length || '',
           availabilityTimes: applicationData?.availability_times || [],
-          
+
           // Technology & Communication
           videoConferencingComfort: applicationData?.video_conferencing_comfort || '',
           internetConnectionQuality: applicationData?.internet_connection_quality || '',
-          
+
           // Languages & Cultural Competency
           languagesFluent: applicationData?.languages_fluent || [],
-          
+
           // Professional References
           references: applicationData?.references || []
+        };
+
+        console.log('Setting profile data with application fields:', {
+          educationalBackground: newProfileData.educationalBackground,
+          coachingExperienceYears: newProfileData.coachingExperienceYears,
+          actTrainingLevel: newProfileData.actTrainingLevel
         });
 
+        setProfileData(newProfileData);
         setSelectedSpecialties(data.specialties || applicationData?.coaching_expertise || []);
         setSelectedLanguages(data.languages || applicationData?.languages_fluent || []);
         setSelectedTherapyModalities(data.therapy_modalities || []);
-        
-        // Load location from demographics if available
-        if (data.demographics && data.demographics.location) {
-          const location = data.demographics.location;
-          const validLocationCodes = [
-            'AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS', 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC', 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY',
-            'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
-          ];
-          
-          if (validLocationCodes.includes(location)) {
-            setProfileData(prev => ({ ...prev, location: location, customLocation: '' }));
-          } else {
-            setProfileData(prev => ({ ...prev, location: 'custom', customLocation: location }));
-          }
-        } else {
-          setProfileData(prev => ({ ...prev, location: 'none', customLocation: '' }));
-        }
       }
     } catch (error) {
       console.error('Error loading profile:', error);
@@ -311,7 +333,8 @@ export default function CoachProfilePage() {
           totalClients: statsData.totalClients || 0,
           totalSessions: statsData.totalSessions || 0,
           averageRating: statsData.averageRating || 0,
-          completionRate: statsData.completionRate || statsData.completion_rate || 0
+          completionRate: statsData.completionRate || statsData.completion_rate || 0,
+          savedByCount: statsData.savedByCount || 0
         });
       }
     } catch (error) {
@@ -360,35 +383,48 @@ export default function CoachProfilePage() {
     
     // Enhanced validation with detailed error messages
     const validationErrors = [];
-    
+
     if (!profileData.firstName?.trim()) {
       validationErrors.push('❌ First name is required');
     }
-    
+
     if (!profileData.lastName?.trim()) {
       validationErrors.push('❌ Last name is required');
     }
-    
+
     if (!profileData.email?.trim()) {
       validationErrors.push('❌ Email is required');
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(profileData.email)) {
       validationErrors.push('❌ Please enter a valid email address');
     }
-    
+
     if (profileData.experience && (parseInt(profileData.experience) < 0 || parseInt(profileData.experience) > 50)) {
       validationErrors.push('❌ Years of experience must be between 0 and 50');
     }
-    
+
     if (profileData.hourlyRate && (parseFloat(profileData.hourlyRate) < 0 || parseFloat(profileData.hourlyRate) > 1000)) {
       validationErrors.push('❌ Hourly rate must be between $0 and $1000');
     }
-    
+
     if (selectedSpecialties.length === 0) {
       validationErrors.push('❌ Please select at least one specialty');
     }
-    
+
     if (selectedLanguages.length === 0) {
       validationErrors.push('❌ Please select at least one language');
+    }
+
+    // Character limit validations
+    if (profileData.educationalBackground && profileData.educationalBackground.length > 1000) {
+      validationErrors.push(`❌ Educational Background is too long (${profileData.educationalBackground.length} characters). Maximum is 1000 characters.`);
+    }
+
+    if (profileData.coachingExperienceYears && profileData.coachingExperienceYears.length > 100) {
+      validationErrors.push(`❌ Coaching Experience is too long (${profileData.coachingExperienceYears.length} characters). Maximum is 100 characters.`);
+    }
+
+    if (profileData.actTrainingLevel && profileData.actTrainingLevel.length > 200) {
+      validationErrors.push(`❌ ACT Training Level is too long (${profileData.actTrainingLevel.length} characters). Maximum is 200 characters.`);
     }
     
     if (validationErrors.length > 0) {
@@ -402,6 +438,19 @@ export default function CoachProfilePage() {
       const qualifications = profileData.qualifications
         ? profileData.qualifications.split(',').map(q => q.trim()).filter(q => q)
         : [];
+
+      // Validate required arrays
+      if (!selectedSpecialties || selectedSpecialties.length === 0) {
+        setError('Please select at least one specialty');
+        setLoading(false);
+        return;
+      }
+
+      if (!selectedLanguages || selectedLanguages.length === 0) {
+        setError('Please select at least one language');
+        setLoading(false);
+        return;
+      }
 
       const updateData = {
         firstName: profileData.firstName.trim(),
@@ -418,16 +467,16 @@ export default function CoachProfilePage() {
         isAvailable: profileData.isAvailable,
         videoAvailable: profileData.videoAvailable,
         availability_options: profileData.availability_options,
-        location: profileData.location === 'custom' ? profileData.customLocation?.trim() || null : 
+        location: profileData.location === 'custom' ? profileData.customLocation?.trim() || null :
                  profileData.location === 'none' ? null : profileData.location,
         ...(profileData.genderIdentity ? { genderIdentity: profileData.genderIdentity } : {}),
-        // Application data fields
-        educationalBackground: profileData.educationalBackground?.trim() || null,
-        coachingExperienceYears: profileData.coachingExperienceYears || null,
-        professionalCertifications: profileData.professionalCertifications,
-        coachingExpertise: profileData.coachingExpertise,
-        ageGroupsComfortable: profileData.ageGroupsComfortable,
-        actTrainingLevel: profileData.actTrainingLevel || null
+        // Application data fields - send actual values, not null if empty
+        educationalBackground: profileData.educationalBackground?.trim() || '',
+        coachingExperienceYears: profileData.coachingExperienceYears || '',
+        professionalCertifications: profileData.professionalCertifications || [],
+        coachingExpertise: profileData.coachingExpertise || [],
+        ageGroupsComfortable: profileData.ageGroupsComfortable || [],
+        actTrainingLevel: profileData.actTrainingLevel || ''
       };
 
       console.log('Frontend sending updateData:', updateData);
@@ -442,8 +491,15 @@ export default function CoachProfilePage() {
       if (response.data.success) {
         setSuccessMessage('Profile updated successfully!');
         setEditing(false);
-        await loadProfile();
-        
+
+        // Force reload with a longer delay to ensure database has been updated
+        console.log('Save successful, scheduling reload in 1500ms...');
+        setTimeout(async () => {
+          console.log('Executing delayed reload...');
+          await loadProfile(true);
+          console.log('Reload completed');
+        }, 1500);
+
         setTimeout(() => {
           setSuccessMessage('');
         }, 5000);
@@ -590,7 +646,7 @@ export default function CoachProfilePage() {
           </Button>
         </div>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 lg:gap-6">
           <Card className="bg-card border-border">
             <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
@@ -650,6 +706,20 @@ export default function CoachProfilePage() {
                 <div className="ml-4 min-w-0 flex-1">
                   <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Completion</p>
                   <p className="text-2xl font-bold text-foreground">{stats.completionRate || 0}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-card border-border">
+            <CardContent className="p-4 lg:p-6">
+              <div className="flex items-center">
+                <div className="p-3 lg:p-2 bg-pink-100 dark:bg-pink-900/20 rounded-lg flex-shrink-0">
+                  <Heart className="w-6 h-6 text-pink-600 dark:text-pink-400" />
+                </div>
+                <div className="ml-4 min-w-0 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Saved By</p>
+                  <p className="text-2xl font-bold text-foreground">{stats.savedByCount}</p>
                 </div>
               </div>
             </CardContent>
@@ -1015,20 +1085,38 @@ export default function CoachProfilePage() {
                   <h3 className="text-lg font-semibold">Professional Background</h3>
                   
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">Educational Background</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-2 dark:text-gray-300">
+                      Educational Background
+                      {editing && (
+                        <span className={`ml-2 text-xs ${profileData.educationalBackground.length > 1000 ? 'text-red-600' : 'text-gray-500'}`}>
+                          ({profileData.educationalBackground.length}/1000 characters)
+                        </span>
+                      )}
+                    </label>
                     {editing ? (
-                      <textarea
-                        name="educationalBackground"
-                        value={profileData.educationalBackground}
-                        onChange={handleChange}
-                        rows={3}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground"
-                        placeholder="Describe your educational background..."
-                      />
+                      <>
+                        <textarea
+                          name="educationalBackground"
+                          value={profileData.educationalBackground}
+                          onChange={handleChange}
+                          rows={3}
+                          maxLength={1000}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-background text-foreground"
+                          placeholder="Describe your educational background (max 1000 characters)..."
+                        />
+                        {profileData.educationalBackground.length > 900 && (
+                          <p className={`text-xs mt-1 ${profileData.educationalBackground.length > 1000 ? 'text-red-600' : 'text-yellow-600'}`}>
+                            {profileData.educationalBackground.length > 1000
+                              ? `⚠️ Text exceeds limit by ${profileData.educationalBackground.length - 1000} characters`
+                              : `⚠️ ${1000 - profileData.educationalBackground.length} characters remaining`
+                            }
+                          </p>
+                        )}
+                      </>
                     ) : (
                       <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
                         {profileData.educationalBackground ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <span className="text-sm text-gray-700 dark:text-gray-300">
                             {profileData.educationalBackground}
                           </span>
                         ) : (
