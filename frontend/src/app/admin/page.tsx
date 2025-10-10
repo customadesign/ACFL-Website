@@ -383,8 +383,8 @@ export default function AdminDashboard() {
       {/* Enhanced Header with View Mode Controls */}
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1">Admin Dashboard</h1>
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1 break-words leading-tight">Admin Dashboard</h1>
             <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Overview of your ACFL platform</p>
           </div>
           
@@ -436,19 +436,19 @@ export default function AdminDashboard() {
               className="bg-white dark:bg-gray-800 p-4 sm:p-5 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md hover:border-gray-300 dark:hover:border-gray-600 transition-all duration-200 min-h-[120px] sm:min-h-[140px]"
             >
               <div className="flex items-center justify-between h-full">
-                <div className="flex-1 mr-3">
-                  <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5 leading-tight">
+                <div className="flex-1 min-w-0 mr-3">
+                  <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 mb-1.5 leading-tight truncate">
                     {card.title}
                   </p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mb-2 leading-none">
+                  <p className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-2 leading-tight break-words">
                     {card.value}
                   </p>
                   <div className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                    card.changeType === 'positive' 
-                      ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400' 
+                    card.changeType === 'positive'
+                      ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
                       : 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
                   }`}>
-                    <TrendingUp className={`h-3 w-3 mr-1 ${
+                    <TrendingUp className={`h-3 w-3 mr-1 flex-shrink-0 ${
                       card.changeType === 'negative' ? 'rotate-180' : ''
                     }`} />
                     {card.change}
@@ -485,14 +485,14 @@ export default function AdminDashboard() {
             {/* Priority Stats Row */}
             <div className="grid grid-cols-3 gap-4 mb-4">
               {getPriorityStats().slice(0, 3).map((stat, index) => (
-                <div key={index} className="text-center">
-                  <div className={`inline-flex p-2 rounded-lg ${'bgColor' in stat ? `${(stat as any).bgColor} dark:${(stat as any).bgColor.replace('-50', '-900/20')}` : 'bg-gray-100 dark:bg-gray-700'} mb-2`}>
+                <div key={index} className="text-center min-w-0">
+                  <div className={`inline-flex p-2 rounded-lg ${'bgColor' in stat ? `${(stat as any).bgColor} dark:${(stat as any).bgColor.replace('-50', '-900/20')}` : 'bg-gray-100 dark:bg-gray-700'} mb-2 flex-shrink-0`}>
                     <stat.icon className={`h-4 w-4 ${stat.color}`} />
                   </div>
-                  <div className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">
+                  <div className="text-base sm:text-lg md:text-xl font-bold text-gray-900 dark:text-white break-words leading-tight">
                     {stat.value}
                   </div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 font-medium truncate">
                     {stat.title}
                   </div>
                   <div className={`text-xs mt-1 ${stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'}`}>

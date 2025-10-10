@@ -202,17 +202,17 @@ export default function ClientBillingDashboard({ clientId, onNavigateToRefunds, 
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Pending Refunds</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Pending Refunds</CardTitle>
+            <Clock className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words leading-tight">
               {dashboardData.pending_refunds.length}
             </div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground break-words">
               {dashboardData.pending_refunds.length > 0 && (
                 <span>
                   {formatCurrency(
@@ -226,11 +226,11 @@ export default function ClientBillingDashboard({ clientId, onNavigateToRefunds, 
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Spending</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Monthly Spending</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words leading-tight">
               {formatCurrency(Math.abs(dashboardData.monthly_summary.total_revenue_cents))}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -252,28 +252,28 @@ export default function ClientBillingDashboard({ clientId, onNavigateToRefunds, 
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Total Payments</p>
-              <p className="text-lg font-semibold text-red-600">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Payments</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-red-600 break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.total_revenue_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Refunds Received</p>
-              <p className="text-lg font-semibold text-green-600">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Refunds Received</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-green-600 break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.total_refunds_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Average Payment</p>
-              <p className="text-lg font-semibold">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Average Payment</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.average_transaction_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Net Spending</p>
-              <p className="text-lg font-semibold">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Net Spending</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold break-words leading-tight">
                 {formatCurrency(
                   dashboardData.monthly_summary.total_revenue_cents -
                   dashboardData.monthly_summary.total_refunds_cents

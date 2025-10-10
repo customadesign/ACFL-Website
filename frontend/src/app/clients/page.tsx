@@ -127,48 +127,48 @@ export default function ClientDashboard() {
         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex-shrink-0">
                 <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 dark:text-blue-400" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Upcoming</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.upcomingAppointments}</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground break-words leading-tight">Upcoming</p>
+                <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.upcomingAppointments}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg flex-shrink-0">
                 <Heart className="w-5 h-5 sm:w-6 sm:h-6 text-green-600 dark:text-green-400" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Saved Coaches</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.savedCoaches}</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground break-words leading-tight">Saved Coaches</p>
+                <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.savedCoaches}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex-shrink-0">
                 <Clock className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600 dark:text-purple-400" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Completed</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">{stats.completedSessions}</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground break-words leading-tight">Completed</p>
+                <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.completedSessions}</p>
               </div>
             </div>
           </Card>
 
           <Card className="p-4 sm:p-6">
             <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+              <div className="p-2 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg flex-shrink-0">
                 <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-600 dark:text-yellow-400" />
               </div>
               <div className="ml-3 sm:ml-4 min-w-0 flex-1">
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">Messages</p>
-                <p className="text-xl sm:text-2xl font-bold text-foreground">0</p>
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground break-words leading-tight">Messages</p>
+                <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">0</p>
               </div>
             </div>
           </Card>

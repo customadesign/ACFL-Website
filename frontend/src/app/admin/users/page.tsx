@@ -305,7 +305,8 @@ export default function UserManagement() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
-        }
+        },
+        cache: 'no-store' // Prevent caching of user data
       });
 
 
@@ -411,8 +412,10 @@ export default function UserManagement() {
                user.email?.toLowerCase().includes(searchTerm.toLowerCase());
       });
       setFilteredUsers(filtered);
+    } else {
+      // When no search term, update filteredUsers to match users
+      setFilteredUsers(users);
     }
-    // If no search term, filteredUsers should already be set from server response in fetchUsers()
   };
 
   const handleUserAction = async (userId: string, action: string, userType: string) => {
@@ -880,7 +883,7 @@ export default function UserManagement() {
       }
 
       console.log('User created successfully:', result);
-      
+
       // Show success modal with credentials
       setSuccessData({
         email: formData.email,
@@ -888,13 +891,13 @@ export default function UserManagement() {
         userType: formData.userType
       });
       setShowSuccessModal(true);
-      
-      // Add new user to local state
-      setUsers(prevUsers => [...prevUsers, result.user]);
-      
+
       // Reset form and close modal
       resetForm();
-      
+
+      // Refresh the users list from the server
+      await fetchUsers();
+
     } catch (error) {
       console.error('Failed to create user:', error);
       const errorMessage = error instanceof Error ? error.message : 'Please try again.';
@@ -958,26 +961,26 @@ export default function UserManagement() {
           throw new Error(errorMsg);
         }
       }
-      
-      // Update user in local state
-      setUsers(prevUsers =>
-        prevUsers.map(user => {
-          if (user.id === selectedUser.id) {
-            return { ...user, ...result.user };
-          }
-          return user;
-        })
-      );
-      
+
+      // Update the users array with the returned updated user data
+      if (result.user) {
+        setUsers(prevUsers =>
+          prevUsers.map(u => u.id === result.user.id ? result.user : u)
+        );
+      }
+
       // Show success message
       showInfo(
         'User Updated',
         `${formData.userType.charAt(0).toUpperCase() + formData.userType.slice(1)} profile has been updated successfully.`
       );
-      
+
       // Reset form and close modal
       resetForm();
-      
+
+      // Refresh the users list from the server to ensure all data is current
+      await fetchUsers();
+
     } catch (error) {
       console.error('Failed to update user:', error);
       showError(
@@ -1064,24 +1067,28 @@ export default function UserManagement() {
   };
 
   const openEditModal = (user: User) => {
+    // Find the latest user data from the users state to ensure we have fresh data
+    const latestUser = users.find(u => u.id === user.id) || user;
+
     setFormData({
-      firstName: user.first_name || '',
-      lastName: user.last_name || '',
-      email: user.email,
-      phone: user.phone || '',
-      userType: user.role,
-      status: user.status,
-      department: user.department,
-      specialties: user.specialties,
-      yearsExperience: user.years_experience,
-      hourlyRate: user.hourly_rate_usd,
+      firstName: latestUser.first_name || '',
+      lastName: latestUser.last_name || '',
+      email: latestUser.email,
+      phone: latestUser.phone || '',
+      userType: latestUser.role,
+      status: latestUser.status,
+      department: latestUser.department,
+      specialties: latestUser.specialties,
+      yearsExperience: latestUser.years_experience,
+      hourlyRate: latestUser.hourly_rate_usd,
+      bio: latestUser.bio,
       // Client specific fields
-      dob: user.dob || '',
-      genderIdentity: user.gender_identity || '',
-      ethnicIdentity: user.ethnic_identity || '',
-      religiousBackground: user.religious_background || ''
+      dob: latestUser.dob || '',
+      genderIdentity: latestUser.gender_identity || '',
+      ethnicIdentity: latestUser.ethnic_identity || '',
+      religiousBackground: latestUser.religious_background || ''
     });
-    setSelectedUser(user);
+    setSelectedUser(latestUser);
     setIsEditMode(true);
     setShowUserModal(true);
   };

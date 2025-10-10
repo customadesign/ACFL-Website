@@ -10,7 +10,14 @@
       "Bash(done)",
       "Bash(git checkout:*)",
       "Bash(do echo \"Resolving $file\")",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nMerge branch ''feature/enhanced-ui-notifications'' into feat/payment-reflecting-on-square\n\nResolved merge conflicts in 32 files across backend and frontend.\n\nBackend changes:\n- Merged billing controller with payout approval/rejection methods\n- Combined Square payment service with enhanced transfer logic\n- Integrated billing service with earnings calculations and payout requests\n- Merged route handlers for admin, billing, client, and coach routes\n- Enhanced coach search service with bank account verification\n\nFrontend changes:\n- Merged enhanced UI/UX improvements and notifications\n- Combined mobile responsiveness enhancements\n- Integrated localStorage fallback for saved coaches\n- Merged improved error handling and user feedback\n- Combined notification systems with badges and real-time updates\n- Merged enhanced analytics dashboard with mobile-optimized design\n- Integrated collapsible sidebar with hover tooltips\n- Combined form state management improvements\n- Merged payout request and billing management components\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npx tsc:*)",
+      "Bash(npm run dev:*)",
+      "Bash(curl:*)",
+      "Bash(npx ts-node:*)",
+      "Bash(netstat:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

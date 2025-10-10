@@ -565,54 +565,54 @@ function ProfileContent() {
             <Card className="bg-card border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
                     <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Total Sessions</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.totalSessions}</p>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300">Total Sessions</p>
+                    <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.totalSessions}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
                     <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Upcoming Sessions</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.upcomingSessions}</p>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300">Upcoming Sessions</p>
+                    <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.upcomingSessions}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
                     <Heart className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Saved Coaches</p>
-                    <p className="text-2xl font-bold text-foreground">{stats.savedCoaches}</p>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300">Saved Coaches</p>
+                    <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.savedCoaches}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
                     <User className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Member Since</p>
-                    <p className="text-xl font-bold text-foreground">{stats.memberSince}</p>
+                  <div className="ml-3 sm:ml-4 min-w-0 flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-muted-foreground dark:text-gray-300">Member Since</p>
+                    <p className="text-sm sm:text-lg md:text-2xl font-bold text-foreground break-words leading-tight">{stats.memberSince}</p>
                   </div>
                 </div>
               </CardContent>
@@ -674,21 +674,21 @@ function ProfileContent() {
         ) : (
         <Card className="bg-card border-border">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div className="flex-1">
                 <CardTitle>Profile Information</CardTitle>
                 <CardDescription className="dark:text-gray-300">Update your personal details and preferences</CardDescription>
               </div>
               {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
+                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white w-full sm:w-auto flex-shrink-0">
                   Edit Profile
                 </Button>
               ) : (
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
                     onClick={form.handleSubmit(handleSubmit)}
                     disabled={isLoading}
-                    className="bg-green-600 hover:bg-green-700 dark:text-white"
+                    className="bg-green-600 hover:bg-green-700 dark:text-white w-full sm:w-auto"
                   >
                     {isLoading ? 'Saving...' : 'Save Changes'}
                   </Button>
@@ -696,6 +696,7 @@ function ProfileContent() {
                     onClick={handleCancel}
                     variant="outline"
                     disabled={isLoading}
+                    className="w-full sm:w-auto"
                   >
                     Cancel
                   </Button>
@@ -1007,8 +1008,8 @@ function ProfileContent() {
         ) : (
           <Card className="bg-card border-border mt-6">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex-1">
                   <CardTitle className="flex items-center gap-2">
                     <Bell className="w-5 h-5" />
                     Notification Preferences
@@ -1018,16 +1019,16 @@ function ProfileContent() {
                   </CardDescription>
                 </div>
                 {!isEditingNotifications ? (
-                  <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
+                  <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white w-full sm:w-auto flex-shrink-0">
                     <Settings className="w-4 h-4 mr-2" />
                     Edit Settings
                   </Button>
                 ) : (
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                     <Button
                       onClick={handleNotificationSubmit}
                       disabled={isLoadingNotifications}
-                      className="bg-green-600 hover:bg-green-700 dark:text-white"
+                      className="bg-green-600 hover:bg-green-700 dark:text-white w-full sm:w-auto"
                     >
                       {isLoadingNotifications ? 'Saving...' : 'Save Changes'}
                     </Button>
@@ -1035,6 +1036,7 @@ function ProfileContent() {
                       onClick={handleNotificationCancel}
                       variant="outline"
                       disabled={isLoadingNotifications}
+                      className="w-full sm:w-auto"
                     >
                       Cancel
                     </Button>

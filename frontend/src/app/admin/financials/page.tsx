@@ -462,8 +462,8 @@ export default function FinancialManagement() {
       {/* Header */}
       <div className="mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Financial Management</h1>
-          <p className="text-gray-600 dark:text-gray-400">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2 break-words leading-tight">Financial Management</h1>
+          <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
             Monitor billing, payments, and financial performance
           </p>
         </div>
@@ -471,55 +471,55 @@ export default function FinancialManagement() {
 
       {/* Statistics Cards */}
       {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalRevenue)}</p>
+              <div className="min-w-0 flex-1 mr-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">Total Revenue</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600 break-words leading-tight">{formatCurrency(stats.totalRevenue)}</p>
               </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Transactions</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions}</p>
+              <div className="min-w-0 flex-1 mr-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">Total Transactions</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-blue-600 break-words leading-tight">{stats.totalTransactions}</p>
               </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-blue-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <CreditCard className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.totalTransactions > 0 
+              <div className="min-w-0 flex-1 mr-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">Success Rate</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-green-600 break-words leading-tight">
+                  {stats.totalTransactions > 0
                     ? Math.round((stats.successfulTransactions / stats.totalTransactions) * 100)
                     : 0}%
                 </p>
               </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
               </div>
             </div>
           </div>
 
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
             <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Transaction</p>
-                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.averageTransactionValue)}</p>
+              <div className="min-w-0 flex-1 mr-3">
+                <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400 truncate">Avg. Transaction</p>
+                <p className="text-lg sm:text-xl md:text-2xl font-bold text-purple-600 break-words leading-tight">{formatCurrency(stats.averageTransactionValue)}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6 text-purple-600" />
               </div>
             </div>
           </div>
@@ -697,48 +697,48 @@ export default function FinancialManagement() {
               <div key={`mobile-${transaction.id}`} className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                 <div className="space-y-3">
                   {/* Header with Status and Amount */}
-                  <div className="flex items-center justify-between">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                  <div className="flex items-center justify-between gap-2">
+                    <span className={`inline-flex items-center px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium flex-shrink-0 ${
                       statusColors[transaction.status] || statusColors.pending
                     }`}>
                       {transaction.status}
                     </span>
-                    <div className="text-right">
-                      <div className="text-lg font-semibold text-gray-900 dark:text-white">
+                    <div className="text-right min-w-0 flex-1">
+                      <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white break-words leading-tight">
                         {formatCurrency(transaction.amount_cents ? transaction.amount_cents / 100 : transaction.amount)}
                       </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-[10px] sm:text-xs text-gray-500 dark:text-gray-400 truncate">
                         {transaction.currency} • {transaction.payment_method}
                       </div>
                     </div>
                   </div>
 
                   {/* Transaction ID */}
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Transaction ID</div>
-                    <div className="text-sm font-mono text-gray-900 dark:text-white break-all">
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Transaction ID</div>
+                    <div className="text-xs sm:text-sm font-mono text-gray-900 dark:text-white break-all">
                       {transaction.id.slice(0, 12)}...
                     </div>
                   </div>
 
                   {/* Client Information */}
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Client</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Client</div>
+                    <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white break-words leading-tight">
                       {transaction.client.first_name} {transaction.client.last_name}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-words">
                       {transaction.client.email}
                     </div>
                   </div>
 
                   {/* Coach Information */}
-                  <div>
-                    <div className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Coach</div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  <div className="min-w-0">
+                    <div className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Coach</div>
+                    <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white break-words leading-tight">
                       {transaction.coach.first_name} {transaction.coach.last_name}
                     </div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400 break-words">
+                    <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-words">
                       {transaction.coach.email}
                     </div>
                   </div>

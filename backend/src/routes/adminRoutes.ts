@@ -432,11 +432,21 @@ router.get('/users', async (req, res) => {
     // Build queries for each user type
     const getUsersFromTable = async (tableName: string, userRole: string) => {
       try {
+        // Build select query with all necessary fields based on table
+        let selectFields = 'id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at';
+
+        if (tableName === 'clients') {
+          selectFields += ', dob, gender_identity, ethnic_identity, religious_background, bio';
+        } else if (tableName === 'coaches') {
+          selectFields += ', specialties, years_experience, hourly_rate_usd, bio, qualifications, languages';
+        } else if (tableName === 'staff') {
+          selectFields += ', department, role_level, permissions';
+        }
+
         // Build base query with filters
         let query = supabase
           .from(tableName)
-          .select('id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at' +
-                  (tableName === 'staff' ? ', department, role_level' : ''))
+          .select(selectFields)
           .order('created_at', { ascending: false });
 
         // Apply status filter
@@ -480,11 +490,7 @@ router.get('/users', async (req, res) => {
           ...user,
           name: `${user.first_name || ''} ${user.last_name || ''}`.trim() || `Unnamed ${userRole}`,
           role: userRole,
-          status: user.is_active === false ? 'inactive' : (user.status || 'active'),
-          ...(tableName === 'staff' && {
-            department: user.department,
-            role_level: user.role_level
-          })
+          status: user.is_active === false ? 'inactive' : (user.status || 'active')
         }));
 
         return { users: formattedUsers, count: count || 0 };
@@ -526,6 +532,11 @@ router.get('/users', async (req, res) => {
     const paginatedUsers = allUsers.slice(offset, offset + limitNum);
 
     console.log(`Total users found: ${totalCount}, returning: ${paginatedUsers.length}`);
+
+    // Set cache-control headers to prevent stale data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
 
     // Return paginated response
     res.json({
@@ -1036,6 +1047,11 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
       if (data.phone !== undefined) transformed.phone = data.phone || null;
       if (data.status) transformed.status = data.status;
 
+      // Advanced profile settings (available for all types)
+      if (data.emailVerified !== undefined) transformed.email_verified = data.emailVerified;
+      if (data.profileComplete !== undefined) transformed.profile_complete = data.profileComplete;
+      if (data.adminNotes !== undefined) transformed.admin_notes = data.adminNotes || null;
+
       // Only add type-specific fields
       if (type === 'client') {
         // Client specific fields
@@ -1043,6 +1059,7 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
         if (data.genderIdentity !== undefined) transformed.gender_identity = data.genderIdentity || null;
         if (data.ethnicIdentity !== undefined) transformed.ethnic_identity = data.ethnicIdentity || null;
         if (data.religiousBackground !== undefined) transformed.religious_background = data.religiousBackground || null;
+        if (data.bio !== undefined) transformed.bio = data.bio || null;
       } else if (type === 'coach') {
         // Coach specific fields
         if (data.specialties !== undefined) transformed.specialties = data.specialties || [];
@@ -1063,6 +1080,14 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
 
     const updateData = transformToSnakeCase(userData, userType);
 
+    // Log the transformation for debugging
+    console.log('Update user request:', {
+      userId: id,
+      userType,
+      incomingData: userData,
+      transformedData: updateData
+    });
+
     switch (userType) {
       case 'client':
         const { data: updatedClient, error: clientError } = await supabase
@@ -1071,8 +1096,11 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
           .eq('id', id)
           .select()
           .single();
-        
-        if (clientError) throw clientError;
+
+        if (clientError) {
+          console.error('Client update error:', clientError);
+          throw clientError;
+        }
         result = { ...updatedClient, role: 'client' };
         break;
 
@@ -1083,8 +1111,11 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
           .eq('id', id)
           .select()
           .single();
-        
-        if (coachError) throw coachError;
+
+        if (coachError) {
+          console.error('Coach update error:', coachError);
+          throw coachError;
+        }
         result = { ...updatedCoach, role: 'coach' };
         break;
 
@@ -1096,13 +1127,18 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
           .select()
           .single();
 
-        if (staffError) throw staffError;
+        if (staffError) {
+          console.error('Staff update error:', staffError);
+          throw staffError;
+        }
         result = { ...updatedStaff, role: 'staff' };
         break;
 
       default:
         return res.status(400).json({ error: 'Invalid user type' });
     }
+
+    console.log('User updated successfully:', { userId: id, userType, updatedFields: Object.keys(updateData) });
 
     // Log the admin action
     const auditReq = req as AuditRequest;

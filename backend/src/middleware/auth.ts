@@ -144,9 +144,12 @@ export const requireActiveUser = async (
     }
 
     // Check if user is active
+    // Note: staff table only has 'status', not 'is_active'
+    const selectColumns = (role === 'staff' || role === 'admin') ? 'status' : 'is_active, status';
+
     const { data: user, error } = await supabase
       .from(tableName)
-      .select('is_active, status')
+      .select(selectColumns)
       .eq('id', userId)
       .single();
 
@@ -160,7 +163,14 @@ export const requireActiveUser = async (
     }
 
     // Check if user is inactive/deactivated
-    if (user.is_active === false || user.status === 'inactive') {
+    // For staff/admin: check status field only
+    // For clients/coaches: check both is_active and status
+    const userData = user as any;
+    const isInactive = (role === 'staff' || role === 'admin')
+      ? (userData.status === 'inactive' || userData.status === 'suspended')
+      : (userData.is_active === false || userData.status === 'inactive');
+
+    if (isInactive) {
       return res.status(403).json({
         error: 'Account is deactivated. Please contact support to reactivate your account.',
         code: 'ACCOUNT_DEACTIVATED'
@@ -183,4 +193,4 @@ export const allowDeactivatedUser = (
   // This middleware simply passes through without checking active status
   // Use this for endpoints that deactivated users should be able to access
   next();
-};
+};  

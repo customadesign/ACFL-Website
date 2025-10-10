@@ -147,14 +147,14 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
   return (
     <div className="space-y-6">
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Earnings</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Monthly Earnings</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words leading-tight">
               {formatCurrency(dashboardData.monthly_summary.net_revenue_cents)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -165,11 +165,11 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Earnings</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xs sm:text-sm font-medium">Total Earnings</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground flex-shrink-0" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg sm:text-xl md:text-2xl font-bold break-words leading-tight">
               {formatCurrency(dashboardData.current_balance_cents)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -191,28 +191,28 @@ export default function CoachBillingDashboard({ coachId }: CoachBillingDashboard
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div>
-              <p className="text-sm text-muted-foreground">Gross Revenue</p>
-              <p className="text-lg font-semibold">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Gross Revenue</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.total_revenue_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Refunds</p>
-              <p className="text-lg font-semibold text-red-600 dark:text-red-400">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Total Refunds</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-red-600 dark:text-red-400 break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.total_refunds_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Platform Fees</p>
-              <p className="text-lg font-semibold text-orange-600 dark:text-orange-400">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Platform Fees</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-orange-600 dark:text-orange-400 break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.total_fees_cents)}
               </p>
             </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Net Earnings</p>
-              <p className="text-lg font-semibold text-green-600 dark:text-green-400">
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm text-muted-foreground truncate">Net Earnings</p>
+              <p className="text-sm sm:text-base md:text-lg font-semibold text-green-600 dark:text-green-400 break-words leading-tight">
                 {formatCurrency(dashboardData.monthly_summary.net_revenue_cents)}
               </p>
             </div>

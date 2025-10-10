@@ -416,8 +416,8 @@ function AppointmentsContent() {
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
+            <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
           </div>
         </div>
       </div>
@@ -584,32 +584,32 @@ function AppointmentsContent() {
             <Card key={appointment.id} className="overflow-hidden">
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col">
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-3">
-                      <div>
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-white break-words leading-tight">
                           Coach {appointment.coaches ? `${appointment.coaches.first_name} ${appointment.coaches.last_name}` : 'TBD'}
                         </h3>
-                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
+                        <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 break-words">{appointment.coaches?.email || appointment.coaches?.users?.email}</p>
                       </div>
-                      <span className={`self-start px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
+                      <span className={`self-start flex-shrink-0 px-2 sm:px-3 py-1 text-[10px] sm:text-xs font-medium rounded-full ${getStatusDisplay(appointment).color}`}>
                         {getStatusDisplay(appointment).label}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Date & Time</p>
-                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">
+                        <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100 break-words">
                           {new Date(appointment.starts_at).toLocaleDateString()} at {' '}
                           {new Date(appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Duration</p>
                         <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">{Math.round((new Date(appointment.ends_at).getTime() - new Date(appointment.starts_at).getTime()) / (1000 * 60))} minutes</p>
                       </div>
-                      <div>
+                      <div className="min-w-0">
                         <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">Session Type</p>
                         <p className="text-xs sm:text-sm text-gray-900 dark:text-gray-100">Virtual Session</p>
                       </div>
