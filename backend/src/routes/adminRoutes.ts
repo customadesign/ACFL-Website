@@ -1024,41 +1024,44 @@ router.put('/users/:id', authorize('admin', 'staff'), async (req, res) => {
     let result;
     
     // Transform form camelCase to snake_case for database fields
-    const transformToSnakeCase = (data: any) => {
+    const transformToSnakeCase = (data: any, type: string) => {
       const transformed: any = {
         updated_at: new Date().toISOString()
       };
-      
+
       // Map common fields
       if (data.firstName) transformed.first_name = data.firstName;
       if (data.lastName) transformed.last_name = data.lastName;
       if (data.email) transformed.email = data.email;
       if (data.phone !== undefined) transformed.phone = data.phone || null;
       if (data.status) transformed.status = data.status;
-      
-      // Client specific fields
-      if (data.dob !== undefined) transformed.dob = data.dob || null;
-      if (data.genderIdentity !== undefined) transformed.gender_identity = data.genderIdentity || null;
-      if (data.ethnicIdentity !== undefined) transformed.ethnic_identity = data.ethnicIdentity || null;
-      if (data.religiousBackground !== undefined) transformed.religious_background = data.religiousBackground || null;
-      
-      // Coach specific fields
-      if (data.specialties !== undefined) transformed.specialties = data.specialties || [];
-      if (data.yearsExperience !== undefined) transformed.years_experience = data.yearsExperience || null;
-      if (data.hourlyRate !== undefined) transformed.hourly_rate_usd = data.hourlyRate || null;
-      if (data.bio !== undefined) transformed.bio = data.bio || null;
-      if (data.qualifications !== undefined) transformed.qualifications = data.qualifications || [];
-      if (data.languages !== undefined) transformed.languages = data.languages || [];
-      
-      // Staff specific fields
-      if (data.department !== undefined) transformed.department = data.department || null;
-      if (data.permissions !== undefined) transformed.permissions = data.permissions || [];
-      if (data.roleLevel !== undefined) transformed.role_level = data.roleLevel || null;
-      
+
+      // Only add type-specific fields
+      if (type === 'client') {
+        // Client specific fields
+        if (data.dob !== undefined) transformed.dob = data.dob || null;
+        if (data.genderIdentity !== undefined) transformed.gender_identity = data.genderIdentity || null;
+        if (data.ethnicIdentity !== undefined) transformed.ethnic_identity = data.ethnicIdentity || null;
+        if (data.religiousBackground !== undefined) transformed.religious_background = data.religiousBackground || null;
+      } else if (type === 'coach') {
+        // Coach specific fields
+        if (data.specialties !== undefined) transformed.specialties = data.specialties || [];
+        if (data.yearsExperience !== undefined) transformed.years_experience = data.yearsExperience || null;
+        if (data.hourlyRate !== undefined) transformed.hourly_rate_usd = data.hourlyRate || null;
+        if (data.bio !== undefined) transformed.bio = data.bio || null;
+        if (data.qualifications !== undefined) transformed.qualifications = data.qualifications || [];
+        if (data.languages !== undefined) transformed.languages = data.languages || [];
+      } else if (type === 'staff') {
+        // Staff specific fields
+        if (data.department !== undefined) transformed.department = data.department || null;
+        if (data.permissions !== undefined) transformed.permissions = data.permissions || [];
+        if (data.roleLevel !== undefined) transformed.role_level = data.roleLevel || null;
+      }
+
       return transformed;
     };
 
-    const updateData = transformToSnakeCase(userData);
+    const updateData = transformToSnakeCase(userData, userType);
 
     switch (userType) {
       case 'client':
@@ -2686,15 +2689,16 @@ router.get('/analytics', async (req, res) => {
     });
 
     // Calculate growth percentages
-    const userGrowth = prevPeriodClients.length > 0 
-      ? ((currentPeriodClients.length - prevPeriodClients.length) / prevPeriodClients.length * 100).toFixed(1)
-      : 0;
+    // Return null when there's no previous data to compare against
+    const userGrowth = prevPeriodClients.length > 0
+      ? parseFloat(((currentPeriodClients.length - prevPeriodClients.length) / prevPeriodClients.length * 100).toFixed(1))
+      : null;
     const coachGrowth = prevPeriodCoaches.length > 0
-      ? ((currentPeriodCoaches.length - prevPeriodCoaches.length) / prevPeriodCoaches.length * 100).toFixed(1)
-      : 0;
+      ? parseFloat(((currentPeriodCoaches.length - prevPeriodCoaches.length) / prevPeriodCoaches.length * 100).toFixed(1))
+      : null;
     const sessionGrowth = prevPeriodAppointments.length > 0
-      ? ((currentPeriodAppointments.length - prevPeriodAppointments.length) / prevPeriodAppointments.length * 100).toFixed(1)
-      : 0;
+      ? parseFloat(((currentPeriodAppointments.length - prevPeriodAppointments.length) / prevPeriodAppointments.length * 100).toFixed(1))
+      : null;
 
     // Calculate revenue (estimated since sessions table doesn't have price)
     const completedSessions = appointments.filter(a => a.status === 'completed');
@@ -2707,8 +2711,8 @@ router.get('/analytics', async (req, res) => {
     const prevRevenue = prevCompletedSessions.length * 75;
     
     const revenueGrowth = prevRevenue > 0
-      ? ((currentRevenue - prevRevenue) / prevRevenue * 100).toFixed(1)
-      : 0;
+      ? parseFloat(((currentRevenue - prevRevenue) / prevRevenue * 100).toFixed(1))
+      : null;
 
     // Calculate coach metrics - include both 'approved' and 'active' coaches
     const activeCoaches = coaches.filter(c => c.status === 'approved' || c.status === 'active');
@@ -2777,10 +2781,13 @@ router.get('/analytics', async (req, res) => {
           `${coach.first_name || ''} ${coach.last_name || ''}`.trim() || 'Unknown Coach' :
           'Unknown Coach';
         
+        // Get actual rating from coach data, convert to number and format
+        const coachRating = coach?.rating ? parseFloat(coach.rating.toString()) : 0;
+
         return {
           id: coachId,
           name: coachName,
-          rating: coach?.rating || 4.5,
+          rating: Number(coachRating.toFixed(1)), // Use actual rating, not fallback
           sessions: count,
           revenue
         };

@@ -60,10 +60,10 @@ export default function HomePage() {
       <nav>
         <NavbarLandingPage />
       </nav>
-      {/* Hero Section */}
-      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 py-20 lg:py-28 overflow-hidden">
+      {/* Hero Section - Added top padding to account for fixed navbar */}
+      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 pt-20 sm:pt-24 pb-12 sm:pb-16 md:pb-20 lg:pb-28 overflow-hidden">
         {/* Background Lottie Animation */}
-        <div className="absolute top-10 right-10 opacity-60 hidden md:block z-0">
+        <div className="absolute top-10 right-10 opacity-60 hidden lg:block z-0">
           <LottieAnimation width={280} height={280} />
         </div>
 
@@ -376,14 +376,14 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-center lg:text-left"
             >
-              <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-ink-dark mb-4 sm:mb-6">
                 Find the perfect coach for meaningful change
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
-                Professional ACT coaching that helps you overcome challenges, build resilience, 
+              <p className="text-base sm:text-lg md:text-xl text-gray-600 mb-6 sm:mb-8 leading-relaxed">
+                Professional ACT coaching that helps you overcome challenges, build resilience,
                 and create meaningful life changes. Get matched with qualified coaches in 24 hours.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <a href="#quick-assessment">
                   <Button 
                     size="lg" 
@@ -402,18 +402,18 @@ export default function HomePage() {
                   Watch Demo
                 </Button>
                 </div>
-              <div className="flex items-center justify-center lg:justify-start space-x-6 text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 sm:gap-4 md:space-x-6 text-xs sm:text-sm text-gray-600">
                 <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-brand-leaf mr-2" />
-                  Qualified professionals
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf mr-2" />
+                  <span>Qualified professionals</span>
               </div>
                 <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-brand-leaf mr-2" />
-                  24/7 support
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf mr-2" />
+                  <span>24/7 support</span>
                 </div>
                 <div className="flex items-center">
-                  <CheckCircle className="w-5 h-5 text-brand-leaf mr-2" />
-                  Insurance accepted
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf mr-2" />
+                  <span>Insurance accepted</span>
                 </div>
               </div>
             </motion.div>
@@ -430,19 +430,19 @@ export default function HomePage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      <section className="py-12 sm:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="text-center"
             >
-              <div className="text-3xl lg:text-4xl font-bold text-brand-teal mb-2">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-teal mb-2">
                 <CountUp to={3000} duration={2.5} separator="," />+
                   </div>
-              <div className="text-gray-600">Active clients</div>
+              <div className="text-sm sm:text-base text-gray-600">Active clients</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -450,10 +450,10 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="text-center"
             >
-              <div className="text-3xl lg:text-4xl font-bold text-brand-orange mb-2">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-orange mb-2">
                 <CountUp to={500} duration={2} />+
                 </div>
-              <div className="text-gray-600">Professional coaches</div>
+              <div className="text-sm sm:text-base text-gray-600">Professional coaches</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -461,10 +461,10 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-center"
             >
-              <div className="text-3xl lg:text-4xl font-bold text-brand-leaf mb-2">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-leaf mb-2">
                 <CountUp to={4.8} duration={2.2} from={0} />/<CountUp to={5} duration={1.8} />
               </div>
-              <div className="text-gray-600">Client rating</div>
+              <div className="text-sm sm:text-base text-gray-600">Client rating</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -472,33 +472,33 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.3 }}
               className="text-center"
             >
-              <div className="text-3xl lg:text-4xl font-bold text-brand-coral mb-2">
+              <div className="text-2xl sm:text-3xl lg:text-4xl font-bold text-brand-coral mb-2">
                 <CountUp to={24} duration={1.5} />hr
               </div>
-              <div className="text-gray-600">Match guarantee</div>
+              <div className="text-sm sm:text-base text-gray-600">Match guarantee</div>
             </motion.div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section className="py-20 bg-gray-lite">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-lite">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-dark mb-3 sm:mb-4 px-4">
               Why choose ACT Coaching For Life?
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               We combine proven ACT methodology with personalized matching to help you achieve lasting change.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -611,23 +611,23 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-white">
+      <section id="how-it-works" className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-dark mb-3 sm:mb-4 px-4">
               How it works
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               Getting started with your coaching journey is simple and takes just a few minutes.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -691,23 +691,23 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 bg-gray-lite">
+      <section className="py-12 sm:py-16 md:py-20 bg-gray-lite">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-ink-dark mb-3 sm:mb-4 px-4">
               What our clients say
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-gray-600 max-w-3xl mx-auto px-4">
               Real stories from people who have transformed their lives through ACT coaching.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -820,7 +820,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section with Ballpit Background */}
-      <section className="relative py-20 bg-brand-teal overflow-hidden">
+      <section className="relative py-12 sm:py-16 md:py-20 bg-brand-teal overflow-hidden">
         {/* Ballpit Background */}
         <div className="absolute inset-0 z-0">
           <Ballpit 
@@ -847,10 +847,10 @@ export default function HomePage() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-4">
               Ready to start your transformation?
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg md:text-xl text-white/90 mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
               Join thousands of people who have found their perfect coach match and are living more fulfilling lives.
             </p>
             <div className="flex justify-center">

@@ -77,7 +77,6 @@ router.get('/coach/profile', authenticate, requireActiveUser, async (req: Reques
 router.put('/coach/profile', [
   authenticate,
   requireActiveUser,
-  authenticate,
   body('firstName').optional().trim().isLength({ min: 2, max: 50 }),
   body('lastName').optional().trim().isLength({ min: 2, max: 50 }),
   body('phone').optional().custom((value) => {
@@ -106,27 +105,27 @@ router.put('/coach/profile', [
   body('genderIdentity').optional().isString(),
   body('profilePhoto').optional().isString(),
   body('experience').optional().isInt({ min: 0 }),
-  body('hourlyRate').optional().isFloat({ min: 0 }),
+  body('hourlyRate').optional({ nullable: true }).custom((value) => {
+    if (value === null || value === undefined) return true;
+    const num = parseFloat(value);
+    if (isNaN(num) || num < 0) {
+      throw new Error('Hourly rate must be a positive number');
+    }
+    return true;
+  }),
   body('isAvailable').optional().isBoolean(),
   body('videoAvailable').optional().isBoolean(),
   body('inPersonAvailable').optional().isBoolean(),
   body('phoneAvailable').optional().isBoolean(),
   body('availability_options').optional().isArray(),
-  body('educationalBackground').optional({ nullable: true }),
-  body('coachingExperienceYears').optional({ nullable: true }),
-  body('professionalCertifications').optional({ nullable: true }),
-  body('coachingExpertise').optional({ nullable: true }),
-  body('ageGroupsComfortable').optional({ nullable: true }),
-  body('actTrainingLevel').optional({ nullable: true }),
-  body('email').optional(),
   body('location').optional().isString().custom((value) => {
     if (!value) return true; // Allow empty/optional
-    
+
     // Special value for no location
     if (value === 'none') {
       return null; // Convert to null for database
     }
-    
+
     // Check if it's a valid location code (US states + international)
     const validLocationCodes = [
       // US States
@@ -134,33 +133,59 @@ router.put('/coach/profile', [
       // International
       'CA-ON', 'CA-BC', 'CA-AB', 'CA-QC', 'UK-LON', 'UK-MAN', 'UK-BIR', 'AU-NSW', 'AU-VIC', 'AU-QLD', 'DE-BER', 'DE-MUN', 'FR-PAR', 'FR-LYO', 'ES-MAD', 'ES-BAR', 'IT-ROME', 'IT-MIL', 'NL-AMS', 'JP-TOK', 'JP-OSA', 'KR-SEO', 'SG-SIN', 'IN-MH', 'IN-DL', 'BR-SP', 'BR-RJ', 'MX-CMX', 'MX-JAL'
     ];
-    
+
     // If it's a predefined code, validate it
     if (validLocationCodes.includes(value)) {
       return value;
     }
-    
+
     // If it's custom text, allow it (but limit length)
     if (value.length > 100) {
       throw new Error('Custom location must be less than 100 characters');
     }
-    
+
     return value;
+  }),
+  // Professional/Application section fields
+  body('educationalBackground').optional({ nullable: true }).custom((value) => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string' && value.length <= 1000) return true;
+    throw new Error('Educational background must be a string (max 1000 characters)');
+  }),
+  body('coachingExperienceYears').optional({ nullable: true }).custom((value) => {
+    if (value === null || value === undefined) return true;
+    // Accept both string ranges (e.g., "3-5 years") and numbers
+    if (typeof value === 'string' || typeof value === 'number') return true;
+    throw new Error('Coaching experience must be a string or number');
+  }),
+  body('professionalCertifications').optional().isArray(),
+  body('coachingExpertise').optional().isArray(),
+  body('ageGroupsComfortable').optional().isArray(),
+  body('actTrainingLevel').optional({ nullable: true }).custom((value) => {
+    if (value === null || value === undefined) return true;
+    if (typeof value === 'string') return true;
+    throw new Error('ACT training level must be a string');
   })
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
+    console.log('=== PUT /coach/profile - Request received ===');
+    console.log('User:', req.user);
+    console.log('Body keys:', Object.keys(req.body));
+
     if (!req.user || req.user.role !== 'coach') {
-      return res.status(403).json({ 
-        success: false, 
-        message: 'Access denied. Coach role required.' 
+      console.log('Access denied - not a coach');
+      return res.status(403).json({
+        success: false,
+        message: 'Access denied. Coach role required.'
       });
     }
 
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ 
-        success: false, 
-        errors: errors.array() 
+      console.log('Validation errors:', JSON.stringify(errors.array(), null, 2));
+      return res.status(400).json({
+        success: false,
+        errors: errors.array()
       });
     }
 
@@ -313,35 +338,114 @@ router.put('/coach/profile', [
       console.log('No demographics updates needed');
     }
 
-    // Update coach_applications table if application-specific fields are provided
-    if (educationalBackground !== undefined || coachingExperienceYears !== undefined ||
-        professionalCertifications !== undefined || coachingExpertise !== undefined ||
-        ageGroupsComfortable !== undefined || actTrainingLevel !== undefined) {
+    // Update coach_applications if professional section fields are provided
+    if (educationalBackground !== undefined ||
+        coachingExperienceYears !== undefined ||
+        professionalCertifications !== undefined ||
+        coachingExpertise !== undefined ||
+        ageGroupsComfortable !== undefined ||
+        actTrainingLevel !== undefined) {
 
       const applicationUpdates: any = {
         updated_at: new Date().toISOString()
       };
 
-      if (educationalBackground !== undefined) applicationUpdates.educational_background = educationalBackground;
-      if (coachingExperienceYears !== undefined) applicationUpdates.coaching_experience_years = coachingExperienceYears;
-      if (professionalCertifications !== undefined) applicationUpdates.professional_certifications = professionalCertifications;
-      if (coachingExpertise !== undefined) applicationUpdates.coaching_expertise = coachingExpertise;
-      if (ageGroupsComfortable !== undefined) applicationUpdates.age_groups_comfortable = ageGroupsComfortable;
-      if (actTrainingLevel !== undefined) applicationUpdates.act_training_level = actTrainingLevel;
+      // Only update fields that have meaningful values (not null, not empty string, not empty array)
+      if (educationalBackground !== undefined && educationalBackground !== null && educationalBackground !== '') {
+        applicationUpdates.educational_background = educationalBackground;
+      }
+      if (coachingExperienceYears !== undefined && coachingExperienceYears !== null && coachingExperienceYears !== '') {
+        applicationUpdates.coaching_experience_years = coachingExperienceYears;
+      }
+      if (professionalCertifications !== undefined && professionalCertifications !== null &&
+          Array.isArray(professionalCertifications) && professionalCertifications.length > 0) {
+        applicationUpdates.professional_certifications = professionalCertifications;
+      }
+      if (coachingExpertise !== undefined && coachingExpertise !== null &&
+          Array.isArray(coachingExpertise) && coachingExpertise.length > 0) {
+        applicationUpdates.coaching_expertise = coachingExpertise;
+      }
+      if (ageGroupsComfortable !== undefined && ageGroupsComfortable !== null &&
+          Array.isArray(ageGroupsComfortable) && ageGroupsComfortable.length > 0) {
+        applicationUpdates.age_groups_comfortable = ageGroupsComfortable;
+      }
+      if (actTrainingLevel !== undefined && actTrainingLevel !== null && actTrainingLevel !== '') {
+        applicationUpdates.act_training_level = actTrainingLevel;
+      }
 
-      // Update coach_applications table using email as the key
-      // Note: coach_applications uses email field, not coach_id or user_id
-      const { error: appError } = await supabase
+      console.log('Updating coach_applications with:', applicationUpdates);
+
+      // First check if a record exists
+      const { data: existingApps, error: checkError } = await supabase
         .from('coach_applications')
-        .update(applicationUpdates)
-        .eq('email', req.user.email);
+        .select('id, email')
+        .ilike('email', req.user.email)
+        .eq('status', 'approved');
+
+      if (checkError) {
+        console.error('Error checking for existing application:', checkError);
+      }
+
+      const existingApp = existingApps && existingApps.length > 0 ? existingApps[0] : null;
+
+      let appError = null;
+      if (existingApp) {
+        // Update existing record
+        console.log('Updating existing application record');
+        const { error } = await supabase
+          .from('coach_applications')
+          .update(applicationUpdates)
+          .eq('id', existingApp.id);
+        appError = error;
+      } else {
+        // Create new record
+        console.log('Creating new application record for', req.user.email);
+        const newApplicationData = {
+          email: req.user.email,
+          first_name: firstName || '',
+          last_name: lastName || '',
+          status: 'approved',
+          ...applicationUpdates
+        };
+
+        // Log data lengths for debugging
+        console.log('New application data field lengths:', {
+          email: newApplicationData.email?.length,
+          first_name: newApplicationData.first_name?.length,
+          last_name: newApplicationData.last_name?.length,
+          educational_background: newApplicationData.educational_background?.length,
+          coaching_experience_years: newApplicationData.coaching_experience_years?.length,
+          act_training_level: newApplicationData.act_training_level?.length
+        });
+
+        const { error } = await supabase
+          .from('coach_applications')
+          .insert(newApplicationData);
+        appError = error;
+      }
 
       if (appError) {
-        // Database error updating application
-        console.error('Failed to update coach application:', appError);
+        console.error('Coach application update/insert error:', appError);
+        console.error('Failed to save application data. This may be due to field length constraints.');
         // Don't fail the whole request if application update fails
       } else {
-        console.log('Coach application updated successfully');
+        console.log('✓ Coach application saved successfully to database!');
+
+        // Verify the data was saved
+        const { data: verifyData, error: verifyError } = await supabase
+          .from('coach_applications')
+          .select('educational_background, coaching_experience_years, act_training_level')
+          .ilike('email', req.user.email)
+          .eq('status', 'approved')
+          .single();
+
+        if (!verifyError && verifyData) {
+          console.log('✓ CONFIRMED: Data stored in database:', {
+            educational_background: verifyData.educational_background?.substring(0, 50) + '...',
+            coaching_experience_years: verifyData.coaching_experience_years,
+            act_training_level: verifyData.act_training_level
+          });
+        }
       }
     }
 
@@ -1248,7 +1352,15 @@ router.get('/coach/profile/stats', authenticate, requireActiveUser, async (req: 
 
     // Get unique clients
     const uniqueClientIds = [...new Set(allSessions?.map(s => s.client_id) || [])];
-    
+
+    // Get saved by count
+    const { data: savedByData, error: savedError } = await supabase
+      .from('saved_coaches')
+      .select('id')
+      .eq('coach_id', coachId);
+
+    const savedByCount = !savedError && savedByData ? savedByData.length : 0;
+
     // Calculate stats
     const totalSessions = allSessions?.filter(s => s.status === 'completed').length || 0;
     const totalClients = uniqueClientIds.length;
@@ -1263,7 +1375,8 @@ router.get('/coach/profile/stats', authenticate, requireActiveUser, async (req: 
         totalClients,
         totalSessions,
         averageRating,
-        completionRate
+        completionRate,
+        savedByCount
       }
     });
   } catch (error) {
@@ -1285,6 +1398,9 @@ router.get('/coach/application-data', authenticate, async (req: Request & { user
       });
     }
 
+    console.log('=== GET /coach/application-data - Request received ===');
+    console.log('User email:', req.user.email);
+
     // Get coach application data by email
     const { data: applicationData, error: applicationError } = await supabase
       .from('coach_applications')
@@ -1294,7 +1410,9 @@ router.get('/coach/application-data', authenticate, async (req: Request & { user
       .single();
 
     if (applicationError) {
+      console.log('Application data error:', applicationError);
       if (applicationError.code === 'PGRST116') {
+        console.log('No application data found for email:', req.user.email);
         return res.json({
           success: true,
           data: null,
@@ -1303,6 +1421,13 @@ router.get('/coach/application-data', authenticate, async (req: Request & { user
       }
       throw applicationError;
     }
+
+    console.log('Application data retrieved successfully:', {
+      educational_background: applicationData?.educational_background,
+      coaching_experience_years: applicationData?.coaching_experience_years,
+      act_training_level: applicationData?.act_training_level,
+      professional_certifications: applicationData?.professional_certifications
+    });
 
     res.json({
       success: true,
@@ -2566,11 +2691,10 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
     // Mock on-time performance (would need actual meeting start/end times)
     const onTimeRate = 95; // Placeholder
 
-    // Recent activity (last 10 payment transactions including refunded)
+    // Recent activity (last 10 payment transactions)
     const { data: recentPayments, error: activityError } = await supabase
       .from('payments')
       .select(`
-        id,
         amount_cents,
         created_at,
         status,
@@ -2578,31 +2702,15 @@ router.get('/coach/revenue', authenticate, async (req: Request & { user?: any },
         clients(first_name, last_name)
       `)
       .eq('coach_id', coachId)
-      .in('status', ['succeeded', 'refunded', 'partially_refunded'])
+      .eq('status', 'succeeded')
       .order('created_at', { ascending: false })
       .limit(10);
 
-    // Get refund information for refunded payments
-    const paymentIds = recentPayments?.map(p => p.id) || [];
-    const { data: refunds } = await supabase
-      .from('refunds')
-      .select('payment_id, amount_cents, status')
-      .in('payment_id', paymentIds)
-      .eq('status', 'succeeded');
-
-    const refundMap = new Map();
-    refunds?.forEach(refund => {
-      refundMap.set(refund.payment_id, refund.amount_cents);
-    });
-
     const formattedActivity = recentPayments?.map((payment: any) => {
-      const refundAmount = refundMap.get(payment.id) || 0;
       return {
         clientName: payment.clients ? `${payment.clients.first_name} ${payment.clients.last_name}` : 'Client',
         date: payment.created_at,
         amount: (payment.amount_cents / 100).toFixed(2),
-        status: payment.status,
-        refundAmount: (refundAmount / 100).toFixed(2),
         duration: 60 // This could be pulled from session data if needed
       };
     }) || [];

@@ -157,7 +157,8 @@ class CoachSearchService {
 
       console.log(`✅ Found ${coaches?.length || 0} available coaches`);
 
-      // Filter out coaches without bank accounts
+      // Filter out coaches without verified bank accounts
+      // Only show coaches who can receive payments
       if (coaches && coaches.length > 0) {
         const coachIds = coaches.map(c => c.id);
 

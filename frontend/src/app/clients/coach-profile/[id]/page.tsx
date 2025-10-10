@@ -450,6 +450,11 @@ function CoachProfileContent() {
     try {
       const API_URL = getApiUrl()
       console.log('Checking if coach is saved for user:', user?.id, 'coach:', params.id)
+
+      // Also check localStorage as a fallback
+      const localSavedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+      const isInLocalStorage = localSavedCoaches.some((savedCoach: any) => savedCoach.id === params.id)
+
       const response = await fetch(`${API_URL}/api/client/saved-coaches`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -459,9 +464,9 @@ function CoachProfileContent() {
       if (response.ok) {
         const data = await response.json()
         console.log('Saved coaches data:', data)
-        // Check if this coach is in the saved coaches list
+        // Check if this coach is in the saved coaches list (database OR localStorage)
         // The API returns data directly, not data.savedCoaches
-        const isCoachSaved = data.data?.some((savedCoach: any) => savedCoach.id === params.id || savedCoach.coach_id === params.id)
+        const isCoachSaved = data.data?.some((savedCoach: any) => savedCoach.id === params.id || savedCoach.coach_id === params.id) || isInLocalStorage
         setIsSaved(isCoachSaved || false)
       } else {
         setIsSaved(false)
@@ -521,8 +526,32 @@ function CoachProfileContent() {
           setIsSaved(true)
           // Re-check the saved state to ensure synchronization
           checkIfCoachIsSaved()
+        } else if (response.status === 409) {
+          // Duplicate - coach is already saved by another client (database schema issue)
+          // Store in localStorage as a workaround
+          console.log('Coach already saved by another client, storing in localStorage')
+          const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
+          const exists = savedCoaches.some((c: any) => c.id === coach?.id)
+          if (!exists && coach) {
+            savedCoaches.push({
+              id: coach.id,
+              name: `${coach.first_name} ${coach.last_name}`,
+              specialties: coach.specialties,
+              languages: coach.languages,
+              bio: coach.bio,
+              sessionRate: coach.hourly_rate ? `$${coach.hourly_rate}/session` : 'Rate not specified',
+              experience: coach.experience ? `${coach.experience} years` : 'Experience not specified',
+              rating: coach.rating || 0,
+              virtualAvailable: coach.is_available,
+              profilePhoto: coach.profile_photo || '',
+              email: coach.email || null
+            })
+            localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+          }
+          setIsSaved(true)
+          checkIfCoachIsSaved()
         } else {
-          console.error('Failed to save coach')
+          console.error('Failed to save coach:', response.status)
         }
       }
     } catch (error) {

@@ -1,5 +1,7 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +9,32 @@ import Footer from "@/components/Footer";
 import NavbarLandingPage from '@/components/NavbarLandingPage';
 
 export default function CoachApplicationSuccess() {
+  const router = useRouter();
+  const [countdown, setCountdown] = useState(10);
+  const [autoRedirect, setAutoRedirect] = useState(true);
+
+  useEffect(() => {
+    if (!autoRedirect) return;
+
+    // Start countdown
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          router.push('/');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [router, autoRedirect]);
+
+  const handleCancelRedirect = () => {
+    setAutoRedirect(false);
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <nav>
@@ -18,18 +46,31 @@ export default function CoachApplicationSuccess() {
           <Card>
             <CardHeader className="text-center">
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center animate-pulse">
+                  <svg className="w-12 h-12 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               </div>
-              <CardTitle className="text-2xl font-bold text-green-600">
-                Application Submitted!
+              <CardTitle className="text-3xl font-bold text-green-600 mb-2">
+                🎉 Application Successfully Submitted!
               </CardTitle>
-              <CardDescription className="text-gray-600 mt-2">
+              <CardDescription className="text-gray-600 text-base">
                 Thank you for your interest in becoming a coach with ACT Coaching For Life
               </CardDescription>
+              {autoRedirect && (
+                <div className="mt-4">
+                  <div className="text-sm text-gray-500 mb-2">
+                    Redirecting to home page in <span className="font-bold text-blue-600">{countdown}</span> seconds...
+                  </div>
+                  <button
+                    onClick={handleCancelRedirect}
+                    className="text-xs text-gray-400 hover:text-gray-600 underline"
+                  >
+                    Stay on this page
+                  </button>
+                </div>
+              )}
             </CardHeader>
             
             <CardContent className="text-center space-y-4">

@@ -773,7 +773,6 @@ router.get('/client/saved-coaches', authenticate, requireActiveUser, async (req:
 router.post('/client/saved-coaches', [
   authenticate,
   requireActiveUser,
-  authenticate,
   body('coachId').notEmpty().withMessage('Coach ID is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
@@ -795,18 +794,31 @@ router.post('/client/saved-coaches', [
     const { coachId } = req.body;
 
     // Get client profile first
+    console.log('Save coach - Looking for client with userId:', req.user.userId);
     const { data: clientProfile, error: profileError } = await supabase
       .from('clients')
       .select('id')
       .eq('id', req.user.userId)
       .single();
 
-    if (profileError || !clientProfile) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Client profile not found' 
+    if (profileError) {
+      console.error('Save coach - Client profile lookup error:', profileError);
+      return res.status(500).json({
+        success: false,
+        message: 'Database error looking up client profile',
+        error: profileError.message
       });
     }
+
+    if (!clientProfile) {
+      console.error('Save coach - Client profile not found for userId:', req.user.userId);
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
+      });
+    }
+
+    console.log('Save coach - Found client profile:', clientProfile.id);
 
     // Check if already saved
     const { data: existing } = await supabase
@@ -817,13 +829,30 @@ router.post('/client/saved-coaches', [
       .single();
 
     if (existing) {
-      return res.status(400).json({
+      console.log('Save coach - Coach already saved');
+      return res.status(409).json({
         success: false,
         message: 'Coach already saved'
       });
     }
 
+    // Verify coach exists
+    const { data: coach, error: coachError } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('id', coachId)
+      .single();
+
+    if (coachError || !coach) {
+      console.error('Save coach - Coach not found:', coachId);
+      return res.status(404).json({
+        success: false,
+        message: 'Coach not found'
+      });
+    }
+
     // Save the coach
+    console.log('Save coach - Saving coach:', { clientId: clientProfile.id, coachId });
     const { data: savedCoach, error: saveError } = await supabase
       .from('saved_coaches')
       .insert({
@@ -834,19 +863,36 @@ router.post('/client/saved-coaches', [
       .single();
 
     if (saveError) {
-      throw saveError;
+      console.error('Save coach - Insert error:', saveError);
+
+      // Check if it's a duplicate key error (PostgreSQL code 23505)
+      if (saveError.code === '23505') {
+        console.log('Save coach - Duplicate key detected, coach already saved');
+        return res.status(409).json({
+          success: false,
+          message: 'Coach already saved'
+        });
+      }
+
+      return res.status(500).json({
+        success: false,
+        message: 'Database error saving coach',
+        error: saveError.message
+      });
     }
 
+    console.log('Save coach - Successfully saved coach');
     res.json({
       success: true,
       message: 'Coach saved successfully',
       data: savedCoach
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Save coach error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to save coach' 
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save coach',
+      error: error.message || 'Unknown error'
     });
   }
 });
@@ -1538,7 +1584,26 @@ router.post('/client/message-coach', [
       console.error('Database error:', messageError);
       return res.status(500).json({ success: false, message: 'Failed to store message' });
     }
-    
+
+    // Send real-time notification to coach via Socket.IO
+    try {
+      const io = req.app.get('io');
+      if (io) {
+        const messageWithSender = {
+          ...newMessage,
+          sender_id: clientProfile.id,
+          sender_name: `${clientProfile.first_name} ${clientProfile.last_name}`
+        };
+
+        // Emit to coach's room
+        io.to(`user:${coach.id}`).emit('message:new', messageWithSender);
+        console.log(`Real-time notification sent to coach ${coach.id} for message from client ${clientProfile.id}`);
+      }
+    } catch (socketError) {
+      console.error('Failed to send socket notification:', socketError);
+      // Don't fail the request if socket notification fails
+    }
+
     res.json({
       success: true,
       message: 'Message sent successfully to coach',

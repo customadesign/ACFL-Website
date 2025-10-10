@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import Script from 'next/script'
 import Providers from '@/components/Providers'
 import { ThemeScript } from '@/components/ThemeScript'
@@ -10,6 +10,14 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.ico',
   },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+  themeColor: '#25A7B8',
 }
 
 export default function RootLayout({

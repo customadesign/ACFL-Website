@@ -168,11 +168,11 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
   const progress = ((currentStep + 1) / steps.length) * 100
 
   return (
-    <Card className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+    <Card className="bg-white rounded-2xl sm:rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
       <CardContent className="p-0">
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">
-          <motion.div 
+          <motion.div
             className="h-full bg-brand-teal"
             initial={{ width: "25%" }}
             animate={{ width: `${progress}%` }}
@@ -180,14 +180,14 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
           />
         </div>
 
-        <div className="p-8">
+        <div className="p-4 sm:p-6 md:p-8">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4 sm:mb-6">
             <div>
-              <h3 className="text-xl font-semibold text-ink-dark">Quick Assessment</h3>
-              <p className="text-sm text-gray-500">Step {currentStep + 1} of {steps.length}</p>
+              <h3 className="text-lg sm:text-xl font-semibold text-ink-dark">Quick Assessment</h3>
+              <p className="text-xs sm:text-sm text-gray-500">Step {currentStep + 1} of {steps.length}</p>
             </div>
-            <span className="bg-brand-leaf text-white px-3 py-1 rounded-full text-sm font-medium">
+            <span className="bg-brand-leaf text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium whitespace-nowrap">
               2 min
             </span>
           </div>
@@ -201,29 +201,29 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h4 className="text-lg font-medium text-ink-dark mb-2">
+              <h4 className="text-base sm:text-lg font-medium text-ink-dark mb-2">
                 {steps[currentStep].title}
               </h4>
-              <p className="text-gray-600 mb-6">{steps[currentStep].subtitle}</p>
+              <p className="text-sm sm:text-base text-gray-600 mb-4 sm:mb-6">{steps[currentStep].subtitle}</p>
 
               {/* Options */}
               {steps[currentStep].id === "location" ? (
-                <div className="mb-8">
+                <div className="mb-6 sm:mb-8">
                   <div className="relative" ref={dropdownRef}>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 sm:w-5 sm:h-5" />
                       <Input
                         type="text"
                         placeholder="Search for your state..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={() => setIsDropdownOpen(true)}
-                        className="pl-10 pr-4 py-3 w-full border-2 border-gray-200 rounded-xl focus:border-brand-teal focus:outline-none"
+                        className="pl-9 sm:pl-10 pr-4 py-2 sm:py-3 w-full text-sm sm:text-base border-2 border-gray-200 rounded-xl focus:border-brand-teal focus:outline-none"
                       />
                     </div>
-                    
+
                     {isDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-48 sm:max-h-60 overflow-y-auto">
                         {Object.values(STATE_NAMES)
                           .filter(state => 
                             state.toLowerCase().includes(searchTerm.toLowerCase())
@@ -270,7 +270,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                   )}
                 </div>
               ) : (
-                <div className="space-y-3 mb-8">
+                <div className="space-y-2 sm:space-y-3 mb-6 sm:mb-8">
                   {getOptions().map((option, index) => (
                     <motion.div
                       key={option.value}
@@ -278,14 +278,14 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleAnswer(steps[currentStep].id, option.value)}
-                      className={`w-full p-4 text-left rounded-xl border-2 transition-all cursor-pointer ${
+                      className={`w-full p-3 sm:p-4 text-left rounded-lg sm:rounded-xl border-2 transition-all cursor-pointer ${
                         isSelected(option.value)
                           ? 'border-brand-teal bg-brand-teal/5 text-brand-teal'
                           : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="font-medium">{option.label}</span>
+                        <span className="text-sm sm:text-base font-medium">{option.label}</span>
                         {isSelected(option.value) && (
                           <motion.div
                             initial={{ scale: 0 }}
@@ -304,22 +304,22 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 0}
-              className="border-gray-300 text-gray-600 hover:border-gray-400"
+              className="border-gray-300 text-gray-600 hover:border-gray-400 text-xs sm:text-sm px-2 sm:px-4"
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Back
+              <ChevronLeft className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+              <span className="hidden xs:inline">Back</span>
             </Button>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-1.5 sm:space-x-2">
               {steps.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
+                  className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full transition-colors ${
                     index <= currentStep ? 'bg-brand-teal' : 'bg-gray-300'
                   }`}
                 />
@@ -329,14 +329,15 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
             <Button
               onClick={nextStep}
               disabled={!canProceed()}
-              className={`text-white transition-all ${
-                canProceed() 
-                  ? 'bg-brand-teal hover:bg-brand-teal/90 cursor-pointer' 
+              className={`text-white transition-all text-xs sm:text-sm px-2 sm:px-4 whitespace-nowrap ${
+                canProceed()
+                  ? 'bg-brand-teal hover:bg-brand-teal/90 cursor-pointer'
                   : 'bg-gray-400 cursor-not-allowed opacity-50'
               }`}
             >
-              {currentStep === steps.length - 1 ? 'Get Matches' : 'Next'}
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <span className="hidden xs:inline">{currentStep === steps.length - 1 ? 'Get Matches' : 'Next'}</span>
+              <span className="xs:hidden">{currentStep === steps.length - 1 ? 'Match' : 'Next'}</span>
+              <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1 sm:ml-2" />
             </Button>
           </div>
         </div>

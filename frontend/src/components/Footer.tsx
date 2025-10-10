@@ -30,21 +30,21 @@ export default function Footer() {
   };
 
   return (
-    <footer className="bg-ink-dark dark:bg-gray-900 text-white py-16">
+    <footer className="bg-ink-dark dark:bg-gray-900 text-white py-12 sm:py-16">
     <div className="max-w-full md:max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid md:grid-cols-5 gap-8">
-        <div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6 sm:gap-8">
+        <div className="sm:col-span-2 md:col-span-1">
           <div className="flex items-center space-x-3 mb-4">
-            <Logo size={32} />
-            <span className="text-xl font-bold">ACT Coaching For Life</span>
+            <Logo size={28} />
+            <span className="text-lg sm:text-xl font-bold">ACT Coaching For Life</span>
           </div>
-          <p className="text-gray-400 leading-relaxed">
+          <p className="text-sm sm:text-base text-gray-400 leading-relaxed">
             Transforming lives through personalized ACT coaching and evidence-based practice.
           </p>
         </div>
         <div>
-          <h3 className="font-semibold mb-4">Services</h3>
-          <ul className="space-y-2 text-gray-400">
+          <h3 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Services</h3>
+          <ul className="space-y-2 text-sm sm:text-base text-gray-400">
             <li><a href="/clients/search-coaches" className="hover:text-white transition-colors">Find a Coach</a></li>
             <li><a href="/group-coaching" className="hover:text-white transition-colors">Group Coaching</a></li>
             <li><a href="/corporate" className="hover:text-white transition-colors">Corporate Programs</a></li>
@@ -52,8 +52,8 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold mb-4">Support</h3>
-          <ul className="space-y-2 text-gray-400">
+          <h3 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Support</h3>
+          <ul className="space-y-2 text-sm sm:text-base text-gray-400">
             <li><a href="/help" className="hover:text-white transition-colors">Help Center</a></li>
             <li><a href="/help" className="hover:text-white transition-colors">Contact Us</a></li>
             <li><a href="/privacy" className="hover:text-white transition-colors">Privacy Policy</a></li>
@@ -61,16 +61,16 @@ export default function Footer() {
           </ul>
         </div>
         <div>
-          <h3 className="font-semibold mb-4">Company</h3>
-          <ul className="space-y-2 text-gray-400">
+          <h3 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Company</h3>
+          <ul className="space-y-2 text-sm sm:text-base text-gray-400">
             <li><a href="/(public)/about" className="hover:text-white transition-colors">About Us</a></li>
             <li><a href="/careers" className="hover:text-white transition-colors">Careers</a></li>
             <li><a href="/press" className="hover:text-white transition-colors">Press</a></li>
             <li><a href="/blog" className="hover:text-white transition-colors">Blog</a></li>
           </ul>
         </div>
-        <div>
-          <h3 className="font-semibold mb-4">Download Our App</h3>
+        <div className="sm:col-span-2 md:col-span-1">
+          <h3 className="text-sm sm:text-base font-semibold mb-3 sm:mb-4">Download Our App</h3>
           <div className="space-y-3">
             {/* App Store Button */}
             <a href="#" className="block">
@@ -100,8 +100,8 @@ export default function Footer() {
           </div>
         </div>
       </div>
-      <div className="border-t border-gray-700 mt-12 pt-8 text-center text-gray-400">
-        <p>&copy; 2025 ACT Coaching For Life. All rights reserved.</p>
+      <div className="border-t border-gray-700 mt-8 sm:mt-12 pt-6 sm:pt-8 text-center text-gray-400">
+        <p className="text-xs sm:text-sm">&copy; 2025 ACT Coaching For Life. All rights reserved.</p>
       </div>
     </div>
   </footer>

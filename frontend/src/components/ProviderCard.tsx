@@ -59,42 +59,40 @@ export const ProviderCard = ({
   const initialModalities = safeModalities.slice(0, 4);
   const remainingModalities = safeModalities.slice(4);
 
-  // Use initialIsSaved prop from parent (which comes from database) and sync with localStorage
+  // Use initialIsSaved prop from parent (which comes from database) and also check localStorage
   useEffect(() => {
-    setIsSaved(initialIsSaved)
-    
-    // Also update localStorage to sync with database state
     try {
       const coachId = id || name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')
       const savedCoaches = JSON.parse(localStorage.getItem('savedCoaches') || '[]')
-      
-      if (initialIsSaved) {
-        // Ensure it's in localStorage
-        const exists = savedCoaches.some((coach: any) => coach.id === coachId)
-        if (!exists) {
-          const coachData = {
-            id: coachId,
-            name,
-            specialties,
-            modalities,
-            languages,
-            bio,
-            sessionRate,
-            experience,
-            rating,
-            matchScore,
-            virtualAvailable,
-            email
-          }
-          savedCoaches.push(coachData)
-          localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+      const isInLocalStorage = savedCoaches.some((coach: any) => coach.id === coachId)
+
+      // Set saved state if EITHER database says it's saved OR localStorage says it's saved
+      const shouldBeSaved = initialIsSaved || isInLocalStorage
+      setIsSaved(shouldBeSaved)
+
+      // Sync localStorage with the determined state
+      if (shouldBeSaved && !isInLocalStorage) {
+        // Add to localStorage if it should be saved but isn't there yet
+        const coachData = {
+          id: coachId,
+          name,
+          specialties,
+          modalities,
+          languages,
+          bio,
+          sessionRate,
+          experience,
+          rating,
+          matchScore,
+          virtualAvailable,
+          email
         }
-      } else {
-        // Ensure it's not in localStorage
+        savedCoaches.push(coachData)
+        localStorage.setItem('savedCoaches', JSON.stringify(savedCoaches))
+      } else if (!shouldBeSaved && isInLocalStorage) {
+        // Remove from localStorage if it shouldn't be saved but is there
         const updatedCoaches = savedCoaches.filter((coach: any) => coach.id !== coachId)
-        if (updatedCoaches.length !== savedCoaches.length) {
-          localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
-        }
+        localStorage.setItem('savedCoaches', JSON.stringify(updatedCoaches))
       }
     } catch (error) {
       console.error('Error syncing saved coaches:', error)
@@ -125,15 +123,33 @@ export const ProviderCard = ({
         }
       } else {
         // Add to saved
+        console.log('Saving coach:', coachId, 'API URL:', API_URL);
+        const token = localStorage.getItem('token');
+        console.log('Token available:', !!token);
+
         const response = await fetch(`${API_URL}/api/client/saved-coaches`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ coachId })
         })
-        
+
+        console.log('Save coach response status:', response.status);
+
+        // Try to get the response body for debugging
+        const responseText = await response.text();
+        console.log('Save coach response body:', responseText);
+
+        // Parse the response
+        let responseData;
+        try {
+          responseData = JSON.parse(responseText);
+        } catch (e) {
+          console.error('Failed to parse response:', e);
+        }
+
         if (response.ok) {
           setIsSaved(true)
           // Update localStorage
@@ -182,11 +198,15 @@ export const ProviderCard = ({
           }
           onSaveChange?.()
         } else {
-          throw new Error(`Failed to save coach: ${response.status}`)
+          const errorMsg = responseData?.message || responseData?.error || 'Unknown error';
+          console.error('Failed to save coach:', response.status, errorMsg, responseData);
+          throw new Error(`Failed to save coach: ${response.status} - ${errorMsg}`)
         }
       }
     } catch (error) {
       console.error('Error saving coach:', error)
+      // Show user-friendly error message
+      alert(`Failed to save coach: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
   const hasMoreSpecialties = safeSpecialties.length > 4;

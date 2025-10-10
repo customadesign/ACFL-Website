@@ -450,7 +450,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex overflow-x-hidden">
       {/* Collapsible Sidebar - Desktop */}
       <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-[10001] ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
@@ -530,7 +530,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       {!sidebarCollapsed && <span>{item.name}</span>}
                     </Link>
                     {sidebarCollapsed && (
-                      <div className="absolute left-full ml-1 top-0 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto whitespace-nowrap z-[10002]">
+                      <div className="absolute left-full ml-1 top-0 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto whitespace-nowrap z-[10002]">
                         {item.name}
                       </div>
                     )}
@@ -643,7 +643,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   />
                 )}
                 {sidebarCollapsed && (
-                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto whitespace-nowrap z-[10002]">
+                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto whitespace-nowrap z-[10002]">
                     Notifications
                     {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && ` (${displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount})`}
                   </div>
@@ -777,7 +777,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   )}
                 </div>
                 {sidebarCollapsed && (
-                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto whitespace-nowrap z-[10002]">
+                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto whitespace-nowrap z-[10002]">
                     {user?.first_name || 'Admin'} {user?.last_name || ''}
                   </div>
                 )}
@@ -827,7 +827,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       </div>
 
       {/* Main Content Area */}
-      <div className={`flex-1 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'} transition-all duration-300 ease-in-out relative z-[1]`}>
+      <div className={`flex-1 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'} transition-all duration-300 ease-in-out relative z-[1] min-w-0`}>
         {/* Mobile Header */}
         <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="px-4 sm:px-6">
@@ -1336,8 +1336,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </div>
 
         {/* Main Content */}
-        <main className={`p-4 lg:p-8 ${filteredNavigationGroups.flatMap(g => g.items).length > 3 ? 'pb-20 lg:pb-8' : 'pb-4 lg:pb-8'}`}>
-          <div className="max-w-7xl mx-auto">
+        <main className={`p-3 sm:p-4 lg:p-8 ${filteredNavigationGroups.flatMap(g => g.items).length > 3 ? 'pb-20 lg:pb-8' : 'pb-6 lg:pb-8'} min-w-0`}>
+          <div className="max-w-7xl mx-auto w-full">
             {children}
           </div>
         </main>
@@ -1346,7 +1346,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       {/* Portal-based Hover Flyout for Collapsed Sidebar */}
       {typeof window !== 'undefined' && sidebarCollapsed && hoveredGroup && hoverPosition && createPortal(
         <div
-          className="fixed w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-2 z-[10002] border border-gray-200 dark:border-gray-600 pointer-events-auto"
+          className="fixed w-48 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-2 z-[10002] border border-gray-200 dark:border-gray-600 pointer-events-auto hidden lg:block"
           style={{
             left: `${hoverPosition.x}px`,
             top: `${hoverPosition.y}px`

@@ -35,7 +35,7 @@ export async function getLocationId(): Promise<string> {
   } catch (error) {
     console.error('Error fetching Square location:', error);
     // Return default sandbox location ID as fallback
-    return 'LH2N1E5NBGA79';
+    return process.env.SQUARE_LOCATION_ID || 'LH2N1E5NBGA79';
   }
 }
 
