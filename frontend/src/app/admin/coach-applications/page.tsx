@@ -43,19 +43,19 @@ interface CoachApplication {
   reviewed_at?: string;
   reviewed_by?: string;
   rejection_reason?: string;
-  coaching_expertise: string[];
+  coaching_expertise?: string[] | null;
   coaching_experience_years: string;
   act_training_level: string;
-  languages_fluent: string[];
+  languages_fluent?: string[] | null;
   coach_id?: string; // The actual coach user ID if application is approved
 }
 
 interface ApplicationDetails extends CoachApplication {
   educational_background: string;
-  professional_certifications: string[];
-  age_groups_comfortable: string[];
+  professional_certifications?: string[] | null;
+  age_groups_comfortable?: string[] | null;
   coaching_philosophy: string;
-  coaching_techniques: string[];
+  coaching_techniques?: string[] | null;
   session_structure: string;
   scope_handling_approach: string;
   professional_discipline_history: boolean;
@@ -65,7 +65,7 @@ interface ApplicationDetails extends CoachApplication {
   self_harm_protocol: string;
   weekly_hours_available: string;
   preferred_session_length: string;
-  availability_times: string[];
+  availability_times?: string[] | null;
   video_conferencing_comfort: string;
   internet_connection_quality: string;
   references: Array<{
@@ -563,15 +563,15 @@ export default function CoachApplicationsPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="break-words"><strong>ACT Training:</strong> {application.act_training_level}</p>
-                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent.join(', ')}</p>
+                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent?.join(', ') || 'Not specified'}</p>
                         <p className="break-words"><strong>Submitted:</strong> {formatDate(application.submitted_at)}</p>
                       </div>
                     </div>
                     
                     <div className="mt-3">
                       <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
-                        <strong>Expertise:</strong> {application.coaching_expertise.slice(0, 3).join(', ')}
-                        {application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
+                        <strong>Expertise:</strong> {application.coaching_expertise?.slice(0, 3).join(', ') || 'Not specified'}
+                        {application.coaching_expertise && application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
                       </p>
                     </div>
                   </div>
@@ -844,12 +844,16 @@ const ApplicationDetailsModal = ({
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Professional Certifications</label>
                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                  {application.professional_certifications.map((cert, index) => (
-                    <div key={index} className="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
-                      <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{cert}</span>
-                    </div>
-                  ))}
+                  {application.professional_certifications?.length > 0 ? (
+                    application.professional_certifications.map((cert, index) => (
+                      <div key={index} className="flex items-start space-x-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full flex-shrink-0 mt-2"></div>
+                        <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{cert}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -867,21 +871,29 @@ const ApplicationDetailsModal = ({
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Areas of Expertise</label>
                 <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {application.coaching_expertise.map((area, index) => (
-                    <Badge key={index} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs break-words mobile-badge">
-                      {area}
-                    </Badge>
-                  ))}
+                  {application.coaching_expertise?.length > 0 ? (
+                    application.coaching_expertise.map((area, index) => (
+                      <Badge key={index} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs break-words mobile-badge">
+                        {area}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Comfortable Age Groups</label>
                 <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {application.age_groups_comfortable.map((group, index) => (
-                    <Badge key={index} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 text-xs break-words mobile-badge">
-                      {group}
-                    </Badge>
-                  ))}
+                  {application.age_groups_comfortable?.length > 0 ? (
+                    application.age_groups_comfortable.map((group, index) => (
+                      <Badge key={index} className="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600 text-xs break-words mobile-badge">
+                        {group}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
               </div>
             </div>
@@ -907,12 +919,16 @@ const ApplicationDetailsModal = ({
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Techniques Used</label>
                 <div className="space-y-2 max-h-32 overflow-y-auto custom-scrollbar">
-                  {application.coaching_techniques.map((technique, index) => (
-                    <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
-                      <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{technique}</span>
-                    </div>
-                  ))}
+                  {application.coaching_techniques?.length > 0 ? (
+                    application.coaching_techniques.map((technique, index) => (
+                      <div key={index} className="flex items-start space-x-2 p-2 bg-green-50 dark:bg-green-900/20 rounded-md">
+                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 mt-2"></div>
+                        <span className="text-sm text-gray-700 dark:text-gray-300 break-words">{technique}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
@@ -982,20 +998,28 @@ const ApplicationDetailsModal = ({
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Availability Times:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1 mb-4">
-                  {application.availability_times.map((time, index) => (
-                    <Badge key={index} variant="outline" className="text-xs break-words">
-                      {time}
-                    </Badge>
-                  ))}
+                  {application.availability_times?.length > 0 ? (
+                    application.availability_times.map((time, index) => (
+                      <Badge key={index} variant="outline" className="text-xs break-words">
+                        {time}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
-                
+
                 <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Languages:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {application.languages_fluent.map((lang, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs break-words">
-                      {lang}
-                    </Badge>
-                  ))}
+                  {application.languages_fluent?.length > 0 ? (
+                    application.languages_fluent.map((lang, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs break-words">
+                        {lang}
+                      </Badge>
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-500 dark:text-gray-400">None specified</p>
+                  )}
                 </div>
               </div>
             </div>
