@@ -254,14 +254,26 @@ export class BillingService {
     // Calculate total earnings (since coaches are paid directly by clients)
     let totalEarnings = 0;
     if (userType === 'coach') {
-      // Get all completed payments for this coach (lifetime earnings)
+      // Get all completed and partially refunded payments for this coach
       const { data: allPayments } = await supabase
         .from('payments')
-        .select('coach_earnings_cents')
+        .select('id, coach_earnings_cents, status')
         .eq('coach_id', userId)
-        .eq('status', 'completed');
+        .in('status', ['completed', 'partially_refunded']);
 
-      totalEarnings = (allPayments || []).reduce((sum, payment) => sum + (payment.coach_earnings_cents || 0), 0);
+      // Calculate base earnings from payments
+      let baseEarnings = (allPayments || []).reduce((sum, payment) => sum + (payment.coach_earnings_cents || 0), 0);
+
+      // Subtract coach penalties from refunds
+      const { data: refunds } = await supabase
+        .from('refunds')
+        .select('coach_penalty_cents')
+        .in('payment_id', (allPayments || []).map(p => p.id))
+        .eq('status', 'succeeded');
+
+      const totalPenalties = (refunds || []).reduce((sum, refund) => sum + (refund.coach_penalty_cents || 0), 0);
+
+      totalEarnings = baseEarnings - totalPenalties;
     } else {
       // For clients, this could be credits or total spent
       totalEarnings = 0;
@@ -402,6 +414,280 @@ export class BillingService {
 
     if (error) throw error;
     return data || [];
+  }
+
+  // Approve payout
+  async approvePayout(payoutId: string, adminId: string, notes?: string): Promise<Payout> {
+    // Get payout details
+    const { data: payout, error: payoutError } = await supabase
+      .from('payouts')
+      .select('*')
+      .eq('id', payoutId)
+      .single();
+
+    if (payoutError) throw payoutError;
+
+    if (payout.status !== 'pending') {
+      throw new Error(`Payout cannot be approved. Current status: ${payout.status}`);
+    }
+
+    // Import SquarePaymentService to initiate bank transfer
+    const { SquarePaymentService } = await import('./squarePaymentService');
+    const squareService = new SquarePaymentService();
+
+    try {
+      // Initiate bank transfer via Square
+      await squareService.initiateCoachTransfer(
+        payout.coach_id,
+        payout.payment_id,
+        payout.net_amount_cents
+      );
+
+      // Update payout status to completed
+      const { data: updatedPayout, error: updateError } = await supabase
+        .from('payouts')
+        .update({
+          status: 'completed',
+          processed_at: new Date().toISOString(),
+          processed_by: adminId,
+          metadata: {
+            ...payout.metadata,
+            admin_notes: notes,
+            approved_at: new Date().toISOString()
+          }
+        })
+        .eq('id', payoutId)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      // Update billing transaction
+      await supabase
+        .from('billing_transactions')
+        .update({ status: 'completed' })
+        .eq('reference_id', payoutId)
+        .eq('reference_type', 'payout');
+
+      return updatedPayout;
+    } catch (error) {
+      // If bank transfer fails, mark payout as failed
+      await supabase
+        .from('payouts')
+        .update({
+          status: 'failed',
+          metadata: {
+            ...payout.metadata,
+            failure_reason: error instanceof Error ? error.message : 'Bank transfer failed',
+            failed_at: new Date().toISOString()
+          }
+        })
+        .eq('id', payoutId);
+
+      throw new Error(`Failed to process bank transfer: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  // Reject payout
+  async rejectPayout(payoutId: string, adminId: string, rejectionReason: string): Promise<Payout> {
+    // Get payout details
+    const { data: payout, error: payoutError } = await supabase
+      .from('payouts')
+      .select('*')
+      .eq('id', payoutId)
+      .single();
+
+    if (payoutError) throw payoutError;
+
+    if (payout.status !== 'pending') {
+      throw new Error(`Payout cannot be rejected. Current status: ${payout.status}`);
+    }
+
+    // Update payout status to rejected
+    const { data: updatedPayout, error: updateError } = await supabase
+      .from('payouts')
+      .update({
+        status: 'rejected',
+        processed_at: new Date().toISOString(),
+        processed_by: adminId,
+        metadata: {
+          ...payout.metadata,
+          rejection_reason: rejectionReason,
+          rejected_at: new Date().toISOString()
+        }
+      })
+      .eq('id', payoutId)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Update billing transaction
+    await supabase
+      .from('billing_transactions')
+      .update({ status: 'failed' })
+      .eq('reference_id', payoutId)
+      .eq('reference_type', 'payout');
+
+    return updatedPayout;
+  }
+
+  // Coach requests payout (auto-selects all pending payments)
+  async requestCoachPayout(coachId: string, bankAccountId?: string, notes?: string): Promise<Payout> {
+    // Get all completed and partially refunded payments that haven't been paid out yet
+    const { data: pendingPayments, error: paymentsError } = await supabase
+      .from('payments')
+      .select('id, coach_earnings_cents')
+      .eq('coach_id', coachId)
+      .in('status', ['completed', 'partially_refunded'])
+      .is('payout_id', null); // Not yet linked to a payout
+
+    if (paymentsError) throw paymentsError;
+
+    if (!pendingPayments || pendingPayments.length === 0) {
+      throw new Error('No pending earnings available for payout');
+    }
+
+    // Calculate base earnings
+    const baseEarnings = pendingPayments.reduce((sum, p) => sum + (p.coach_earnings_cents || 0), 0);
+
+    // Subtract coach penalties from refunds
+    const { data: refunds } = await supabase
+      .from('refunds')
+      .select('coach_penalty_cents')
+      .in('payment_id', pendingPayments.map(p => p.id))
+      .eq('status', 'succeeded');
+
+    const totalPenalties = (refunds || []).reduce((sum, refund) => sum + (refund.coach_penalty_cents || 0), 0);
+    const totalEarnings = baseEarnings - totalPenalties;
+
+    if (totalEarnings <= 0) {
+      throw new Error('No earnings available for payout');
+    }
+
+    // Get coach's default bank account if not specified
+    let finalBankAccountId = bankAccountId;
+    if (!finalBankAccountId) {
+      const { data: bankAccount, error: bankError } = await supabase
+        .from('coach_bank_accounts')
+        .select('id')
+        .eq('coach_id', coachId)
+        .eq('is_verified', true)
+        .eq('is_default', true)
+        .single();
+
+      if (bankError || !bankAccount) {
+        throw new Error('No verified bank account found. Please add a bank account first.');
+      }
+      finalBankAccountId = bankAccount.id;
+    }
+
+    // Verify bank account exists and is verified
+    const { data: bankAccount, error: bankError } = await supabase
+      .from('coach_bank_accounts')
+      .select('*')
+      .eq('id', finalBankAccountId)
+      .eq('coach_id', coachId)
+      .eq('is_verified', true)
+      .single();
+
+    if (bankError) {
+      throw new Error('Valid bank account not found');
+    }
+
+    const fees = 0; // No fees for coach payouts
+    const netAmount = totalEarnings - fees;
+
+    // Create payout record
+    const { data: payout, error } = await supabase
+      .from('payouts')
+      .insert({
+        coach_id: coachId,
+        bank_account_id: finalBankAccountId,
+        amount_cents: totalEarnings,
+        currency: 'USD',
+        status: 'pending',
+        payout_method: 'bank_transfer',
+        fees_cents: fees,
+        net_amount_cents: netAmount,
+        metadata: {
+          notes: notes,
+          payment_ids: pendingPayments.map(p => p.id),
+          requested_by_coach: true
+        }
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Link all payments to this payout
+    await supabase
+      .from('payments')
+      .update({ payout_id: payout.id })
+      .in('id', pendingPayments.map(p => p.id));
+
+    // Create billing transaction
+    await this.createBillingTransaction({
+      user_id: coachId,
+      user_type: 'coach',
+      transaction_type: 'payout',
+      amount_cents: totalEarnings,
+      currency: 'USD',
+      status: 'pending',
+      description: `Payout request for ${pendingPayments.length} payment(s)`,
+      reference_id: payout.id,
+      reference_type: 'payout',
+      metadata: { payment_count: pendingPayments.length }
+    });
+
+    return payout;
+  }
+
+  // Get coach's payout requests
+  async getCoachPayoutRequests(coachId: string, status?: string): Promise<Payout[]> {
+    let query = supabase
+      .from('payouts')
+      .select('*')
+      .eq('coach_id', coachId);
+
+    if (status) {
+      query = query.eq('status', status);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  }
+
+  // Get coach's pending earnings (not yet requested for payout)
+  async getCoachPendingEarnings(coachId: string): Promise<{ totalEarnings: number; paymentCount: number }> {
+    const { data: pendingPayments, error } = await supabase
+      .from('payments')
+      .select('id, coach_earnings_cents')
+      .eq('coach_id', coachId)
+      .in('status', ['completed', 'partially_refunded'])
+      .is('payout_id', null);
+
+    if (error) throw error;
+
+    // Calculate base earnings
+    const baseEarnings = (pendingPayments || []).reduce((sum, p) => sum + (p.coach_earnings_cents || 0), 0);
+
+    // Subtract coach penalties from refunds
+    const { data: refunds } = await supabase
+      .from('refunds')
+      .select('coach_penalty_cents')
+      .in('payment_id', (pendingPayments || []).map(p => p.id))
+      .eq('status', 'succeeded');
+
+    const totalPenalties = (refunds || []).reduce((sum, refund) => sum + (refund.coach_penalty_cents || 0), 0);
+
+    const totalEarnings = baseEarnings - totalPenalties;
+    const paymentCount = pendingPayments?.length || 0;
+
+    return { totalEarnings, paymentCount };
   }
 }
 

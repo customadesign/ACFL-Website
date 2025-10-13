@@ -267,27 +267,54 @@ export default function CoachRevenuePage() {
                   <p className="text-sm">Complete sessions to see revenue activity</p>
                 </div>
               ) : (
-                (revenueData?.recentActivity || []).map((activity: any, index: number) => (
-                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-full">
-                        <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400" />
+                (revenueData?.recentActivity || []).map((activity: any, index: number) => {
+                  const isRefunded = activity.status === 'refunded' || activity.status === 'partially_refunded';
+                  const refundAmount = activity.refundAmount || 0;
+
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className={`p-2 rounded-full ${
+                          isRefunded
+                            ? 'bg-red-100 dark:bg-red-900/30'
+                            : 'bg-green-100 dark:bg-green-900/30'
+                        }`}>
+                          <DollarSign className={`w-4 h-4 ${
+                            isRefunded
+                              ? 'text-red-600 dark:text-red-400'
+                              : 'text-green-600 dark:text-green-400'
+                          }`} />
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">
+                            Session with {activity.clientName}
+                            {isRefunded && (
+                              <span className="ml-2 text-xs px-2 py-0.5 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded">
+                                {activity.status === 'partially_refunded' ? 'Partially Refunded' : 'Refunded'}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(activity.date).toLocaleDateString()}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium text-sm">
-                          Session with {activity.clientName}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {new Date(activity.date).toLocaleDateString()}
-                        </p>
+                      <div className="text-right">
+                        {isRefunded ? (
+                          <>
+                            <p className="font-bold text-red-600 line-through">+${activity.amount}</p>
+                            {refundAmount > 0 && (
+                              <p className="text-xs text-red-600">-${refundAmount} refunded</p>
+                            )}
+                          </>
+                        ) : (
+                          <p className="font-bold text-green-600">+${activity.amount}</p>
+                        )}
+                        <p className="text-xs text-gray-500">{activity.duration}min</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-green-600">+${activity.amount}</p>
-                      <p className="text-xs text-gray-500">{activity.duration}min</p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}

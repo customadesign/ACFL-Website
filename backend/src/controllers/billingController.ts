@@ -222,6 +222,46 @@ export class BillingController {
     }
   }
 
+  // Approve payout (admin only)
+  async approvePayout(req: Request, res: Response) {
+    try {
+      const { payout_id } = req.params;
+      const { admin_id, notes } = req.body;
+
+      if (!admin_id) {
+        return res.status(400).json({ error: 'admin_id is required' });
+      }
+
+      const payout = await billingService.approvePayout(payout_id, admin_id, notes);
+      res.json(payout);
+    } catch (error) {
+      console.error('Error approving payout:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to approve payout' });
+    }
+  }
+
+  // Reject payout (admin only)
+  async rejectPayout(req: Request, res: Response) {
+    try {
+      const { payout_id } = req.params;
+      const { admin_id, rejection_reason } = req.body;
+
+      if (!admin_id) {
+        return res.status(400).json({ error: 'admin_id is required' });
+      }
+
+      if (!rejection_reason) {
+        return res.status(400).json({ error: 'rejection_reason is required' });
+      }
+
+      const payout = await billingService.rejectPayout(payout_id, admin_id, rejection_reason);
+      res.json(payout);
+    } catch (error) {
+      console.error('Error rejecting payout:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to reject payout' });
+    }
+  }
+
   // Delete bank account
   async deleteBankAccount(req: AuthRequest, res: Response) {
     try {
@@ -255,6 +295,60 @@ export class BillingController {
     } catch (error) {
       console.error('Error setting default bank account:', error);
       res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to set default bank account' });
+    }
+  }
+
+  // Coach requests payout
+  async requestPayout(req: AuthRequest, res: Response) {
+    try {
+      const coach_id = req.user?.id;
+
+      if (!coach_id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { bank_account_id, notes } = req.body;
+
+      const payout = await billingService.requestCoachPayout(coach_id, bank_account_id, notes);
+      res.status(201).json(payout);
+    } catch (error) {
+      console.error('Error requesting payout:', error);
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to request payout' });
+    }
+  }
+
+  // Get coach's payout requests
+  async getMyPayoutRequests(req: AuthRequest, res: Response) {
+    try {
+      const coach_id = req.user?.id;
+
+      if (!coach_id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const { status } = req.query;
+      const payouts = await billingService.getCoachPayoutRequests(coach_id, status as string);
+      res.json(payouts);
+    } catch (error) {
+      console.error('Error getting payout requests:', error);
+      res.status(500).json({ error: 'Failed to retrieve payout requests' });
+    }
+  }
+
+  // Get coach's pending earnings
+  async getPendingEarnings(req: AuthRequest, res: Response) {
+    try {
+      const coach_id = req.user?.id;
+
+      if (!coach_id) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+
+      const earnings = await billingService.getCoachPendingEarnings(coach_id);
+      res.json(earnings);
+    } catch (error) {
+      console.error('Error getting pending earnings:', error);
+      res.status(500).json({ error: 'Failed to retrieve pending earnings' });
     }
   }
 }

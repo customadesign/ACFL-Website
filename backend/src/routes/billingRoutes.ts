@@ -25,8 +25,16 @@ router.post('/refunds', billingController.createRefundRequest);
 router.put('/refunds/process', requireAdminRole, billingController.processRefundRequest);
 router.get('/refunds', requireAdminRole, billingController.getAllRefundRequests);
 
-// Payout management routes (admin only)
+// Payout management routes
+// Coach can request their own payouts
+router.post('/payouts/request', billingController.requestPayout);
+router.get('/payouts/my-requests', billingController.getMyPayoutRequests);
+router.get('/payouts/pending-earnings', billingController.getPendingEarnings);
+
+// Admin payout management
 router.post('/payouts', requireAdminRole, billingController.createPayout);
 router.get('/payouts', requireAdminRole, billingController.getAllPayouts);
+router.put('/payouts/:payout_id/approve', requireAdminRole, billingController.approvePayout);
+router.put('/payouts/:payout_id/reject', requireAdminRole, billingController.rejectPayout);
 
 export default router;

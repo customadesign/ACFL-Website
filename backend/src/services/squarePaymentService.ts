@@ -135,7 +135,11 @@ export class SquarePaymentService {
       // If successful, initiate fund transfer to coach
       if (paymentStatus === 'succeeded') {
         try {
-          await this.initiateCoachTransfer(payment);
+          await this.initiateCoachTransfer(
+            payment.coach_id,
+            payment.id,
+            payment.coach_earnings_cents
+          );
         } catch (error) {
           console.error('Failed to initiate coach transfer:', error);
           // Don't throw error as payment is still successful
@@ -407,32 +411,63 @@ export class SquarePaymentService {
     }
   }
 
-  private async initiateCoachTransfer(payment: Payment): Promise<void> {
-    // Check if coach has payment account configured
-    const { data: paymentAccount } = await supabase
-      .from('coach_payment_accounts')
-      .select('account_id, is_enabled')
-      .eq('coach_id', payment.coach_id)
+  /**
+   * Initiates a coach transfer/payout
+   *
+   * IMPORTANT: Square's Payouts API is READ-ONLY. You cannot programmatically create payouts.
+   * Payouts from Square to external bank accounts must be done manually via Square Dashboard
+   * or through automated payout settings configured in the Dashboard.
+   *
+   * This method records the payout intention and generates instructions for manual processing.
+   *
+   * For automated bank transfers, you would need to integrate with a third-party service like:
+   * - Stripe Connect (for marketplace payouts)
+   * - Dwolla (ACH transfers)
+   * - Plaid Transfer API
+   * - Or manually process via Square Dashboard
+   */
+  async initiateCoachTransfer(
+    coachId: string,
+    paymentId: string,
+    amountCents: number
+  ): Promise<void> {
+    // Get coach bank account details
+    const { data: bankAccount } = await supabase
+      .from('coach_bank_accounts')
+      .select('*')
+      .eq('coach_id', coachId)
+      .eq('is_verified', true)
+      .eq('is_default', true)
       .single();
 
-    if (!paymentAccount || !paymentAccount.is_enabled) {
-      console.log(`Coach ${payment.coach_id} doesn't have enabled payment account`);
-      return;
+    if (!bankAccount) {
+      throw new Error(`No verified bank account found for coach ${coachId}`);
     }
 
-    // For now, just log the transfer intention
-    // In a real implementation, you would integrate with a payout service
+    // Log the transfer requirement for manual processing
     try {
-      const transferId = `transfer_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      const transferReference = `PAYOUT_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      await this.logPaymentEvent(payment.id, 'coach_transfer_initiated', {
-        transfer_id: transferId,
-        amount_cents: payment.coach_earnings_cents,
-        coach_account_id: paymentAccount.account_id
+      await this.logPaymentEvent(paymentId, 'coach_payout_approved', {
+        transfer_reference: transferReference,
+        amount_cents: amountCents,
+        amount_usd: (amountCents / 100).toFixed(2),
+        coach_id: coachId,
+        bank_account_last_four: bankAccount.account_number_last_four,
+        routing_number: bankAccount.routing_number,
+        account_holder_name: bankAccount.account_holder_name,
+        instructions: 'Manual payout required via Square Dashboard or third-party ACH service'
       });
+
+      console.log(`[PAYOUT APPROVED] ${transferReference}: $${(amountCents / 100).toFixed(2)} to ${bankAccount.account_holder_name} (****${bankAccount.account_number_last_four})`);
+
+      // TODO: Integrate with third-party payout service (Stripe Connect, Dwolla, etc.)
+      // For now, this just logs the requirement for manual processing
+
     } catch (error) {
-      await this.logPaymentEvent(payment.id, 'coach_transfer_failed', {
+      await this.logPaymentEvent(paymentId, 'coach_payout_failed', {
         error: (error as Error).message,
+        coach_id: coachId
       });
       throw error;
     }
