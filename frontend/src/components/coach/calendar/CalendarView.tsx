@@ -134,21 +134,21 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-md">
+        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-3 sm:px-4 py-2 sm:py-3 rounded-md text-sm">
           {error}
         </div>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Calendar Grid */}
         <div className="lg:col-span-2">
           <Card>
-            <CardHeader>
+            <CardHeader className="p-3 sm:p-4 md:p-6">
               <div className="flex items-center justify-between flex-wrap gap-2">
-                <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
-                  <CalendarIcon className="h-5 w-5" />
+                <CardTitle className="flex items-center gap-2 text-base sm:text-lg md:text-xl">
+                  <CalendarIcon className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                   <span className="truncate">{monthName}</span>
                 </CardTitle>
                 <div className="flex gap-1 sm:gap-2">
@@ -156,35 +156,35 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                     variant="outline"
                     size="sm"
                     onClick={() => navigateMonth('prev')}
-                    className="p-2 min-w-[36px]"
+                    className="p-1.5 sm:p-2 min-w-[32px] sm:min-w-[36px] h-8 sm:h-9"
                   >
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => setCurrentDate(new Date())}
-                    className="px-2 sm:px-3"
+                    className="px-2 sm:px-3 h-8 sm:h-9 text-xs sm:text-sm"
                   >
                     <span className="hidden sm:inline">Today</span>
-                    <span className="sm:hidden text-xs">•</span>
+                    <span className="sm:hidden">•</span>
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => navigateMonth('next')}
-                    className="p-2 min-w-[36px]"
+                    className="p-1.5 sm:p-2 min-w-[32px] sm:min-w-[36px] h-8 sm:h-9"
                   >
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   </Button>
                 </div>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-2 sm:p-4 md:p-6">
               {/* Days of week header */}
-              <div className="grid grid-cols-7 gap-1 sm:gap-2 mb-4">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2 mb-2 sm:mb-3 md:mb-4">
                 {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                  <div key={day} className="text-center text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 py-2">
+                  <div key={day} className="text-center text-[10px] sm:text-xs md:text-sm font-medium text-gray-500 dark:text-gray-400 py-1 sm:py-1.5 md:py-2">
                     <span className="hidden sm:inline">{day}</span>
                     <span className="sm:hidden">{day.charAt(0)}</span>
                   </div>
@@ -192,7 +192,7 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
               </div>
 
               {/* Calendar grid */}
-              <div className="grid grid-cols-7 gap-1 sm:gap-2">
+              <div className="grid grid-cols-7 gap-0.5 sm:gap-1 md:gap-2">
                 {monthData.map((date, index) => {
                   const dayAppointments = getAppointmentsForDate(date)
                   const isCurrentMonthDate = isCurrentMonth(date)
@@ -204,22 +204,22 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                       key={index}
                       onClick={() => handleDateClick(date)}
                       className={`
-                        min-h-[80px] sm:min-h-[100px] p-1 sm:p-2 rounded border sm:rounded-lg transition-all hover:shadow-md text-left relative
+                        min-h-[60px] sm:min-h-[80px] md:min-h-[100px] p-0.5 sm:p-1 md:p-2 rounded border sm:rounded-md md:rounded-lg transition-all hover:shadow-md text-left relative
                         ${isTodayDate ? 'bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-700' : ''}
                         ${isSelected ? 'ring-1 sm:ring-2 ring-blue-500' : ''}
                         ${isCurrentMonthDate ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700' : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 text-gray-400'}
                         ${dayAppointments.length > 0 ? 'hover:bg-gray-50 dark:hover:bg-gray-750' : ''}
                       `}
                     >
-                      <div className={`text-xs sm:text-sm font-medium mb-1 ${isTodayDate ? 'text-blue-600 dark:text-blue-400' : ''}`}>
+                      <div className={`text-[10px] sm:text-xs md:text-sm font-medium mb-0.5 sm:mb-1 ${isTodayDate ? 'text-blue-600 dark:text-blue-400' : ''}`}>
                         {date.getDate()}
                       </div>
 
-                      <div className="space-y-0.5 sm:space-y-1">
+                      <div className="space-y-0.5">
                         {dayAppointments.slice(0, 2).map(appointment => (
                           <div
                             key={appointment.id}
-                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded border ${getStatusColor(appointment.status)}`}
+                            className={`text-[8px] sm:text-[10px] md:text-xs p-0.5 sm:p-1 rounded border ${getStatusColor(appointment.status)} overflow-hidden`}
                           >
                             <div className="font-medium truncate">
                               {appointment.clients ? (
@@ -238,7 +238,7 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                                   minute: '2-digit'
                                 })}
                               </span>
-                              <span className="sm:hidden text-[8px]">
+                              <span className="sm:hidden text-[7px]">
                                 {new Date(appointment.starts_at).toLocaleTimeString([], {
                                   hour: 'numeric'
                                 })}
@@ -247,7 +247,7 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                           </div>
                         ))}
                         {dayAppointments.length > 2 && (
-                          <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400">
+                          <div className="text-[8px] sm:text-[9px] md:text-xs text-gray-500 dark:text-gray-400">
                             <span className="hidden sm:inline">+{dayAppointments.length - 2} more</span>
                             <span className="sm:hidden">+{dayAppointments.length - 2}</span>
                           </div>
@@ -264,15 +264,15 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
         {/* Day Details Panel */}
         <div className="space-y-4">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5" />
+            <CardHeader className="p-3 sm:p-4 md:p-6">
+              <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 flex-shrink-0" />
                 <span className="text-sm sm:text-lg truncate">
                   {selectedDate ? selectedDate.toLocaleDateString() : 'Select a Date'}
                 </span>
               </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-3 sm:p-4 md:p-6">
               {selectedDate ? (
                 todayAppointments.length > 0 ? (
                   <div className="space-y-3">
@@ -340,26 +340,26 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
 
           {/* Legend */}
           <Card>
-            <CardHeader>
-              <CardTitle className="text-sm">Status Legend</CardTitle>
+            <CardHeader className="p-3 sm:p-4 md:p-6">
+              <CardTitle className="text-xs sm:text-sm">Status Legend</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
+            <CardContent className="p-3 sm:p-4 md:p-6">
+              <div className="space-y-1.5 sm:space-y-2">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-blue-100 border border-blue-200"></div>
-                  <span className="text-sm">Scheduled</span>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-blue-100 border border-blue-200 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Scheduled</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-yellow-100 border border-yellow-200"></div>
-                  <span className="text-sm">Confirmed</span>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-yellow-100 border border-yellow-200 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Confirmed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-green-100 border border-green-200"></div>
-                  <span className="text-sm">Completed</span>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-green-100 border border-green-200 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Completed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded bg-red-100 border border-red-200"></div>
-                  <span className="text-sm">Cancelled</span>
+                  <div className="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded bg-red-100 border border-red-200 flex-shrink-0"></div>
+                  <span className="text-xs sm:text-sm">Cancelled</span>
                 </div>
               </div>
             </CardContent>

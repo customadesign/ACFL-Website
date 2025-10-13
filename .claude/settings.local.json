@@ -17,7 +17,9 @@
       "Bash(curl:*)",
       "Bash(npx ts-node:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(node:*)",
+      "Bash(taskkill:*)"
     ],
     "deny": [],
     "ask": []

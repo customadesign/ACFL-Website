@@ -395,6 +395,7 @@ router.get('/users', async (req, res) => {
   try {
     const { status, role, page = 1, limit = 20, startDate, endDate, date } = req.query;
     console.log('Admin users endpoint called with query:', { status, role, page, limit, startDate, endDate, date });
+    console.log('Full req.query:', req.query);
 
     const pageNum = parseInt(page as string);
     const limitNum = parseInt(limit as string);
@@ -433,7 +434,13 @@ router.get('/users', async (req, res) => {
     const getUsersFromTable = async (tableName: string, userRole: string) => {
       try {
         // Build select query with all necessary fields based on table
-        let selectFields = 'id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo, is_active, deactivated_at';
+        // Staff table doesn't have is_active and deactivated_at fields
+        let selectFields = 'id, first_name, last_name, email, phone, created_at, last_login, status, profile_photo';
+
+        // Add is_active and deactivated_at for clients and coaches only
+        if (tableName !== 'staff') {
+          selectFields += ', is_active, deactivated_at';
+        }
 
         if (tableName === 'clients') {
           selectFields += ', dob, gender_identity, ethnic_identity, religious_background, bio';
@@ -450,11 +457,26 @@ router.get('/users', async (req, res) => {
           .order('created_at', { ascending: false });
 
         // Apply status filter
+        console.log(`Applying status filter for ${tableName}: status="${status}"`);
         if (status && status !== 'all') {
-          if (status === 'inactive') {
-            query = query.eq('is_active', false);
-          } else {
+          console.log(`Status filter active for ${tableName}: ${status}`);
+          // Staff table only has 'status' field, clients/coaches have both 'is_active' and 'status'
+          if (tableName === 'staff') {
+            // Staff only has status field
             query = query.eq('status', status);
+          } else {
+            // Clients and coaches have both is_active and status fields
+            if (status === 'active') {
+              // Active means is_active=true AND (status is NULL OR status != 'inactive')
+              // Using OR with compound conditions to handle NULL values
+              query = query.or('and(is_active.eq.true,status.is.null),and(is_active.eq.true,status.neq.inactive)');
+            } else if (status === 'inactive') {
+              // Inactive means is_active=false OR status='inactive'
+              query = query.or('is_active.eq.false,status.eq.inactive');
+            } else {
+              // For other statuses (pending, approved, rejected, suspended), check status field
+              query = query.eq('status', status);
+            }
           }
         }
 
@@ -467,10 +489,23 @@ router.get('/users', async (req, res) => {
           .select('*', { count: 'exact', head: true });
 
         if (status && status !== 'all') {
-          if (status === 'inactive') {
-            countQuery = countQuery.eq('is_active', false);
-          } else {
+          // Staff table only has 'status' field, clients/coaches have both 'is_active' and 'status'
+          if (tableName === 'staff') {
+            // Staff only has status field
             countQuery = countQuery.eq('status', status);
+          } else {
+            // Clients and coaches have both is_active and status fields
+            if (status === 'active') {
+              // Active means is_active=true AND (status is NULL OR status != 'inactive')
+              // Using OR with compound conditions to handle NULL values
+              countQuery = countQuery.or('and(is_active.eq.true,status.is.null),and(is_active.eq.true,status.neq.inactive)');
+            } else if (status === 'inactive') {
+              // Inactive means is_active=false OR status='inactive'
+              countQuery = countQuery.or('is_active.eq.false,status.eq.inactive');
+            } else {
+              // For other statuses (pending, approved, rejected, suspended), check status field
+              countQuery = countQuery.eq('status', status);
+            }
           }
         }
 
@@ -2681,7 +2716,7 @@ function calculateCoachMetrics(sessions: any[]) {
 // Analytics endpoints
 router.get('/analytics', async (req, res) => {
   try {
-    const { timeRange = '30d' } = req.query;
+    const { timeRange = '30d' } = req.query; // Default to "Last 30 days"
 
     // Fetch all necessary data from Supabase
     const [clientsRes, coachesRes, sessionsRes] = await Promise.all([
@@ -2701,37 +2736,118 @@ router.get('/analytics', async (req, res) => {
 
     // Calculate time range
     const now = new Date();
-    const daysAgo = parseInt(timeRange.toString().replace('d', ''));
-    const startDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+    let startDate: Date;
+    let prevStartDate: Date;
+
+    // Handle different time range formats
+    if (timeRange.toString().endsWith('m')) {
+      // Monthly format: 1m, 3m, 6m
+      const monthsAgo = parseInt(timeRange.toString().replace('m', ''));
+      startDate = new Date(now);
+
+      if (monthsAgo === 1) {
+        // Current month: from first day of this month to today
+        startDate.setDate(1);
+        startDate.setHours(0, 0, 0, 0);
+
+        // Previous period: same day range in previous month (for fair comparison)
+        // Example: If today is Oct 13, compare Oct 1-13 vs Sep 1-13
+        prevStartDate = new Date(startDate);
+        prevStartDate.setMonth(prevStartDate.getMonth() - 1);
+
+        // Calculate the previous period end date (same day of month as today, but in previous month)
+        const currentDayOfMonth = now.getDate();
+        const prevPeriodEnd = new Date(prevStartDate); // Start with Sep 1
+        prevPeriodEnd.setDate(currentDayOfMonth); // Set to Sep 13 (same day as today)
+        prevPeriodEnd.setHours(23, 59, 59, 999);
+
+        // Store the end date for filtering (we'll use this in the filter logic)
+        (prevStartDate as any).endDate = prevPeriodEnd;
+      } else {
+        // Multiple months: go back N months
+        startDate.setMonth(startDate.getMonth() - monthsAgo);
+        startDate.setHours(0, 0, 0, 0);
+
+        // Previous period: same duration before startDate
+        prevStartDate = new Date(startDate);
+        prevStartDate.setMonth(prevStartDate.getMonth() - monthsAgo);
+      }
+    } else if (timeRange.toString() === '1y') {
+      // Yearly format
+      startDate = new Date(now);
+      startDate.setFullYear(startDate.getFullYear() - 1);
+      startDate.setHours(0, 0, 0, 0);
+
+      // Previous period: same duration (1 year) before startDate
+      prevStartDate = new Date(startDate);
+      prevStartDate.setFullYear(prevStartDate.getFullYear() - 1);
+    } else {
+      // Daily format: 7d, 30d, 90d
+      const daysAgo = parseInt(timeRange.toString().replace('d', ''));
+      startDate = new Date(now.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+
+      // Previous period: same duration before startDate
+      prevStartDate = new Date(startDate.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+    }
 
     // Calculate metrics for current period
     const currentPeriodClients = clients.filter(c => new Date(c.created_at) >= startDate);
     const currentPeriodCoaches = coaches.filter(c => new Date(c.created_at) >= startDate);
     const currentPeriodAppointments = appointments.filter(a => new Date(a.created_at) >= startDate);
 
-    // Calculate metrics for previous period (for growth comparison)
-    const prevStartDate = new Date(startDate.getTime() - (daysAgo * 24 * 60 * 60 * 1000));
+    // For previous period, check if we have an endDate (for month-to-date comparison)
+    const prevEndDate = (prevStartDate as any).endDate;
     const prevPeriodClients = clients.filter(c => {
       const date = new Date(c.created_at);
+      if (prevEndDate) {
+        return date >= prevStartDate && date <= prevEndDate;
+      }
       return date >= prevStartDate && date < startDate;
     });
     const prevPeriodCoaches = coaches.filter(c => {
       const date = new Date(c.created_at);
+      if (prevEndDate) {
+        return date >= prevStartDate && date <= prevEndDate;
+      }
       return date >= prevStartDate && date < startDate;
     });
     const prevPeriodAppointments = appointments.filter(a => {
       const date = new Date(a.created_at);
+      if (prevEndDate) {
+        return date >= prevStartDate && date <= prevEndDate;
+      }
       return date >= prevStartDate && date < startDate;
     });
 
+    // Debug logging for period comparison
+    console.log('Analytics period comparison:', {
+      timeRange,
+      currentPeriod: {
+        start: startDate.toISOString(),
+        end: now.toISOString(),
+        clients: currentPeriodClients.length,
+        coaches: currentPeriodCoaches.length,
+        sessions: currentPeriodAppointments.length
+      },
+      previousPeriod: {
+        start: prevStartDate.toISOString(),
+        end: prevEndDate ? prevEndDate.toISOString() : startDate.toISOString(),
+        clients: prevPeriodClients.length,
+        coaches: prevPeriodCoaches.length,
+        sessions: prevPeriodAppointments.length
+      }
+    });
+
     // Calculate growth percentages
-    // Return null when there's no previous data to compare against
+    // Only show growth when there's previous data to compare against
     const userGrowth = prevPeriodClients.length > 0
       ? parseFloat(((currentPeriodClients.length - prevPeriodClients.length) / prevPeriodClients.length * 100).toFixed(1))
-      : null;
+      : null; // No previous data = no meaningful comparison
+
     const coachGrowth = prevPeriodCoaches.length > 0
       ? parseFloat(((currentPeriodCoaches.length - prevPeriodCoaches.length) / prevPeriodCoaches.length * 100).toFixed(1))
       : null;
+
     const sessionGrowth = prevPeriodAppointments.length > 0
       ? parseFloat(((currentPeriodAppointments.length - prevPeriodAppointments.length) / prevPeriodAppointments.length * 100).toFixed(1))
       : null;
@@ -2748,7 +2864,7 @@ router.get('/analytics', async (req, res) => {
     
     const revenueGrowth = prevRevenue > 0
       ? parseFloat(((currentRevenue - prevRevenue) / prevRevenue * 100).toFixed(1))
-      : null;
+      : null; // No previous revenue = no meaningful comparison
 
     // Calculate coach metrics - include both 'approved' and 'active' coaches
     const activeCoaches = coaches.filter(c => c.status === 'approved' || c.status === 'active');
@@ -2865,10 +2981,11 @@ router.get('/analytics', async (req, res) => {
 
     const analyticsData = {
       overview: {
-        totalUsers: clients.length + coaches.length,
-        totalCoaches: coaches.length,
-        totalSessions: completedAppointments.length, // Only count completed sessions
-        totalRevenue,
+        // Show data for the selected period, not all-time
+        totalUsers: currentPeriodClients.length + currentPeriodCoaches.length,
+        totalCoaches: currentPeriodCoaches.length,
+        totalSessions: currentCompletedSessions.length, // Only count completed sessions in current period
+        totalRevenue: currentRevenue, // Revenue from current period only
         userGrowth,
         coachGrowth,
         sessionGrowth,

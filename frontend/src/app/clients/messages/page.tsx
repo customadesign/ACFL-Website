@@ -513,7 +513,7 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full h-[680px]`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 pb-6 sm:relative sm:inset-auto sm:pb-0' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full h-full sm:h-[680px]`}>
 					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
 						{/* Back button for mobile */}
 						<button

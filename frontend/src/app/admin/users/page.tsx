@@ -1674,128 +1674,128 @@ export default function UserManagement() {
 
         {/* Enhanced Filters Section */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-          <div className="p-4 sm:p-6 lg:p-8">
-          <div className="space-y-4">
-            {/* First row: Search and Status filter */}
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search Input */}
-              <div className="flex-1 max-w-md">
-                <label htmlFor="user-search" className="sr-only">Search users</label>
-                <SearchInput
-                  value={searchTerm}
-                  onChange={(value) => {
-                    setSearchTerm(value);
-                    if (value) {
-                      setSearchLoading(true);
-                      setTimeout(() => setSearchLoading(false), 300);
-                    } else {
-                      setSearchLoading(false);
-                    }
+          <div className="p-3 sm:p-4 md:p-6 lg:p-8">
+          <div className="space-y-3 sm:space-y-4">
+            {/* Search Input - Full Width on Mobile */}
+            <div className="w-full">
+              <label htmlFor="user-search" className="sr-only">Search users</label>
+              <SearchInput
+                value={searchTerm}
+                onChange={(value) => {
+                  setSearchTerm(value);
+                  if (value) {
+                    setSearchLoading(true);
+                    setTimeout(() => setSearchLoading(false), 300);
+                  } else {
+                    setSearchLoading(false);
+                  }
+                }}
+                placeholder="Search users by name, email, or role..."
+                isLoading={searchLoading}
+                size="md"
+                className="w-full"
+              />
+            </div>
+
+            {/* Status and Items Per Page - Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+              {/* Status Filter */}
+              <div className="w-full">
+                <label htmlFor="status-filter" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Status
+                </label>
+                <select
+                  id="status-filter"
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
                   }}
-                  placeholder="Search users by name, email, or role..."
-                  isLoading={searchLoading}
-                  size="md"
-                  className="w-full"
+                  className="w-full px-3 sm:px-4 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-h-[44px]"
+                >
+                  <option value="all">All Status</option>
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                  <option value="suspended">Suspended</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </div>
+
+              {/* Items per page */}
+              <div className="w-full">
+                <label htmlFor="items-per-page" className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Per Page
+                </label>
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(parseInt(e.target.value));
+                    setCurrentPage(1); // Reset to first page when limit changes
+                  }}
+                  className="w-full px-3 sm:px-4 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-h-[44px]"
+                >
+                  <option value={10}>10 per page</option>
+                  <option value={20}>20 per page</option>
+                  <option value={50}>50 per page</option>
+                  <option value={100}>100 per page</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Date Range Filters - Responsive Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="w-full">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Joined After
+                </label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => {
+                    setStartDate(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
+                  }}
+                  className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark] min-h-[44px]"
                 />
               </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                {/* Status Filter */}
-                <div className="flex-shrink-0">
-                  <label htmlFor="status-filter" className="sr-only">Filter by status</label>
-                  <select
-                    id="status-filter"
-                    value={statusFilter}
-                    onChange={(e) => {
-                      setStatusFilter(e.target.value);
-                      setCurrentPage(1); // Reset to first page when filter changes
-                    }}
-                    className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[140px]"
-                  >
-                    <option value="all">All Status</option>
-                    <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
-                    <option value="suspended">Suspended</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="rejected">Rejected</option>
-                  </select>
-                </div>
-
-                {/* Items per page */}
-                <div className="flex-shrink-0">
-                  <label htmlFor="items-per-page" className="sr-only">Items per page</label>
-                  <select
-                    id="items-per-page"
-                    value={itemsPerPage}
-                    onChange={(e) => {
-                      setItemsPerPage(parseInt(e.target.value));
-                      setCurrentPage(1); // Reset to first page when limit changes
-                    }}
-                    className="w-full sm:w-auto px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:border-blue-500 transition-colors min-w-[120px]"
-                  >
-                    <option value={10}>10 per page</option>
-                    <option value={20}>20 per page</option>
-                    <option value={50}>50 per page</option>
-                    <option value={100}>100 per page</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Second row: Date range filters */}
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex flex-col sm:flex-row gap-4 flex-1">
-                <div className="flex-1 max-w-xs">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Joined After
-                  </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => {
-                      setStartDate(e.target.value);
-                      setCurrentPage(1); // Reset to first page when filter changes
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
-                  />
-                </div>
-                <div className="flex-1 max-w-xs">
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                    Joined Before
-                  </label>
-                  <input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => {
-                      setEndDate(e.target.value);
-                      setCurrentPage(1); // Reset to first page when filter changes
-                    }}
-                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
-                  />
-                </div>
-              </div>
-
-              {/* Clear filters button */}
-              {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
-                <button
-                  onClick={() => {
-                    setStartDate('');
-                    setEndDate('');
-                    setStatusFilter('all');
-                    setSearchTerm('');
-                    setCurrentPage(1);
+              <div className="w-full">
+                <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                  Joined Before
+                </label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => {
+                    setEndDate(e.target.value);
+                    setCurrentPage(1); // Reset to first page when filter changes
                   }}
-                  className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap"
-                >
-                  Clear Filters
-                </button>
-              )}
+                  className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark] min-h-[44px]"
+                />
+              </div>
             </div>
+
+            {/* Clear Filters Button - Full Width on Mobile */}
+            {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setStatusFilter('all');
+                  setSearchTerm('');
+                  setCurrentPage(1);
+                }}
+                className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 min-h-[44px] font-medium"
+              >
+                Clear All Filters
+              </button>
+            )}
 
             {/* Results Summary */}
-            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-              <span>
+            <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg">
+              <span className="break-words">
                 Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} users
                 {searchTerm && ` (filtered by search)`}
               </span>

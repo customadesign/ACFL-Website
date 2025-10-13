@@ -479,8 +479,8 @@ export default function MeetingChatComponent({
       {isVisible && !isEmbedded && (
         <>
           {/* Mobile: Full screen overlay */}
-          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[20000] sm:hidden">
-            <Card className="w-full h-[85vh] flex flex-col shadow-xl rounded-t-xl rounded-b-none border-t">
+          <div className="fixed inset-0 bg-black/50 flex items-end justify-center z-[20000] sm:hidden pb-safe">
+            <Card className="w-full h-[80vh] max-h-[80vh] flex flex-col shadow-xl rounded-t-xl rounded-b-none border-t">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b bg-gray-50 rounded-t-xl">
                 <div className="flex items-center gap-3">
@@ -503,7 +503,7 @@ export default function MeetingChatComponent({
               {/* Messages */}
               <div
                 ref={messagesContainerRef}
-                className="flex-1 p-4 overflow-y-auto space-y-3 bg-gray-50"
+                className="flex-1 p-4 pb-6 overflow-y-auto space-y-3 bg-gray-50"
               >
                 {messages.length === 0 ? (
                   <div className="text-center text-gray-500 text-sm py-12">
@@ -542,7 +542,7 @@ export default function MeetingChatComponent({
 
               {/* Scroll to bottom button */}
               {isScrolledUp && (
-                <div className="absolute bottom-24 right-6">
+                <div className="absolute bottom-28 right-6">
                   <Button
                     size="sm"
                     variant="secondary"
@@ -555,7 +555,7 @@ export default function MeetingChatComponent({
               )}
 
               {/* Input */}
-              <div className="p-4 border-t bg-white">
+              <div className="p-4 pb-6 border-t bg-white safe-bottom">
                 <div className="flex gap-2">
                   <Input
                     value={newMessage}
