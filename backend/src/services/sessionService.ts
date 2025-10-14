@@ -58,8 +58,6 @@ export class SessionService {
         .update({
           status: 'completed',
           session_notes: request.session_notes || session.session_notes,
-          completion_confirmed_by: completedBy,
-          completed_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
         .eq('id', request.session_id)
