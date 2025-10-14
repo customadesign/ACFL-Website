@@ -104,10 +104,18 @@ export class SessionService {
       }
 
       // 3. Capture payment if using authorization flow
-      if (request.auto_capture_payment && session.payments) {
-        // This would integrate with your payment service
-        // For now, we'll assume payment is already captured
-        console.log('Payment capture would happen here for payment:', session.payment_id);
+      if (request.auto_capture_payment && session.payment_id) {
+        try {
+          console.log('Capturing payment for session:', session.payment_id);
+          const { PaymentServiceV2 } = await import('./paymentServiceV2');
+          const paymentService = new PaymentServiceV2();
+          await paymentService.capturePayment(session.payment_id);
+          console.log('Payment captured successfully:', session.payment_id);
+        } catch (error) {
+          console.error('Error capturing payment:', error);
+          // Don't throw - payment capture failure shouldn't fail session completion
+          // The payment can be captured manually later
+        }
       }
 
       // 4. Generate invoice automatically
