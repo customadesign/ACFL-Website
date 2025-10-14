@@ -36,27 +36,11 @@ export class SessionService {
     completedBy: string
   ): Promise<{ session: Session; invoice?: any }> {
     try {
-      // 1. Get session details with related booking and payment info
+      // 1. Get session details with related coach and client info
       const { data: session, error: sessionError } = await supabase
         .from('sessions')
         .select(`
           *,
-          bookings:booking_id (
-            id,
-            coach_rate_id,
-            coach_adjusted_price_cents,
-            session_type,
-            area_of_focus
-          ),
-          payments:payment_id (
-            id,
-            amount_cents,
-            coach_earnings_cents,
-            platform_fee_cents,
-            payment_method,
-            stripe_payment_intent_id,
-            square_payment_id
-          ),
           coaches:coach_id (
             id,
             first_name,
@@ -134,10 +118,17 @@ export class SessionService {
       // 4. Generate invoice automatically
       let invoice = null;
       if (request.generate_invoice !== false) { // Default to true
+        // Fetch payment separately for invoice generation
+        const { data: paymentData } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('session_id', request.session_id)
+          .single();
+
         invoice = await this.generateInvoiceForSession(
           updatedSession,
-          session.bookings,
-          session.payments,
+          null, // booking info not available
+          paymentData,
           session.coaches,
           session.clients
         );
