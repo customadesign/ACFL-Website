@@ -180,6 +180,8 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
         } else if (date && time) {
           const time24 = convertTo24Hour(time);
           scheduledAt = new Date(`${date}T${time24}:00`);
+          // Scheduled bookings should NOT capture payment immediately
+          isInstantBooking = false;
         } else {
           scheduledAt = new Date();
         }
@@ -187,6 +189,8 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
         // Convert time to 24-hour format if needed
         const time24 = convertTo24Hour(selectedTime);
         scheduledAt = new Date(`${selectedDate}T${time24}:00`);
+        // Scheduled bookings should NOT capture payment immediately
+        isInstantBooking = false;
 
         // Check if the date is valid
         if (isNaN(scheduledAt.getTime())) {
