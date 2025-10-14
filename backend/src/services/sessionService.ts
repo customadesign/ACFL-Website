@@ -104,13 +104,26 @@ export class SessionService {
       }
 
       // 3. Capture payment if using authorization flow
-      if (request.auto_capture_payment && session.payment_id) {
+      if (request.auto_capture_payment) {
         try {
-          console.log('Capturing payment for session:', session.payment_id);
-          const { PaymentServiceV2 } = await import('./paymentServiceV2');
-          const paymentService = new PaymentServiceV2();
-          await paymentService.capturePayment(session.payment_id);
-          console.log('Payment captured successfully:', session.payment_id);
+          // Find payment by session_id (payments table has session_id, not sessions->payment_id)
+          const { data: payment, error: paymentError } = await supabase
+            .from('payments')
+            .select('id, status')
+            .eq('session_id', request.session_id)
+            .single();
+
+          if (payment && payment.status === 'authorized') {
+            console.log('Capturing payment for session:', payment.id);
+            const { PaymentServiceV2 } = await import('./paymentServiceV2');
+            const paymentService = new PaymentServiceV2();
+            await paymentService.capturePayment(payment.id);
+            console.log('Payment captured successfully:', payment.id);
+          } else if (payment) {
+            console.log('Payment already in status:', payment.status, '- skipping capture');
+          } else {
+            console.log('No payment found for session - skipping capture');
+          }
         } catch (error) {
           console.error('Error capturing payment:', error);
           // Don't throw - payment capture failure shouldn't fail session completion
