@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 interface EmailData {
   to: string | string[];
@@ -36,38 +36,21 @@ interface AppointmentConfirmationData {
 }
 
 class EmailService {
-  private transporter: nodemailer.Transporter;
+  private resend: Resend;
   private isConfigured: boolean;
 
   constructor() {
     this.isConfigured = this.checkConfiguration();
 
     if (this.isConfigured) {
-      this.transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-        tls: {
-          rejectUnauthorized: false, // Allow self-signed certificates
-          servername: process.env.SMTP_HOST
-        }
-      });
+      this.resend = new Resend(process.env.RESEND_API_KEY);
     } else {
-      console.warn('SMTP configuration incomplete. Email notifications will be disabled.');
+      console.warn('Resend API key not configured. Email notifications will be disabled.');
     }
   }
 
   private checkConfiguration(): boolean {
-    return !!(
-      process.env.SMTP_HOST &&
-      process.env.SMTP_PORT &&
-      process.env.SMTP_USER &&
-      process.env.SMTP_PASS
-    );
+    return !!(process.env.RESEND_API_KEY);
   }
 
   async sendEmail({ to, cc, subject, text, html, templateData = {}, attachments }: EmailData) {
@@ -77,37 +60,53 @@ class EmailService {
     }
 
     try {
+      const fromEmail = process.env.FROM_EMAIL || 'noreply@actcoachingforlife.com';
+      const fromName = process.env.RESEND_FROM_NAME || 'ACT Coaching For Life';
+
       const mailOptions: any = {
-        from: `${process.env.SMTP_FROM_NAME || 'ACT Coaching For Life'} <${process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER}>`,
-        to: Array.isArray(to) ? to.join(', ') : to,
+        from: `${fromName} <${fromEmail}>`,
+        to: Array.isArray(to) ? to : [to],
         subject: subject,
-        text: text,
-        html: html,
       };
 
+      // Resend prefers HTML, but we'll include text as fallback
+      if (html) {
+        mailOptions.html = html;
+      } else if (text) {
+        mailOptions.text = text;
+      }
+
       if (cc && cc.length > 0) {
-        mailOptions.cc = cc.join(', ');
+        mailOptions.cc = cc;
       }
 
       if (attachments && attachments.length > 0) {
         mailOptions.attachments = attachments.map(att => ({
           filename: att.filename,
-          content: att.content,
-          contentType: att.contentType || 'application/octet-stream'
+          content: att.content instanceof Buffer ? att.content.toString('base64') : att.content,
         }));
       }
 
-      console.log('Attempting to send email via SMTP:', {
+      console.log('Attempting to send email via Resend:', {
         to: mailOptions.to,
         from: mailOptions.from,
         subject: mailOptions.subject,
         hasAttachments: !!(attachments && attachments.length > 0)
       });
 
-      const info = await this.transporter.sendMail(mailOptions);
+      const result = await this.resend.emails.send(mailOptions);
 
-      console.log('Email sent successfully:', info.messageId);
-      return { success: true, messageId: info.messageId };
+      if (result.error) {
+        console.error('Email sending failed:', result.error);
+        return {
+          success: false,
+          error: result.error.message,
+          details: result.error
+        };
+      }
+
+      console.log('Email sent successfully:', result.data?.id);
+      return { success: true, messageId: result.data?.id };
     } catch (error: any) {
       console.error('Email sending failed:', error);
 
