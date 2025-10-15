@@ -483,10 +483,13 @@ export default function ClientLayout({
                   }`}
                   aria-label="Notifications"
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center min-h-[40px]">
                     <Bell className={`w-5 h-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} flex-shrink-0 text-gray-500 dark:text-gray-400`} />
                     {!sidebarCollapsed && (
-                      <span className="text-gray-700 dark:text-gray-300">Notifications</span>
+                      <div className="text-left">
+                        <p className="font-medium text-gray-900 dark:text-white">Notifications</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Updates & Alerts</p>
+                      </div>
                     )}
                   </div>
                   {!sidebarCollapsed && (unreadMessageCount + appointmentNotificationCount) > 0 && (
@@ -583,7 +586,7 @@ export default function ClientLayout({
                     sidebarCollapsed ? 'justify-center' : 'justify-between'
                   }`}
                 >
-                  <div className="flex items-center">
+                  <div className="flex items-center min-h-[40px]">
                     <CircleUserRound className={`w-5 h-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} flex-shrink-0 text-gray-500 dark:text-gray-400`} />
                     {!sidebarCollapsed && (
                       <div className="text-left">
