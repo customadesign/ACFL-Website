@@ -35,6 +35,7 @@ const port = process.env.PORT || 3001;
 import http = require('http');
 import jwt = require('jsonwebtoken');
 import { Server } from 'socket.io';
+import { setSocketIO } from './lib/socket';
 
 // CORS configuration
 const corsOptions = {
@@ -148,6 +149,9 @@ const io = new Server(server, {
 
 // Make io instance available to routes
 app.set('io', io);
+
+// Make io instance available globally for services
+setSocketIO(io);
 
 type SocketUser = { userId: string; role: string } | null;
 

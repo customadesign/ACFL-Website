@@ -1,7 +1,19 @@
 import { supabase } from '../lib/supabase';
 import { BookingRequest, BookingEvent } from '../types/booking';
+import { getSocketIO } from '../lib/socket';
 
 export class BookingNotificationService {
+  /**
+   * Emit real-time notification via Socket.IO
+   */
+  private emitNotification(userId: string, notification: any): void {
+    const io = getSocketIO();
+    if (io) {
+      const room = `user:${userId}`;
+      io.to(room).emit('notification', notification);
+      console.log(`Real-time notification emitted to user ${userId} in room ${room}`);
+    }
+  }
   /**
    * Send notification when a new booking request is created
    */
@@ -54,9 +66,17 @@ export class BookingNotificationService {
 
       await supabase.from('notifications').insert([notificationData]);
 
+      // Send real-time notification via Socket.IO
+      this.emitNotification(coach.id, {
+        type: 'appointment',
+        title: notificationData.title,
+        content: notificationData.message,
+        appointmentId: bookingRequest.id,
+        data: notificationData.data
+      });
+
       // TODO: Send email notification if coach has email notifications enabled
       // TODO: Send push notification if coach has push notifications enabled
-      // TODO: Send real-time notification via WebSocket/Socket.IO
 
       console.log(`Notification sent to coach ${coach.id} for booking request ${bookingRequest.id}`);
     } catch (error) {
