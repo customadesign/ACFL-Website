@@ -1481,6 +1481,6 @@ function CoachProfileContent() {
   )
 }
 
-export default function CoachProfile() {
+export default function CoachProfile({ params }: { params: { id: string } }) {
   return <CoachProfileContent />
 }

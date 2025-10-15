@@ -10,7 +10,8 @@ import {
   X,
   Users,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  ArrowLeft
 } from 'lucide-react'
 import { dbHelpers, supabase, isSupabaseConfigured } from '@/lib/supabase'
 import { useAuth } from '@/contexts/AuthContext'
@@ -354,14 +355,14 @@ export default function MeetingChatComponent({
               isConnected ? 'bg-green-500' : 'bg-red-500'
             }`} title={isConnected ? 'Connected' : 'Disconnected'} />
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
+          <button
             onClick={onToggle}
-            className="h-8 w-8 p-0 text-gray-600 hover:text-gray-800"
+            className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg touch-manipulation flex-shrink-0 active:scale-95 transition-transform border-2 border-gray-900 dark:border-white"
+            aria-label="Close chat"
           >
-            <X size={16} />
-          </Button>
+            <X className="w-5 h-5 text-gray-900 dark:text-white" />
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Close</span>
+          </button>
         </div>
 
         {/* Messages */}
@@ -426,7 +427,7 @@ export default function MeetingChatComponent({
               onChange={(e) => setNewMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder="Type a message..."
-              className="flex-1 text-sm border-gray-300 focus:border-blue-500"
+              className="flex-1 text-sm text-gray-900 bg-white placeholder-gray-500 border-gray-300 focus:border-blue-500"
               disabled={sending}
               maxLength={500}
             />
@@ -490,14 +491,14 @@ export default function MeetingChatComponent({
                     isConnected ? 'bg-green-500' : 'bg-red-500'
                   }`} title={isConnected ? 'Connected' : 'Disconnected'} />
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
+                <button
                   onClick={onToggle}
-                  className="h-8 w-8 p-0"
+                  className="flex items-center gap-2 px-3 py-2 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg touch-manipulation flex-shrink-0 active:scale-95 transition-transform border-2 border-gray-900 dark:border-white"
+                  aria-label="Close chat"
                 >
-                  <X size={18} />
-                </Button>
+                  <ArrowLeft className="w-6 h-6 text-gray-900 dark:text-white" />
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">Back</span>
+                </button>
               </div>
 
               {/* Messages */}
@@ -562,7 +563,7 @@ export default function MeetingChatComponent({
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type a message..."
-                    className="flex-1 text-sm"
+                    className="flex-1 text-sm text-gray-900 bg-white placeholder-gray-500"
                     disabled={sending}
                     maxLength={500}
                   />
@@ -599,14 +600,14 @@ export default function MeetingChatComponent({
                   isConnected ? 'bg-green-500' : 'bg-red-500'
                 }`} title={isConnected ? 'Connected' : 'Disconnected'} />
               </div>
-              <Button
-                variant="ghost"
-                size="sm"
+              <button
                 onClick={onToggle}
-                className="h-6 w-6 p-0"
+                className="flex items-center gap-1 px-2 py-1.5 bg-white dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg active:scale-95 transition-transform border-2 border-gray-900 dark:border-white"
+                aria-label="Close chat"
               >
-                <X size={14} />
-              </Button>
+                <X className="w-4 h-4 text-gray-900 dark:text-white" />
+                <span className="text-xs font-medium text-gray-900 dark:text-white">Close</span>
+              </button>
             </div>
 
             {/* Messages */}
@@ -671,7 +672,7 @@ export default function MeetingChatComponent({
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyPress={handleKeyPress}
                   placeholder="Type a message..."
-                  className="flex-1 text-sm"
+                  className="flex-1 text-sm text-gray-900 bg-white placeholder-gray-500"
                   disabled={sending}
                   maxLength={500}
                 />

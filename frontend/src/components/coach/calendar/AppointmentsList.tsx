@@ -295,15 +295,37 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
     setDateFilter('all')
   }
 
+  // Allow joining anytime - no time restrictions
   const isJoinAvailable = (apt: Appointment) => {
-    const start = new Date(apt.starts_at).getTime()
-    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000)
-    return nowMs >= start && nowMs <= end
+    // Always allow joining - session will end based on scheduled end time
+    return true
   }
 
   const isCompleteAvailable = (apt: Appointment) => {
     const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (new Date(apt.starts_at).getTime() + 60 * 60 * 1000)
     return nowMs >= end
+  }
+
+  const getCountdownLabel = (apt: Appointment) => {
+    const start = new Date(apt.starts_at).getTime()
+    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000)
+    const toStart = start - nowMs
+    const toEnd = end - nowMs
+
+    // Session has ended
+    if (toEnd <= 0) return 'Session ended'
+
+    // Session is live now
+    if (toStart <= 0 && toEnd > 0) return 'Live now'
+
+    // Session hasn't started yet - show countdown
+    const h = Math.floor(toStart / 3600000)
+    const m = Math.floor((toStart % 3600000) / 60000)
+    const s = Math.floor((toStart % 60000) / 1000)
+    const hh = h.toString().padStart(2, '0')
+    const mm = m.toString().padStart(2, '0')
+    const ss = s.toString().padStart(2, '0')
+    return `Scheduled in ${hh}:${mm}:${ss}`
   }
 
   const handleJoinMeeting = (appointment: Appointment) => {
@@ -567,15 +589,18 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
                       <div className="mt-4 space-y-2">
                         <div className="flex flex-col sm:flex-row gap-2">
                           {appointment.meeting_id && (
-                            <Button
-                              onClick={() => handleJoinMeeting(appointment)}
-                              className="bg-green-600 hover:bg-green-700 dark:text-white disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto"
-                              disabled={!isJoinAvailable(appointment)}
-                              size="sm"
-                            >
-                              <VideoIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                              Join Session
-                            </Button>
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                onClick={() => handleJoinMeeting(appointment)}
+                                className="bg-green-600 hover:bg-green-700 dark:text-white disabled:opacity-40 disabled:cursor-not-allowed w-full sm:w-auto"
+                                disabled={!isJoinAvailable(appointment)}
+                                size="sm"
+                              >
+                                <VideoIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                                Join Session
+                              </Button>
+                              <span className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 self-center">{getCountdownLabel(appointment)}</span>
+                            </div>
                           )}
                           <Button
                             onClick={() => handleStatusChange(appointment.id, 'completed')}

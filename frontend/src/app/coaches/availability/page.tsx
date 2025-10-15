@@ -91,7 +91,12 @@ export default function CoachAvailabilityPage() {
     available_durations: [60] as number[],
     is_flexible_duration: false,
     min_session_minutes: 30,
-    max_session_minutes: 120
+    max_session_minutes: 120,
+    // Custom time input fields
+    use_custom_duration: false,
+    custom_duration: '',
+    use_custom_buffer: false,
+    custom_buffer: ''
   });
 
   const [newBlocked, setNewBlocked] = useState({
@@ -204,6 +209,26 @@ export default function CoachAvailabilityPage() {
         return;
       }
 
+      // Validate custom inputs
+      if (newSlot.use_custom_duration && (!newSlot.custom_duration || parseInt(newSlot.custom_duration) <= 0)) {
+        showToast('Please enter a valid custom session duration', 'error');
+        return;
+      }
+
+      if (newSlot.use_custom_buffer && newSlot.custom_buffer && parseInt(newSlot.custom_buffer) < 0) {
+        showToast('Please enter a valid custom buffer time', 'error');
+        return;
+      }
+
+      // Determine final duration and buffer values
+      const finalDuration = newSlot.use_custom_duration
+        ? parseInt(newSlot.custom_duration)
+        : newSlot.slot_duration_minutes;
+
+      const finalBuffer = newSlot.use_custom_buffer
+        ? (newSlot.custom_buffer ? parseInt(newSlot.custom_buffer) : 0)
+        : newSlot.buffer_minutes;
+
       const response = await fetch(
         `${API_BASE_URL}/api/calendar/coach/${user?.id}/availability`,
         {
@@ -216,14 +241,14 @@ export default function CoachAvailabilityPage() {
             dayOfWeek: newSlot.day_of_week,
             startTime: newSlot.start_time,
             endTime: newSlot.end_time,
-            slotDurationMinutes: newSlot.slot_duration_minutes,
-            bufferMinutes: newSlot.buffer_minutes,
+            slotDurationMinutes: finalDuration,
+            bufferMinutes: finalBuffer,
             title: newSlot.title,
             description: newSlot.description,
-            availableDurations: [newSlot.slot_duration_minutes], // Simplified to single duration
+            availableDurations: [finalDuration], // Simplified to single duration
             isFlexibleDuration: false,
-            minSessionMinutes: newSlot.slot_duration_minutes,
-            maxSessionMinutes: newSlot.slot_duration_minutes
+            minSessionMinutes: finalDuration,
+            maxSessionMinutes: finalDuration
           })
         }
       );
@@ -241,12 +266,18 @@ export default function CoachAvailabilityPage() {
           available_durations: [60],
           is_flexible_duration: false,
           min_session_minutes: 30,
-          max_session_minutes: 120
+          max_session_minutes: 120,
+          use_custom_duration: false,
+          custom_duration: '',
+          use_custom_buffer: false,
+          custom_buffer: ''
         });
         await loadAvailability();
+        showToast('Availability slot added successfully', 'success');
       }
     } catch (error) {
       console.error('Error adding slot:', error);
+      showToast('Failed to add availability slot', 'error');
     } finally {
       setSaving(false);
     }
@@ -1114,11 +1145,44 @@ export default function CoachAvailabilityPage() {
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                   Session Settings
                 </h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+
+                {/* Session Length */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Session Length
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newSlot.use_custom_duration}
+                        onChange={(e) => setNewSlot({
+                          ...newSlot,
+                          use_custom_duration: e.target.checked,
+                          custom_duration: e.target.checked ? '60' : ''
+                        })}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Custom</span>
+                    </label>
+                  </div>
+
+                  {newSlot.use_custom_duration ? (
+                    <div className="space-y-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="480"
+                        value={newSlot.custom_duration}
+                        onChange={(e) => setNewSlot({ ...newSlot, custom_duration: e.target.value })}
+                        placeholder="Enter minutes (e.g., 75)"
+                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Enter custom duration in minutes (1-480)
+                      </p>
+                    </div>
+                  ) : (
                     <select
                       value={newSlot.slot_duration_minutes}
                       onChange={(e) => setNewSlot({ ...newSlot, slot_duration_minutes: parseInt(e.target.value) })}
@@ -1130,11 +1194,46 @@ export default function CoachAvailabilityPage() {
                       <option value={90}>1.5 hours</option>
                       <option value={120}>2 hours</option>
                     </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  )}
+                </div>
+
+                {/* Buffer Time */}
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                       Buffer Time
                     </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={newSlot.use_custom_buffer}
+                        onChange={(e) => setNewSlot({
+                          ...newSlot,
+                          use_custom_buffer: e.target.checked,
+                          custom_buffer: e.target.checked ? '5' : ''
+                        })}
+                        className="w-4 h-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Custom</span>
+                    </label>
+                  </div>
+
+                  {newSlot.use_custom_buffer ? (
+                    <div className="space-y-2">
+                      <input
+                        type="number"
+                        min="0"
+                        max="120"
+                        value={newSlot.custom_buffer}
+                        onChange={(e) => setNewSlot({ ...newSlot, custom_buffer: e.target.value })}
+                        placeholder="Enter minutes (e.g., 12)"
+                        className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Enter custom buffer in minutes (0-120)
+                      </p>
+                    </div>
+                  ) : (
                     <select
                       value={newSlot.buffer_minutes}
                       onChange={(e) => setNewSlot({ ...newSlot, buffer_minutes: parseInt(e.target.value) })}
@@ -1146,7 +1245,7 @@ export default function CoachAvailabilityPage() {
                       <option value={15}>15 minutes</option>
                       <option value={30}>30 minutes</option>
                     </select>
-                  </div>
+                  )}
                 </div>
               </div>
 
@@ -1173,7 +1272,13 @@ export default function CoachAvailabilityPage() {
                   </span>
                 </div>
                 <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  {newSlot.slot_duration_minutes}min sessions with {newSlot.buffer_minutes}min buffer
+                  {newSlot.use_custom_duration
+                    ? `${newSlot.custom_duration || '0'}min sessions`
+                    : `${newSlot.slot_duration_minutes}min sessions`
+                  } with {newSlot.use_custom_buffer
+                    ? `${newSlot.custom_buffer || '0'}min buffer`
+                    : `${newSlot.buffer_minutes}min buffer`
+                  }
                 </div>
               </div>
             </div>

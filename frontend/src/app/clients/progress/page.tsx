@@ -5,7 +5,7 @@ import ClientPageWrapper from '@/components/ClientPageWrapper';
 import ClientProgressDashboard from '@/components/progress/ClientProgressDashboard';
 import { useAuth } from '@/contexts/AuthContext';
 
-const ClientProgressPage: React.FC = () => {
+const ClientProgressPage: React.FC<{ params: Promise<Record<string, never>> }> = ({ params }) => {
   const { user } = useAuth();
 
   return (

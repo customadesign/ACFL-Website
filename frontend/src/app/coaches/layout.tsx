@@ -37,8 +37,10 @@ interface NavigationGroup {
 
 export default function CoachLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<Record<string, never>>;
 }) {
   const pathname = usePathname();
   const router = useRouter();
