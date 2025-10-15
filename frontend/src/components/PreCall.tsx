@@ -39,6 +39,8 @@ export default function PreCall({
   const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([])
   const [speakerDevices, setSpeakerDevices] = useState<MediaDeviceInfo[]>([])
   const [showSettings, setShowSettings] = useState(false)
+  const [micPermission, setMicPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt')
+  const [cameraPermission, setCameraPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt')
   
   const videoRef = useRef<HTMLVideoElement>(null)
   const audioContextRef = useRef<AudioContext | null>(null)
@@ -99,6 +101,10 @@ export default function PreCall({
         } : false
       })
 
+      // Record granted permissions for requested media
+      if (micEnabled) setMicPermission('granted')
+      if (cameraEnabled) setCameraPermission('granted')
+
       // Set video stream
       if (videoRef.current && cameraEnabled) {
         videoRef.current.srcObject = stream
@@ -122,6 +128,9 @@ export default function PreCall({
       
       if (error.name === 'NotAllowedError') {
         setPermissionError('Please allow camera and microphone access to join the meeting')
+        // Reflect denied permissions explicitly
+        if (micEnabled) setMicPermission('denied')
+        if (cameraEnabled) setCameraPermission('denied')
       } else if (error.name === 'NotFoundError') {
         setPermissionError('No camera or microphone found. Please check your devices.')
       } else {
@@ -129,6 +138,34 @@ export default function PreCall({
       }
     }
   }
+
+  // Check browser permission status without prompting (where supported)
+  useEffect(() => {
+    let cancelled = false
+    const checkPermissions = async () => {
+      try {
+        if ((navigator as any).permissions?.query) {
+          const micStatus = await (navigator as any).permissions.query({ name: 'microphone' as any })
+          const camStatus = await (navigator as any).permissions.query({ name: 'camera' as any })
+          if (!cancelled) {
+            setMicPermission(micStatus.state as 'granted' | 'denied' | 'prompt')
+            setCameraPermission(camStatus.state as 'granted' | 'denied' | 'prompt')
+          }
+          // React to changes
+          micStatus.onchange = () => {
+            if (!cancelled) setMicPermission(micStatus.state as 'granted' | 'denied' | 'prompt')
+          }
+          camStatus.onchange = () => {
+            if (!cancelled) setCameraPermission(camStatus.state as 'granted' | 'denied' | 'prompt')
+          }
+        }
+      } catch {
+        // Permissions API not available or blocked; ignore
+      }
+    }
+    checkPermissions()
+    return () => { cancelled = true }
+  }, [])
 
   // Setup audio level visualization
   const setupAudioVisualization = (stream: MediaStream) => {
@@ -303,7 +340,10 @@ export default function PreCall({
     if (micStreamRef.current) {
       micStreamRef.current.getTracks().forEach(track => track.stop())
     }
-    onJoinMeeting({ mic: micEnabled, camera: cameraEnabled })
+    // Only report devices as enabled if permissions are actually granted
+    const effectiveMic = micEnabled && micPermission === 'granted'
+    const effectiveCamera = cameraEnabled && cameraPermission === 'granted'
+    onJoinMeeting({ mic: effectiveMic, camera: effectiveCamera })
   }
 
   return (
@@ -455,10 +495,10 @@ export default function PreCall({
                 <h3 className="font-semibold mb-3">Pre-call Checklist</h3>
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <div className={`mt-1 w-5 h-5 rounded-full ${!loading && !permissionError ? 'bg-green-500' : 'bg-gray-300'}`} />
+                    <div className={`mt-1 w-5 h-5 rounded-full ${(!loading && !permissionError) || (micPermission === 'granted' || cameraPermission === 'granted') ? 'bg-green-500' : 'bg-gray-300'}`} />
                     <div>
-                      <p className="font-medium">Device permissions granted</p>
-                      <p className="text-sm text-gray-600">Camera and microphone access allowed</p>
+                      <p className="font-medium">Device permissions</p>
+                      <p className="text-sm text-gray-600">Mic: {micPermission} • Camera: {cameraPermission}</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
