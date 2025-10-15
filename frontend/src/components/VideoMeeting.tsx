@@ -208,14 +208,18 @@ function MeetingView({
 
   const participantIds = [...participants.keys()]
 
-  // Update local states based on SDK states
+  // Update local states based on SDK states with debounce to prevent override during toggle
   useEffect(() => {
-    setLocalMicOn(sdkLocalMicOn || false)
-  }, [sdkLocalMicOn])
+    if (isMeetingJoined) {
+      setLocalMicOn(sdkLocalMicOn || false)
+    }
+  }, [sdkLocalMicOn, isMeetingJoined])
 
   useEffect(() => {
-    setLocalWebcamOn(sdkLocalWebcamOn || false)
-  }, [sdkLocalWebcamOn])
+    if (isMeetingJoined) {
+      setLocalWebcamOn(sdkLocalWebcamOn || false)
+    }
+  }, [sdkLocalWebcamOn, isMeetingJoined])
 
   // Update participant count
   useEffect(() => {
@@ -324,26 +328,90 @@ function MeetingView({
     }
   }, [])
 
-  // Safe toggle functions to prevent circular JSON issues
-  const handleToggleMic = useCallback(() => {
+  // Safe toggle functions with proper permission handling
+  const handleToggleMic = useCallback(async () => {
     try {
-      if (toggleMic) {
-        toggleMic()
-      }
-    } catch (error) {
-      console.error('Toggle mic error:', error)
-    }
-  }, [toggleMic])
+      console.log('🎤 Toggle mic requested. Current state:', localMicOn)
 
-  const handleToggleWebcam = useCallback(() => {
-    try {
-      if (toggleWebcam) {
-        toggleWebcam()
+      // If turning ON and currently OFF, request permission first
+      if (!localMicOn) {
+        try {
+          console.log('🎤 Requesting microphone permission...')
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+          console.log('✅ Microphone permission granted')
+
+          // Stop the test stream
+          stream.getTracks().forEach(track => track.stop())
+
+          // Small delay to ensure permission is registered
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } catch (permError) {
+          console.error('❌ Microphone permission denied:', permError)
+          alert('Microphone access denied. Please allow microphone access in your browser settings.')
+          return
+        }
+      }
+
+      // Optimistically update UI
+      setLocalMicOn(!localMicOn)
+
+      // Toggle via SDK
+      if (toggleMic) {
+        console.log('🔄 Calling VideoSDK toggleMic()...')
+        toggleMic()
+
+        // Give SDK time to process
+        await new Promise(resolve => setTimeout(resolve, 200))
+        console.log('✅ Mic toggle completed')
       }
     } catch (error) {
-      console.error('Toggle webcam error:', error)
+      console.error('💥 Toggle mic error:', error)
+      // Revert optimistic update on error
+      setLocalMicOn(localMicOn)
     }
-  }, [toggleWebcam])
+  }, [toggleMic, localMicOn])
+
+  const handleToggleWebcam = useCallback(async () => {
+    try {
+      console.log('📹 Toggle webcam requested. Current state:', localWebcamOn)
+
+      // If turning ON and currently OFF, request permission first
+      if (!localWebcamOn) {
+        try {
+          console.log('📹 Requesting camera permission...')
+          const stream = await navigator.mediaDevices.getUserMedia({ video: true })
+          console.log('✅ Camera permission granted')
+
+          // Stop the test stream
+          stream.getTracks().forEach(track => track.stop())
+
+          // Small delay to ensure permission is registered
+          await new Promise(resolve => setTimeout(resolve, 100))
+        } catch (permError) {
+          console.error('❌ Camera permission denied:', permError)
+          alert('Camera access denied. Please allow camera access in your browser settings.')
+          return
+        }
+      }
+
+      // Optimistically update UI
+      setLocalWebcamOn(!localWebcamOn)
+
+      // Toggle via SDK
+      if (toggleWebcam) {
+        console.log('🔄 Calling VideoSDK toggleWebcam()...')
+        toggleWebcam()
+
+        // Give SDK time to process
+        await new Promise(resolve => setTimeout(resolve, 200))
+        console.log('✅ Webcam toggle completed')
+      }
+    } catch (error) {
+      console.error('💥 Toggle webcam error:', error)
+      // Revert optimistic update on error
+      setLocalWebcamOn(localWebcamOn)
+    }
+  }, [toggleWebcam, localWebcamOn])
 
   const handleToggleScreenShare = useCallback(async () => {
     try {
