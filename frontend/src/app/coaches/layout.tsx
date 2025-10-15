@@ -484,11 +484,11 @@ export default function CoachLayout({
             </div>
 
             {/* Notification section */}
-            <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-1 border-t border-gray-200 dark:border-gray-700">
               <div className="relative" ref={notificationRef}>
                 <button
                   onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-                  className={`w-full group flex items-center px-2 py-1.5 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                  className={`w-full group flex items-center px-2 py-1 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                     sidebarCollapsed ? 'justify-center' : 'justify-between'
                   }`}
                   aria-label="Notifications"
@@ -585,11 +585,11 @@ export default function CoachLayout({
             </div>
 
             {/* User section at bottom */}
-            <div className="p-2 border-t border-gray-200 dark:border-gray-700">
+            <div className="p-1 border-t border-gray-200 dark:border-gray-700">
               <div className="relative" ref={dropdownRef}>
                 <button
                   onClick={() => setShowDropdown(!showDropdown)}
-                  className={`w-full group flex items-center px-2 py-1.5 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
+                  className={`w-full group flex items-center px-2 py-1 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
                     sidebarCollapsed ? 'justify-center' : 'justify-between'
                   }`}
                 >
