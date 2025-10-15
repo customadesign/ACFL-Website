@@ -365,8 +365,8 @@ export default function CoachLayout({
             )}
 
             {/* Navigation Groups */}
-            <div className="flex-1 overflow-y-auto">
-              <nav className="space-y-1 p-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden">
+              <nav className="space-y-1 p-4 min-h-full">
               {navigationGroups.map((group) => {
                 const filteredItems = filterItemsBySearch(group.items);
                 const isExpanded = expandedGroups.has(group.id);
