@@ -76,34 +76,34 @@ export default function PreCall({
       setLoading(true)
       setPermissionError(null)
       
-      // Check if at least one media type is enabled
-      if (!cameraEnabled && !micEnabled) {
-        // No media requested, just get devices and finish
-        await getDevices()
-        setLoading(false)
-        return
-      }
+      // If both toggles are off, still request minimal permissions silently so in-meeting toggles work
+      const requestAudio = micEnabled || (!micEnabled && !cameraEnabled)
+      const requestVideo = cameraEnabled || (!micEnabled && !cameraEnabled)
       
-      // Get permissions for requested media with HD quality
+      // Get permissions for requested media with HD quality when toggles on; minimal when both off
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: cameraEnabled ? {
-          deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
-          width: { ideal: 1280, min: 640 },
-          height: { ideal: 720, min: 480 },
-          frameRate: { ideal: 30, min: 15 },
-          facingMode: 'user'
-        } : false,
-        audio: micEnabled ? {
-          deviceId: selectedMic ? { exact: selectedMic } : undefined,
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true
-        } : false
+        video: requestVideo ? (
+          cameraEnabled ? {
+            deviceId: selectedCamera ? { exact: selectedCamera } : undefined,
+            width: { ideal: 1280, min: 640 },
+            height: { ideal: 720, min: 480 },
+            frameRate: { ideal: 30, min: 15 },
+            facingMode: 'user'
+          } : true // minimal constraints when both toggles are off
+        ) : false,
+        audio: requestAudio ? (
+          micEnabled ? {
+            deviceId: selectedMic ? { exact: selectedMic } : undefined,
+            echoCancellation: true,
+            noiseSuppression: true,
+            autoGainControl: true
+          } : true // minimal constraints when both toggles are off
+        ) : false
       })
 
       // Record granted permissions for requested media
-      if (micEnabled) setMicPermission('granted')
-      if (cameraEnabled) setCameraPermission('granted')
+      if (requestAudio) setMicPermission('granted')
+      if (requestVideo) setCameraPermission('granted')
 
       // Set video stream
       if (videoRef.current && cameraEnabled) {
@@ -118,6 +118,12 @@ export default function PreCall({
       // Store stream for cleanup
       micStreamRef.current = stream
 
+      // If both toggles are off, immediately stop the preview tracks to keep them off
+      if (!cameraEnabled && !micEnabled && micStreamRef.current) {
+        micStreamRef.current.getTracks().forEach(track => track.stop())
+        micStreamRef.current = null
+      }
+
       // Get devices after permissions granted
       await getDevices()
       
@@ -127,7 +133,10 @@ export default function PreCall({
       setLoading(false)
       
       if (error.name === 'NotAllowedError') {
-        setPermissionError('Please allow camera and microphone access to join the meeting')
+        // If user denied, allow join with both toggles off; otherwise show error
+        if (micEnabled || cameraEnabled) {
+          setPermissionError('Please allow camera and microphone access to join the meeting')
+        }
         // Reflect denied permissions explicitly
         if (micEnabled) setMicPermission('denied')
         if (cameraEnabled) setCameraPermission('denied')
