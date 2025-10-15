@@ -455,7 +455,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-[10001] ${
         sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
       } transition-all duration-300 ease-in-out`}>
-        <div className="flex grow flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
+        <div className="flex h-full flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
           {/* Logo and collapse button */}
           <div className="flex h-16 shrink-0 items-center px-4 border-b border-gray-200 dark:border-gray-700">
             {!sidebarCollapsed && (
@@ -485,7 +485,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
           {/* Search bar */}
           {!sidebarCollapsed && (
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+            <div className="shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -499,8 +499,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           )}
 
-          {/* Navigation Groups */}
-          <div className="flex-1 overflow-y-scroll overflow-x-hidden scrollbar-hide" style={{maxHeight: 'calc(100vh - 12rem)'}}>
+          {/* Navigation Groups - Scrollable */}
+          <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-hide min-h-0">
             <nav className="space-y-1 p-4">
             {filteredNavigationGroups.map((group) => {
               const filteredItems = filterItemsBySearch(group.items);
@@ -611,8 +611,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </nav>
           </div>
 
-          {/* Notification section */}
-          <div className="p-1 border-t border-gray-200 dark:border-gray-700">
+          {/* Notification section - Fixed at bottom */}
+          <div className="shrink-0 p-1 border-t border-gray-200 dark:border-gray-700">
             <div className="relative" ref={notificationRef}>
               <button
                 onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
@@ -757,8 +757,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             </div>
           </div>
 
-          {/* User section at bottom */}
-          <div className="p-1 border-t border-gray-200 dark:border-gray-700">
+          {/* User section - Fixed at bottom */}
+          <div className="shrink-0 p-1 border-t border-gray-200 dark:border-gray-700">
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
