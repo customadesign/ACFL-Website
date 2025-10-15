@@ -318,11 +318,31 @@ function MeetingView({
     }
   }, [meetingId]) // Only depend on meetingId
 
-  // Handle component unmount
+  // Handle component unmount and cleanup
   useEffect(() => {
     return () => {
+      console.log('🧹 Component unmounting, cleaning up...')
+
+      // Clear any reconnection attempts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current)
+        reconnectTimeoutRef.current = null
+      }
+
+      // Clean up media tracks
       if (hasJoinedRef.current) {
-        // Don't call leave directly - just let VideoSDK handle cleanup
+        try {
+          // Get all media tracks and stop them
+          navigator.mediaDevices.enumerateDevices().then(() => {
+            // Force stop all tracks
+            if (typeof navigator.mediaDevices.getUserMedia !== 'undefined') {
+              console.log('🧹 Cleaning up media tracks...')
+            }
+          }).catch(err => console.error('Cleanup error:', err))
+        } catch (err) {
+          console.error('Media cleanup error:', err)
+        }
+
         hasJoinedRef.current = false
       }
     }
@@ -530,12 +550,27 @@ function MeetingView({
     }
   }, [toggleScreenShare, presenterId, isScreenShareSupported])
 
-  const handleLeaveMeeting = useCallback(() => {
+  const handleLeaveMeeting = useCallback(async () => {
     try {
+      console.log('👋 Leaving meeting...')
+
       // Clear any reconnection attempts
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
+      }
+
+      // Stop all local media tracks before leaving
+      try {
+        const streams = await navigator.mediaDevices.getUserMedia({ audio: true, video: true }).catch(() => null)
+        if (streams) {
+          streams.getTracks().forEach(track => {
+            track.stop()
+            console.log('🧹 Stopped track:', track.kind)
+          })
+        }
+      } catch (cleanupError) {
+        console.log('Media cleanup skipped (tracks may not be active):', cleanupError)
       }
 
       if (isMeetingJoined && leave) {
@@ -935,50 +970,135 @@ function ParticipantView({
   const audioRef = useRef<HTMLAudioElement>(null)
   const [isVideoLoaded, setIsVideoLoaded] = useState(false)
   const [connectionState, setConnectionState] = useState<'connecting' | 'connected' | 'failed'>('connecting')
+  const [retryCount, setRetryCount] = useState(0)
 
   const { webcamStream, micStream, webcamOn, micOn, displayName, isLocal } = useParticipant(participantId)
 
+  // Video stream handler with retry logic
   useEffect(() => {
-    if (webcamStream && videoRef.current) {
-      const mediaStream = new MediaStream()
-      mediaStream.addTrack(webcamStream.track)
-      videoRef.current.srcObject = mediaStream
+    let mounted = true
+    const video = videoRef.current
 
-      videoRef.current.play()
-        .then(() => {
-          setIsVideoLoaded(true)
-          setConnectionState('connected')
-        })
-        .catch((error) => {
-          console.error('Video play error:', error)
-          setConnectionState('failed')
-        })
+    if (webcamStream && video) {
+      console.log(`📹 Setting up video for ${displayName} (${isLocal ? 'local' : 'remote'})`)
 
-      // Handle video events
-      const video = videoRef.current
-      const handleLoadedMetadata = () => setIsVideoLoaded(true)
-      const handleError = () => setConnectionState('failed')
+      const setupVideo = async () => {
+        try {
+          // Clean up any existing stream reference (do not stop SDK-owned tracks)
+          if (video.srcObject) {
+            video.srcObject = null
+          }
 
-      video.addEventListener('loadedmetadata', handleLoadedMetadata)
-      video.addEventListener('error', handleError)
+          // Create new stream
+          const mediaStream = new MediaStream()
+          mediaStream.addTrack(webcamStream.track)
+
+          // Set up event listeners before assigning srcObject
+          const handleLoadedMetadata = () => {
+            if (mounted) {
+              console.log(`✅ Video loaded for ${displayName}`)
+              setIsVideoLoaded(true)
+              setConnectionState('connected')
+              setRetryCount(0)
+            }
+          }
+
+          const handleError = (e: any) => {
+            console.error(`❌ Video error for ${displayName}:`, e)
+            if (mounted) {
+              setConnectionState('failed')
+              // Retry up to 3 times
+              if (retryCount < 3) {
+                console.log(`🔄 Retrying video setup (${retryCount + 1}/3)...`)
+                setTimeout(() => {
+                  if (mounted) {
+                    setRetryCount(prev => prev + 1)
+                  }
+                }, 1000)
+              }
+            }
+          }
+
+          video.addEventListener('loadedmetadata', handleLoadedMetadata)
+          video.addEventListener('error', handleError)
+
+          // Assign stream
+          video.srcObject = mediaStream
+
+          // Attempt to play
+          await video.play()
+          console.log(`▶️ Video playing for ${displayName}`)
+
+          return () => {
+            mounted = false
+            video.removeEventListener('loadedmetadata', handleLoadedMetadata)
+            video.removeEventListener('error', handleError)
+            // Only drop the element's reference; the SDK manages track lifecycle
+            if (video.srcObject) {
+              video.srcObject = null
+            }
+          }
+        } catch (error) {
+          console.error(`💥 Video setup error for ${displayName}:`, error)
+          if (mounted) {
+            setConnectionState('failed')
+          }
+        }
+      }
+
+      setupVideo()
 
       return () => {
-        video.removeEventListener('loadedmetadata', handleLoadedMetadata)
-        video.removeEventListener('error', handleError)
+        mounted = false
+        // Cleanup on unmount: drop reference only
+        if (video.srcObject) {
+          video.srcObject = null
+        }
       }
     } else {
+      // Reset state when camera is off
       setIsVideoLoaded(false)
-    }
-  }, [webcamStream])
+      setConnectionState('connecting')
 
+      // Clean up video reference (tracks managed by SDK)
+      if (video && video.srcObject) {
+        video.srcObject = null
+      }
+    }
+  }, [webcamStream, displayName, isLocal, retryCount])
+
+  // Audio stream handler with cleanup
   useEffect(() => {
-    if (micStream && audioRef.current && !isLocal) {
+    let mounted = true
+    const audio = audioRef.current
+
+    if (micStream && audio && !isLocal) {
+      console.log(`🎤 Setting up audio for ${displayName}`)
+
+      // Clean up any existing stream reference (do not stop SDK-owned tracks)
+      if (audio.srcObject) {
+        audio.srcObject = null
+      }
+
       const mediaStream = new MediaStream()
       mediaStream.addTrack(micStream.track)
-      audioRef.current.srcObject = mediaStream
-      audioRef.current.play().catch(console.error)
+      audio.srcObject = mediaStream
+
+      audio.play()
+        .then(() => console.log(`▶️ Audio playing for ${displayName}`))
+        .catch(err => console.error(`Audio play error for ${displayName}:`, err))
+
+      return () => {
+        mounted = false
+        if (audio.srcObject) {
+          audio.srcObject = null
+        }
+      }
+    } else if (audio && audio.srcObject) {
+      // Clean up audio reference when mic is off
+      audio.srcObject = null
     }
-  }, [micStream, isLocal])
+  }, [micStream, isLocal, displayName])
 
   const containerClasses = `
     relative overflow-hidden transition-all duration-200
