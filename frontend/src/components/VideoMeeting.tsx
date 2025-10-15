@@ -78,20 +78,24 @@ function MeetingView({
   meetingId,
   participantName,
   onMeetingEnd,
-  appointmentId
+  appointmentId,
+  initialMicOn,
+  initialWebcamOn
 }: {
   meetingId: string
   participantName: string
   onMeetingEnd: () => void
   appointmentId?: string
+  initialMicOn?: boolean
+  initialWebcamOn?: boolean
 }) {
   const [isChatVisible, setIsChatVisible] = useState(false)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
   const [isMeetingJoined, setIsMeetingJoined] = useState(false)
   const [isConnecting, setIsConnecting] = useState(true)
   const [connectionQuality, setConnectionQuality] = useState<'good' | 'poor' | 'disconnected'>('good')
-  const [localMicOn, setLocalMicOn] = useState(false)
-  const [localWebcamOn, setLocalWebcamOn] = useState(false)
+  const [localMicOn, setLocalMicOn] = useState(initialMicOn ?? true)
+  const [localWebcamOn, setLocalWebcamOn] = useState(initialWebcamOn ?? true)
   const [participantCount, setParticipantCount] = useState(0)
   const [dominantSpeaker, setDominantSpeaker] = useState<string | null>(null)
   const [screenShareError, setScreenShareError] = useState<string | null>(null)
@@ -154,6 +158,11 @@ function MeetingView({
       setIsMeetingJoined(false)
       setIsConnecting(false)
       hasJoinedRef.current = false
+
+      // Reset mic and camera settings to default
+      setLocalMicOn(initialMicOn ?? true)
+      setLocalWebcamOn(initialWebcamOn ?? true)
+      console.log('🔄 Reset mic/camera settings to default')
 
       // Clear global meeting state
       setMeetingState(false, null)
@@ -1222,6 +1231,8 @@ export default function VideoMeeting({
             participantName={participantName || 'Participant'}
             onMeetingEnd={onMeetingEnd}
             appointmentId={appointmentId}
+            initialMicOn={initialMicOn}
+            initialWebcamOn={initialWebcamOn}
           />
         )}
       </MeetingConsumer>
