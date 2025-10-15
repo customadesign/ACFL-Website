@@ -365,7 +365,7 @@ export default function CoachLayout({
             )}
 
             {/* Navigation Groups */}
-            <div className="flex-1 overflow-y-scroll overflow-x-hidden" style={{maxHeight: 'calc(100vh - 16rem)'}}>
+            <div className="flex-1 overflow-y-scroll overflow-x-hidden scrollbar-hide" style={{maxHeight: 'calc(100vh - 16rem)'}}>
               <nav className="space-y-1 p-4">
               {navigationGroups.map((group) => {
                 const filteredItems = filterItemsBySearch(group.items);
