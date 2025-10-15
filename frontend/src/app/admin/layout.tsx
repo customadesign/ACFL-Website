@@ -500,7 +500,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           )}
 
           {/* Navigation Groups */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden scrollbar-thin">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain">
             <nav className="space-y-1 p-4">
             {filteredNavigationGroups.map((group) => {
               const filteredItems = filterItemsBySearch(group.items);
