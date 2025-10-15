@@ -64,6 +64,37 @@ function ClientRegisterForm() {
       newErrors.phone = 'Phone number is too long';
     }
 
+    // Validate birthday if provided
+    if (formData.dateOfBirth) {
+      const birthDate = new Date(formData.dateOfBirth);
+      const today = new Date();
+      
+      // Check if birthday is a valid date
+      if (isNaN(birthDate.getTime())) {
+        newErrors.dateOfBirth = 'Invalid date format';
+      } else if (birthDate > today) {
+        // Check if birthday is not in the future
+        newErrors.dateOfBirth = 'Birthday cannot be in the future';
+      } else {
+        // Calculate age
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const monthDiff = today.getMonth() - birthDate.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        // Check minimum age (18 years old)
+        if (age < 18) {
+          newErrors.dateOfBirth = 'You must be at least 18 years old to register for coaching services';
+        }
+        
+        // Check maximum age (120 years old - reasonable limit)
+        if (age > 120) {
+          newErrors.dateOfBirth = 'Invalid birthday - please enter a valid date';
+        }
+      }
+    }
+
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {

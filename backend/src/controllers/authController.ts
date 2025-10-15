@@ -37,7 +37,7 @@ export const registerClient = async (req: Request, res: Response) => {
   });
 
   try {
-    // Step 1: Validate input
+    // Step 1:  Validate input
     console.log('\n📋 Step 1: Validating input...');
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -47,6 +47,58 @@ export const registerClient = async (req: Request, res: Response) => {
     console.log('✅ Input validation passed');
 
     const { email, password, firstName, lastName, phone, dateOfBirth } = req.body as RegisterClientDto;
+
+    // Step 1.5: Validate birthday if provided
+    if (dateOfBirth) {
+      console.log('\n📅 Step 1.5: Validating birthday...');
+      const birthDate = new Date(dateOfBirth);
+      const today = new Date();
+      
+      // Check if birthday is a valid date
+      if (isNaN(birthDate.getTime())) {
+        console.log('❌ Invalid birthday format');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid birthday format' 
+        });
+      }
+      
+      // Check if birthday is not in the future
+      if (birthDate > today) {
+        console.log('❌ Birthday is in the future');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Birthday cannot be in the future' 
+        });
+      }
+      
+      // Calculate age
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const monthDiff = today.getMonth() - birthDate.getMonth();
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      
+      // Check minimum age (18 years old for professional coaching services)
+      if (age < 18) {
+        console.log('❌ User is under 18 years old');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'You must be at least 18 years old to register for coaching services' 
+        });
+      }
+      
+      // Check maximum age (120 years old - reasonable limit)
+      if (age > 120) {
+        console.log('❌ Age exceeds reasonable limit');
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid birthday - age exceeds reasonable limit' 
+        });
+      }
+      
+      console.log(`✅ Birthday validation passed (Age: ${age})`);
+    }
 
     // Step 2: Check for existing client
     console.log('\n🔍 Step 2: Checking for existing client...');
