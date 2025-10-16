@@ -238,12 +238,36 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
 
   const handleStatusChange = async (appointmentId: string, newStatus: string) => {
     try {
-      const response = await apiPut(`${API_URL}/api/coach/appointments/${appointmentId}`,
-        { status: newStatus }
-      )
+      // If marking as completed, use the V2 endpoint with automatic payment capture
+      if (newStatus === 'completed') {
+        const response = await fetch(`${API_URL}/api/payments/v2/sessions/complete`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            session_id: appointmentId,
+            auto_capture_payment: true,
+            generate_invoice: true
+          })
+        })
 
-      if (response.data.success) {
-        await loadAppointments(true)
+        if (response.ok) {
+          await loadAppointments(true)
+        } else {
+          const error = await response.json()
+          throw new Error(error.error || 'Failed to complete session')
+        }
+      } else {
+        // For other status changes, use the regular endpoint
+        const response = await apiPut(`${API_URL}/api/coach/appointments/${appointmentId}`,
+          { status: newStatus }
+        )
+
+        if (response.data.success) {
+          await loadAppointments(true)
+        }
       }
     } catch (error) {
       console.error('Error updating appointment status:', error)
