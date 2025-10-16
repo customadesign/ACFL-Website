@@ -28,6 +28,7 @@ export interface Coach extends User {
   lastName: string;
   phone?: string;
   email_verified?: boolean;
+  status?: 'pending' | 'approved' | 'rejected' | 'suspended' | 'active';
   specialties: string[];
   languages: string[];
   bio?: string;

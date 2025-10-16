@@ -1641,17 +1641,68 @@ router.put('/coaches/:id/:action', async (req, res) => {
     if (action === 'approve') {
       updateData.approved_at = new Date().toISOString();
     }
-    
+
     const { data, error } = await supabase
       .from('coaches')
       .update(updateData)
       .eq('id', id)
       .select()
       .single();
-    
+
     if (error) {
       console.error('Coach status update error:', error);
       return res.status(500).json({ error: 'Failed to update coach status' });
+    }
+
+    // Send verification email when approving coach
+    if (action === 'approve') {
+      console.log('✅ Coach approved, generating and sending verification email...');
+      try {
+        const crypto = require('crypto');
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+        // Delete any old verification tokens for this coach
+        await supabase
+          .from('email_verification_tokens')
+          .delete()
+          .eq('email', data.email.toLowerCase());
+
+        // Store new verification token
+        const { error: tokenError } = await supabase
+          .from('email_verification_tokens')
+          .insert({
+            email: data.email.toLowerCase(),
+            token: verificationToken,
+            expires_at: verificationExpiry.toISOString(),
+            user_role: 'coach',
+            user_id: data.id,
+            created_at: new Date().toISOString()
+          });
+
+        if (tokenError) {
+          console.error('⚠️ Failed to store verification token:', tokenError);
+        } else {
+          console.log('✅ Verification token generated and stored');
+
+          // Send verification email
+          const emailService = require('../services/emailService').default;
+          const emailResult = await emailService.sendEmailVerification({
+            email: data.email,
+            first_name: data.first_name,
+            role: 'coach'
+          }, verificationToken);
+
+          if (emailResult.success) {
+            console.log('✅ Verification email sent successfully to approved coach');
+          } else {
+            console.log('⚠️ Warning: Verification email failed:', emailResult.error);
+          }
+        }
+      } catch (emailError) {
+        console.log('⚠️ Warning: Verification email process failed:', emailError);
+        // Don't fail the approval if email fails
+      }
     }
 
     // Log the admin action
