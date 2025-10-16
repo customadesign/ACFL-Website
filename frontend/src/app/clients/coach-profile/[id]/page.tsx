@@ -649,15 +649,7 @@ function CoachProfileContent() {
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
-                {(() => {
-                  console.log('Button visibility check:', {
-                    userType: user?.user_type,
-                    coachEmail: coach.email,
-                    coachName: coach.name,
-                    shouldShowFree: user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))
-                  });
-                  return (user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach')));
-                })() && (
+                {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.id === 'a235efaa-df3a-4583-ae72-b459849736fe' || coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
                   <DeactivatedActionButton action="book a consultation">
                     <Button
                       size="lg"
@@ -734,7 +726,7 @@ function CoachProfileContent() {
                 {/* Booking buttons */}
                 <div className="flex gap-2 mt-4 sm:mt-6">
                   {/* Free Call - Visible to coaches OR clients viewing Test Coach only */}
-                  {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
+                  {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.id === 'a235efaa-df3a-4583-ae72-b459849736fe' || coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
                     <Button
                       className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
                       onClick={() => handleBookSession('consultation')}
@@ -1401,7 +1393,7 @@ function CoachProfileContent() {
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex gap-2 w-full">
                     {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
-                    {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
+                    {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.id === 'a235efaa-df3a-4583-ae72-b459849736fe' || coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
                       <Button
                         size="lg"
                         className="flex-1 bg-white text-blue-700 hover:bg-blue-50 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
@@ -1423,7 +1415,7 @@ function CoachProfileContent() {
                       <span className="sm:hidden">Paid</span>
                     </Button>
                   </div>
-                  {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
+                  {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.id === 'a235efaa-df3a-4583-ae72-b459849736fe' || coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
                     <p className="text-xs sm:text-sm text-blue-100">
                       No commitment required • 15 minutes • Video call
                     </p>
