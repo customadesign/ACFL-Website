@@ -423,6 +423,7 @@ export const registerCoach = async (req: Request, res: Response) => {
       last_name: lastName,
       phone,
       is_available: true,
+      status: 'pending', // Coach needs admin approval before verification
       bio: 'Professional ACT coach ready to help you achieve your goals',
       years_experience: 1,
       // hourly_rate_usd removed - rates now managed in coach_rates table
@@ -516,70 +517,21 @@ export const registerCoach = async (req: Request, res: Response) => {
     });
     console.log('✅ JWT token generated');
 
-    // Step 8: Generate email verification token
-    console.log('\n🔐 Step 8: Generating email verification token...');
-    const crypto = require('crypto');
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    // Step 8: Skip email verification - coach needs admin approval first
+    console.log('\n⏭️ Step 8: Skipping email verification...');
+    console.log('Coach status set to "pending" - verification email will be sent after admin approval');
 
-    // Get the coach ID first
-    const { data: coachData } = await supabase
-      .from('coaches')
-      .select('id')
-      .eq('email', email)
-      .single();
-
-    if (coachData) {
-      // Store verification token
-      const { error: tokenError } = await supabase
-        .from('email_verification_tokens')
-        .insert({
-          email: email.toLowerCase(),
-          token: verificationToken,
-          expires_at: verificationExpiry.toISOString(),
-          user_role: 'coach',
-          user_id: coachData.id,
-          created_at: new Date().toISOString()
-        });
-
-      if (tokenError) {
-        console.error('⚠️ Failed to store verification token:', tokenError);
-        // Continue with registration even if verification token fails
-      } else {
-        console.log('✅ Verification token generated and stored');
-      }
-    }
-
-    // Step 9: Send verification email
-    console.log('\n📧 Step 9: Sending verification email...');
-    try {
-      const emailResult = await emailService.sendEmailVerification({
-        email: email,
-        first_name: firstName,
-        role: 'coach'
-      }, verificationToken);
-
-      if (emailResult.success) {
-        console.log('✅ Verification email sent successfully');
-      } else {
-        console.log('⚠️ Warning: Verification email failed to send:', emailResult.error);
-        console.log('📋 Email error details:', emailResult.details);
-      }
-    } catch (emailError) {
-      console.log('⚠️ Warning: Verification email failed to send:', emailError.message);
-      // Don't fail registration if email fails
-    }
-
-    // Step 10: Send success response
+    // Step 9: Send success response
     const response: AuthResponse = {
       success: true,
-      message: 'Registration successful. Please check your email to verify your account.',
+      message: 'Registration successful. Your application is pending admin approval. You will receive a verification email once approved.',
       token,
       user: {
         id: authData.user.id,
         email: authData.user.email || email,
         role: 'coach',
-        email_verified: false // New coaches are not verified
+        email_verified: false, // New coaches are not verified
+        status: 'pending' // Coach is pending approval
       }
     };
 

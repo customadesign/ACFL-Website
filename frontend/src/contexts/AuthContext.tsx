@@ -290,21 +290,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('Sending coach registration:', data);
       const response = await axios.post(`${API_URL}/api/auth/register/coach`, data);
 
-      // Note: With email verification enabled, we don't auto-login anymore
-      // The coach needs to verify their email first before they can login
+      // Note: Coach registration now requires admin approval before email verification
+      // Flow: register -> admin approval -> email verification -> login
       const { message } = response.data;
 
       console.log('Coach registration successful:', message);
-      console.log('Redirecting to success page for email verification');
+      console.log('Redirecting to pending approval page');
 
-      // Redirect to success page with email for display
-      const successUrl = `/register/coach/success?email=${encodeURIComponent(data.email)}`;
-      router.push(successUrl);
+      // Redirect to pending approval page with email for display
+      const pendingUrl = `/register/coach/pending?email=${encodeURIComponent(data.email)}`;
+      router.push(pendingUrl);
 
       // Fallback redirect
       setTimeout(() => {
-        if (window.location.pathname.includes('/register') && !window.location.pathname.includes('/success')) {
-          window.location.href = successUrl;
+        if (window.location.pathname.includes('/register') && !window.location.pathname.includes('/pending')) {
+          window.location.href = pendingUrl;
         }
       }, 500);
     } catch (error: any) {
