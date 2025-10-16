@@ -17,6 +17,9 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [hasAssessmentData, setHasAssessmentData] = useState(false);
+  const [emailNotVerified, setEmailNotVerified] = useState(false);
+  const [resendingEmail, setResendingEmail] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const { login } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -39,20 +42,54 @@ function LoginForm() {
     }));
   };
 
+  const handleResendVerification = async () => {
+    setResendingEmail(true);
+    setResendSuccess(false);
+    setError('');
+
+    try {
+      const { getApiUrl } = await import('@/lib/api');
+      const apiUrl = getApiUrl();
+
+      const response = await fetch(`${apiUrl}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formData.email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResendSuccess(true);
+        setEmailNotVerified(false);
+      } else {
+        setError(data.message || 'Failed to resend verification email');
+      }
+    } catch (err: any) {
+      setError('An error occurred while resending verification email');
+    } finally {
+      setResendingEmail(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setEmailNotVerified(false);
+    setResendSuccess(false);
     setLoading(true);
 
     try {
       // Check if we have assessment data that needs special handling
       const assessmentData = localStorage.getItem('assessmentData');
       const shouldRedirectToSearch = (fromAssessment || hasAssessmentData) && assessmentData;
-      
+
       if (shouldRedirectToSearch || redirect) {
         // Use skipRedirect for custom redirect handling
         await login(formData.email, formData.password, true);
-        
+
         // Handle custom redirects
         if (shouldRedirectToSearch) {
           console.log('Redirecting to search-coaches with assessment data after login');
@@ -73,7 +110,13 @@ function LoginForm() {
         await login(formData.email, formData.password);
       }
     } catch (err: any) {
-      setError(err.message || 'Login failed');
+      const errorMessage = err.message || 'Login failed';
+      setError(errorMessage);
+
+      // Check if error is due to unverified email
+      if (errorMessage.includes('verify your email') || errorMessage.includes('verification')) {
+        setEmailNotVerified(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -104,9 +147,30 @@ function LoginForm() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
+              {resendSuccess && (
+                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                  ✅ Verification email sent! Please check your inbox and click the verification link.
+                </div>
+              )}
+
               {error && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                   {error}
+                  {emailNotVerified && (
+                    <div className="mt-3 pt-3 border-t border-red-300">
+                      <p className="mb-2 font-medium">Didn't receive the verification email?</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleResendVerification}
+                        disabled={resendingEmail}
+                        className="w-full"
+                      >
+                        {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
               

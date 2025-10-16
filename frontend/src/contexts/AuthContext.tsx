@@ -243,12 +243,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Handle account status errors specifically
       if (error.response?.status === 403) {
         const { message, statusCode } = error.response.data;
-        
+
         // These are account status issues, show the message directly
         if (statusCode === 'ACCOUNT_SUSPENDED' ||
             statusCode === 'ACCOUNT_DEACTIVATED' ||
             statusCode === 'ACCOUNT_REJECTED' ||
-            statusCode === 'ACCOUNT_PENDING') {
+            statusCode === 'ACCOUNT_PENDING' ||
+            statusCode === 'EMAIL_NOT_VERIFIED') {
           throw new Error(message);
         }
       }
@@ -261,25 +262,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerClient = async (data: RegisterClientData) => {
     try {
       const response = await axios.post(`${API_URL}/api/auth/register/client`, data);
-      
-      const { token, user } = response.data;
-      
-      // Save token
-      localStorage.setItem('token', token);
-      try {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      } catch (error) {
-        console.warn('Could not set axios default headers:', error);
-      }
-      
-      // Set user
-      setUser(user);
 
-      // Redirect to client dashboard with fallback
-      router.push('/clients');
+      // Note: With email verification enabled, we don't auto-login anymore
+      // The user needs to verify their email first before they can login
+      const { message } = response.data;
+
+      console.log('Registration successful:', message);
+      console.log('Redirecting to success page for email verification');
+
+      // Redirect to success page with email for display
+      const successUrl = `/register/client/success?email=${encodeURIComponent(data.email)}`;
+      router.push(successUrl);
+
+      // Fallback redirect
       setTimeout(() => {
-        if (window.location.pathname.includes('/register')) {
-          window.location.href = '/clients';
+        if (window.location.pathname.includes('/register') && !window.location.pathname.includes('/success')) {
+          window.location.href = successUrl;
         }
       }, 500);
     } catch (error: any) {
