@@ -118,7 +118,89 @@ class EmailService {
     }
   }
 
+  async sendEmailVerification(user: User, verificationToken: string) {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+    const subject = 'Verify Your Email - ACT Coaching For Life';
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Verify Your Email</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 8px 8px; }
+          .button { display: inline-block; padding: 14px 35px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white !important; text-decoration: none; border-radius: 50px; font-weight: 600; margin: 20px 0; }
+          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; }
+          .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>🔐 Verify Your Email Address</h1>
+          </div>
+          <div class="content">
+            <h2>Hi ${user.first_name || user.email}!</h2>
+            <p>Thank you for registering with ACT Coaching For Life! To complete your registration and access all features, please verify your email address.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${verificationUrl}" class="button">Verify Email Address</a>
+            </div>
+
+            <p>Or copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #666; background: white; padding: 15px; border-radius: 5px;">${verificationUrl}</p>
+
+            <div class="warning">
+              <strong>⏰ Important:</strong> This verification link will expire in 24 hours for your security.
+            </div>
+
+            <p>If you didn't create an account with ACT Coaching For Life, you can safely ignore this email.</p>
+
+            <p>Need help? Contact our support team at <a href="mailto:support@actcoachingforlife.com">support@actcoachingforlife.com</a></p>
+
+            <p>Best regards,<br><strong>The ACT Coaching For Life Team</strong></p>
+          </div>
+          <div class="footer">
+            <p>© 2025 ACT Coaching For Life. All rights reserved.</p>
+            <p>This email was sent to ${user.email}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+      Verify Your Email - ACT Coaching For Life
+
+      Hi ${user.first_name || user.email}!
+
+      Thank you for registering! Please verify your email address by clicking this link:
+      ${verificationUrl}
+
+      This link will expire in 24 hours.
+
+      If you didn't create an account, you can safely ignore this email.
+
+      Best regards,
+      The ACT Coaching For Life Team
+    `;
+
+    return this.sendEmail({
+      to: user.email,
+      subject,
+      text,
+      html
+    });
+  }
+
   async sendWelcomeEmail(user: User) {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
     const subject = 'Welcome to ACT Coaching For Life!';
     const html = `
       <!DOCTYPE html>
@@ -155,7 +237,7 @@ class EmailService {
                 <li>📊 Personal progress tracking</li>
               </ul>
               <p>Ready to start your journey? Take our quick assessment to find coaches that match your goals:</p>
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:4000'}/clients" class="button">Get Started</a>
+              <a href="${frontendUrl}/clients" class="button">Get Started</a>
             ` : `
               <p>As a coach, you now have access to:</p>
               <ul>
@@ -166,7 +248,7 @@ class EmailService {
                 <li>📈 Dashboard with insights and analytics</li>
               </ul>
               <p>Ready to help clients on their journey? Access your coach dashboard:</p>
-              <a href="${process.env.FRONTEND_URL || 'http://localhost:4000'}/coaches" class="button">Go to Dashboard</a>
+              <a href="${frontendUrl}/coaches" class="button">Go to Dashboard</a>
             `}
 
             <p>If you have any questions or need assistance, our support team is here to help. Simply reply to this email or contact us through the platform.</p>
@@ -195,7 +277,7 @@ class EmailService {
         : 'As a coach, you can manage clients, set availability, message securely, conduct video sessions, and view analytics.'
       }
 
-      Get started at: ${process.env.FRONTEND_URL || 'http://localhost:4000'}/${user.role}s
+      Get started at: ${frontendUrl}/${user.role}s
 
       Welcome aboard!
       The ACT Coaching For Life Team
@@ -279,7 +361,8 @@ class EmailService {
   }
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/reset-password?token=${resetToken}`;
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const subject = 'Reset Your Password - ACT Coaching For Life';
     const html = `
@@ -602,7 +685,8 @@ class EmailService {
   }
 
   async sendCoachApprovalEmail({ email, first_name }: { email: string; first_name: string }) {
-    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const loginUrl = `${frontendUrl}/login`;
     const subject = 'Congratulations! Your Coach Application Has Been Approved';
 
     const html = `
@@ -766,7 +850,8 @@ class EmailService {
     application_id: string;
     days_remaining: number;
   }) {
-    const applicationUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/register/coach/verification?id=${application_id}`;
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const applicationUrl = `${frontendUrl}/register/coach/verification?id=${application_id}`;
     const subject = 'Complete Your Coach Application - ACT Coaching For Life';
 
     const html = `
@@ -1068,8 +1153,9 @@ class EmailService {
     lastName?: string;
     role: string;
   }) {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
     const subject = 'Password Reset - ACT Coaching For Life';
-    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+    const loginUrl = `${frontendUrl}/login`;
 
     const html = `
       <!DOCTYPE html>
@@ -1285,8 +1371,9 @@ class EmailService {
     lastName?: string;
     role: string;
   }) {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
     const subject = 'Your ACT Coaching For Life Account Credentials';
-    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+    const loginUrl = `${frontendUrl}/login`;
 
     const html = `
       <!DOCTYPE html>
@@ -1513,9 +1600,10 @@ class EmailService {
     appointmentDetails: AppointmentDetails;
     timeUntilSession: string;
   }) {
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
     const clientSubject = `Session Reminder: Your appointment with ${coachName} is approaching`;
     const coachSubject = `Session Reminder: Your appointment with ${clientName} is approaching`;
-    const loginUrl = `${process.env.FRONTEND_URL || 'http://localhost:4000'}/login`;
+    const loginUrl = `${frontendUrl}/login`;
 
     const clientHtml = `
       <!DOCTYPE html>

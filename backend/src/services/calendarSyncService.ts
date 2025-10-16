@@ -17,8 +17,9 @@ interface SyncJob {
 
 interface SessionData {
   id: string;
-  session_date: string;
-  duration_minutes: number;
+  starts_at: string;
+  ends_at?: string;
+  duration_minutes?: number;
   status: string;
   session_notes?: string;
   meeting_url?: string;
@@ -293,17 +294,17 @@ export class CalendarSyncService {
       .from('sessions')
       .select(`
         id,
-        session_date,
-        duration_minutes,
+        starts_at,
+        ends_at,
         status,
-        session_notes,
+        notes,
         client_id,
         coach_id,
         clients!sessions_client_id_fkey(first_name, last_name, email),
         coaches!sessions_coach_id_fkey(first_name, last_name, email)
       `)
       .eq('coach_id', job.coach_id)
-      .gte('session_date', new Date().toISOString())
+      .gte('starts_at', new Date().toISOString())
       .in('status', ['scheduled', 'confirmed']);
 
     if (error) {
@@ -682,10 +683,10 @@ export class CalendarSyncService {
       .from('sessions')
       .select(`
         id,
-        session_date,
-        duration_minutes,
+        starts_at,
+        ends_at,
         status,
-        session_notes,
+        notes,
         client_id,
         coach_id,
         clients!sessions_client_id_fkey(first_name, last_name, email),
@@ -698,13 +699,19 @@ export class CalendarSyncService {
       return null;
     }
 
+    // Calculate duration in minutes from starts_at and ends_at
+    const durationMinutes = data.ends_at
+      ? Math.round((new Date(data.ends_at).getTime() - new Date(data.starts_at).getTime()) / 60000)
+      : 60; // Default to 60 minutes if ends_at is not set
+
     // Transform the data to match our interface
     const sessionData: SessionData = {
       id: data.id,
-      session_date: data.session_date,
-      duration_minutes: data.duration_minutes,
+      starts_at: data.starts_at,
+      ends_at: data.ends_at,
+      duration_minutes: durationMinutes,
       status: data.status,
-      session_notes: data.session_notes,
+      session_notes: data.notes,
       meeting_url: `${process.env.FRONTEND_URL}/meeting/${sessionId}`, // Generate meeting URL
       clients: Array.isArray(data.clients) ? data.clients[0] : data.clients,
       coaches: Array.isArray(data.coaches) ? data.coaches[0] : data.coaches

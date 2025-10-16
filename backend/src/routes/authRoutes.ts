@@ -8,7 +8,9 @@ import {
   createAdmin,
   forgotPassword,
   resetPassword,
-  verifyResetOTP
+  verifyResetOTP,
+  verifyEmail,
+  resendVerificationEmail
 } from '../controllers/authController';
 import {
   validateRegisterClient,
@@ -25,6 +27,13 @@ router.post('/register/client', validateRegisterClient, registerClient);
 router.post('/register/coach', validateRegisterCoach, registerCoach);
 router.post('/login', validateLogin, login);
 router.post('/logout', authenticate, logout); // Protect logout to access user info for logging
+
+// Email verification routes
+router.post('/verify-email', verifyEmail);
+router.get('/verify-email', verifyEmail); // Support both GET and POST for email verification
+router.post('/resend-verification', [
+  body('email').isEmail().normalizeEmail(),
+], resendVerificationEmail);
 
 // Password reset routes
 router.post('/forgot-password', [

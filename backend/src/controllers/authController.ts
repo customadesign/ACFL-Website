@@ -191,35 +191,61 @@ export const registerClient = async (req: Request, res: Response) => {
     });
     console.log('✅ JWT token generated');
 
-    // Step 8: Send welcome email
-    console.log('\n📧 Step 8: Sending welcome email...');
+    // Step 8: Generate email verification token
+    console.log('\n🔐 Step 8: Generating email verification token...');
+    const crypto = require('crypto');
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Store verification token
+    const { error: tokenError } = await supabase
+      .from('email_verification_tokens')
+      .insert({
+        email: email.toLowerCase(),
+        token: verificationToken,
+        expires_at: verificationExpiry.toISOString(),
+        user_role: 'client',
+        user_id: profile.id,
+        created_at: new Date().toISOString()
+      });
+
+    if (tokenError) {
+      console.error('⚠️ Failed to store verification token:', tokenError);
+      // Continue with registration even if verification token fails
+    } else {
+      console.log('✅ Verification token generated and stored');
+    }
+
+    // Step 9: Send verification email
+    console.log('\n📧 Step 9: Sending verification email...');
     try {
-      const emailResult = await emailService.sendWelcomeEmail({
+      const emailResult = await emailService.sendEmailVerification({
         email: email,
         first_name: firstName,
         role: 'client'
-      });
-      
+      }, verificationToken);
+
       if (emailResult.success) {
-        console.log('✅ Welcome email sent successfully');
+        console.log('✅ Verification email sent successfully');
       } else {
-        console.log('⚠️ Warning: Welcome email failed to send:', emailResult.error);
+        console.log('⚠️ Warning: Verification email failed to send:', emailResult.error);
         console.log('📋 Email error details:', emailResult.details);
       }
     } catch (emailError) {
-      console.log('⚠️ Warning: Welcome email failed to send:', emailError.message);
+      console.log('⚠️ Warning: Verification email failed to send:', emailError.message);
       // Don't fail registration if email fails
     }
 
-    // Step 9: Send success response
+    // Step 10: Send success response
     const response: AuthResponse = {
       success: true,
-      message: 'Registration successful',
+      message: 'Registration successful. Please check your email to verify your account.',
       token,
       user: {
         id: profile.id, // Use the client profile ID
         email: email,
         role: 'client',
+        email_verified: false, // New users are not verified
         ...profile // Include all profile data
       }
     };
@@ -641,9 +667,20 @@ export const login = async (req: Request, res: Response) => {
 
     if (!profile) {
       console.log('❌ No profile found for email:', email);
-      return res.status(401).json({ 
-        success: false, 
-        message: 'Invalid email or password' 
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid email or password'
+      });
+    }
+
+    // Check email verification for clients (not coaches, admins, or staff)
+    if (role === 'client' && profile.email_verified === false) {
+      console.log('⚠️ Client email not verified:', email);
+      return res.status(403).json({
+        success: false,
+        message: 'Please verify your email address before logging in. Check your inbox for the verification email.',
+        statusCode: 'EMAIL_NOT_VERIFIED',
+        email: email
       });
     }
 
@@ -1408,6 +1445,290 @@ export const verifyResetOTP = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: 'An error occurred while verifying your OTP'
+    });
+  }
+};
+
+export const resendVerificationEmail = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('📧 RESEND VERIFICATION EMAIL REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Email:', req.body.email);
+
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email address is required'
+      });
+    }
+
+    console.log('\n🔍 Step 1: Looking up user...');
+
+    // Check if user exists and get their info
+    let userProfile = null;
+    let userRole: 'client' | 'coach' = 'client';
+
+    // Check client
+    const { data: clientProfile } = await supabase
+      .from('clients')
+      .select('*')
+      .ilike('email', email)
+      .single();
+
+    if (clientProfile) {
+      userProfile = clientProfile;
+      userRole = 'client';
+      console.log('✅ Found client profile');
+    } else {
+      // Check coach
+      const { data: coachProfile } = await supabase
+        .from('coaches')
+        .select('*')
+        .ilike('email', email)
+        .single();
+
+      if (coachProfile) {
+        userProfile = coachProfile;
+        userRole = 'coach';
+        console.log('✅ Found coach profile');
+      }
+    }
+
+    if (!userProfile) {
+      console.log('❌ No user found for email:', email);
+      // Don't reveal if email exists or not for security
+      return res.json({
+        success: true,
+        message: 'If an account exists with this email, a verification email has been sent.'
+      });
+    }
+
+    // Check if already verified
+    if (userProfile.email_verified === true) {
+      console.log('✅ Email already verified');
+      return res.status(400).json({
+        success: false,
+        message: 'Your email is already verified. You can log in now.',
+        statusCode: 'ALREADY_VERIFIED'
+      });
+    }
+
+    console.log('\n🔐 Step 2: Generating new verification token...');
+    const crypto = require('crypto');
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Delete old verification tokens for this email
+    await supabase
+      .from('email_verification_tokens')
+      .delete()
+      .eq('email', email.toLowerCase());
+
+    // Store new verification token
+    const { error: tokenError } = await supabase
+      .from('email_verification_tokens')
+      .insert({
+        email: email.toLowerCase(),
+        token: verificationToken,
+        expires_at: verificationExpiry.toISOString(),
+        user_role: userRole,
+        user_id: userProfile.id,
+        created_at: new Date().toISOString()
+      });
+
+    if (tokenError) {
+      console.error('❌ Failed to store verification token:', tokenError);
+      throw tokenError;
+    }
+
+    console.log('✅ New verification token generated and stored');
+
+    console.log('\n📧 Step 3: Sending verification email...');
+    try {
+      const emailResult = await emailService.sendEmailVerification({
+        email: email,
+        first_name: userProfile.first_name,
+        role: userRole
+      }, verificationToken);
+
+      if (emailResult.success) {
+        console.log('✅ Verification email sent successfully');
+      } else {
+        console.log('⚠️ Warning: Verification email failed to send:', emailResult.error);
+      }
+    } catch (emailError) {
+      console.log('⚠️ Warning: Verification email failed to send:', emailError);
+      // Don't fail the request if email fails
+    }
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ RESEND VERIFICATION EMAIL COMPLETED');
+    console.log(`Total time: ${duration}ms`);
+    console.log('========================================\n');
+
+    res.json({
+      success: true,
+      message: 'Verification email has been sent. Please check your inbox.'
+    });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ RESEND VERIFICATION EMAIL FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while sending verification email. Please try again.'
+    });
+  }
+};
+
+export const verifyEmail = async (req: Request, res: Response) => {
+  const startTime = Date.now();
+  console.log('\n========================================');
+  console.log('📧 EMAIL VERIFICATION REQUEST STARTED');
+  console.log('========================================');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Token:', req.body.token || req.query.token);
+
+  try {
+    const token = req.body.token || req.query.token;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+    }
+
+    console.log('\n🔍 Step 1: Looking up verification token...');
+
+    // Get verification token record
+    const { data: tokenRecord, error: tokenError } = await supabase
+      .from('email_verification_tokens')
+      .select('*')
+      .eq('token', token)
+      .single();
+
+    if (tokenError || !tokenRecord) {
+      console.log('❌ Verification token not found');
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    console.log('✅ Verification token found');
+
+    console.log('\n🔍 Step 2: Checking expiry...');
+    const now = new Date();
+    const expiryTime = new Date(tokenRecord.expires_at + (tokenRecord.expires_at.includes('Z') ? '' : 'Z'));
+
+    if (now > expiryTime) {
+      console.log('❌ Verification token has expired');
+      // Clean up expired token
+      await supabase
+        .from('email_verification_tokens')
+        .delete()
+        .eq('id', tokenRecord.id);
+
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token has expired. Please request a new verification email.'
+      });
+    }
+
+    console.log('✅ Token is still valid');
+
+    console.log('\n💾 Step 3: Updating user verification status...');
+
+    // Update user's email_verified status based on role
+    const userRole = tokenRecord.user_role;
+    const userId = tokenRecord.user_id;
+    let updateError = null;
+
+    if (userRole === 'client') {
+      const { error } = await supabase
+        .from('clients')
+        .update({ email_verified: true })
+        .eq('id', userId);
+      updateError = error;
+    } else if (userRole === 'coach') {
+      const { error } = await supabase
+        .from('coaches')
+        .update({ email_verified: true })
+        .eq('id', userId);
+      updateError = error;
+    }
+
+    if (updateError) {
+      console.error('❌ Failed to update verification status:', updateError);
+      throw updateError;
+    }
+
+    console.log('✅ Email verification status updated');
+
+    console.log('\n🗑️ Step 4: Cleaning up verification token...');
+    // Clean up the used token
+    await supabase
+      .from('email_verification_tokens')
+      .delete()
+      .eq('id', tokenRecord.id);
+    console.log('✅ Verification token cleaned up');
+
+    // Send welcome email now that email is verified
+    console.log('\n📧 Step 5: Sending welcome email...');
+    try {
+      const { data: userProfile } = await supabase
+        .from(userRole === 'client' ? 'clients' : 'coaches')
+        .select('email, first_name')
+        .eq('id', userId)
+        .single();
+
+      if (userProfile) {
+        await emailService.sendWelcomeEmail({
+          email: userProfile.email,
+          first_name: userProfile.first_name,
+          role: userRole
+        });
+        console.log('✅ Welcome email sent');
+      }
+    } catch (emailError) {
+      console.log('⚠️ Warning: Welcome email failed to send:', emailError);
+      // Don't fail verification if email fails
+    }
+
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.log('✅ EMAIL VERIFICATION COMPLETED SUCCESSFULLY');
+    console.log(`Total time: ${duration}ms`);
+    console.log('========================================\n');
+
+    res.json({
+      success: true,
+      message: 'Email verified successfully! Welcome to ACT Coaching For Life.'
+    });
+
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    console.log('\n========================================');
+    console.error('❌ EMAIL VERIFICATION FAILED');
+    console.log(`Total time: ${duration}ms`);
+    console.error('Error:', error.message);
+    console.log('========================================\n');
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while verifying your email. Please try again.'
     });
   }
 };
