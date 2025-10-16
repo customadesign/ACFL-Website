@@ -516,35 +516,70 @@ export const registerCoach = async (req: Request, res: Response) => {
     });
     console.log('✅ JWT token generated');
 
-    // Step 8: Send welcome email
-    console.log('\n📧 Step 8: Sending welcome email...');
+    // Step 8: Generate email verification token
+    console.log('\n🔐 Step 8: Generating email verification token...');
+    const crypto = require('crypto');
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+    // Get the coach ID first
+    const { data: coachData } = await supabase
+      .from('coaches')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    if (coachData) {
+      // Store verification token
+      const { error: tokenError } = await supabase
+        .from('email_verification_tokens')
+        .insert({
+          email: email.toLowerCase(),
+          token: verificationToken,
+          expires_at: verificationExpiry.toISOString(),
+          user_role: 'coach',
+          user_id: coachData.id,
+          created_at: new Date().toISOString()
+        });
+
+      if (tokenError) {
+        console.error('⚠️ Failed to store verification token:', tokenError);
+        // Continue with registration even if verification token fails
+      } else {
+        console.log('✅ Verification token generated and stored');
+      }
+    }
+
+    // Step 9: Send verification email
+    console.log('\n📧 Step 9: Sending verification email...');
     try {
-      const emailResult = await emailService.sendWelcomeEmail({
+      const emailResult = await emailService.sendEmailVerification({
         email: email,
         first_name: firstName,
         role: 'coach'
-      });
-      
+      }, verificationToken);
+
       if (emailResult.success) {
-        console.log('✅ Welcome email sent successfully');
+        console.log('✅ Verification email sent successfully');
       } else {
-        console.log('⚠️ Warning: Welcome email failed to send:', emailResult.error);
+        console.log('⚠️ Warning: Verification email failed to send:', emailResult.error);
         console.log('📋 Email error details:', emailResult.details);
       }
     } catch (emailError) {
-      console.log('⚠️ Warning: Welcome email failed to send:', emailError.message);
+      console.log('⚠️ Warning: Verification email failed to send:', emailError.message);
       // Don't fail registration if email fails
     }
 
-    // Step 9: Send success response
+    // Step 10: Send success response
     const response: AuthResponse = {
       success: true,
-      message: 'Registration successful',
+      message: 'Registration successful. Please check your email to verify your account.',
       token,
       user: {
         id: authData.user.id,
         email: authData.user.email || email,
-        role: 'coach'
+        role: 'coach',
+        email_verified: false // New coaches are not verified
       }
     };
 
@@ -673,9 +708,9 @@ export const login = async (req: Request, res: Response) => {
       });
     }
 
-    // Check email verification for clients (not coaches, admins, or staff)
-    if (role === 'client' && profile.email_verified === false) {
-      console.log('⚠️ Client email not verified:', email);
+    // Check email verification for clients and coaches (not admins or staff)
+    if ((role === 'client' || role === 'coach') && profile.email_verified === false) {
+      console.log(`⚠️ ${role} email not verified:`, email);
       return res.status(403).json({
         success: false,
         message: 'Please verify your email address before logging in. Check your inbox for the verification email.',
