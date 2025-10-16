@@ -32,7 +32,7 @@ export default function TermsPage() {
 
   const fetchContent = async () => {
     try {
-      const response = await fetch(`${getApiUrl()}/api/admin/content/public/content?slug=terms-of-service`);
+      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=terms-of-service`);
       
       if (response.ok) {
         const data = await response.json();
@@ -67,6 +67,35 @@ export default function TermsPage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-white ">
+      {/* Add custom styles for CMS content */}
+      <style jsx global>{`
+        .cms-content h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          margin-bottom: 1rem;
+          margin-top: 1.5rem;
+        }
+        .cms-content p {
+          color: #4b5563;
+          margin-bottom: 1.5rem;
+          line-height: 1.75;
+        }
+        .cms-content ul {
+          list-style-type: disc;
+          list-style-position: inside;
+          color: #4b5563;
+          margin-bottom: 1.5rem;
+        }
+        .cms-content ul li {
+          margin-bottom: 0.5rem;
+        }
+        .cms-content br {
+          display: block;
+          margin-bottom: 0.5rem;
+        }
+      `}</style>
+
       {/* Navigation */}
       <nav>
         <NavbarLandingPage />
@@ -113,9 +142,12 @@ export default function TermsPage() {
                 {content?.content ? (
                   <div
                     dangerouslySetInnerHTML={{ 
-                      __html: content.content.replace(/\n/g, '<br>') 
+                      __html: content.content
                     }}
-                    className="whitespace-pre-wrap text-gray-600"
+                    className="cms-content"
+                    style={{
+                      // Custom styles for CMS content to match fallback design
+                    }}
                   />
                 ) : (
                   // Fallback content if CMS is not available

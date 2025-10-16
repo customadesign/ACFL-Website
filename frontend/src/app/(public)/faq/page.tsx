@@ -58,14 +58,14 @@ export default function FAQPage() {
   const fetchData = async () => {
     try {
       // Fetch categories
-      const categoriesResponse = await fetch(`${getApiUrl()}/api/admin/content/public/faq/categories`);
+      const categoriesResponse = await fetch(`${getApiUrl()}/api/content/public/faq/categories`);
       if (categoriesResponse.ok) {
         const categoriesData = await categoriesResponse.json();
         setCategories(categoriesData);
       }
 
       // Fetch FAQ items
-      const faqsResponse = await fetch(`${getApiUrl()}/api/admin/content/public/faq/items`);
+      const faqsResponse = await fetch(`${getApiUrl()}/api/content/public/faq/items`);
       if (faqsResponse.ok) {
         const faqsData = await faqsResponse.json();
         setFaqs(faqsData);
@@ -109,7 +109,7 @@ export default function FAQPage() {
 
   const handleFeedback = async (faqId: string, helpful: boolean) => {
     try {
-      await fetch(`${getApiUrl()}/api/admin/content/public/faq/${faqId}/feedback`, {
+      await fetch(`${getApiUrl()}/api/content/public/faq/${faqId}/feedback`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
