@@ -289,30 +289,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       console.log('Sending coach registration:', data);
       const response = await axios.post(`${API_URL}/api/auth/register/coach`, data);
-      
-      const { token, user } = response.data;
-      
-      // Save token
-      localStorage.setItem('token', token);
-      try {
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      } catch (error) {
-        console.warn('Could not set axios default headers:', error);
-      }
-      
-      // Set user
-      setUser(user);
 
-      // Redirect to coach dashboard with fallback
-      router.push('/coaches');
+      // Note: With email verification enabled, we don't auto-login anymore
+      // The coach needs to verify their email first before they can login
+      const { message } = response.data;
+
+      console.log('Coach registration successful:', message);
+      console.log('Redirecting to success page for email verification');
+
+      // Redirect to success page with email for display
+      const successUrl = `/register/coach/success?email=${encodeURIComponent(data.email)}`;
+      router.push(successUrl);
+
+      // Fallback redirect
       setTimeout(() => {
-        if (window.location.pathname.includes('/register')) {
-          window.location.href = '/coaches';
+        if (window.location.pathname.includes('/register') && !window.location.pathname.includes('/success')) {
+          window.location.href = successUrl;
         }
       }, 500);
     } catch (error: any) {
       console.error('Registration error:', error.response?.data);
-      
+
       // Handle validation errors
       if (error.response?.data?.errors) {
         const validationErrors = error.response.data.errors;
@@ -321,7 +318,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .join(', ');
         throw new Error(errorMessage);
       }
-      
+
       throw new Error(error.response?.data?.message || 'Registration failed');
     }
   };
