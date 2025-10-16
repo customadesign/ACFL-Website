@@ -1,7 +1,7 @@
 'use client';
 
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,8 +9,9 @@ import NavbarLandingPage from '@/components/NavbarLandingPage';
 import Footer from '@/components/Footer';
 import { Mail, CheckCircle2, ArrowRight } from 'lucide-react';
 
-function CoachRegistrationSuccessContent() {
+function ClientRegistrationSuccessContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const email = searchParams.get('email');
 
   return (
@@ -34,7 +35,7 @@ function CoachRegistrationSuccessContent() {
               </CardTitle>
 
               <CardDescription className="text-lg mt-4">
-                Thank you for joining ACT Coaching For Life as a coach
+                Thank you for registering with ACT Coaching For Life
               </CardDescription>
             </CardHeader>
 
@@ -57,7 +58,7 @@ function CoachRegistrationSuccessContent() {
                       )}
                     </p>
                     <p className="text-sm text-blue-700">
-                      Please check your inbox and click the verification link to activate your coach account and access your dashboard.
+                      Please check your inbox and click the verification link to activate your account and access all features.
                     </p>
                   </div>
                 </div>
@@ -85,7 +86,7 @@ function CoachRegistrationSuccessContent() {
                     </div>
                     <div className="flex-1">
                       <p className="text-gray-700">
-                        <strong>Click the verification link</strong> - This will verify your email address and activate your coach account
+                        <strong>Click the verification link</strong> - This will verify your email address and activate your account
                       </p>
                     </div>
                   </div>
@@ -96,18 +97,7 @@ function CoachRegistrationSuccessContent() {
                     </div>
                     <div className="flex-1">
                       <p className="text-gray-700">
-                        <strong>Sign in and complete your profile</strong> - Once verified, you can sign in and set up your coaching profile, availability, and rates
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start space-x-3">
-                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                      <span className="text-green-700 text-sm font-semibold">4</span>
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-gray-700">
-                        <strong>Start connecting with clients</strong> - Begin your coaching journey and help clients achieve their goals
+                        <strong>Sign in and explore</strong> - Once verified, you can sign in and start browsing our qualified ACT coaches
                       </p>
                     </div>
                   </div>
@@ -137,11 +127,7 @@ function CoachRegistrationSuccessContent() {
                     <strong>Didn't receive the email?</strong> Check your spam folder or wait a few minutes and check again.
                   </p>
                   <p>
-                    <strong>Have questions about the platform?</strong> Check out our{' '}
-                    <Link href="/help" className="text-blue-600 hover:text-blue-700 underline">
-                      Help Center
-                    </Link>
-                    {' '}or contact our support team at{' '}
+                    <strong>Still having issues?</strong> Contact our support team at{' '}
                     <a
                       href="mailto:support@actcoachingforlife.com"
                       className="text-blue-600 hover:text-blue-700 underline"
@@ -156,7 +142,7 @@ function CoachRegistrationSuccessContent() {
               <div className="bg-gray-50 rounded-lg p-4 text-xs text-gray-600">
                 <p className="flex items-center">
                   <span className="mr-2">🔒</span>
-                  This platform is HIPAA-compliant and your data is secure. The verification link will expire in 24 hours for your protection.
+                  This platform is HIPAA-compliant and your data is secure. The verification link will expire in 24 hours.
                 </p>
               </div>
             </CardContent>
@@ -169,7 +155,7 @@ function CoachRegistrationSuccessContent() {
   );
 }
 
-export default function CoachRegistrationSuccess() {
+export default function ClientRegistrationSuccess() {
   return (
     <Suspense fallback={
       <div className="flex flex-col min-h-screen bg-white">
@@ -187,7 +173,7 @@ export default function CoachRegistrationSuccess() {
         <Footer />
       </div>
     }>
-      <CoachRegistrationSuccessContent />
+      <ClientRegistrationSuccessContent />
     </Suspense>
   );
 }

@@ -596,6 +596,14 @@ export class OutlookCalendarService {
     template: { title: string; description: string },
     includeClientDetails: boolean = false
   ): CalendarEvent {
+    // Debug logging
+    console.log('Converting session to calendar event:', {
+      session_id: session.id,
+      starts_at: session.starts_at,
+      ends_at: session.ends_at,
+      duration_minutes: session.duration_minutes
+    });
+
     const clientName = includeClientDetails
       ? `${session.clients?.first_name || ''} ${session.clients?.last_name || ''}`.trim()
       : 'Client';
@@ -612,9 +620,16 @@ export class OutlookCalendarService {
       description += `\n\nSession Notes: ${session.session_notes}`;
     }
 
-    // Convert session_date and duration_minutes to start/end times
-    const sessionStart = new Date(session.session_date);
-    const sessionEnd = new Date(sessionStart.getTime() + (session.duration_minutes * 60 * 1000));
+    // Convert starts_at and ends_at to start/end times
+    const sessionStart = new Date(session.starts_at);
+    const sessionEnd = session.ends_at
+      ? new Date(session.ends_at)
+      : new Date(sessionStart.getTime() + ((session.duration_minutes || 60) * 60 * 1000));
+
+    console.log('Converted times:', {
+      sessionStart: sessionStart.toISOString(),
+      sessionEnd: sessionEnd.toISOString()
+    });
 
     return {
       title,
