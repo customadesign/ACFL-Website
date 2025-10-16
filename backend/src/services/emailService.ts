@@ -119,7 +119,7 @@ class EmailService {
   }
 
   async sendEmailVerification(user: User, verificationToken: string) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
 
     const subject = 'Verify Your Email - ACT Coaching For Life';
@@ -200,7 +200,7 @@ class EmailService {
   }
 
   async sendWelcomeEmail(user: User) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const subject = 'Welcome to ACT Coaching For Life!';
     const html = `
       <!DOCTYPE html>
@@ -361,7 +361,7 @@ class EmailService {
   }
 
   async sendPasswordResetEmail(email: string, resetToken: string) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
 
     const subject = 'Reset Your Password - ACT Coaching For Life';
@@ -685,7 +685,7 @@ class EmailService {
   }
 
   async sendCoachApprovalEmail({ email, first_name }: { email: string; first_name: string }) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const loginUrl = `${frontendUrl}/login`;
     const subject = 'Congratulations! Your Coach Application Has Been Approved';
 
@@ -850,7 +850,7 @@ class EmailService {
     application_id: string;
     days_remaining: number;
   }) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const applicationUrl = `${frontendUrl}/register/coach/verification?id=${application_id}`;
     const subject = 'Complete Your Coach Application - ACT Coaching For Life';
 
@@ -1153,7 +1153,7 @@ class EmailService {
     lastName?: string;
     role: string;
   }) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const subject = 'Password Reset - ACT Coaching For Life';
     const loginUrl = `${frontendUrl}/login`;
 
@@ -1371,7 +1371,7 @@ class EmailService {
     lastName?: string;
     role: string;
   }) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const subject = 'Your ACT Coaching For Life Account Credentials';
     const loginUrl = `${frontendUrl}/login`;
 
@@ -1600,7 +1600,7 @@ class EmailService {
     appointmentDetails: AppointmentDetails;
     timeUntilSession: string;
   }) {
-    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://therapist-matcher-frontend.onrender.com';
+    const frontendUrl = process.env.FRONTEND_URL || process.env.CORS_ORIGIN || 'https://actcoachingforlife.onrender.com';
     const clientSubject = `Session Reminder: Your appointment with ${coachName} is approaching`;
     const coachSubject = `Session Reminder: Your appointment with ${clientName} is approaching`;
     const loginUrl = `${frontendUrl}/login`;

@@ -48,7 +48,7 @@ const corsOptions = {
       'http://localhost:4002',
       'http://localhost:4003',
       'http://frontend:3000',
-      'https://therapist-matcher-frontend.onrender.com',
+      'https://actcoachingforlife.onrender.com',
       process.env.CORS_ORIGIN
     ].filter(Boolean);
 
@@ -135,7 +135,7 @@ const io = new Server(server, {
   cors: {
     origin: (origin: string | undefined, callback: any) => {
       const allowedOrigins = process.env.NODE_ENV === 'production'
-        ? ['https://therapist-matcher-frontend.onrender.com', process.env.CORS_ORIGIN].filter(Boolean)
+        ? ['https://actcoachingforlife.onrender.com', process.env.CORS_ORIGIN].filter(Boolean)
         : ['http://localhost:3002', 'http://localhost:4000', 'http://localhost:4002', 'http://localhost:4003', 'http://localhost:3000', 'http://frontend:3000'];
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) return callback(null, true);
