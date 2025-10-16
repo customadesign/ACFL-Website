@@ -55,7 +55,7 @@ function MessagesContent() {
 	const [uploading, setUploading] = useState(false)
 	const [showMobileChat, setShowMobileChat] = useState(false)
 	const fileInputRef = useRef<HTMLInputElement>(null)
-const scrollerRef = useRef<HTMLDivElement>(null)
+	const scrollerRef = useRef<HTMLDivElement>(null)
 
 	const loadConversations = async () => {
 		const res = await fetch(`${API_URL}/api/coach/conversations`, {
@@ -510,7 +510,7 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 md:relative md:inset-auto' : 'hidden md:flex'} md:col-span-2 md:border md:dark:border-gray-700 md:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full min-w-0`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 md:relative md:inset-auto' : 'hidden md:flex'} md:col-span-2 md:border md:dark:border-gray-700 md:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden md:h-[500px] w-full min-w-0`}>
 					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
 						{/* Back button for mobile */}
 						<button
