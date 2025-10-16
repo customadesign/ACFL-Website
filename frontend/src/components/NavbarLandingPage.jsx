@@ -9,7 +9,12 @@ const NavbarLandingPage = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
 
   const handleDropdownToggle = (dropdown) => {
-    setOpenDropdown(openDropdown === dropdown ? null : dropdown);
+    // If closing a mobile sub-dropdown, go back to 'mobile' instead of null
+    if (openDropdown === dropdown && dropdown.startsWith('mobile-')) {
+      setOpenDropdown('mobile');
+    } else {
+      setOpenDropdown(openDropdown === dropdown ? null : dropdown);
+    }
   };
 
   const handleMouseEnter = (dropdown) => {
@@ -39,29 +44,35 @@ const NavbarLandingPage = () => {
                 <button
                   className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
                   onClick={() => handleDropdownToggle('services')}
+                  onMouseEnter={() => handleMouseEnter('services')}
                 >
                   Services <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/corporate" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                {openDropdown === 'services' && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200"
+                    onMouseLeave={handleMouseLeave}
                   >
-                    Corporate Coaching
-                  </Link>
-                  <Link 
-                    href="/group-coaching" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Group Coaching
-                  </Link>
-                  <Link 
-                    href="/pricing" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Pricing
-                  </Link>
-                </div>
+                    <Link
+                      href="/corporate"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Corporate Coaching
+                    </Link>
+                    <Link
+                      href="/group-coaching"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Group Coaching
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Pricing
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Resources Dropdown */}
@@ -69,29 +80,35 @@ const NavbarLandingPage = () => {
                 <button
                   className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
                   onClick={() => handleDropdownToggle('resources')}
+                  onMouseEnter={() => handleMouseEnter('resources')}
                 >
                   Resources <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/blog" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                {openDropdown === 'resources' && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200"
+                    onMouseLeave={handleMouseLeave}
                   >
-                    Blog
-                  </Link>
-                  <Link 
-                    href="/resources" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Resources Library
-                  </Link>
-                  <Link 
-                    href="/press" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Press
-                  </Link>
-                </div>
+                    <Link
+                      href="/blog"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Blog
+                    </Link>
+                    <Link
+                      href="/resources"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Resources Library
+                    </Link>
+                    <Link
+                      href="/press"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Press
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Company Dropdown */}
@@ -99,29 +116,35 @@ const NavbarLandingPage = () => {
                 <button
                   className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
                   onClick={() => handleDropdownToggle('company')}
+                  onMouseEnter={() => handleMouseEnter('company')}
                 >
                   Company <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/about" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                {openDropdown === 'company' && (
+                  <div
+                    className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200"
+                    onMouseLeave={handleMouseLeave}
                   >
-                    About Us
-                  </Link>
-                  <Link 
-                    href="/careers" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Careers
-                  </Link>
-                  <Link 
-                    href="/contact" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Contact
-                  </Link>
-                </div>
+                    <Link
+                      href="/about"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      About Us
+                    </Link>
+                    <Link
+                      href="/careers"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Careers
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Contact
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <Link href="/help" className="text-gray-600 hover:text-brand-teal transition-colors">
@@ -155,7 +178,7 @@ const NavbarLandingPage = () => {
           </div>
 
           {/* Mobile menu */}
-          {openDropdown === 'mobile' && (
+          {(openDropdown === 'mobile' || openDropdown?.startsWith('mobile-')) && (
             <div className="md:hidden pb-4">
               <a href="/" className="block px-4 py-2 text-gray-600 hover:text-brand-teal">Home</a>
               
@@ -208,14 +231,14 @@ const NavbarLandingPage = () => {
               </div>
 
               <Link href="/help" className="block px-4 py-2 text-gray-600 hover:text-brand-teal">Help</Link>
-              
-              <div className="px-4 py-2 space-y-2">
-                <Link href="/login">
+
+              <div className="px-4 py-2 flex flex-col gap-3 mt-2">
+                <Link href="/login" className="w-full">
                   <Button variant="outline" className="w-full bg-white border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
                     Login
                   </Button>
                 </Link>
-                <a href="/">
+                <a href="/" className="w-full">
                   <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white">
                     Get Started
                   </Button>
