@@ -14,6 +14,7 @@ export interface Client extends User {
   lastName: string;
   phone?: string;
   dateOfBirth?: Date;
+  email_verified?: boolean;
   preferences?: {
     specialties?: string[];
     languages?: string[];
@@ -26,6 +27,7 @@ export interface Coach extends User {
   firstName: string;
   lastName: string;
   phone?: string;
+  email_verified?: boolean;
   specialties: string[];
   languages: string[];
   bio?: string;
