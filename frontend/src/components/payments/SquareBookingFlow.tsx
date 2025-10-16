@@ -9,6 +9,7 @@ import SquareProvider from './SquareProvider';
 import SquarePaymentForm from './SquarePaymentForm';
 import { toast } from 'react-toastify';
 import { getApiUrl } from '@/lib/api';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface CoachRate {
   id: string;
@@ -49,6 +50,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
   onBookingComplete,
   onCancel
 }) => {
+  const { user } = useAuth();
   const [step, setStep] = useState<'select_rate' | 'payment' | 'success'>('select_rate');
   const [coach, setCoach] = useState<Coach | null>(null);
   const [rates, setRates] = useState<CoachRate[]>([]);
@@ -519,16 +521,19 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
                   >
                     Schedule for Later
                   </Button>
-                  <Button
-                    className="w-full"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRateSelect(rate, true);
-                    }}
-                  >
-                    Book Instant Session (Now)
-                  </Button>
+                  {/* Book Instant Session - Only visible to coaches */}
+                  {user?.user_type === 'coach' && (
+                    <Button
+                      className="w-full"
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleRateSelect(rate, true);
+                      }}
+                    >
+                      Book Instant Session (Now)
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>
