@@ -648,7 +648,7 @@ function CoachProfileContent() {
 
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                {/* Free Consultation - Visible to coaches OR clients viewing Test Coach */}
+                {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
                 {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
                   <DeactivatedActionButton action="book a consultation">
                     <Button
@@ -662,19 +662,17 @@ function CoachProfileContent() {
                   </DeactivatedActionButton>
                 )}
 
-                {/* Book Paid Session - Visible to coaches OR clients viewing Test Coach */}
-                {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
-                  <DeactivatedActionButton action="book a session">
-                    <Button
-                      size="lg"
-                      className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
-                      onClick={() => handleBookSession('session')}
-                    >
-                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                      Book Paid Session
-                    </Button>
-                  </DeactivatedActionButton>
-                )}
+                {/* Book Paid Session - Visible to ALL users */}
+                <DeactivatedActionButton action="book a session">
+                  <Button
+                    size="lg"
+                    className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
+                    onClick={() => handleBookSession('session')}
+                  >
+                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    Book Paid Session
+                  </Button>
+                </DeactivatedActionButton>
               </div>
             </div>
 
@@ -727,7 +725,7 @@ function CoachProfileContent() {
                 </div>
                 {/* Booking buttons */}
                 <div className="flex gap-2 mt-4 sm:mt-6">
-                  {/* Free Call - Visible to coaches OR clients viewing Test Coach */}
+                  {/* Free Call - Visible to coaches OR clients viewing Test Coach only */}
                   {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
                     <Button
                       className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
@@ -738,17 +736,15 @@ function CoachProfileContent() {
                       <span className="sm:hidden">Free</span>
                     </Button>
                   )}
-                  {/* Paid - Visible to coaches OR clients viewing Test Coach */}
-                  {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
-                    <Button
-                      className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
-                      onClick={() => handleBookSession('session')}
-                    >
-                      <DollarSign className="w-4 h-4 mr-1" />
-                      <span className="hidden sm:inline">Paid</span>
-                      <span className="sm:hidden">Pay</span>
-                    </Button>
-                  )}
+                  {/* Paid - Visible to ALL users */}
+                  <Button
+                    className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
+                    onClick={() => handleBookSession('session')}
+                  >
+                    <DollarSign className="w-4 h-4 mr-1" />
+                    <span className="hidden sm:inline">Paid</span>
+                    <span className="sm:hidden">Pay</span>
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -1396,7 +1392,7 @@ function CoachProfileContent() {
                 {/* CTA Buttons */}
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex gap-2 w-full">
-                    {/* Free Consultation - Visible to coaches OR clients viewing Test Coach */}
+                    {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
                     {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
                       <Button
                         size="lg"
@@ -1408,18 +1404,16 @@ function CoachProfileContent() {
                         <span className="sm:hidden">Free</span>
                       </Button>
                     )}
-                    {/* Paid Session - Visible to coaches OR clients viewing Test Coach */}
-                    {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
-                      <Button
-                        size="lg"
-                        className="flex-1 bg-green-500 text-white hover:bg-green-600 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
-                        onClick={() => handleBookSession('session')}
-                      >
-                        <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
-                        <span className="hidden sm:inline">Paid Session</span>
-                        <span className="sm:hidden">Paid</span>
-                      </Button>
-                    )}
+                    {/* Paid Session - Visible to ALL users */}
+                    <Button
+                      size="lg"
+                      className="flex-1 bg-green-500 text-white hover:bg-green-600 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
+                      onClick={() => handleBookSession('session')}
+                    >
+                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <span className="hidden sm:inline">Paid Session</span>
+                      <span className="sm:hidden">Paid</span>
+                    </Button>
                   </div>
                   {(user?.user_type === 'coach' || (user?.user_type === 'client' && coach.email === 'coach@acfl.com')) && (
                     <p className="text-xs sm:text-sm text-blue-100">
