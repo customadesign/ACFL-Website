@@ -340,8 +340,10 @@ export default function CoachVerificationForm() {
         throw new Error(errorData.message || 'Application submission failed');
       }
 
-      // Redirect to success page
-      router.push('/register/coach/success');
+      const data = await response.json();
+
+      // Redirect to pending approval page with email
+      router.push(`/register/coach/pending?email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       setErrors({ submit: error.message || 'Application submission failed' });
     } finally {

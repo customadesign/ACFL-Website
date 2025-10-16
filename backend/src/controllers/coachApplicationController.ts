@@ -558,7 +558,8 @@ const createCoachProfileFromApplication = async (application: any) => {
         last_name: application.last_name,
         phone: application.phone,
         is_available: true,
-        status: 'active', // Coach is active when application is approved
+        status: 'approved', // Coach is approved but needs email verification
+        email_verified: false, // Needs to verify email before becoming active
         
         // Password hash from application
         password_hash: application.password_hash,
@@ -627,7 +628,8 @@ const createCoachProfileFromApplication = async (application: any) => {
       last_name: application.last_name,
       phone: application.phone,
       is_available: true,
-      status: 'active', // Coach is active when application is approved
+      status: 'approved', // Coach is approved but needs email verification
+      email_verified: false, // Needs to verify email before becoming active
       
       // Password hash from application
       password_hash: application.password_hash,
@@ -920,6 +922,54 @@ export const updateApplicationStatus = async (req: Request, res: Response) => {
         console.log('✅ Application approved, creating coach profile...');
         const coachId = await createCoachProfileFromApplication(updatedApp);
         console.log('✅ Coach profile created successfully with ID:', coachId);
+
+        // Send verification email after coach profile is created
+        console.log('📧 Sending verification email to approved coach...');
+        try {
+          const crypto = require('crypto');
+          const verificationToken = crypto.randomBytes(32).toString('hex');
+          const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+          // Delete any old verification tokens for this coach
+          await supabase
+            .from('email_verification_tokens')
+            .delete()
+            .eq('email', updatedApp.email.toLowerCase());
+
+          // Store new verification token
+          const { error: tokenError } = await supabase
+            .from('email_verification_tokens')
+            .insert({
+              email: updatedApp.email.toLowerCase(),
+              token: verificationToken,
+              expires_at: verificationExpiry.toISOString(),
+              user_role: 'coach',
+              user_id: coachId,
+              created_at: new Date().toISOString()
+            });
+
+          if (tokenError) {
+            console.error('⚠️ Failed to store verification token:', tokenError);
+          } else {
+            console.log('✅ Verification token generated and stored');
+
+            // Send verification email
+            const emailResult = await emailService.sendEmailVerification({
+              email: updatedApp.email,
+              first_name: updatedApp.first_name,
+              role: 'coach'
+            }, verificationToken);
+
+            if (emailResult.success) {
+              console.log('✅ Verification email sent successfully to approved coach');
+            } else {
+              console.log('⚠️ Warning: Verification email failed:', emailResult.error);
+            }
+          }
+        } catch (verificationError) {
+          console.log('⚠️ Warning: Verification email process failed:', verificationError);
+          // Don't fail the approval if email fails
+        }
       } catch (coachCreationError) {
         console.error('❌ Failed to create coach profile:', coachCreationError);
         // Don't fail the approval process, but log the error
@@ -1082,7 +1132,47 @@ export const bulkUpdateApplicationStatus = async (req: Request, res: Response) =
         // Create coach profile if approved
         if (status === 'approved') {
           try {
-            await createCoachProfileFromApplication(updatedApp);
+            const coachId = await createCoachProfileFromApplication(updatedApp);
+
+            // Send verification email after coach profile is created
+            try {
+              const crypto = require('crypto');
+              const verificationToken = crypto.randomBytes(32).toString('hex');
+              const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
+              // Delete any old verification tokens for this coach
+              await supabase
+                .from('email_verification_tokens')
+                .delete()
+                .eq('email', updatedApp.email.toLowerCase());
+
+              // Store new verification token
+              const { error: tokenError } = await supabase
+                .from('email_verification_tokens')
+                .insert({
+                  email: updatedApp.email.toLowerCase(),
+                  token: verificationToken,
+                  expires_at: verificationExpiry.toISOString(),
+                  user_role: 'coach',
+                  user_id: coachId,
+                  created_at: new Date().toISOString()
+                });
+
+              if (!tokenError) {
+                // Send verification email
+                const emailResult = await emailService.sendEmailVerification({
+                  email: updatedApp.email,
+                  first_name: updatedApp.first_name,
+                  role: 'coach'
+                }, verificationToken);
+
+                if (emailResult.success) {
+                  console.log(`✅ Verification email sent successfully to ${updatedApp.email}`);
+                }
+              }
+            } catch (verificationError) {
+              console.log(`⚠️ Verification email failed for ${applicationId}:`, verificationError);
+            }
           } catch (profileError) {
             console.log(`Warning: Coach profile creation failed for ${applicationId}:`, profileError);
           }
