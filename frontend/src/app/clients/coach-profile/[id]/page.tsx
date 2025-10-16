@@ -649,7 +649,15 @@ function CoachProfileContent() {
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
-                {(user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))) && (
+                {(() => {
+                  console.log('Button visibility check:', {
+                    userType: user?.user_type,
+                    coachEmail: coach.email,
+                    coachName: coach.name,
+                    shouldShowFree: user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach'))
+                  });
+                  return (user?.user_type === 'coach' || (user?.user_type === 'client' && (coach.email === 'coach@acfl.com' || coach.name === 'Test Coach')));
+                })() && (
                   <DeactivatedActionButton action="book a consultation">
                     <Button
                       size="lg"
