@@ -52,93 +52,111 @@ const NavbarLandingPage = () => {
               </a>
               
               {/* Services Dropdown */}
-              <div className="relative group">
+              <div
+                className="relative group"
+                onMouseEnter={() => handleMouseEnter('services')}
+                onMouseLeave={handleMouseLeave}
+              >
                 <button
-                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
+                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors py-2"
                   onClick={() => handleDropdownToggle('services')}
                 >
                   Services <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/corporate" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Corporate Coaching
-                  </Link>
-                  <Link 
-                    href="/group-coaching" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Group Coaching
-                  </Link>
-                  <Link 
-                    href="/pricing" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Pricing
-                  </Link>
-                </div>
+                {openDropdown === 'services' && (
+                  <div className="absolute top-full left-0 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200">
+                    <Link
+                      href="/corporate"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Corporate Coaching
+                    </Link>
+                    <Link
+                      href="/group-coaching"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Group Coaching
+                    </Link>
+                    <Link
+                      href="/pricing"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Pricing
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Resources Dropdown */}
-              <div className="relative group">
+              <div
+                className="relative group"
+                onMouseEnter={() => handleMouseEnter('resources')}
+                onMouseLeave={handleMouseLeave}
+              >
                 <button
-                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
+                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors py-2"
                   onClick={() => handleDropdownToggle('resources')}
                 >
                   Resources <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/blog" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Blog
-                  </Link>
-                  <Link 
-                    href="/resources" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Resources Library
-                  </Link>
-                  <Link 
-                    href="/press" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Press
-                  </Link>
-                </div>
+                {openDropdown === 'resources' && (
+                  <div className="absolute top-full left-0 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200">
+                    <Link
+                      href="/blog"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Blog
+                    </Link>
+                    <Link
+                      href="/resources"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Resources Library
+                    </Link>
+                    <Link
+                      href="/press"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Press
+                    </Link>
+                  </div>
+                )}
               </div>
 
               {/* Company Dropdown */}
-              <div className="relative group">
+              <div
+                className="relative group"
+                onMouseEnter={() => handleMouseEnter('company')}
+                onMouseLeave={handleMouseLeave}
+              >
                 <button
-                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors"
+                  className="flex items-center text-gray-600 hover:text-brand-teal transition-colors py-2"
                   onClick={() => handleDropdownToggle('company')}
                 >
                   Company <ChevronDown className="ml-1 h-4 w-4" />
                 </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white rounded-md shadow-lg py-2 z-50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200">
-                  <Link 
-                    href="/about" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    About Us
-                  </Link>
-                  <Link 
-                    href="/careers" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Careers
-                  </Link>
-                  <Link 
-                    href="/contact" 
-                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
-                  >
-                    Contact
-                  </Link>
-                </div>
+                {openDropdown === 'company' && (
+                  <div className="absolute top-full left-0 w-48 bg-white rounded-md shadow-lg py-2 z-50 transition-all duration-200">
+                    <Link
+                      href="/about"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      About Us
+                    </Link>
+                    <Link
+                      href="/careers"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Careers
+                    </Link>
+                    <Link
+                      href="/contact"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-brand-teal"
+                    >
+                      Contact
+                    </Link>
+                  </div>
+                )}
               </div>
 
               <Link href="/help" className="text-gray-600 hover:text-brand-teal transition-colors">
