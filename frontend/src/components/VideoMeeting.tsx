@@ -474,88 +474,60 @@ function MeetingView({
 
       console.log('🖥️ Starting screen share process...')
 
-      // Let VideoSDK handle the permission request directly
-      // This ensures it's triggered by the user gesture
+      // Request screen share permission FIRST before calling VideoSDK
+      // This ensures the permission dialog appears
       try {
+        console.log('🎬 Requesting screen share permission from browser...')
+        const stream = await navigator.mediaDevices.getDisplayMedia({
+          video: {
+            width: { ideal: 1920, max: 1920 },
+            height: { ideal: 1080, max: 1080 },
+            frameRate: { ideal: 15, max: 30 }
+          },
+          audio: false
+        })
+
+        console.log('✅ Screen share permission granted')
+
+        // Stop the manual stream - we just needed to get permission
+        stream.getTracks().forEach(track => track.stop())
+
+        // Small delay to ensure permission is registered
+        await new Promise(resolve => setTimeout(resolve, 100))
+
+        // Now call VideoSDK with permission already granted
         if (toggleScreenShare) {
-          console.log('🎬 Calling VideoSDK toggleScreenShare directly...')
+          console.log('🎬 Calling VideoSDK toggleScreenShare after permission granted...')
           toggleScreenShare()
         }
-      } catch (videoSdkError: any) {
-        console.error('VideoSDK screen share error:', videoSdkError)
+      } catch (permissionError: any) {
+        console.error('Screen share permission error:', permissionError)
 
-        // If VideoSDK fails, try manual permission request as fallback
-        console.log('🔄 VideoSDK failed, trying manual permission request...')
+        let errorMessage = 'Screen sharing failed'
 
-        try {
-          // Try with audio first, fallback to video only if it fails
-          let stream
-          try {
-            stream = await navigator.mediaDevices.getDisplayMedia({
-              video: {
-                width: { ideal: 1920, max: 1920 },
-                height: { ideal: 1080, max: 1080 },
-                frameRate: { ideal: 15, max: 30 }
-              },
-              audio: {
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false
-              }
-            })
-          } catch (audioError) {
-            console.log('🔄 Audio capture failed, trying video only...')
-            stream = await navigator.mediaDevices.getDisplayMedia({
-              video: {
-                width: { ideal: 1920, max: 1920 },
-                height: { ideal: 1080, max: 1080 },
-                frameRate: { ideal: 15, max: 30 }
-              },
-              audio: false
-            })
-          }
+        if (permissionError.name === 'NotAllowedError') {
+          errorMessage = 'Permission denied. Please click "Share" when the browser asks for screen sharing permission.'
+        } else if (permissionError.name === 'NotSupportedError') {
+          errorMessage = 'Screen sharing is not supported by your browser.'
+        } else if (permissionError.name === 'NotFoundError') {
+          errorMessage = 'No screens available for sharing.'
+        } else if (permissionError.name === 'AbortError') {
+          errorMessage = 'Screen sharing was cancelled. Please try again and select a screen to share.'
+        } else if (permissionError.name === 'InvalidStateError') {
+          errorMessage = 'Screen sharing is already active or in an invalid state.'
+        } else {
+          errorMessage = `Screen sharing failed: ${permissionError.message || 'Unknown error'}`
+        }
 
-          console.log('✅ Manual screen sharing permissions granted')
+        setScreenShareError(errorMessage)
 
-          // Stop the manual stream - we just needed to get permission
-          stream.getTracks().forEach(track => {
-            track.stop()
-          })
-
-          // Try VideoSDK again now that permission is granted
-          if (toggleScreenShare) {
-            toggleScreenShare()
-          }
-
-        } catch (permissionError: any) {
-          console.error('Manual screen sharing permission error:', permissionError)
-
-          let errorMessage = 'Screen sharing failed'
-
-          if (permissionError.name === 'NotAllowedError') {
-            errorMessage = 'Permission denied. Please click "Share" when the browser asks for screen sharing permission.'
-          } else if (permissionError.name === 'NotSupportedError') {
-            errorMessage = 'Screen sharing is not supported by your browser.'
-          } else if (permissionError.name === 'NotFoundError') {
-            errorMessage = 'No screens available for sharing.'
-          } else if (permissionError.name === 'AbortError') {
-            errorMessage = 'Screen sharing was cancelled. Please try again and select a screen to share.'
-          } else if (permissionError.name === 'InvalidStateError') {
-            errorMessage = 'Screen sharing is already active or in an invalid state.'
-          } else {
-            errorMessage = `Screen sharing failed: ${permissionError.message || 'Unknown error'}`
-          }
-
-          setScreenShareError(errorMessage)
-
-          // Show additional help for permission issues
-          if (permissionError.name === 'NotAllowedError') {
-            setTimeout(() => {
-              setScreenShareError(
-                'Screen sharing blocked. Try refreshing the page and clicking "Allow" when prompted, or check if your browser is blocking screen sharing permissions.'
-              )
-            }, 5000)
-          }
+        // Show additional help for permission issues
+        if (permissionError.name === 'NotAllowedError') {
+          setTimeout(() => {
+            setScreenShareError(
+              'Screen sharing blocked. Try refreshing the page and clicking "Allow" when prompted, or check if your browser is blocking screen sharing permissions.'
+            )
+          }, 5000)
         }
       }
 
