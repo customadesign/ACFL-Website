@@ -55,6 +55,38 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
 
     try {
       setLoading(true);
+
+      // Calculate appointment duration
+      const originalStart = new Date(appointment.starts_at);
+      const originalEnd = new Date(appointment.ends_at);
+      const durationMs = originalEnd.getTime() - originalStart.getTime();
+      const durationMinutes = Math.floor(durationMs / (1000 * 60));
+
+      // Check if selected date is today
+      const selectedDateObj = new Date(selectedDate);
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      selectedDateObj.setHours(0, 0, 0, 0);
+      const isToday = selectedDateObj.getTime() === todayDate.getTime();
+
+      // If today, ALWAYS show "Start Now" as first slot (bypass availability check)
+      if (isToday) {
+        const now = new Date();
+        const newEnd = new Date(now.getTime() + durationMs);
+
+        const nowSlot: AvailableSlot = {
+          slot_start: now.toISOString(),
+          slot_end: newEnd.toISOString(),
+          duration_minutes: durationMinutes
+        };
+
+        // Only show "Start Now" slot for today
+        setAvailableSlots([nowSlot]);
+        setLoading(false);
+        return;
+      }
+
+      // For other dates, fetch available slots from API
       const token = localStorage.getItem('token');
       const API_BASE_URL = getApiUrl();
       const response = await fetch(
@@ -66,36 +98,7 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
 
       if (response.ok) {
         const data = await response.json();
-        const fetchedSlots = data.slots || [];
-
-        // Calculate appointment duration
-        const originalStart = new Date(appointment.starts_at);
-        const originalEnd = new Date(appointment.ends_at);
-        const durationMs = originalEnd.getTime() - originalStart.getTime();
-        const durationMinutes = Math.floor(durationMs / (1000 * 60));
-
-        // Check if selected date is today
-        const selectedDateObj = new Date(selectedDate);
-        const todayDate = new Date();
-        todayDate.setHours(0, 0, 0, 0);
-        selectedDateObj.setHours(0, 0, 0, 0);
-        const isToday = selectedDateObj.getTime() === todayDate.getTime();
-
-        // If today, add "Start Now" as first slot
-        if (isToday) {
-          const now = new Date();
-          const newEnd = new Date(now.getTime() + durationMs);
-
-          const nowSlot: AvailableSlot = {
-            slot_start: now.toISOString(),
-            slot_end: newEnd.toISOString(),
-            duration_minutes: durationMinutes
-          };
-
-          setAvailableSlots([nowSlot, ...fetchedSlots]);
-        } else {
-          setAvailableSlots(fetchedSlots);
-        }
+        setAvailableSlots(data.slots || []);
       }
     } catch (error) {
       console.error('Error loading available slots:', error);
