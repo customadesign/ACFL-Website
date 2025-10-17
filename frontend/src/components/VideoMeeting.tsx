@@ -1402,20 +1402,7 @@ export default function VideoMeeting({
     name: participantName || 'Participant',
     mode: 'CONFERENCE' as const,
     multiStream: true,
-    debugMode: true, // Enable debug mode to get more logs
-    // Screen sharing configuration
-    screenShareConfig: {
-      video: {
-        width: { ideal: 1920, max: 1920 },
-        height: { ideal: 1080, max: 1080 },
-        frameRate: { ideal: 15, max: 30 }
-      },
-      audio: {
-        echoCancellation: true,
-        noiseSuppression: true,
-        sampleRate: 44100
-      }
-    }
+    debugMode: false
   }
 
   return (
