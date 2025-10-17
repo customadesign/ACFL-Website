@@ -43,6 +43,24 @@ interface SquareBookingFlowProps {
   onCancel?: () => void;
 }
 
+// Test Coach IDs - coaches that show instant booking to clients
+const TEST_COACH_IDS = [
+  'a235efaa-df3a-4583-ae72-b4590497386fe', // Test Coach
+]
+
+// Test Coach identifiers (email and name as fallback)
+const TEST_COACH_IDENTIFIERS = {
+  emails: ['coach@acfl.com'],
+  names: ['Test Coach']
+}
+
+// Helper function to check if a coach is a test coach
+const isTestCoach = (coachId: string, coach?: Coach | null) => {
+  return TEST_COACH_IDS.includes(coachId) ||
+         (coach?.email && TEST_COACH_IDENTIFIERS.emails.includes(coach.email)) ||
+         (coach?.name && TEST_COACH_IDENTIFIERS.names.includes(coach.name))
+}
+
 const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
   coachId,
   selectedDate,
@@ -521,8 +539,8 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
                   >
                     Schedule for Later
                   </Button>
-                  {/* Book Instant Session - Only visible to coaches */}
-                  {user?.role === 'coach' && (
+                  {/* Book Instant Session - Visible to coaches OR clients viewing Test Coach */}
+                  {(user?.role === 'coach' || (user?.role === 'client' && isTestCoach(coachId, coach))) && (
                     <Button
                       className="w-full"
                       variant="outline"
