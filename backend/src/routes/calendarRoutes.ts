@@ -632,7 +632,7 @@ router.put('/appointment/:appointmentId/reschedule', async (req, res) => {
     }
 
     // Verify user can reschedule this appointment
-    const canReschedule = 
+    const canReschedule =
       (authReq.user?.role === 'client' && authReq.user.userId === appointment.client_id) ||
       (authReq.user?.role === 'coach' && authReq.user.userId === appointment.coach_id) ||
       authReq.user?.role === 'admin';
@@ -641,19 +641,22 @@ router.put('/appointment/:appointmentId/reschedule', async (req, res) => {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Check if new slot is still available
-    const { data: isAvailable } = await supabase
-      .rpc('is_slot_available', {
-        p_coach_id: appointment.coach_id,
-        p_start_time: newStartTime,
-        p_end_time: newEndTime,
-        p_timezone: appointment.timezone || 'UTC'
-      });
+    // Coaches can reschedule to any time (including immediate/now)
+    // Only check availability for client-initiated reschedules
+    if (authReq.user?.role === 'client') {
+      const { data: isAvailable } = await supabase
+        .rpc('is_slot_available', {
+          p_coach_id: appointment.coach_id,
+          p_start_time: newStartTime,
+          p_end_time: newEndTime,
+          p_timezone: appointment.timezone || 'UTC'
+        });
 
-    if (!isAvailable) {
-      return res.status(409).json({ 
-        error: 'The new time slot is no longer available' 
-      });
+      if (!isAvailable) {
+        return res.status(409).json({
+          error: 'The new time slot is no longer available'
+        });
+      }
     }
 
     // Update appointment
