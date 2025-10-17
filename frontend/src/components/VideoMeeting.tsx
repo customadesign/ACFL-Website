@@ -836,19 +836,12 @@ function MeetingView({
             size="sm"
             variant={presenterId ? "default" : "ghost"}
             className={`rounded-full h-11 w-11 sm:h-12 sm:w-12 p-0 transition-all duration-200 hover:scale-110 ${
-              !isScreenShareSupported ? 'opacity-50 cursor-not-allowed' : ''
-            } ${
               presenterId
                 ? 'bg-blue-600 hover:bg-blue-700 text-white'
                 : 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
             }`}
-            disabled={isConnecting || !isScreenShareSupported}
-            title={!isScreenShareSupported
-              ? `Screen sharing unavailable: ${screenSharingDiagnostics.checkSupport().issues.join(', ')}`
-              : presenterId
-                ? 'Stop screen sharing'
-                : 'Share your screen'
-            }
+            disabled={isConnecting}
+            title={presenterId ? 'Stop screen sharing' : 'Share your screen'}
           >
             {presenterId ? <MonitorStop size={18} className="sm:size-5 text-white" /> : <Monitor size={18} className="sm:size-5 text-white" />}
           </Button>
