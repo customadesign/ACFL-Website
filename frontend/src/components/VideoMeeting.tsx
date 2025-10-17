@@ -530,31 +530,32 @@ function MeetingView({
         } catch (permissionError: any) {
           console.error('Manual screen sharing permission error:', permissionError)
 
-        let errorMessage = 'Screen sharing failed'
+          let errorMessage = 'Screen sharing failed'
 
-        if (permissionError.name === 'NotAllowedError') {
-          errorMessage = 'Permission denied. Please click "Share" when the browser asks for screen sharing permission.'
-        } else if (permissionError.name === 'NotSupportedError') {
-          errorMessage = 'Screen sharing is not supported by your browser.'
-        } else if (permissionError.name === 'NotFoundError') {
-          errorMessage = 'No screens available for sharing.'
-        } else if (permissionError.name === 'AbortError') {
-          errorMessage = 'Screen sharing was cancelled. Please try again and select a screen to share.'
-        } else if (permissionError.name === 'InvalidStateError') {
-          errorMessage = 'Screen sharing is already active or in an invalid state.'
-        } else {
-          errorMessage = `Screen sharing failed: ${permissionError.message || 'Unknown error'}`
-        }
+          if (permissionError.name === 'NotAllowedError') {
+            errorMessage = 'Permission denied. Please click "Share" when the browser asks for screen sharing permission.'
+          } else if (permissionError.name === 'NotSupportedError') {
+            errorMessage = 'Screen sharing is not supported by your browser.'
+          } else if (permissionError.name === 'NotFoundError') {
+            errorMessage = 'No screens available for sharing.'
+          } else if (permissionError.name === 'AbortError') {
+            errorMessage = 'Screen sharing was cancelled. Please try again and select a screen to share.'
+          } else if (permissionError.name === 'InvalidStateError') {
+            errorMessage = 'Screen sharing is already active or in an invalid state.'
+          } else {
+            errorMessage = `Screen sharing failed: ${permissionError.message || 'Unknown error'}`
+          }
 
-        setScreenShareError(errorMessage)
+          setScreenShareError(errorMessage)
 
-        // Show additional help for permission issues
-        if (permissionError.name === 'NotAllowedError') {
-          setTimeout(() => {
-            setScreenShareError(
-              'Screen sharing blocked. Try refreshing the page and clicking "Allow" when prompted, or check if your browser is blocking screen sharing permissions.'
-            )
-          }, 5000)
+          // Show additional help for permission issues
+          if (permissionError.name === 'NotAllowedError') {
+            setTimeout(() => {
+              setScreenShareError(
+                'Screen sharing blocked. Try refreshing the page and clicking "Allow" when prompted, or check if your browser is blocking screen sharing permissions.'
+              )
+            }, 5000)
+          }
         }
       }
 
