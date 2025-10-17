@@ -711,7 +711,7 @@ router.get('/client/saved-coaches', authenticate, requireActiveUser, async (req:
     }
 
     // Get saved coaches
-    const { data: savedCoaches, error: savedError } = await supabase
+    const { data: savedCoaches, error: savedError} = await supabase
       .from('saved_coaches')
       .select(`
         *,
@@ -731,7 +731,7 @@ router.get('/client/saved-coaches', authenticate, requireActiveUser, async (req:
           created_at
         )
       `)
-      .eq('member_id', clientProfile.id);
+      .eq('client_id', clientProfile.id);
 
     if (savedError) {
       throw savedError;
@@ -812,7 +812,7 @@ router.post('/client/saved-coaches', [
     const { data: existing } = await supabase
       .from('saved_coaches')
       .select('id')
-      .eq('member_id', clientProfile.id)
+      .eq('client_id', clientProfile.id)
       .eq('coach_id', coachId)
       .single();
 
@@ -827,7 +827,7 @@ router.post('/client/saved-coaches', [
     const { data: savedCoach, error: saveError } = await supabase
       .from('saved_coaches')
       .insert({
-        member_id: clientProfile.id,
+        client_id: clientProfile.id,
         coach_id: coachId
       })
       .select()
@@ -881,7 +881,7 @@ router.delete('/client/saved-coaches/:coachId', authenticate, requireActiveUser,
     const { error: removeError } = await supabase
       .from('saved_coaches')
       .delete()
-      .eq('member_id', clientProfile.id)
+      .eq('client_id', clientProfile.id)
       .eq('coach_id', coachId);
 
     if (removeError) {
@@ -1887,7 +1887,7 @@ router.get('/client/activity', authenticate, async (req: Request & { user?: any 
         saved_at,
         coach_id
       `)
-      .eq('member_id', clientId)
+      .eq('client_id', clientId)
       .order('saved_at', { ascending: false })
       .limit(5);
 
