@@ -71,7 +71,7 @@ interface AnalyticsData {
 export default function Analytics() {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('30d');
+  const [timeRange, setTimeRange] = useState('30d'); // Default to "Last 30 days"
 
   useEffect(() => {
     fetchAnalyticsData();
@@ -135,6 +135,9 @@ export default function Analytics() {
     // Handle negative zero edge case
     const normalizedNum = num === 0 ? 0 : num;
 
+    // For 0, show as "0%" without + sign
+    if (normalizedNum === 0) return "0.0%";
+
     return `${normalizedNum > 0 ? '+' : ''}${normalizedNum.toFixed(1)}%`;
   };
 
@@ -148,8 +151,10 @@ export default function Analytics() {
     const normalizedGrowth = growth === 0 ? 0 : growth;
 
     if (normalizedGrowth === 0) {
-      // No change - show neutral indicator
-      return <div className="h-4 w-4 rounded-full bg-gray-400 dark:bg-gray-500" />;
+      // No change - show neutral indicator (horizontal line)
+      return <div className="h-4 w-4 flex items-center justify-center">
+        <div className="h-0.5 w-3 bg-gray-400 dark:bg-gray-500 rounded-full" />
+      </div>;
     }
 
     return normalizedGrowth > 0 ? (
@@ -283,7 +288,10 @@ export default function Analytics() {
                 className="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
               >
                 <option value="7d">Last 7 days</option>
+                <option value="1m">This Month</option>
                 <option value="30d">Last 30 days</option>
+                <option value="3m">Last 3 months</option>
+                <option value="6m">Last 6 months</option>
                 <option value="90d">Last 90 days</option>
                 <option value="1y">Last year</option>
               </select>
@@ -322,18 +330,20 @@ export default function Analytics() {
                 <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/40">
                   <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Total Users</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">New Users</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 {analyticsData.overview.totalUsers.toLocaleString()}
               </p>
-              <div className="flex items-center gap-1.5">
-                {getGrowthIcon(analyticsData.overview.userGrowth)}
-                <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.userGrowth)}`}>
-                  {formatPercentage(analyticsData.overview.userGrowth)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
-              </div>
+              {analyticsData.overview.userGrowth !== null && analyticsData.overview.userGrowth !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  {getGrowthIcon(analyticsData.overview.userGrowth)}
+                  <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.userGrowth)}`}>
+                    {formatPercentage(analyticsData.overview.userGrowth)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -346,18 +356,20 @@ export default function Analytics() {
                 <div className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/40">
                   <UserCheck className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Coaches</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">New Coaches</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 {analyticsData.overview.totalCoaches.toLocaleString()}
               </p>
-              <div className="flex items-center gap-1.5">
-                {getGrowthIcon(analyticsData.overview.coachGrowth)}
-                <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.coachGrowth)}`}>
-                  {formatPercentage(analyticsData.overview.coachGrowth)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
-              </div>
+              {analyticsData.overview.coachGrowth !== null && analyticsData.overview.coachGrowth !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  {getGrowthIcon(analyticsData.overview.coachGrowth)}
+                  <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.coachGrowth)}`}>
+                    {formatPercentage(analyticsData.overview.coachGrowth)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -370,18 +382,20 @@ export default function Analytics() {
                 <div className="p-2 rounded-lg bg-green-100 dark:bg-green-900/40">
                   <Calendar className="h-4 w-4 text-green-600 dark:text-green-400" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Sessions</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Completed Sessions</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 {analyticsData.overview.totalSessions.toLocaleString()}
               </p>
-              <div className="flex items-center gap-1.5">
-                {getGrowthIcon(analyticsData.overview.sessionGrowth)}
-                <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.sessionGrowth)}`}>
-                  {formatPercentage(analyticsData.overview.sessionGrowth)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
-              </div>
+              {analyticsData.overview.sessionGrowth !== null && analyticsData.overview.sessionGrowth !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  {getGrowthIcon(analyticsData.overview.sessionGrowth)}
+                  <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.sessionGrowth)}`}>
+                    {formatPercentage(analyticsData.overview.sessionGrowth)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -394,18 +408,20 @@ export default function Analytics() {
                 <div className="p-2 rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
                   <DollarSign className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Revenue</p>
+                <p className="text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide">Period Revenue</p>
               </div>
               <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                 {formatCurrency(analyticsData.overview.totalRevenue)}
               </p>
-              <div className="flex items-center gap-1.5">
-                {getGrowthIcon(analyticsData.overview.revenueGrowth)}
-                <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.revenueGrowth)}`}>
-                  {formatPercentage(analyticsData.overview.revenueGrowth)}
-                </span>
-                <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
-              </div>
+              {analyticsData.overview.revenueGrowth !== null && analyticsData.overview.revenueGrowth !== undefined && (
+                <div className="flex items-center gap-1.5">
+                  {getGrowthIcon(analyticsData.overview.revenueGrowth)}
+                  <span className={`text-xs sm:text-sm font-semibold ${getGrowthColor(analyticsData.overview.revenueGrowth)}`}>
+                    {formatPercentage(analyticsData.overview.revenueGrowth)}
+                  </span>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">vs prev period</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -710,7 +726,15 @@ export default function Analytics() {
         
         <div className="mt-3 sm:mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
           <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
-            <strong>Note:</strong> Reports include data from the selected time range ({timeRange === '7d' ? 'Last 7 days' : timeRange === '30d' ? 'Last 30 days' : timeRange === '90d' ? 'Last 90 days' : 'Last year'}).
+            <strong>Note:</strong> Reports include data from the selected time range ({
+              timeRange === '7d' ? 'Last 7 days' :
+              timeRange === '1m' ? 'This Month' :
+              timeRange === '30d' ? 'Last 30 days' :
+              timeRange === '3m' ? 'Last 3 months' :
+              timeRange === '6m' ? 'Last 6 months' :
+              timeRange === '90d' ? 'Last 90 days' :
+              'Last year'
+            }).
             All financial data is calculated based on completed sessions only.
           </p>
         </div>

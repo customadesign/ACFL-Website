@@ -20,11 +20,14 @@ export const viewport: Viewport = {
   themeColor: '#25A7B8',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: Promise<Record<string, never>>
 }) {
+  await params;
   const squareEnvironment = process.env.NEXT_PUBLIC_SQUARE_ENVIRONMENT || 'sandbox';
   const squareScriptUrl = squareEnvironment === 'production'
     ? 'https://web.squarecdn.com/v1/square.js'

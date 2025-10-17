@@ -513,14 +513,16 @@ useEffect(() => {
 					</div>
 
 				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full h-[680px]`}>
-					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0">
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 pb-6 sm:relative sm:inset-auto sm:pb-0' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden w-full max-w-full h-full sm:h-[680px]`}>
+					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3 flex-shrink-0 bg-white dark:bg-gray-800">
 						{/* Back button for mobile */}
 						<button
 							onClick={() => setShowMobileChat(false)}
-							className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full touch-manipulation flex-shrink-0"
+							className="sm:hidden flex items-center gap-2 p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg touch-manipulation flex-shrink-0 active:scale-95 transition-transform"
+							aria-label="Back to conversations"
 						>
-							<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+							<ArrowLeft className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+							<span className="text-sm font-medium text-gray-700 dark:text-gray-300">Back</span>
 						</button>
 						<div className="font-semibold text-gray-900 dark:text-white truncate flex-1 min-w-0">{activePartner?.partnerName || 'Select a conversation'}</div>
 					</div>
@@ -662,7 +664,7 @@ useEffect(() => {
 									value={text}
 									onChange={e => setText(e.target.value)}
 									placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-									className="flex-1 min-w-0 dark:text-white dark:placeholder-gray-400 text-base sm:text-sm py-3 sm:py-2"
+									className="flex-1 min-w-0 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-400 text-base sm:text-sm py-3 sm:py-2"
 									disabled={!activePartnerId}
 									onKeyDown={e => {
 										if (e.key === 'Enter' && !e.shiftKey) {

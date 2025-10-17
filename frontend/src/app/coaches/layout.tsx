@@ -37,8 +37,10 @@ interface NavigationGroup {
 
 export default function CoachLayout({
   children,
+  params,
 }: {
   children: React.ReactNode;
+  params: Promise<Record<string, never>>;
 }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -324,11 +326,21 @@ export default function CoachLayout({
             {/* Logo and collapse button */}
             <div className="flex h-16 shrink-0 items-center px-4 border-b border-gray-200 dark:border-gray-700">
               {!sidebarCollapsed && (
-                <img
-                  src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
-                  alt="ACFL Logo"
-                  className="h-8 w-auto mr-3"
-                />
+                <>
+                  {/* Light mode logo (inverted to be dark) */}
+                  <img
+                    src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+                    alt="ACFL Logo"
+                    className="h-8 w-auto mr-3 dark:hidden brightness-0"
+                    style={{ filter: 'brightness(0)' }}
+                  />
+                  {/* Dark mode logo (original light colored) */}
+                  <img
+                    src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+                    alt="ACFL Logo"
+                    className="h-8 w-auto mr-3 hidden dark:block"
+                  />
+                </>
               )}
               {!sidebarCollapsed && (
                 <h1 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
@@ -678,10 +690,18 @@ export default function CoachLayout({
                     )}
                   </button>
 
+                  {/* Light mode logo (inverted to be dark) */}
                   <img
                     src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                     alt="ACFL Logo"
-                    className="h-8 w-auto"
+                    className="h-8 w-auto dark:hidden brightness-0"
+                    style={{ filter: 'brightness(0)' }}
+                  />
+                  {/* Dark mode logo (original light colored) */}
+                  <img
+                    src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+                    alt="ACFL Logo"
+                    className="h-8 w-auto hidden dark:block"
                   />
                   <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
                     Coach Portal
@@ -849,10 +869,18 @@ export default function CoachLayout({
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
+                      {/* Light mode logo (inverted to be dark) */}
                       <img
                         src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                         alt="ACFL Logo"
-                        className="h-8 w-auto"
+                        className="h-8 w-auto dark:hidden brightness-0"
+                        style={{ filter: 'brightness(0)' }}
+                      />
+                      {/* Dark mode logo (original light colored) */}
+                      <img
+                        src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+                        alt="ACFL Logo"
+                        className="h-8 w-auto hidden dark:block"
                       />
                       <span className="font-semibold text-sm text-gray-900 dark:text-white">
                         Coach Portal

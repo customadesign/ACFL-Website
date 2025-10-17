@@ -64,7 +64,7 @@ interface NavigationGroup {
   items: NavigationItem[];
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+export default function AdminLayout({ children, params }: AdminLayoutProps & { params: Promise<Record<string, never>> }) {
   const [isLoading, setIsLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);

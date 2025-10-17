@@ -74,7 +74,7 @@ interface ClientStats {
   averageSessionLength: number;
 }
 
-export default function ClientProfilePage() {
+export default function ClientProfilePage({ params: _params }: { params: { id: string } }) {
   const params = useParams();
   const router = useRouter();
   const { user } = useAuth();
@@ -136,8 +136,8 @@ export default function ClientProfilePage() {
         const sessionLengths = completedSessions.map((s: Session) => 
           (new Date(s.ends_at).getTime() - new Date(s.starts_at).getTime()) / (1000 * 60)
         );
-        const avgLength = sessionLengths.length > 0 
-          ? Math.round(sessionLengths.reduce((a, b) => a + b, 0) / sessionLengths.length)
+        const avgLength = sessionLengths.length > 0
+          ? Math.round(sessionLengths.reduce((a: number, b: number) => a + b, 0) / sessionLengths.length)
           : 60;
 
         setStats({

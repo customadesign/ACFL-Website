@@ -368,11 +368,11 @@ export default function CoachApplicationsPage() {
       </div>
 
       {/* Filters - Mobile Responsive */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="space-y-4">
+      <div className="bg-white dark:bg-gray-800 p-3 sm:p-4 md:p-6 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="space-y-3 sm:space-y-4">
           {/* Search Input - Full Width */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="w-full">
+            <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5 sm:mb-2">
               Search Applications
             </label>
             <div className="relative">
@@ -385,16 +385,15 @@ export default function CoachApplicationsPage() {
                   setCurrentPage(1);
                 }}
                 placeholder="Search by name, email, or expertise..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white min-h-[44px]"
               />
             </div>
           </div>
 
           {/* Filter Selects - Responsive Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div className="w-full">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Status
               </label>
               <select
@@ -403,7 +402,7 @@ export default function CoachApplicationsPage() {
                   setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 sm:px-4 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors min-h-[44px]"
               >
                 <option value="all">All Applications</option>
                 <option value="pending">Pending</option>
@@ -414,8 +413,8 @@ export default function CoachApplicationsPage() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            <div className="w-full">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
                 Per Page
               </label>
               <select
@@ -424,7 +423,7 @@ export default function CoachApplicationsPage() {
                   setItemsPerPage(parseInt(e.target.value));
                   setCurrentPage(1);
                 }}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full px-3 sm:px-4 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white transition-colors min-h-[44px]"
               >
                 <option value={5}>5 per page</option>
                 <option value={10}>10 per page</option>
@@ -433,8 +432,8 @@ export default function CoachApplicationsPage() {
               </select>
             </div>
 
-            {/* Apply Button - Full Width on Mobile */}
-            <div className="sm:col-span-2 lg:col-span-1 flex items-end">
+            {/* Refresh Button - Full Width on Mobile */}
+            <div className="w-full sm:col-span-2 lg:col-span-1 flex items-end">
               <button
                 onClick={() => {
                   const storedToken = localStorage.getItem('token');
@@ -443,7 +442,7 @@ export default function CoachApplicationsPage() {
                   }
                 }}
                 disabled={loading}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-sm sm:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 min-h-[44px] font-medium"
               >
                 <Filter className="w-4 h-4" />
                 {loading ? 'Loading...' : 'Refresh'}
@@ -451,59 +450,57 @@ export default function CoachApplicationsPage() {
             </div>
           </div>
 
-          {/* Second row: Date range filters */}
-          <div className="flex flex-col sm:flex-row gap-4 items-end">
-            <div className="flex flex-col sm:flex-row gap-4 flex-1">
-              <div className="flex-1 max-w-xs">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Submitted After
-                </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setCurrentPage(1); // Reset to first page when filter changes
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-              <div className="flex-1 max-w-xs">
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Submitted Before
-                </label>
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setCurrentPage(1); // Reset to first page when filter changes
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark]"
-                />
-              </div>
-            </div>
-
-            {/* Clear filters button */}
-            {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
-              <button
-                onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
-                  setStatusFilter('all');
-                  setSearchTerm('');
-                  setCurrentPage(1);
+          {/* Date Range Filters - Responsive Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            <div className="w-full">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Submitted After
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setCurrentPage(1); // Reset to first page when filter changes
                 }}
-                className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-              >
-                Clear All Filters
-              </button>
-            )}
+                className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark] min-h-[44px]"
+              />
+            </div>
+            <div className="w-full">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Submitted Before
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setCurrentPage(1); // Reset to first page when filter changes
+                }}
+                className="w-full px-3 py-2.5 text-sm sm:text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent [color-scheme:light] dark:[color-scheme:dark] min-h-[44px]"
+              />
+            </div>
           </div>
 
-          {/* Results summary */}
-          <div className="flex items-center text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-lg">
-            <span>
+          {/* Clear Filters Button - Full Width on Mobile */}
+          {(startDate || endDate || statusFilter !== 'all' || searchTerm) && (
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+                setStatusFilter('all');
+                setSearchTerm('');
+                setCurrentPage(1);
+              }}
+              className="w-full sm:w-auto px-4 py-2.5 text-sm sm:text-base text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800 min-h-[44px] font-medium"
+            >
+              Clear All Filters
+            </button>
+          )}
+
+          {/* Results Summary */}
+          <div className="flex items-center text-xs sm:text-sm text-gray-600 dark:text-gray-400 bg-gray-50 dark:bg-gray-700 px-3 py-2 sm:px-4 sm:py-2.5 rounded-lg">
+            <span className="break-words">
               Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems} applications
               {searchTerm && ` (filtered by search)`}
             </span>
@@ -563,15 +560,15 @@ export default function CoachApplicationsPage() {
                       </div>
                       <div className="space-y-1">
                         <p className="break-words"><strong>ACT Training:</strong> {application.act_training_level}</p>
-                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent.join(', ')}</p>
+                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent?.join(', ') || 'Not specified'}</p>
                         <p className="break-words"><strong>Submitted:</strong> {formatDate(application.submitted_at)}</p>
                       </div>
                     </div>
                     
                     <div className="mt-3">
                       <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
-                        <strong>Expertise:</strong> {application.coaching_expertise.slice(0, 3).join(', ')}
-                        {application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
+                        <strong>Expertise:</strong> {application.coaching_expertise?.slice(0, 3).join(', ') || 'Not specified'}
+                        {application.coaching_expertise && application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
                       </p>
                     </div>
                   </div>
@@ -867,11 +864,15 @@ const ApplicationDetailsModal = ({
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
                 <label className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3 block">Areas of Expertise</label>
                 <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {application.coaching_expertise.map((area, index) => (
-                    <Badge key={index} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs break-words mobile-badge">
-                      {area}
-                    </Badge>
-                  ))}
+                  {application.coaching_expertise && application.coaching_expertise.length > 0 ? (
+                    application.coaching_expertise.map((area, index) => (
+                      <Badge key={index} className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 border-purple-200 dark:border-purple-700 text-xs break-words mobile-badge">
+                        {area}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Not specified</span>
+                  )}
                 </div>
               </div>
               <div className="bg-white dark:bg-gray-800 rounded-lg p-3 sm:p-4 border border-gray-200 dark:border-gray-700">
@@ -991,11 +992,15 @@ const ApplicationDetailsModal = ({
                 
                 <p className="font-medium mb-2 text-gray-900 dark:text-white"><strong>Languages:</strong></p>
                 <div className="flex flex-wrap gap-1 mt-1">
-                  {application.languages_fluent.map((lang, index) => (
-                    <Badge key={index} variant="secondary" className="text-xs break-words">
-                      {lang}
-                    </Badge>
-                  ))}
+                  {application.languages_fluent && application.languages_fluent.length > 0 ? (
+                    application.languages_fluent.map((lang, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs break-words">
+                        {lang}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Not specified</span>
+                  )}
                 </div>
               </div>
             </div>

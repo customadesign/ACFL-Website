@@ -43,7 +43,7 @@ function AppointmentsContent() {
   const { isInMeeting, currentMeetingId, setMeetingState, canJoinMeeting } = useMeeting();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
-  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming');
+  const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('all');
   const [sortBy, setSortBy] = useState<'dateAdded' | 'name'>('dateAdded');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [loading, setLoading] = useState(true);
@@ -138,10 +138,10 @@ function AppointmentsContent() {
     };
   }, [user?.id, API_URL]);
 
+  // Allow joining anytime - no time restrictions
   const isJoinAvailable = (apt: Appointment) => {
-    const start = new Date(apt.starts_at).getTime();
-    const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
-    return nowMs >= start && nowMs <= end;
+    // Always allow joining - session will end based on scheduled end time
+    return true;
   };
 
   const getCountdownLabel = (apt: Appointment) => {
@@ -149,17 +149,21 @@ function AppointmentsContent() {
     const end = apt.ends_at ? new Date(apt.ends_at).getTime() : (start + 60 * 60 * 1000);
     const toStart = start - nowMs;
     const toEnd = end - nowMs;
-    if (toStart > 0) {
-      const h = Math.floor(toStart / 3600000);
-      const m = Math.floor((toStart % 3600000) / 60000);
-      const s = Math.floor((toStart % 60000) / 1000);
-      const hh = h.toString().padStart(2, '0');
-      const mm = m.toString().padStart(2, '0');
-      const ss = s.toString().padStart(2, '0');
-      return `Starts in ${hh}:${mm}:${ss}`;
-    }
-    if (toEnd > 0) return 'Live now';
-    return 'Session ended';
+
+    // Session has ended
+    if (toEnd <= 0) return 'Session ended';
+
+    // Session is live now
+    if (toStart <= 0 && toEnd > 0) return 'Live now';
+
+    // Session hasn't started yet - show countdown
+    const h = Math.floor(toStart / 3600000);
+    const m = Math.floor((toStart % 3600000) / 60000);
+    const s = Math.floor((toStart % 60000) / 1000);
+    const hh = h.toString().padStart(2, '0');
+    const mm = m.toString().padStart(2, '0');
+    const ss = s.toString().padStart(2, '0');
+    return `Scheduled in ${hh}:${mm}:${ss}`;
   };
 
   const handleJoinMeeting = (appointment: Appointment) => {

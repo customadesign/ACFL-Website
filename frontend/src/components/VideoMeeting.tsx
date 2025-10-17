@@ -78,12 +78,16 @@ function MeetingView({
   meetingId,
   participantName,
   onMeetingEnd,
-  appointmentId
+  appointmentId,
+  initialMicOn,
+  initialWebcamOn
 }: {
   meetingId: string
   participantName: string
   onMeetingEnd: () => void
   appointmentId?: string
+  initialMicOn?: boolean
+  initialWebcamOn?: boolean
 }) {
   const [isChatVisible, setIsChatVisible] = useState(false)
   const [isScreenSharing, setIsScreenSharing] = useState(false)
@@ -96,8 +100,13 @@ function MeetingView({
   const [dominantSpeaker, setDominantSpeaker] = useState<string | null>(null)
   const [screenShareError, setScreenShareError] = useState<string | null>(null)
   const [isScreenShareSupported, setIsScreenShareSupported] = useState(false)
+  const [isEnablingMic, setIsEnablingMic] = useState(false)
+  const [isEnablingWebcam, setIsEnablingWebcam] = useState(false)
   const hasJoinedRef = useRef(false)
+  const hasSetInitialStateRef = useRef(false)
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const micEnableAttempts = useRef(0)
+  const webcamEnableAttempts = useRef(0)
 
   // Global meeting state management
   const { setMeetingState } = useGlobalMeeting()
@@ -132,10 +141,8 @@ function MeetingView({
     localMicOn: sdkLocalMicOn,
     localWebcamOn: sdkLocalWebcamOn
   } = useMeeting({
-    onMeetingJoined: () => {
+    onMeetingJoined: async () => {
       console.log('🎉 Meeting joined successfully!')
-      setIsMeetingJoined(true)
-      setIsConnecting(false)
       hasJoinedRef.current = true
       setConnectionQuality('good')
 
@@ -148,12 +155,78 @@ function MeetingView({
         clearTimeout(reconnectTimeoutRef.current)
         reconnectTimeoutRef.current = null
       }
+
+      // Apply initial device state BEFORE showing UI
+      if (!hasSetInitialStateRef.current) {
+        hasSetInitialStateRef.current = true
+
+        console.log('🔧 User wanted when joining:', {
+          wantedMicOn: initialMicOn,
+          wantedCameraOn: initialWebcamOn
+        })
+        console.log('📊 VideoSDK ALWAYS starts with devices ON (required for toggle functionality)')
+
+        // Wait for VideoSDK to fully initialize with devices ON (brief moment)
+        await new Promise(resolve => setTimeout(resolve, 500))
+
+        // IMPORTANT: We KNOW devices are ON because we set micEnabled:true, webcamEnabled:true
+        // So we ONLY toggle if user wanted them OFF
+
+        if (initialMicOn === false) {
+          // User wanted mic OFF, but it's currently ON, so toggle it
+          console.log('🔇 User wanted mic OFF - toggling mic to turn it OFF...')
+          if (toggleMic) {
+            toggleMic()
+            await new Promise(resolve => setTimeout(resolve, 400))
+            console.log('✅ Mic toggled OFF')
+          }
+        } else {
+          // User wanted mic ON, it's already ON, do nothing
+          console.log('🎤 User wanted mic ON - keeping it ON (no toggle needed)')
+        }
+
+        if (initialWebcamOn === false) {
+          // User wanted camera OFF, but it's currently ON, so toggle it
+          console.log('📴 User wanted camera OFF - toggling camera to turn it OFF...')
+          if (toggleWebcam) {
+            toggleWebcam()
+            await new Promise(resolve => setTimeout(resolve, 400))
+            console.log('✅ Camera toggled OFF')
+          }
+        } else {
+          // User wanted camera ON, it's already ON, do nothing
+          console.log('📹 User wanted camera ON - keeping it ON (no toggle needed)')
+        }
+
+        // Additional wait to ensure state is synced
+        await new Promise(resolve => setTimeout(resolve, 300))
+        console.log('🎬 Devices should now match user preferences:', {
+          userWantedMic: initialMicOn,
+          userWantedCamera: initialWebcamOn
+        })
+      }
+
+      // NOW show the meeting UI
+      setIsMeetingJoined(true)
+      setIsConnecting(false)
+      console.log('✅ Meeting UI visible - user can now see the session')
     },
     onMeetingLeft: () => {
       console.log('👋 Meeting left')
       setIsMeetingJoined(false)
       setIsConnecting(false)
       hasJoinedRef.current = false
+      hasSetInitialStateRef.current = false
+
+      // Reset device states
+      setLocalMicOn(false)
+      setLocalWebcamOn(false)
+      setIsEnablingMic(false)
+      setIsEnablingWebcam(false)
+
+      // Reset attempt counters
+      micEnableAttempts.current = 0
+      webcamEnableAttempts.current = 0
 
       // Clear global meeting state
       setMeetingState(false, null)
@@ -176,24 +249,36 @@ function MeetingView({
       setDominantSpeaker(activeSpeakerId)
     },
     onError: (error: any) => {
-      console.error('Meeting error:', error)
-      setConnectionQuality('poor')
+      // Only log meaningful errors (skip empty objects and non-critical warnings)
+      const hasErrorContent = error && (
+        error.code ||
+        error.message ||
+        error.name ||
+        (typeof error === 'string' && error.trim().length > 0) ||
+        Object.keys(error || {}).length > 0
+      )
 
-      // Implement auto-reconnect logic
-      if (error?.code === 4001 || error?.message?.includes('connection')) {
-        setConnectionQuality('disconnected')
+      if (hasErrorContent) {
+        console.error('Meeting error:', error)
+        setConnectionQuality('poor')
 
-        if (reconnectTimeoutRef.current) {
-          clearTimeout(reconnectTimeoutRef.current)
-        }
+        // Implement auto-reconnect logic for connection errors
+        if (error?.code === 4001 || error?.message?.includes('connection')) {
+          setConnectionQuality('disconnected')
 
-        reconnectTimeoutRef.current = setTimeout(() => {
-          if (!isMeetingJoined && hasJoinedRef.current === false) {
-            console.log('Attempting to reconnect...')
-            retryJoin()
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current)
           }
-        }, 3000)
+
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (!isMeetingJoined && hasJoinedRef.current === false) {
+              console.log('Attempting to reconnect...')
+              retryJoin()
+            }
+          }, 3000)
+        }
       }
+      // Silently ignore empty error objects
     }
   })
 
@@ -201,10 +286,12 @@ function MeetingView({
 
   // Update local states based on SDK states
   useEffect(() => {
+    console.log('🎤 SDK Mic state changed:', sdkLocalMicOn)
     setLocalMicOn(sdkLocalMicOn || false)
   }, [sdkLocalMicOn])
 
   useEffect(() => {
+    console.log('📹 SDK Webcam state changed:', sdkLocalWebcamOn)
     setLocalWebcamOn(sdkLocalWebcamOn || false)
   }, [sdkLocalWebcamOn])
 
@@ -315,26 +402,92 @@ function MeetingView({
     }
   }, [])
 
-  // Safe toggle functions to prevent circular JSON issues
-  const handleToggleMic = useCallback(() => {
-    try {
-      if (toggleMic) {
-        toggleMic()
-      }
-    } catch (error) {
-      console.error('Toggle mic error:', error)
+  // Toggle microphone - simplified (permissions already granted at join)
+  const handleToggleMic = useCallback(async () => {
+    if (isEnablingMic) {
+      console.log('⏳ Already toggling mic...')
+      return
     }
-  }, [toggleMic])
 
-  const handleToggleWebcam = useCallback(() => {
     try {
-      if (toggleWebcam) {
-        toggleWebcam()
+      setIsEnablingMic(true)
+
+      console.log('🎤 Toggling microphone...', {
+        currentLocalMicOn: localMicOn,
+        currentSdkLocalMicOn: sdkLocalMicOn,
+        isMeetingJoined,
+        hasToggleMic: !!toggleMic
+      })
+
+      if (!isMeetingJoined) {
+        console.warn('⚠️ Meeting not joined yet')
+        setIsEnablingMic(false)
+        return
       }
-    } catch (error) {
-      console.error('Toggle webcam error:', error)
+
+      if (!toggleMic) {
+        console.error('❌ VideoSDK toggleMic not available')
+        setIsEnablingMic(false)
+        return
+      }
+
+      // Simply toggle - VideoSDK already has permissions from initial join
+      console.log(`🔊 Calling VideoSDK toggleMic() - current state: ${localMicOn ? 'ON' : 'OFF'}`)
+      toggleMic()
+
+      // Brief delay for state update
+      await new Promise(resolve => setTimeout(resolve, 300))
+      console.log(`✅ Toggle complete`)
+
+    } catch (error: any) {
+      console.error('❌ Toggle mic error:', error)
+    } finally {
+      setIsEnablingMic(false)
     }
-  }, [toggleWebcam])
+  }, [toggleMic, localMicOn, sdkLocalMicOn, isEnablingMic, isMeetingJoined])
+
+  const handleToggleWebcam = useCallback(async () => {
+    if (isEnablingWebcam) {
+      console.log('⏳ Already toggling camera...')
+      return
+    }
+
+    try {
+      setIsEnablingWebcam(true)
+
+      console.log('📹 Toggling camera...', {
+        currentLocalWebcamOn: localWebcamOn,
+        currentSdkLocalWebcamOn: sdkLocalWebcamOn,
+        isMeetingJoined,
+        hasToggleWebcam: !!toggleWebcam
+      })
+
+      if (!isMeetingJoined) {
+        console.warn('⚠️ Meeting not joined yet')
+        setIsEnablingWebcam(false)
+        return
+      }
+
+      if (!toggleWebcam) {
+        console.error('❌ VideoSDK toggleWebcam not available')
+        setIsEnablingWebcam(false)
+        return
+      }
+
+      // Simply toggle - VideoSDK already has permissions from initial join
+      console.log(`📹 Calling VideoSDK toggleWebcam() - current state: ${localWebcamOn ? 'ON' : 'OFF'}`)
+      toggleWebcam()
+
+      // Brief delay for state update
+      await new Promise(resolve => setTimeout(resolve, 300))
+      console.log(`✅ Toggle complete`)
+
+    } catch (error: any) {
+      console.error('❌ Toggle webcam error:', error)
+    } finally {
+      setIsEnablingWebcam(false)
+    }
+  }, [toggleWebcam, localWebcamOn, sdkLocalWebcamOn, isEnablingWebcam, isMeetingJoined])
 
   const handleToggleScreenShare = useCallback(async () => {
     try {
@@ -683,9 +836,15 @@ function MeetingView({
                 ? 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
-            disabled={isConnecting}
+            disabled={isConnecting || isEnablingMic}
           >
-            {localMicOn ? <Mic size={18} className="sm:size-5 text-white" /> : <MicOff size={18} className="sm:size-5 text-white" />}
+            {isEnablingMic ? (
+              <Loader2 size={18} className="sm:size-5 text-white animate-spin" />
+            ) : localMicOn ? (
+              <Mic size={18} className="sm:size-5 text-white" />
+            ) : (
+              <MicOff size={18} className="sm:size-5 text-white" />
+            )}
           </Button>
 
           {/* Camera Control */}
@@ -698,9 +857,15 @@ function MeetingView({
                 ? 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600'
                 : 'bg-red-600 hover:bg-red-700 text-white'
             }`}
-            disabled={isConnecting}
+            disabled={isConnecting || isEnablingWebcam}
           >
-            {localWebcamOn ? <Video size={18} className="sm:size-5 text-white" /> : <VideoOff size={18} className="sm:size-5 text-white" />}
+            {isEnablingWebcam ? (
+              <Loader2 size={18} className="sm:size-5 text-white animate-spin" />
+            ) : localWebcamOn ? (
+              <Video size={18} className="sm:size-5 text-white" />
+            ) : (
+              <VideoOff size={18} className="sm:size-5 text-white" />
+            )}
           </Button>
 
           {/* Screen Share Control */}
@@ -1190,10 +1355,50 @@ export default function VideoMeeting({
     )
   }
 
+  // Request permissions before initializing VideoSDK
+  // This ensures we have permissions even when starting with devices off
+  const [permissionsGranted, setPermissionsGranted] = useState(false)
+
+  useEffect(() => {
+    const requestPermissions = async () => {
+      console.log('🔐 Requesting device permissions before VideoSDK init...')
+
+      try {
+        // Request both audio and video permissions
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: true
+        })
+
+        console.log('✅ Permissions granted, stopping test stream...')
+
+        // Stop all tracks immediately
+        stream.getTracks().forEach(track => {
+          console.log(`🛑 Stopping ${track.kind} track`)
+          track.stop()
+        })
+
+        // Wait a bit for streams to fully release
+        await new Promise(resolve => setTimeout(resolve, 300))
+
+        console.log('✅ Test streams stopped, ready to initialize VideoSDK')
+        setPermissionsGranted(true)
+      } catch (error: any) {
+        console.error('❌ Permission request failed:', error)
+        alert('Camera and microphone permissions are required for video meetings. Please allow access and try again.')
+        onMeetingEnd()
+      }
+    }
+
+    requestPermissions()
+  }, [onMeetingEnd])
+
   const config = {
     meetingId,
-    micEnabled: initialMicOn,
-    webcamEnabled: initialWebcamOn,
+    // IMPORTANT: Always enable devices during initialization to set up device access
+    // We'll toggle them OFF in onMeetingJoined if user wanted them off
+    micEnabled: true,
+    webcamEnabled: true,
     name: participantName || 'Participant',
     mode: 'CONFERENCE' as const,
     multiStream: true,
@@ -1213,6 +1418,25 @@ export default function VideoMeeting({
     }
   }
 
+  console.log('🎥 VideoMeeting config:', {
+    micEnabled: initialMicOn,
+    webcamEnabled: initialWebcamOn,
+    permissionsGranted
+  })
+
+  // Wait for permissions before initializing VideoSDK
+  if (!permissionsGranted) {
+    return (
+      <div className="fixed inset-0 bg-gray-900 dark:bg-gray-950 flex items-center justify-center z-[20000]">
+        <div className="text-center text-white max-w-md mx-auto px-6">
+          <Loader2 className="w-12 h-12 animate-spin mx-auto mb-4 text-blue-400" />
+          <h2 className="text-xl font-semibold mb-2">Requesting Permissions...</h2>
+          <p className="text-gray-400 mb-2">Please allow camera and microphone access</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <MeetingProvider config={config} token={token}>
       <MeetingConsumer>
@@ -1222,6 +1446,8 @@ export default function VideoMeeting({
             participantName={participantName || 'Participant'}
             onMeetingEnd={onMeetingEnd}
             appointmentId={appointmentId}
+            initialMicOn={initialMicOn}
+            initialWebcamOn={initialWebcamOn}
           />
         )}
       </MeetingConsumer>

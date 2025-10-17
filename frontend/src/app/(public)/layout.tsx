@@ -5,8 +5,10 @@ import PublicRoute from '@/components/PublicRoute';
 
 export default function PublicLayout({
   children,
+  params,
 }: {
   children: React.ReactNode
+  params: Promise<Record<string, never>>
 }) {
   useEffect(() => {
     // Force remove dark class from html element for public pages
