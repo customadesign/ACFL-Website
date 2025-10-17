@@ -29,7 +29,7 @@ router.get('/coaches/:coachId/rates', paymentControllerV2.getCoachRates);
 router.post('/coaches/:coachId/rates', paymentControllerV2.createCoachRate);
 router.get('/public/coaches/:coachId/rates', paymentControllerV2.getPublicCoachRates);
 
-// Stripe Webhook
-router.post('/webhook', paymentControllerV2.handleStripeWebhook);
+// Square Webhook
+router.post('/webhook', paymentControllerV2.handleSquareWebhook);
 
 export default router;

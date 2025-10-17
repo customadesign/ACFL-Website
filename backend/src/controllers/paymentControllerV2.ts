@@ -252,12 +252,25 @@ export class PaymentControllerV2 {
     }
   };
 
-  // Webhook handler for Stripe events
-  handleStripeWebhook = async (req: Request, res: Response) => {
+  // Webhook handler for Square events
+  handleSquareWebhook = async (req: Request, res: Response) => {
     try {
-      res.status(501).json({ error: 'Webhook handling not implemented yet' });
+      // TODO: Add Square webhook signature verification
+      // For now, we'll validate it's coming from Square by checking the structure
+      const event = req.body;
+
+      if (!event || !event.type) {
+        return res.status(400).json({ error: 'Invalid webhook payload' });
+      }
+
+      console.log('Square webhook received:', event.type);
+
+      // Delegate to payment service which has handlers for different event types
+      await this.paymentService.handleWebhook(event);
+
+      res.json({ received: true });
     } catch (error) {
-      console.error('Webhook error:', error);
+      console.error('Square webhook error:', error);
       res.status(500).json({ error: (error as Error).message });
     }
   };
