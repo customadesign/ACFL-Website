@@ -474,34 +474,61 @@ function MeetingView({
 
       console.log('🖥️ Starting screen share process...')
 
-      // Request screen share permission FIRST before calling VideoSDK
-      // This ensures the permission dialog appears
+      // Let VideoSDK handle the permission request directly
+      // This ensures it's triggered by the user gesture
       try {
-        console.log('🎬 Requesting screen share permission from browser...')
-        const stream = await navigator.mediaDevices.getDisplayMedia({
-          video: {
-            width: { ideal: 1920, max: 1920 },
-            height: { ideal: 1080, max: 1080 },
-            frameRate: { ideal: 15, max: 30 }
-          },
-          audio: false
-        })
-
-        console.log('✅ Screen share permission granted')
-
-        // Stop the manual stream - we just needed to get permission
-        stream.getTracks().forEach(track => track.stop())
-
-        // Small delay to ensure permission is registered
-        await new Promise(resolve => setTimeout(resolve, 100))
-
-        // Now call VideoSDK with permission already granted
         if (toggleScreenShare) {
-          console.log('🎬 Calling VideoSDK toggleScreenShare after permission granted...')
+          console.log('🎬 Calling VideoSDK toggleScreenShare directly...')
           toggleScreenShare()
         }
-      } catch (permissionError: any) {
-        console.error('Screen share permission error:', permissionError)
+      } catch (videoSdkError: any) {
+        console.error('VideoSDK screen share error:', videoSdkError)
+
+        // If VideoSDK fails, try manual permission request as fallback
+        console.log('🔄 VideoSDK failed, trying manual permission request...')
+
+        try {
+          // Try with audio first, fallback to video only if it fails
+          let stream
+          try {
+            stream = await navigator.mediaDevices.getDisplayMedia({
+              video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 15, max: 30 }
+              },
+              audio: {
+                echoCancellation: false,
+                noiseSuppression: false,
+                autoGainControl: false
+              }
+            })
+          } catch (audioError) {
+            console.log('🔄 Audio capture failed, trying video only...')
+            stream = await navigator.mediaDevices.getDisplayMedia({
+              video: {
+                width: { ideal: 1920, max: 1920 },
+                height: { ideal: 1080, max: 1080 },
+                frameRate: { ideal: 15, max: 30 }
+              },
+              audio: false
+            })
+          }
+
+          console.log('✅ Manual screen sharing permissions granted')
+
+          // Stop the manual stream - we just needed to get permission
+          stream.getTracks().forEach(track => {
+            track.stop()
+          })
+
+          // Try VideoSDK again now that permission is granted
+          if (toggleScreenShare) {
+            toggleScreenShare()
+          }
+
+        } catch (permissionError: any) {
+          console.error('Manual screen sharing permission error:', permissionError)
 
         let errorMessage = 'Screen sharing failed'
 
