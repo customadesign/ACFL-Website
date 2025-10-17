@@ -327,14 +327,13 @@ export default function CoachLayout({
             <div className="flex h-16 shrink-0 items-center px-4 border-b border-gray-200 dark:border-gray-700">
               {!sidebarCollapsed && (
                 <>
-                  {/* Light mode logo (inverted to be dark) */}
+                  {/* Light mode logo */}
                   <img
                     src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                     alt="ACFL Logo"
-                    className="h-8 w-auto mr-3 dark:hidden brightness-0"
-                    style={{ filter: 'brightness(0)' }}
+                    className="h-8 w-auto mr-3 dark:hidden"
                   />
-                  {/* Dark mode logo (original light colored) */}
+                  {/* Dark mode logo */}
                   <img
                     src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                     alt="ACFL Logo"
@@ -690,14 +689,13 @@ export default function CoachLayout({
                     )}
                   </button>
 
-                  {/* Light mode logo (inverted to be dark) */}
+                  {/* Light mode logo */}
                   <img
                     src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                     alt="ACFL Logo"
-                    className="h-8 w-auto dark:hidden brightness-0"
-                    style={{ filter: 'brightness(0)' }}
+                    className="h-8 w-auto dark:hidden"
                   />
-                  {/* Dark mode logo (original light colored) */}
+                  {/* Dark mode logo */}
                   <img
                     src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                     alt="ACFL Logo"
@@ -869,14 +867,13 @@ export default function CoachLayout({
                 <div className="p-4 border-b border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      {/* Light mode logo (inverted to be dark) */}
+                      {/* Light mode logo */}
                       <img
                         src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                         alt="ACFL Logo"
-                        className="h-8 w-auto dark:hidden brightness-0"
-                        style={{ filter: 'brightness(0)' }}
+                        className="h-8 w-auto dark:hidden"
                       />
-                      {/* Dark mode logo (original light colored) */}
+                      {/* Dark mode logo */}
                       <img
                         src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
                         alt="ACFL Logo"

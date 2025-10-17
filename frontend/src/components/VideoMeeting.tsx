@@ -107,6 +107,8 @@ function MeetingView({
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const micEnableAttempts = useRef(0)
   const webcamEnableAttempts = useRef(0)
+  const sdkMicStateRef = useRef<boolean>(false)
+  const sdkWebcamStateRef = useRef<boolean>(false)
 
   // Global meeting state management
   const { setMeetingState } = useGlobalMeeting()
@@ -284,16 +286,55 @@ function MeetingView({
 
   const participantIds = [...participants.keys()]
 
-  // Update local states based on SDK states
+  // Update local states based on SDK states with verification
   useEffect(() => {
-    console.log('🎤 SDK Mic state changed:', sdkLocalMicOn)
-    setLocalMicOn(sdkLocalMicOn || false)
-  }, [sdkLocalMicOn])
+    const newMicState = sdkLocalMicOn || false
+    console.log('🎤 SDK Mic state changed:', newMicState)
+
+    // Update ref immediately so async functions can read latest value
+    sdkMicStateRef.current = newMicState
+
+    // Only update if there's an actual change
+    if (localMicOn !== newMicState) {
+      console.log(`🔄 Updating local mic state: ${localMicOn} -> ${newMicState}`)
+      setLocalMicOn(newMicState)
+    }
+  }, [sdkLocalMicOn, localMicOn])
 
   useEffect(() => {
-    console.log('📹 SDK Webcam state changed:', sdkLocalWebcamOn)
-    setLocalWebcamOn(sdkLocalWebcamOn || false)
-  }, [sdkLocalWebcamOn])
+    const newWebcamState = sdkLocalWebcamOn || false
+    console.log('📹 SDK Webcam state changed:', newWebcamState)
+
+    // Update ref immediately so async functions can read latest value
+    sdkWebcamStateRef.current = newWebcamState
+
+    // Only update if there's an actual change
+    if (localWebcamOn !== newWebcamState) {
+      console.log(`🔄 Updating local webcam state: ${localWebcamOn} -> ${newWebcamState}`)
+      setLocalWebcamOn(newWebcamState)
+    }
+  }, [sdkLocalWebcamOn, localWebcamOn])
+
+  // Periodic state verification to catch any desyncs (runs every 3 seconds while in meeting)
+  useEffect(() => {
+    if (!isMeetingJoined) return
+
+    const verifyStateSync = () => {
+      // Check if local state matches SDK state
+      if (localMicOn !== (sdkLocalMicOn || false)) {
+        console.warn(`⚠️ Mic state desync detected! Local: ${localMicOn}, SDK: ${sdkLocalMicOn}. Force syncing...`)
+        setLocalMicOn(sdkLocalMicOn || false)
+      }
+
+      if (localWebcamOn !== (sdkLocalWebcamOn || false)) {
+        console.warn(`⚠️ Webcam state desync detected! Local: ${localWebcamOn}, SDK: ${sdkLocalWebcamOn}. Force syncing...`)
+        setLocalWebcamOn(sdkLocalWebcamOn || false)
+      }
+    }
+
+    const intervalId = setInterval(verifyStateSync, 3000)
+    return () => clearInterval(intervalId)
+  }, [isMeetingJoined, localMicOn, localWebcamOn, sdkLocalMicOn, sdkLocalWebcamOn])
 
   // Update participant count
   useEffect(() => {
@@ -412,9 +453,10 @@ function MeetingView({
     try {
       setIsEnablingMic(true)
 
+      const initialState = sdkMicStateRef.current
       console.log('🎤 Toggling microphone...', {
         currentLocalMicOn: localMicOn,
-        currentSdkLocalMicOn: sdkLocalMicOn,
+        currentSdkLocalMicOn: initialState,
         isMeetingJoined,
         hasToggleMic: !!toggleMic
       })
@@ -431,20 +473,52 @@ function MeetingView({
         return
       }
 
-      // Simply toggle - VideoSDK already has permissions from initial join
-      console.log(`🔊 Calling VideoSDK toggleMic() - current state: ${localMicOn ? 'ON' : 'OFF'}`)
+      // Call VideoSDK toggle
+      console.log(`🔊 Calling VideoSDK toggleMic() - current state: ${initialState ? 'ON' : 'OFF'} -> expecting: ${!initialState ? 'ON' : 'OFF'}`)
       toggleMic()
 
-      // Brief delay for state update
-      await new Promise(resolve => setTimeout(resolve, 300))
-      console.log(`✅ Toggle complete`)
+      // Wait for SDK state to actually change (poll with timeout, reading from ref)
+      const maxWaitTime = 2000 // 2 seconds max
+      const pollInterval = 100 // Check every 100ms
+      let waitedTime = 0
+      let stateChanged = false
+
+      while (waitedTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval))
+        waitedTime += pollInterval
+
+        // Check if SDK state has changed by reading from ref
+        const currentSdkState = sdkMicStateRef.current
+        if (currentSdkState !== initialState) {
+          stateChanged = true
+          console.log(`✅ SDK mic state changed to: ${currentSdkState ? 'ON' : 'OFF'} (after ${waitedTime}ms)`)
+          break
+        }
+      }
+
+      const finalSdkState = sdkMicStateRef.current
+      if (!stateChanged) {
+        console.error(`⚠️ SDK mic state did not change after ${maxWaitTime}ms. Expected: ${!initialState}, Still: ${finalSdkState}`)
+        // Force a UI update to reflect the SDK state
+        setLocalMicOn(finalSdkState)
+      } else {
+        // Verify the UI state matches SDK state
+        if (localMicOn !== finalSdkState) {
+          console.log(`🔄 Syncing UI state to match SDK state: ${finalSdkState ? 'ON' : 'OFF'}`)
+          setLocalMicOn(finalSdkState)
+        }
+      }
+
+      console.log(`✅ Toggle complete - Final state: ${finalSdkState ? 'ON' : 'OFF'}`)
 
     } catch (error: any) {
       console.error('❌ Toggle mic error:', error)
+      // On error, sync UI with SDK state
+      setLocalMicOn(sdkMicStateRef.current)
     } finally {
       setIsEnablingMic(false)
     }
-  }, [toggleMic, localMicOn, sdkLocalMicOn, isEnablingMic, isMeetingJoined])
+  }, [toggleMic, localMicOn, isEnablingMic, isMeetingJoined])
 
   const handleToggleWebcam = useCallback(async () => {
     if (isEnablingWebcam) {
@@ -455,9 +529,10 @@ function MeetingView({
     try {
       setIsEnablingWebcam(true)
 
+      const initialState = sdkWebcamStateRef.current
       console.log('📹 Toggling camera...', {
         currentLocalWebcamOn: localWebcamOn,
-        currentSdkLocalWebcamOn: sdkLocalWebcamOn,
+        currentSdkLocalWebcamOn: initialState,
         isMeetingJoined,
         hasToggleWebcam: !!toggleWebcam
       })
@@ -474,20 +549,52 @@ function MeetingView({
         return
       }
 
-      // Simply toggle - VideoSDK already has permissions from initial join
-      console.log(`📹 Calling VideoSDK toggleWebcam() - current state: ${localWebcamOn ? 'ON' : 'OFF'}`)
+      // Call VideoSDK toggle
+      console.log(`📹 Calling VideoSDK toggleWebcam() - current state: ${initialState ? 'ON' : 'OFF'} -> expecting: ${!initialState ? 'ON' : 'OFF'}`)
       toggleWebcam()
 
-      // Brief delay for state update
-      await new Promise(resolve => setTimeout(resolve, 300))
-      console.log(`✅ Toggle complete`)
+      // Wait for SDK state to actually change (poll with timeout, reading from ref)
+      const maxWaitTime = 2000 // 2 seconds max
+      const pollInterval = 100 // Check every 100ms
+      let waitedTime = 0
+      let stateChanged = false
+
+      while (waitedTime < maxWaitTime) {
+        await new Promise(resolve => setTimeout(resolve, pollInterval))
+        waitedTime += pollInterval
+
+        // Check if SDK state has changed by reading from ref
+        const currentSdkState = sdkWebcamStateRef.current
+        if (currentSdkState !== initialState) {
+          stateChanged = true
+          console.log(`✅ SDK webcam state changed to: ${currentSdkState ? 'ON' : 'OFF'} (after ${waitedTime}ms)`)
+          break
+        }
+      }
+
+      const finalSdkState = sdkWebcamStateRef.current
+      if (!stateChanged) {
+        console.error(`⚠️ SDK webcam state did not change after ${maxWaitTime}ms. Expected: ${!initialState}, Still: ${finalSdkState}`)
+        // Force a UI update to reflect the SDK state
+        setLocalWebcamOn(finalSdkState)
+      } else {
+        // Verify the UI state matches SDK state
+        if (localWebcamOn !== finalSdkState) {
+          console.log(`🔄 Syncing UI state to match SDK state: ${finalSdkState ? 'ON' : 'OFF'}`)
+          setLocalWebcamOn(finalSdkState)
+        }
+      }
+
+      console.log(`✅ Toggle complete - Final state: ${finalSdkState ? 'ON' : 'OFF'}`)
 
     } catch (error: any) {
       console.error('❌ Toggle webcam error:', error)
+      // On error, sync UI with SDK state
+      setLocalWebcamOn(sdkWebcamStateRef.current)
     } finally {
       setIsEnablingWebcam(false)
     }
-  }, [toggleWebcam, localWebcamOn, sdkLocalWebcamOn, isEnablingWebcam, isMeetingJoined])
+  }, [toggleWebcam, localWebcamOn, isEnablingWebcam, isMeetingJoined])
 
   const handleToggleScreenShare = useCallback(async () => {
     try {
