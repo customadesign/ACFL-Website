@@ -15,6 +15,7 @@ import calendarRoutes from './routes/calendarRoutes';
 import calendarIntegrationRoutes from './routes/calendarIntegrationRoutes';
 import coachApplicationRoutes from './routes/coachApplicationRoutes';
 import paymentRoutes from './routes/paymentRoutes';
+import paymentRoutesV2 from './routes/paymentRoutesV2';
 import bookingRoutes from './routes/bookingRoutes';
 import contentRoutes from './routes/contentRoutes';
 import staffRoutes from './routes/staffRoutes';
@@ -38,13 +39,21 @@ import { Server } from 'socket.io';
 // CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.NODE_ENV === 'production'
-      ? ['https://therapist-matcher-frontend.onrender.com', process.env.CORS_ORIGIN].filter(Boolean)
-      : ['http://localhost:3002', 'http://localhost:4000', 'http://localhost:4002', 'http://localhost:4003', 'http://localhost:3000', 'http://frontend:3000'];
-    
+    // Always allow localhost for local development + production URLs
+    const allowedOrigins = [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:4000',
+      'http://localhost:4002',
+      'http://localhost:4003',
+      'http://frontend:3000',
+      'https://therapist-matcher-frontend.onrender.com',
+      process.env.CORS_ORIGIN
+    ].filter(Boolean);
+
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
-    
+
     if (allowedOrigins.indexOf(origin) !== -1) {
       callback(null, true);
     } else {
@@ -74,6 +83,7 @@ app.use('/api/calendar', calendarRoutes);
 app.use('/api/calendar-integration', calendarIntegrationRoutes);
 app.use('/api/coach-applications', coachApplicationRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/payments/v2', paymentRoutesV2);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/content', contentRoutes);
 app.use('/api/csv-import', csvImportRoutes);
@@ -288,5 +298,6 @@ process.on('SIGINT', () => {
     process.exit(0);
   });
 });
+
 
 
