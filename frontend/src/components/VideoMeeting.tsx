@@ -27,8 +27,9 @@ const screenSharingDiagnostics = {
     const issues: string[] = []
     let supported = true
 
-    // Check secure context
-    if (!window.isSecureContext && window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+    // Check secure context (only fail if NOT secure AND NOT localhost)
+    const isSecure = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+    if (!isSecure) {
       issues.push('Screen sharing requires HTTPS or localhost')
       supported = false
     }
@@ -437,15 +438,10 @@ function MeetingView({
     try {
       setScreenShareError(null)
 
-      // Check if screen sharing is supported
+      // Check if screen sharing is supported - but don't block, just try anyway
       if (!isScreenShareSupported) {
-        const isSecureContext = window.isSecureContext || window.location.protocol === 'https:' || window.location.hostname === 'localhost'
-        if (!isSecureContext) {
-          setScreenShareError('Screen sharing requires HTTPS. Please use a secure connection.')
-        } else {
-          setScreenShareError('Screen sharing is not supported by your browser.')
-        }
-        return
+        console.warn('Screen sharing support check failed, but attempting anyway...')
+        // Don't return early - let VideoSDK try to enable screen share
       }
 
       // Check if already screen sharing
