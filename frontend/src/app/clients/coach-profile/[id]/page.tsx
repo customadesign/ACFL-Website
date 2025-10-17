@@ -667,7 +667,18 @@ function CoachProfileContent() {
               {/* Quick Actions */}
               <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
                 {/* Free Consultation - Visible to coaches OR clients viewing Test Coach only */}
-                {(user?.user_type === 'coach' || (user?.user_type === 'client' && isTestCoach(coach))) && (
+                {(() => {
+                  const shouldShow = user?.user_type === 'coach' || (user?.user_type === 'client' && isTestCoach(coach));
+                  console.log('FREE CONSULTATION BUTTON CHECK:', {
+                    userType: user?.user_type,
+                    coachId: coach.id,
+                    coachEmail: coach.email,
+                    coachName: coach.name,
+                    isTestCoach: isTestCoach(coach),
+                    shouldShow: shouldShow
+                  });
+                  return shouldShow;
+                })() && (
                   <DeactivatedActionButton action="book a consultation">
                     <Button
                       size="lg"
