@@ -126,6 +126,25 @@ function MeetingView({
     checkScreenShareSupport()
   }, [])
 
+  // Handle browser tab/window close - clear meeting state
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (isMeetingJoined) {
+        console.log('🪟 Browser closing - cleaning up meeting state')
+        // Clear meeting state immediately
+        setMeetingState(false, null)
+        // Note: We can't call async functions or show custom messages in beforeunload
+        // The meeting state will be cleared from localStorage automatically
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [isMeetingJoined, setMeetingState])
+
   const {
     join,
     leave,
