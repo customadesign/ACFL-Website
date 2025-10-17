@@ -522,7 +522,7 @@ const SquareBookingFlow: React.FC<SquareBookingFlowProps> = ({
                     Schedule for Later
                   </Button>
                   {/* Book Instant Session - Only visible to coaches */}
-                  {user?.user_type === 'coach' && (
+                  {user?.role === 'coach' && (
                     <Button
                       className="w-full"
                       variant="outline"
