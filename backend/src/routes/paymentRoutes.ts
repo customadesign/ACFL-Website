@@ -27,6 +27,7 @@ router.post('/refunds', authenticate, paymentController.createRefund);
 
 // Square Payment Webhook (no auth - called by Square)
 router.post('/webhook/square', paymentController.handlePaymentWebhook);
+router.post('/webhook', paymentController.handlePaymentWebhook); // Alternative webhook path for Square
 
 // Legacy routes for backward compatibility (protected)
 router.post('/create-payment-intent', authenticate, paymentController.createPaymentIntent);
