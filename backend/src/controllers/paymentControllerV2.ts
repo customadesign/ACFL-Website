@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { PaymentServiceV2 } from '../services/paymentServiceV2';
 import { CoachRateService } from '../services/coachRateService';
-import { 
+import crypto from 'crypto';
+import {
   CreatePaymentAuthorizationRequest,
   CapturePaymentRequest,
   CreateRefundRequest,
@@ -255,15 +256,50 @@ export class PaymentControllerV2 {
   // Webhook handler for Square events
   handleSquareWebhook = async (req: Request, res: Response) => {
     try {
-      // TODO: Add Square webhook signature verification
-      // For now, we'll validate it's coming from Square by checking the structure
+      const signatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY;
+
+      if (!signatureKey) {
+        console.error('SQUARE_WEBHOOK_SIGNATURE_KEY not configured');
+        return res.status(500).json({ error: 'Webhook signature key not configured' });
+      }
+
+      // Get the Square signature from headers
+      const squareSignature = req.headers['x-square-hmacsha256-signature'] as string;
+      const webhookUrl = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+
+      if (!squareSignature) {
+        console.warn('Webhook received without signature - rejecting');
+        return res.status(401).json({ error: 'Missing signature' });
+      }
+
+      // Square webhook signature verification
+      // Concatenate: webhook URL + request body (as string)
+      const payload = webhookUrl + JSON.stringify(req.body);
+
+      // Create HMAC-SHA256 hash using the signature key
+      const hmac = crypto.createHmac('sha256', signatureKey);
+      hmac.update(payload);
+      const computedSignature = hmac.digest('base64');
+
+      // Compare signatures (constant-time comparison to prevent timing attacks)
+      const isValid = crypto.timingSafeEqual(
+        Buffer.from(squareSignature),
+        Buffer.from(computedSignature)
+      );
+
+      if (!isValid) {
+        console.warn('Invalid webhook signature - potential security threat');
+        return res.status(401).json({ error: 'Invalid signature' });
+      }
+
+      // Signature verified - process the webhook
       const event = req.body;
 
       if (!event || !event.type) {
         return res.status(400).json({ error: 'Invalid webhook payload' });
       }
 
-      console.log('Square webhook received:', event.type);
+      console.log('✅ Square webhook verified and received:', event.type);
 
       // Delegate to payment service which has handlers for different event types
       await this.paymentService.handleWebhook(event);
