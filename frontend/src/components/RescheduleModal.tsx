@@ -66,7 +66,36 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
 
       if (response.ok) {
         const data = await response.json();
-        setAvailableSlots(data.slots || []);
+        const fetchedSlots = data.slots || [];
+
+        // Calculate appointment duration
+        const originalStart = new Date(appointment.starts_at);
+        const originalEnd = new Date(appointment.ends_at);
+        const durationMs = originalEnd.getTime() - originalStart.getTime();
+        const durationMinutes = Math.floor(durationMs / (1000 * 60));
+
+        // Check if selected date is today
+        const selectedDateObj = new Date(selectedDate);
+        const todayDate = new Date();
+        todayDate.setHours(0, 0, 0, 0);
+        selectedDateObj.setHours(0, 0, 0, 0);
+        const isToday = selectedDateObj.getTime() === todayDate.getTime();
+
+        // If today, add "Start Now" as first slot
+        if (isToday) {
+          const now = new Date();
+          const newEnd = new Date(now.getTime() + durationMs);
+
+          const nowSlot: AvailableSlot = {
+            slot_start: now.toISOString(),
+            slot_end: newEnd.toISOString(),
+            duration_minutes: durationMinutes
+          };
+
+          setAvailableSlots([nowSlot, ...fetchedSlots]);
+        } else {
+          setAvailableSlots(fetchedSlots);
+        }
       }
     } catch (error) {
       console.error('Error loading available slots:', error);
@@ -107,6 +136,51 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
     } catch (error) {
       console.error('Error rescheduling:', error);
       alert('Failed to reschedule appointment. Please try again.');
+    } finally {
+      setRescheduling(false);
+    }
+  };
+
+  const handleStartNow = async () => {
+    setRescheduling(true);
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = getApiUrl();
+
+      // Get original appointment duration
+      const originalStart = new Date(appointment.starts_at);
+      const originalEnd = new Date(appointment.ends_at);
+      const durationMs = originalEnd.getTime() - originalStart.getTime();
+
+      // Calculate new start (now) and end times
+      const now = new Date();
+      const newEnd = new Date(now.getTime() + durationMs);
+
+      const response = await fetch(
+        `${API_BASE_URL}/api/calendar/appointment/${appointment.id}/reschedule`,
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            newStartTime: now.toISOString(),
+            newEndTime: newEnd.toISOString()
+          })
+        }
+      );
+
+      if (response.ok) {
+        onSuccess();
+        onClose();
+      } else {
+        const error = await response.json();
+        alert(error.error || 'Failed to start session immediately');
+      }
+    } catch (error) {
+      console.error('Error starting session now:', error);
+      alert('Failed to start session immediately. Please try again.');
     } finally {
       setRescheduling(false);
     }
@@ -281,24 +355,36 @@ export default function RescheduleModal({ appointment, isOpen, onClose, onSucces
                       <p className="text-gray-500 dark:text-gray-400 text-sm">No available times</p>
                     </div>
                   ) : (
-                    availableSlots.map((slot, index) => (
-                      <button
-                        key={index}
-                        onClick={() => setSelectedSlot(slot)}
-                        className={`w-full p-3 text-left border rounded-lg transition-all duration-200 ${
-                          selectedSlot === slot
-                            ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
-                            : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-white dark:hover:bg-gray-800'
-                        }`}
-                      >
-                        <div className="font-medium text-gray-900 dark:text-white" suppressHydrationWarning>
-                          {formatTime(slot.slot_start)}
-                        </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          {slot.duration_minutes} minutes
-                        </div>
-                      </button>
-                    ))
+                    availableSlots.map((slot, index) => {
+                      // Check if this is today and the first slot (which is "Start Now")
+                      const slotDate = new Date(slot.slot_start);
+                      const nowDate = new Date();
+                      const isNowSlot = index === 0 &&
+                        slotDate.toDateString() === nowDate.toDateString() &&
+                        Math.abs(slotDate.getTime() - nowDate.getTime()) < 60000; // Within 1 minute
+
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedSlot(slot)}
+                          className={`w-full p-3 text-left border rounded-lg transition-all duration-200 ${
+                            selectedSlot === slot
+                              ? isNowSlot
+                                ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
+                                : 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                              : 'border-gray-200 dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-white dark:hover:bg-gray-800'
+                          }`}
+                        >
+                          <div className={`font-medium flex items-center gap-2 ${isNowSlot ? 'text-green-600 dark:text-green-400' : 'text-gray-900 dark:text-white'}`} suppressHydrationWarning>
+                            {isNowSlot && <Clock className="w-4 h-4" />}
+                            {isNowSlot ? 'Start Now (Immediately)' : formatTime(slot.slot_start)}
+                          </div>
+                          <div className="text-xs text-gray-500 dark:text-gray-400">
+                            {slot.duration_minutes} minutes
+                          </div>
+                        </button>
+                      );
+                    })
                   )}
                 </div>
               ) : (
