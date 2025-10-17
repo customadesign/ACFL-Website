@@ -733,16 +733,16 @@ function MeetingView({
         }`}>
           {/* Screen Share Priority View */}
           {presenterId ? (
-            <div className="h-full flex flex-col p-2 sm:p-4 gap-2 sm:gap-4">
+            <div className="h-full flex flex-row p-2 sm:p-4 gap-2 sm:gap-4">
               {/* Main Screen Share */}
               <div className="flex-1 min-h-0">
                 <ScreenShareView presenterId={presenterId} />
               </div>
 
-              {/* Participant Thumbnails */}
-              <div className="h-20 sm:h-24 flex gap-2 overflow-x-auto pb-1">
+              {/* Participant Thumbnails - Right Sidebar */}
+              <div className="w-48 sm:w-64 flex flex-col gap-2 overflow-y-auto pr-1">
                 {participantIds.map((participantId) => (
-                  <div key={participantId} className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24">
+                  <div key={participantId} className="flex-shrink-0 w-full aspect-video">
                     <ParticipantView participantId={participantId} isScreenShareMode />
                   </div>
                 ))}
