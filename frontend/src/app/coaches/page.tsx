@@ -29,6 +29,10 @@ export default function CoachDashboardPage() {
 
   const API_URL = getApiUrl()
 
+  const handleAppointmentClick = (appointmentId: string) => {
+    router.push(`/coaches/calendar?activeTab=appointments#appointment-${appointmentId}`)
+  }
+
   useEffect(() => {
     loadDashboardData()
   }, [])
@@ -166,7 +170,7 @@ export default function CoachDashboardPage() {
                         <div
                           key={appointment.id}
                           className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
-                          onClick={() => router.push('/coaches/calendar?activeTab=appointments')}
+                          onClick={() => handleAppointmentClick(appointment.id)}
                         >
                           <div className="p-2 bg-blue-100 rounded-full">
                             <User className="w-5 h-5 text-blue-600" />
