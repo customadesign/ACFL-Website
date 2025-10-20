@@ -773,7 +773,6 @@ router.get('/client/saved-coaches', authenticate, requireActiveUser, async (req:
 router.post('/client/saved-coaches', [
   authenticate,
   requireActiveUser,
-  authenticate,
   body('coachId').notEmpty().withMessage('Coach ID is required')
 ], async (req: Request & { user?: any }, res: Response) => {
   try {
