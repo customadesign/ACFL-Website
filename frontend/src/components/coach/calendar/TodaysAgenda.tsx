@@ -270,15 +270,15 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
 
             {isExpanded && (
               <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2" onClick={(e) => e.stopPropagation()}>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col gap-2">
                   {(isAppointmentActive(appointment) || isAppointmentUpcoming(appointment)) && appointment.meeting_id && appointment.status === 'confirmed' && (
                     <Button
                       size="sm"
-                      className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                      className="w-full bg-green-600 hover:bg-green-700 text-white text-xs"
                       onClick={() => handleJoinMeeting(appointment)}
                     >
                       <Video className="h-3 w-3 mr-1" />
-                      {isAppointmentActive(appointment) ? 'Join' : 'Join Early'}
+                      {isAppointmentActive(appointment) ? 'Join Session' : 'Join Early'}
                     </Button>
                   )}
 
@@ -286,7 +286,7 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="text-xs"
+                      className="w-full text-xs"
                       onClick={() => handleMarkAsComplete(appointment.id)}
                     >
                       <Check className="h-3 w-3 mr-1" />
@@ -297,7 +297,7 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-xs col-span-2"
+                    className="w-full text-xs"
                     onClick={() => toast.info('Reschedule feature coming soon')}
                   >
                     <CalendarClock className="h-3 w-3 mr-1" />
