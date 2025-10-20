@@ -833,6 +833,13 @@ router.post('/client/saved-coaches', [
       .single();
 
     if (saveError) {
+      // Handle duplicate constraint error (code 23505)
+      if (saveError.code === '23505') {
+        return res.status(400).json({
+          success: false,
+          message: 'Coach already saved'
+        });
+      }
       throw saveError;
     }
 
@@ -841,11 +848,20 @@ router.post('/client/saved-coaches', [
       message: 'Coach saved successfully',
       data: savedCoach
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Save coach error:', error);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Failed to save coach' 
+
+    // Handle duplicate constraint error
+    if (error.code === '23505') {
+      return res.status(400).json({
+        success: false,
+        message: 'Coach already saved'
+      });
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to save coach'
     });
   }
 });
