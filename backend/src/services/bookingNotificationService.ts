@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { BookingRequest, BookingEvent } from '../types/booking';
 import { getSocketIO } from '../lib/socket';
+import emailService from './emailService';
 
 export class BookingNotificationService {
   /**
@@ -333,7 +334,40 @@ export class BookingNotificationService {
         coachNotificationData
       ]);
 
-      // TODO: Send confirmation emails to both parties
+      // Send confirmation emails to both parties
+      try {
+        const scheduledDateTime = new Date(session.scheduled_at);
+        const appointmentDate = scheduledDateTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+        const appointmentTime = scheduledDateTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        await emailService.sendAppointmentConfirmation({
+          clientEmail: client.email,
+          coachEmail: coach.email,
+          clientName: `${client.first_name} ${client.last_name}`,
+          coachName: `${coach.first_name} ${coach.last_name}`,
+          appointmentDetails: {
+            date: appointmentDate,
+            time: appointmentTime,
+            duration: `${session.duration_minutes} minutes`,
+            type: session.session_type || 'Video Session'
+          }
+        });
+
+        console.log(`Confirmation emails sent to both ${client.email} and ${coach.email}`);
+      } catch (emailError) {
+        console.error('Failed to send confirmation emails:', emailError);
+        // Don't fail the notification if email sending fails
+      }
+
       // TODO: Send calendar invites
       // TODO: Send push notifications
       // TODO: Send real-time notifications via WebSocket/Socket.IO
