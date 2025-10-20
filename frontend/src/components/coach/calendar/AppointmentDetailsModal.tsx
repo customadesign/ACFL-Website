@@ -117,7 +117,7 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
 
           {/* Appointment Details */}
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Appointment Details</h3>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Appointment Details</h3>
             <div className="space-y-2 pl-4">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
@@ -156,7 +156,11 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
         </div>
 
         <div className="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
-          <Button variant="outline" onClick={onClose} className="dark:text-gray-100">
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600"
+          >
             Close
           </Button>
         </div>
