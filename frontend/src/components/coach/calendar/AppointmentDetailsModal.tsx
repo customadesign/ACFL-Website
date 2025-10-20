@@ -74,8 +74,8 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
+        <DialogHeader className="pt-2">
+          <DialogTitle className="flex items-center justify-between text-xl">
             <span>Appointment Details</span>
             <Badge variant="outline" className={`${getStatusColor(appointment.status)} text-xs px-2 py-1`}>
               {appointment.status}
