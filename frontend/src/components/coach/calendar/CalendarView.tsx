@@ -221,48 +221,35 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                         {dayAppointments.slice(0, 2).map(appointment => (
                           <div
                             key={appointment.id}
-                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded border ${getStatusColor(appointment.status)} cursor-pointer hover:opacity-80 transition-opacity flex items-center justify-between gap-1`}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push('/coaches/calendar?activeTab=appointments')
-                            }}
+                            className={`text-[10px] sm:text-xs p-0.5 sm:p-1 rounded border ${getStatusColor(appointment.status)}`}
                           >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium truncate">
-                                {appointment.clients ? (
-                                  <span className="hidden sm:inline">
-                                    {`${appointment.clients.first_name} ${appointment.clients.last_name}`}
-                                  </span>
-                                ) : (
-                                  <span className="hidden sm:inline">Client</span>
-                                )}
-                                <span className="sm:hidden">•</span>
-                              </div>
-                              <div className="truncate">
+                            <div className="font-medium truncate">
+                              {appointment.clients ? (
                                 <span className="hidden sm:inline">
-                                  {new Date(appointment.starts_at).toLocaleTimeString([], {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })}
+                                  {`${appointment.clients.first_name} ${appointment.clients.last_name}`}
                                 </span>
-                                <span className="sm:hidden text-[8px]">
-                                  {new Date(appointment.starts_at).toLocaleTimeString([], {
-                                    hour: 'numeric'
-                                  })}
-                                </span>
-                              </div>
+                              ) : (
+                                <span className="hidden sm:inline">Client</span>
+                              )}
+                              <span className="sm:hidden">•</span>
                             </div>
-                            <ArrowRight className="h-3 w-3 flex-shrink-0 hidden sm:block" />
+                            <div className="truncate">
+                              <span className="hidden sm:inline">
+                                {new Date(appointment.starts_at).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              <span className="sm:hidden text-[8px]">
+                                {new Date(appointment.starts_at).toLocaleTimeString([], {
+                                  hour: 'numeric'
+                                })}
+                              </span>
+                            </div>
                           </div>
                         ))}
                         {dayAppointments.length > 2 && (
-                          <div
-                            className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:underline"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              router.push('/coaches/calendar?activeTab=appointments')
-                            }}
-                          >
+                          <div className="text-[9px] sm:text-xs text-gray-500 dark:text-gray-400">
                             <span className="hidden sm:inline">+{dayAppointments.length - 2} more</span>
                             <span className="sm:hidden">+{dayAppointments.length - 2}</span>
                           </div>
