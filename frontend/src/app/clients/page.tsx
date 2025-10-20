@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { getApiUrl } from '@/lib/api'
@@ -20,6 +21,7 @@ import {
 import axios from 'axios'
 
 export default function ClientDashboard() {
+  const router = useRouter()
   const { user } = useAuth()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -238,7 +240,11 @@ export default function ClientDashboard() {
               ) : (
                 <div className="space-y-4">
                   {upcomingActivities.map((activity: any) => (
-                    <div key={activity.id} className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors">
+                    <div
+                      key={activity.id}
+                      className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+                      onClick={() => router.push('/clients/appointments')}
+                    >
                       <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
                         <Calendar className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                       </div>
