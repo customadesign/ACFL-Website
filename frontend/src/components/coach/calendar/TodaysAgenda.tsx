@@ -5,9 +5,10 @@ import dynamic from 'next/dynamic'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { apiGet } from '@/lib/api-client'
+import { apiGet, apiPut } from '@/lib/api-client'
 import { getApiUrl } from '@/lib/api'
-import { Clock, User, Video, Calendar } from 'lucide-react'
+import { Clock, User, Video, Calendar, ChevronDown, ChevronUp, Check, CalendarClock } from 'lucide-react'
+import { toast } from 'sonner'
 
 // Dynamic imports for meeting components
 const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), {
@@ -39,6 +40,7 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
   const [currentTime, setCurrentTime] = useState(new Date())
   const [showMeeting, setShowMeeting] = useState(false)
   const [meetingAppointment, setMeetingAppointment] = useState<TodaysAppointment | null>(null)
+  const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null)
 
   const API_URL = getApiUrl()
 
@@ -157,6 +159,21 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
     setMeetingAppointment(null)
   }
 
+  const handleMarkAsComplete = async (appointmentId: string) => {
+    try {
+      await apiPut(`${API_URL}/api/coach/appointments/${appointmentId}`, { status: 'completed' })
+      toast.success('Appointment marked as complete')
+      loadTodaysAppointments()
+    } catch (error) {
+      console.error('Error marking appointment as complete:', error)
+      toast.error('Failed to update appointment status')
+    }
+  }
+
+  const toggleExpand = (appointmentId: string) => {
+    setExpandedAppointmentId(expandedAppointmentId === appointmentId ? null : appointmentId)
+  }
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -181,83 +198,117 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
 
   return (
     <div className="space-y-3">
-      {todaysAppointments.map((appointment) => (
-        <div
-          key={appointment.id}
-          className={`p-3 rounded-lg border transition-all ${
-            isAppointmentActive(appointment)
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-              : isAppointmentUpcoming(appointment)
-              ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
-              : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <User className="h-3 w-3 text-gray-500" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                  {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
-                </p>
-              </div>
+      {todaysAppointments.map((appointment) => {
+        const isExpanded = expandedAppointmentId === appointment.id
+        return (
+          <div
+            key={appointment.id}
+            className={`p-3 rounded-lg border transition-all cursor-pointer ${
+              isAppointmentActive(appointment)
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+                : isAppointmentUpcoming(appointment)
+                ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                : 'bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+            }`}
+          >
+            <div className="flex items-start justify-between" onClick={() => toggleExpand(appointment.id)}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <User className="h-3 w-3 text-gray-500" />
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                    {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
+                  </p>
+                </div>
 
-              <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 mb-2">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {formatTime(appointment.starts_at)} - {formatTime(appointment.ends_at)}
-                </span>
-              </div>
+                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-300 mb-2">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    {formatTime(appointment.starts_at)} - {formatTime(appointment.ends_at)}
+                  </span>
+                </div>
 
-              <div className="flex items-center gap-2">
-                <Badge
-                  variant="secondary"
-                  className={`text-xs ${getStatusColor(appointment.status)}`}
-                >
-                  {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
-                </Badge>
-
-                {appointment.meeting_id && appointment.status === 'confirmed' && (
-                  <Badge variant="outline" className="text-xs">
-                    <Video className="h-3 w-3 mr-1" />
-                    Virtual
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant="secondary"
+                    className={`text-xs ${getStatusColor(appointment.status)}`}
+                  >
+                    {appointment.status.charAt(0).toUpperCase() + appointment.status.slice(1)}
                   </Badge>
+
+                  {appointment.meeting_id && appointment.status === 'confirmed' && (
+                    <Badge variant="outline" className="text-xs">
+                      <Video className="h-3 w-3 mr-1" />
+                      Virtual
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="text-right ml-2 flex flex-col items-end">
+                <div className="text-xs font-medium text-gray-900 dark:text-white">
+                  {getTimeUntilAppointment(appointment)}
+                </div>
+                {isAppointmentActive(appointment) && (
+                  <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
+                    Active
+                  </div>
+                )}
+                {isAppointmentUpcoming(appointment) && (
+                  <div className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+                    <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
+                    Soon
+                  </div>
+                )}
+                {isExpanded ? (
+                  <ChevronUp className="h-4 w-4 text-gray-500 mt-1" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-500 mt-1" />
                 )}
               </div>
             </div>
 
-            <div className="text-right ml-2">
-              <div className="text-xs font-medium text-gray-900 dark:text-white">
-                {getTimeUntilAppointment(appointment)}
-              </div>
-              {isAppointmentActive(appointment) && (
-                <div className="flex items-center text-xs text-green-600 dark:text-green-400 mt-1">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-1 animate-pulse"></div>
-                  Active
-                </div>
-              )}
-              {isAppointmentUpcoming(appointment) && (
-                <div className="flex items-center text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full mr-1"></div>
-                  Soon
-                </div>
-              )}
-            </div>
-          </div>
+            {isExpanded && (
+              <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 space-y-2" onClick={(e) => e.stopPropagation()}>
+                <div className="grid grid-cols-2 gap-2">
+                  {(isAppointmentActive(appointment) || isAppointmentUpcoming(appointment)) && appointment.meeting_id && appointment.status === 'confirmed' && (
+                    <Button
+                      size="sm"
+                      className="bg-green-600 hover:bg-green-700 text-white text-xs"
+                      onClick={() => handleJoinMeeting(appointment)}
+                    >
+                      <Video className="h-3 w-3 mr-1" />
+                      {isAppointmentActive(appointment) ? 'Join' : 'Join Early'}
+                    </Button>
+                  )}
 
-          {(isAppointmentActive(appointment) || isAppointmentUpcoming(appointment)) && appointment.meeting_id && appointment.status === 'confirmed' && (
-            <div className="mt-3 pt-2 border-t border-gray-200 dark:border-gray-600">
-              <Button
-                size="sm"
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
-                onClick={() => handleJoinMeeting(appointment)}
-              >
-                <Video className="h-3 w-3 mr-1" />
-                {isAppointmentActive(appointment) ? 'Join Session' : 'Join Early'}
-              </Button>
-            </div>
-          )}
-        </div>
-      ))}
+                  {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-xs"
+                      onClick={() => handleMarkAsComplete(appointment.id)}
+                    >
+                      <Check className="h-3 w-3 mr-1" />
+                      Complete
+                    </Button>
+                  )}
+
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-xs col-span-2"
+                    onClick={() => toast.info('Reschedule feature coming soon')}
+                  >
+                    <CalendarClock className="h-3 w-3 mr-1" />
+                    Reschedule
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        )
+      })}
 
       {todaysAppointments.length > 3 && (
         <div className="text-center pt-2">
