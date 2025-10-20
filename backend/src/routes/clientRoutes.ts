@@ -11,6 +11,7 @@ import { PaymentServiceV2 } from '../services/paymentServiceV2';
 import { appointmentReminderService } from '../services/appointmentReminderService';
 import { calendarSyncService } from '../services/calendarSyncService';
 import { dataExportService } from '../services/dataExportService';
+import  emailService from '../services/emailService';
 import path from 'path';
 import fs from 'fs';
 
@@ -1176,6 +1177,55 @@ router.post('/client/book-appointment', [
     } catch (syncError) {
       console.error(`Calendar sync failed for new session ${session.id}:`, syncError);
       // Don't fail the booking if calendar sync fails
+    }
+
+    // Send confirmation emails to both parties
+    try {
+      // Get email addresses
+      const { data: clientWithEmail } = await supabase
+        .from('clients')
+        .select('email')
+        .eq('id', clientProfile.id)
+        .single();
+
+      const { data: coachWithEmail } = await supabase
+        .from('coaches')
+        .select('email')
+        .eq('id', coachId)
+        .single();
+
+      if (clientWithEmail?.email && coachWithEmail?.email) {
+        const scheduledDateTime = new Date(session.starts_at);
+        const appointmentDate = scheduledDateTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+        const appointmentTime = scheduledDateTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        await emailService.sendAppointmentConfirmation({
+          clientEmail: clientWithEmail.email,
+          coachEmail: coachWithEmail.email,
+          clientName: `${clientProfile.first_name} ${clientProfile.last_name}`,
+          coachName: `${coach.first_name} ${coach.last_name}`,
+          appointmentDetails: {
+            date: appointmentDate,
+            time: appointmentTime,
+            duration: `${duration} minutes`,
+            type: sessionType === 'consultation' ? 'Free Consultation' : 'Coaching Session'
+          }
+        });
+
+        console.log(`Confirmation emails sent to both ${clientWithEmail.email} and ${coachWithEmail.email}`);
+      }
+    } catch (emailError) {
+      console.error('Failed to send confirmation emails:', emailError);
+      // Don't fail the booking if email sending fails
     }
 
     // Handle payment if paymentId is provided
