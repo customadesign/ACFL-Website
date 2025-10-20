@@ -1,14 +1,15 @@
 "use client"
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import CoachPageWrapper from '@/components/CoachPageWrapper'
 import DashboardListSkeleton from '@/components/DashboardListSkeleton'
 import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { 
-  Calendar, 
-  Users, 
+import {
+  Calendar,
+  Users,
   Clock,
   ArrowRight,
   RefreshCw,
@@ -17,6 +18,7 @@ import {
 import axios from 'axios'
 
 export default function CoachDashboardPage() {
+  const router = useRouter()
   const [dashboardData, setDashboardData] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [initialLoad, setInitialLoad] = useState(true)
@@ -161,7 +163,11 @@ export default function CoachDashboardPage() {
                     todayAppointments
                       .slice((appointmentsPage - 1) * pageSize, appointmentsPage * pageSize)
                       .map((appointment: any) => (
-                        <div key={appointment.id} className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer">
+                        <div
+                          key={appointment.id}
+                          className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+                          onClick={() => router.push('/coaches/calendar?activeTab=appointments')}
+                        >
                           <div className="p-2 bg-blue-100 rounded-full">
                             <User className="w-5 h-5 text-blue-600" />
                           </div>
@@ -173,8 +179,8 @@ export default function CoachDashboardPage() {
                               {new Date(appointment.scheduled_at || appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                             <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
-                              appointment.status === 'confirmed' 
-                                ? 'bg-green-100 text-green-800' 
+                              appointment.status === 'confirmed'
+                                ? 'bg-green-100 text-green-800'
                                 : appointment.status === 'scheduled'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-blue-100 text-blue-800'
