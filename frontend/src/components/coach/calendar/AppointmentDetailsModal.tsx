@@ -75,7 +75,7 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader className="pt-2">
-          <DialogTitle className="flex items-center justify-between text-xl">
+          <DialogTitle className="flex items-center justify-between text-xl text-gray-900 dark:text-gray-100">
             <span>Appointment Details</span>
             <Badge variant="outline" className={`${getStatusColor(appointment.status)} text-xs px-2 py-1`}>
               {appointment.status}
@@ -155,8 +155,8 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button variant="outline" onClick={onClose}>
+        <div className="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
+          <Button variant="outline" onClick={onClose} className="dark:text-gray-100">
             Close
           </Button>
         </div>
