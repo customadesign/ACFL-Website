@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiGet } from '@/lib/api-client'
 import { getApiUrl } from '@/lib/api'
-import { ChevronLeft, ChevronRight, Clock, User, Video, Calendar as CalendarIcon } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, User, Video, Calendar as CalendarIcon, ArrowRight } from 'lucide-react'
 
 interface Appointment {
   id: string
@@ -28,6 +29,7 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ coachId }: CalendarViewProps) {
+  const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
@@ -279,7 +281,8 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                     {todayAppointments.map(appointment => (
                       <div
                         key={appointment.id}
-                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 sm:p-3"
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 sm:p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors cursor-pointer"
+                        onClick={() => router.push('/coaches/calendar?activeTab=appointments')}
                       >
                         <div className="flex items-start justify-between mb-2 gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -288,9 +291,12 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                               {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                             </span>
                           </div>
-                          <Badge variant="outline" className={`${getStatusColor(appointment.status)} text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 flex-shrink-0`}>
-                            {appointment.status}
-                          </Badge>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={`${getStatusColor(appointment.status)} text-[10px] sm:text-xs px-1 sm:px-2 py-0.5 flex-shrink-0`}>
+                              {appointment.status}
+                            </Badge>
+                            <ArrowRight className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                          </div>
                         </div>
 
                         <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-300 space-y-1">
