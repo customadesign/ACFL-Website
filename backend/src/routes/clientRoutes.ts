@@ -1063,21 +1063,21 @@ router.post('/client/book-appointment', [
     // Get client profile
     const { data: clientProfile, error: clientError } = await supabase
       .from('clients')
-      .select('id, first_name, last_name')
+      .select('id, first_name, last_name, email')
       .eq('id', req.user.userId)
       .single();
 
     if (clientError || !clientProfile) {
-      return res.status(404).json({ 
-        success: false, 
-        message: 'Client profile not found' 
+      return res.status(404).json({
+        success: false,
+        message: 'Client profile not found'
       });
     }
 
     // Verify coach exists
     const { data: coach, error: coachError } = await supabase
       .from('coaches')
-      .select('id, first_name, last_name, is_available')
+      .select('id, first_name, last_name, email, is_available')
       .eq('id', coachId)
       .single();
 
@@ -1181,20 +1181,7 @@ router.post('/client/book-appointment', [
 
     // Send confirmation emails to both parties
     try {
-      // Get email addresses
-      const { data: clientWithEmail } = await supabase
-        .from('clients')
-        .select('email')
-        .eq('id', clientProfile.id)
-        .single();
-
-      const { data: coachWithEmail } = await supabase
-        .from('coaches')
-        .select('email')
-        .eq('id', coachId)
-        .single();
-
-      if (clientWithEmail?.email && coachWithEmail?.email) {
+      if (clientProfile.email && coach.email) {
         const scheduledDateTime = new Date(session.starts_at);
         const appointmentDate = scheduledDateTime.toLocaleDateString('en-US', {
           weekday: 'long',
@@ -1209,8 +1196,8 @@ router.post('/client/book-appointment', [
         });
 
         await emailService.sendAppointmentConfirmation({
-          clientEmail: clientWithEmail.email,
-          coachEmail: coachWithEmail.email,
+          clientEmail: clientProfile.email,
+          coachEmail: coach.email,
           clientName: `${clientProfile.first_name} ${clientProfile.last_name}`,
           coachName: `${coach.first_name} ${coach.last_name}`,
           appointmentDetails: {
@@ -1221,7 +1208,9 @@ router.post('/client/book-appointment', [
           }
         });
 
-        console.log(`Confirmation emails sent to both ${clientWithEmail.email} and ${coachWithEmail.email}`);
+        console.log(`Confirmation emails sent to both ${clientProfile.email} and ${coach.email}`);
+      } else {
+        console.log('Missing email address(es) - cannot send confirmation emails');
       }
     } catch (emailError) {
       console.error('Failed to send confirmation emails:', emailError);
