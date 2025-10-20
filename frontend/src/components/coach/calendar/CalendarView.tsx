@@ -1,13 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { apiGet } from '@/lib/api-client'
 import { getApiUrl } from '@/lib/api'
 import { ChevronLeft, ChevronRight, Clock, User, Video, Calendar as CalendarIcon, ArrowRight } from 'lucide-react'
+import AppointmentDetailsModal from './AppointmentDetailsModal'
 
 interface Appointment {
   id: string
@@ -29,13 +29,14 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ coachId }: CalendarViewProps) {
-  const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [showDetailsModal, setShowDetailsModal] = useState(false)
 
   const API_URL = getApiUrl()
 
@@ -282,7 +283,10 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
                       <div
                         key={appointment.id}
                         className="border border-gray-200 dark:border-gray-700 rounded-lg p-2 sm:p-3 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
-                        onClick={() => router.push('/coaches/calendar?activeTab=appointments')}
+                        onClick={() => {
+                          setSelectedAppointment(appointment)
+                          setShowDetailsModal(true)
+                        }}
                       >
                         <div className="flex items-start justify-between mb-2 gap-2">
                           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -372,6 +376,16 @@ export default function CalendarView({ coachId }: CalendarViewProps) {
           </Card>
         </div>
       </div>
+
+      {/* Appointment Details Modal */}
+      <AppointmentDetailsModal
+        appointment={selectedAppointment}
+        isOpen={showDetailsModal}
+        onClose={() => {
+          setShowDetailsModal(false)
+          setSelectedAppointment(null)
+        }}
+      />
     </div>
   )
 }
