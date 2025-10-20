@@ -89,8 +89,8 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Client Information</h3>
             <div className="space-y-2 pl-4">
               <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">
+                <User className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {appointment.clients
                     ? `${appointment.clients.first_name} ${appointment.clients.last_name}`
                     : 'Unknown Client'}
@@ -98,16 +98,16 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
               </div>
               {appointment.clients?.email && (
                 <div className="flex items-center gap-2">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <Mail className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
                     {appointment.clients.email}
                   </span>
                 </div>
               )}
               {appointment.clients?.phone && (
                 <div className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                  <Phone className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
                     {appointment.clients.phone}
                   </span>
                 </div>
@@ -120,23 +120,23 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Appointment Details</h3>
             <div className="space-y-2 pl-4">
               <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">{formatDate(appointment.starts_at)}</span>
+                <Calendar className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-sm text-gray-900 dark:text-gray-100">{formatDate(appointment.starts_at)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">
+                <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-sm text-gray-900 dark:text-gray-100">
                   {formatTime(appointment.starts_at)} - {formatTime(appointment.ends_at)}
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-gray-400" />
-                <span className="text-sm">Duration: {getDuration()}</span>
+                <Clock className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                <span className="text-sm text-gray-900 dark:text-gray-100">Duration: {getDuration()}</span>
               </div>
               {appointment.meeting_id && (
                 <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">Virtual Session</span>
+                  <Video className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+                  <span className="text-sm text-gray-900 dark:text-gray-100">Virtual Session</span>
                 </div>
               )}
             </div>
@@ -147,7 +147,7 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
             <div className="space-y-2">
               <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Notes</h3>
               <div className="pl-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <p className="text-sm text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                <p className="text-sm text-gray-600 dark:text-gray-300 whitespace-pre-wrap">
                   {appointment.notes}
                 </p>
               </div>
