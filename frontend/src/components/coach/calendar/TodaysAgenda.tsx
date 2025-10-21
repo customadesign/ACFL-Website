@@ -9,6 +9,7 @@ import { apiGet, apiPut } from '@/lib/api-client'
 import { getApiUrl } from '@/lib/api'
 import { Clock, User, Video, Calendar, ChevronDown, ChevronUp, Check, CalendarClock } from 'lucide-react'
 import { toast } from 'sonner'
+import RescheduleModal from '@/components/RescheduleModal'
 
 // Dynamic imports for meeting components
 const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), {
@@ -19,6 +20,7 @@ const MeetingContainer = dynamic(() => import('@/components/MeetingContainer'), 
 interface TodaysAppointment {
   id: string
   client_id: string
+  coach_id: string
   starts_at: string
   ends_at: string
   status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed'
@@ -41,6 +43,8 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
   const [showMeeting, setShowMeeting] = useState(false)
   const [meetingAppointment, setMeetingAppointment] = useState<TodaysAppointment | null>(null)
   const [expandedAppointmentId, setExpandedAppointmentId] = useState<string | null>(null)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
+  const [rescheduleAppointment, setRescheduleAppointment] = useState<TodaysAppointment | null>(null)
 
   const API_URL = getApiUrl()
 
@@ -174,6 +178,16 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
     setExpandedAppointmentId(expandedAppointmentId === appointmentId ? null : appointmentId)
   }
 
+  const handleRescheduleClick = (appointment: TodaysAppointment) => {
+    setRescheduleAppointment(appointment)
+    setShowRescheduleModal(true)
+  }
+
+  const handleRescheduleSuccess = () => {
+    loadTodaysAppointments()
+    toast.success('Appointment rescheduled successfully!')
+  }
+
   if (loading) {
     return (
       <div className="space-y-3">
@@ -298,7 +312,7 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
                     size="sm"
                     variant="outline"
                     className="w-full text-xs"
-                    onClick={() => toast.info('Reschedule feature coming soon')}
+                    onClick={() => handleRescheduleClick(appointment)}
                   >
                     <CalendarClock className="h-3 w-3 mr-1" />
                     Reschedule
@@ -331,6 +345,19 @@ export default function TodaysAgenda({ coachId }: TodaysAgendaProps) {
           }}
           isHost={true}
           onClose={handleMeetingEnd}
+        />
+      )}
+
+      {/* Reschedule Modal */}
+      {showRescheduleModal && rescheduleAppointment && (
+        <RescheduleModal
+          appointment={rescheduleAppointment}
+          isOpen={showRescheduleModal}
+          onClose={() => {
+            setShowRescheduleModal(false)
+            setRescheduleAppointment(null)
+          }}
+          onSuccess={handleRescheduleSuccess}
         />
       )}
     </div>
