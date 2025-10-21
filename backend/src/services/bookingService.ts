@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import {
   paymentsApi,
+  customersApi,
   getLocationId,
   formatSquareAmount,
   generateIdempotencyKey
