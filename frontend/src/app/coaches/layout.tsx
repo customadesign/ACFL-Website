@@ -143,6 +143,40 @@ export default function CoachLayout({
     };
   }, []);
 
+  // Auto-minimize sidebar when modals open (desktop only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleModalOpen = () => {
+      // Check if there's a modal/dialog open (they typically have role="dialog" or data-state="open")
+      const modalsOpen = document.querySelectorAll('[role="dialog"][data-state="open"], .fixed.inset-0.z-50, [data-radix-dialog-content]');
+
+      // Only auto-collapse on desktop (lg and above)
+      const isDesktop = window.innerWidth >= 1024;
+
+      if (modalsOpen.length > 0 && isDesktop && !sidebarCollapsed) {
+        setSidebarCollapsed(true);
+      }
+    };
+
+    // Use MutationObserver to detect when modals are added to DOM
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.addedNodes.length > 0) {
+          handleModalOpen();
+        }
+      });
+    });
+
+    // Observe changes to document body
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true
+    });
+
+    return () => observer.disconnect();
+  }, [sidebarCollapsed]);
+
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
 
