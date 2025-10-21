@@ -13,6 +13,9 @@ import { CheckCircle2, XCircle, Loader2, Mail } from 'lucide-react';
 function VerifyEmailContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'missing_token'>('loading');
   const [message, setMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [isResending, setIsResending] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
@@ -61,6 +64,41 @@ function VerifyEmailContent() {
 
     verifyEmail();
   }, [token, router]);
+
+  const handleResendVerification = async () => {
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address');
+      return;
+    }
+
+    setIsResending(true);
+    setResendSuccess(false);
+
+    try {
+      const apiUrl = getApiUrl();
+      const response = await fetch(`${apiUrl}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setResendSuccess(true);
+        setMessage('Verification email sent! Please check your inbox.');
+      } else {
+        alert(data.message || 'Failed to resend verification email');
+      }
+    } catch (error) {
+      console.error('Resend verification error:', error);
+      alert('An error occurred while resending the verification email');
+    } finally {
+      setIsResending(false);
+    }
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -132,9 +170,51 @@ function VerifyEmailContent() {
                     <ul className="text-sm text-red-800 space-y-1 list-disc list-inside">
                       <li>Check if the link was copied completely</li>
                       <li>The verification link expires after 24 hours</li>
+                      <li>Request a new verification email below</li>
                       <li>Contact support if you continue to have issues</li>
                     </ul>
                   </div>
+
+                  {resendSuccess ? (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <p className="text-sm text-green-800 font-medium">
+                        ✓ Verification email sent successfully! Please check your inbox and spam folder.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      <div>
+                        <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                          Resend Verification Email
+                        </label>
+                        <input
+                          type="email"
+                          id="email"
+                          placeholder="Enter your email address"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <Button
+                        onClick={handleResendVerification}
+                        disabled={isResending || !email}
+                        className="w-full"
+                      >
+                        {isResending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Sending...
+                          </>
+                        ) : (
+                          <>
+                            <Mail className="h-4 w-4 mr-2" />
+                            Resend Verification Email
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-3">
                     <Link href="/login">
