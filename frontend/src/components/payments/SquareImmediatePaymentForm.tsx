@@ -52,6 +52,7 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [cardAttached, setCardAttached] = useState(false);
+  const [cardholderName, setCardholderName] = useState('');
   const cardContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -83,6 +84,11 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
       return;
     }
 
+    if (!cardholderName.trim()) {
+      setFormError('Please enter the cardholder name.');
+      return;
+    }
+
     setIsProcessing(true);
     setFormError(null);
 
@@ -98,7 +104,7 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
         requestBody = {
           source_id: token,
           billing_details: {
-            name: coachName, // This should come from form input in real implementation
+            name: cardholderName,
             email: 'client@example.com' // This should come from current user
           }
         };
@@ -112,6 +118,7 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
           session_date: sessionDate,
           session_time: sessionTime,
           description: description || `${sessionTitle} with ${coachName}`,
+          buyer_name: cardholderName,
           metadata: {
             ...metadata,
             session_date: sessionDate,
@@ -250,6 +257,22 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Cardholder Name Input */}
+          <div>
+            <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-2">
+              Cardholder Name
+            </label>
+            <input
+              id="cardholderName"
+              type="text"
+              value={cardholderName}
+              onChange={(e) => setCardholderName(e.target.value)}
+              placeholder="John Doe"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              required
+            />
+          </div>
+
           {/* Square Card Element */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

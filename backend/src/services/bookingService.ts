@@ -221,8 +221,11 @@ export class BookingService {
         throw new Error('Payment deadline has passed');
       }
 
-      // Get or create Square customer
-      const squareCustomer = await this.getOrCreateSquareCustomer(clientId);
+      // Get or create Square customer (with buyer name if provided)
+      const squareCustomer = await this.getOrCreateSquareCustomer(
+        clientId,
+        paymentRequest.billing_details?.name
+      );
 
       // Process immediate Square payment (not authorization)
       const locationId = await getLocationId();
@@ -496,7 +499,7 @@ export class BookingService {
   /**
    * Helper to get or create Square customer
    */
-  private async getOrCreateSquareCustomer(clientId: string) {
+  private async getOrCreateSquareCustomer(clientId: string, buyerName?: string) {
     const { data: client, error } = await supabase
       .from('clients')
       .select('email, first_name, last_name, square_customer_id')
@@ -507,22 +510,69 @@ export class BookingService {
       throw new Error(`Client not found: ${error.message}`);
     }
 
-    // If Square customer already exists, return it
-    if (client.square_customer_id) {
-      return { id: client.square_customer_id };
+    // Parse buyer name if provided (format: "LASTNAME, FIRSTNAME" or "FirstName LastName")
+    let givenName = client.first_name;
+    let familyName = client.last_name;
+
+    if (buyerName) {
+      // Handle "LASTNAME, FIRSTNAME" format
+      if (buyerName.includes(',')) {
+        const parts = buyerName.split(',').map(part => part.trim());
+        familyName = parts[0] || client.last_name;
+        givenName = parts[1] || client.first_name;
+      }
+      // Handle "FirstName LastName" format
+      else if (buyerName.includes(' ')) {
+        const parts = buyerName.trim().split(/\s+/);
+        givenName = parts[0] || client.first_name;
+        familyName = parts.slice(1).join(' ') || client.last_name;
+      }
+      // Single name provided - use as given name
+      else {
+        givenName = buyerName.trim();
+      }
     }
 
-    // Create new Square customer would go here
-    // For now, return a mock customer ID
-    const mockCustomerId = `cust_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    // Check if customer already exists in Square
+    if (client.square_customer_id) {
+      try {
+        const { result } = await customersApi.retrieveCustomer(client.square_customer_id);
+        if (result.customer) {
+          // Update customer name if buyer name was provided and different
+          if (buyerName && (result.customer.givenName !== givenName || result.customer.familyName !== familyName)) {
+            try {
+              await customersApi.updateCustomer(client.square_customer_id, {
+                givenName,
+                familyName,
+                emailAddress: client.email,
+              });
+              console.log(`Updated Square customer name to: ${givenName} ${familyName}`);
+            } catch (updateError) {
+              console.warn('Failed to update Square customer name:', updateError);
+            }
+          }
+          return result.customer;
+        }
+      } catch (error) {
+        console.warn('Square customer not found, creating new one:', error);
+      }
+    }
 
-    // Update client with Square customer ID
+    // Create new Square customer
+    const { result: createResult } = await customersApi.createCustomer({
+      idempotencyKey: generateIdempotencyKey(),
+      givenName,
+      familyName,
+      emailAddress: client.email,
+    });
+
+    // Update client record with Square customer ID
     await supabase
       .from('clients')
-      .update({ square_customer_id: mockCustomerId })
+      .update({ square_customer_id: createResult.customer?.id })
       .eq('id', clientId);
 
-    return { id: mockCustomerId };
+    return createResult.customer!;
   }
 
   /**

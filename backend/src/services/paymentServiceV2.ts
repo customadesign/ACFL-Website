@@ -44,8 +44,8 @@ export class PaymentServiceV2 {
       throw new Error('Coach rate does not belong to specified coach');
     }
 
-    // Create or get Square customer
-    const customerId = await this.getOrCreateSquareCustomer(clientId);
+    // Create or get Square customer (with buyer name if provided)
+    const customerId = await this.getOrCreateSquareCustomer(clientId, request.buyer_name);
 
     // Calculate earnings
     const { coachEarnings, platformFee } = await this.coachRateService
@@ -66,6 +66,7 @@ export class PaymentServiceV2 {
       autocomplete: false, // This creates an authorization that can be captured later
       customerId: customerId.id,
       note: request.description || coachRate.title,
+      buyerEmailAddress: request.buyer_email,
     };
 
     const { result: paymentResult } = await paymentsApi.createPayment(createPaymentRequest);
@@ -86,7 +87,11 @@ export class PaymentServiceV2 {
       status: 'authorized', // Payment is authorized but not yet captured
       session_id: request.sessionId,
       description: request.description || coachRate.title,
-      metadata: request.metadata || {},
+      metadata: {
+        ...(request.metadata || {}),
+        buyer_name: request.buyer_name,
+        buyer_email: request.buyer_email,
+      },
     };
 
     const { data: payment, error } = await supabase
@@ -532,7 +537,7 @@ export class PaymentServiceV2 {
     }
   }
 
-  private async getOrCreateSquareCustomer(clientId: string) {
+  private async getOrCreateSquareCustomer(clientId: string, buyerName?: string) {
     // Get client details
     const { data: client, error } = await supabase
       .from('clients')
@@ -544,11 +549,47 @@ export class PaymentServiceV2 {
       throw new Error(`Client not found: ${error.message}`);
     }
 
+    // Parse buyer name if provided (format: "LASTNAME, FIRSTNAME" or "FirstName LastName")
+    let givenName = client.first_name;
+    let familyName = client.last_name;
+
+    if (buyerName) {
+      // Handle "LASTNAME, FIRSTNAME" format
+      if (buyerName.includes(',')) {
+        const parts = buyerName.split(',').map(part => part.trim());
+        familyName = parts[0] || client.last_name;
+        givenName = parts[1] || client.first_name;
+      }
+      // Handle "FirstName LastName" format
+      else if (buyerName.includes(' ')) {
+        const parts = buyerName.trim().split(/\s+/);
+        givenName = parts[0] || client.first_name;
+        familyName = parts.slice(1).join(' ') || client.last_name;
+      }
+      // Single name provided - use as given name
+      else {
+        givenName = buyerName.trim();
+      }
+    }
+
     // Check if customer already exists in Square
     if (client.square_customer_id) {
       try {
         const { result } = await customersApi.retrieveCustomer(client.square_customer_id);
         if (result.customer) {
+          // Update customer name if buyer name was provided and different
+          if (buyerName && (result.customer.givenName !== givenName || result.customer.familyName !== familyName)) {
+            try {
+              await customersApi.updateCustomer(client.square_customer_id, {
+                givenName,
+                familyName,
+                emailAddress: client.email,
+              });
+              console.log(`Updated Square customer name to: ${givenName} ${familyName}`);
+            } catch (updateError) {
+              console.warn('Failed to update Square customer name:', updateError);
+            }
+          }
           return result.customer;
         }
       } catch (error) {
@@ -559,8 +600,8 @@ export class PaymentServiceV2 {
     // Create new Square customer
     const { result: createResult } = await customersApi.createCustomer({
       idempotencyKey: generateIdempotencyKey(),
-      givenName: client.first_name,
-      familyName: client.last_name,
+      givenName,
+      familyName,
       emailAddress: client.email,
     });
 

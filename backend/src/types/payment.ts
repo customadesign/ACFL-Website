@@ -123,6 +123,8 @@ export interface CreatePaymentIntentRequest {
   sourceId?: string; // Square payment source (card nonce)
   description?: string;
   metadata?: Record<string, string>;
+  buyer_name?: string; // Cardholder name
+  buyer_email?: string; // Buyer email address
 }
 
 export interface CreatePaymentIntentResponse {
