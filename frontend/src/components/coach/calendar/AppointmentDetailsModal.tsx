@@ -3,7 +3,9 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Clock, User, Video, Calendar, Mail, Phone, X } from 'lucide-react'
+import { Clock, User, Video, Calendar, Mail, Phone, X, CheckCircle, CalendarClock } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 interface Appointment {
   id: string
@@ -28,7 +30,50 @@ interface AppointmentDetailsModalProps {
 }
 
 export default function AppointmentDetailsModal({ appointment, isOpen, onClose }: AppointmentDetailsModalProps) {
+  const router = useRouter()
+  const [isProcessing, setIsProcessing] = useState(false)
+
   if (!appointment) return null
+
+  const handleJoinSession = () => {
+    // Navigate to the session/meeting page
+    router.push(`/coaches/sessions/${appointment.id}`)
+  }
+
+  const handleMarkComplete = async () => {
+    if (!confirm('Mark this appointment as completed?')) return
+
+    setIsProcessing(true)
+    try {
+      const response = await fetch(`/api/sessions/${appointment.id}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      })
+
+      if (response.ok) {
+        alert('Appointment marked as completed!')
+        onClose()
+        // Refresh the page to update the calendar
+        window.location.reload()
+      } else {
+        const error = await response.json()
+        alert(error.message || 'Failed to mark appointment as completed')
+      }
+    } catch (error) {
+      console.error('Error marking appointment complete:', error)
+      alert('Failed to mark appointment as completed')
+    } finally {
+      setIsProcessing(false)
+    }
+  }
+
+  const handleReschedule = () => {
+    // Navigate to reschedule page or open reschedule modal
+    router.push(`/coaches/appointments/${appointment.id}/reschedule`)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -155,14 +200,49 @@ export default function AppointmentDetailsModal({ appointment, isOpen, onClose }
           )}
         </div>
 
-        <div className="flex justify-end gap-2 pt-4 border-t dark:border-gray-700">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600"
-          >
-            Close
-          </Button>
+        <div className="flex flex-col gap-3 pt-4 border-t dark:border-gray-700">
+          {/* Action Buttons */}
+          {appointment.status !== 'completed' && appointment.status !== 'cancelled' && (
+            <div className="flex flex-wrap gap-2">
+              <Button
+                onClick={handleJoinSession}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white"
+                disabled={isProcessing}
+              >
+                <Video className="w-4 h-4 mr-2" />
+                Join Session
+              </Button>
+              <Button
+                onClick={handleMarkComplete}
+                variant="outline"
+                className="flex-1 border-green-600 text-green-600 hover:bg-green-50 dark:border-green-500 dark:text-green-500 dark:hover:bg-green-950"
+                disabled={isProcessing}
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Mark as Complete
+              </Button>
+              <Button
+                onClick={handleReschedule}
+                variant="outline"
+                className="flex-1 border-blue-600 text-blue-600 hover:bg-blue-50 dark:border-blue-500 dark:text-blue-500 dark:hover:bg-blue-950"
+                disabled={isProcessing}
+              >
+                <CalendarClock className="w-4 h-4 mr-2" />
+                Reschedule
+              </Button>
+            </div>
+          )}
+
+          {/* Close Button */}
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={onClose}
+              className="bg-white text-gray-900 hover:bg-gray-100 dark:bg-gray-800 dark:text-gray-100 dark:hover:bg-gray-700 border-gray-300 dark:border-gray-600"
+            >
+              Close
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
