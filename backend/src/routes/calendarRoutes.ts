@@ -3,6 +3,8 @@ import { supabase } from '../lib/supabase';
 import { authenticate } from '../middleware/auth';
 import { JWTPayload } from '../types/auth';
 import { calendarSyncService } from '../services/calendarSyncService';
+import emailService from '../services/emailService';
+import { appointmentReminderService } from '../services/appointmentReminderService';
 
 interface AuthRequest extends Request {
   user?: JWTPayload;
@@ -538,8 +540,58 @@ router.post('/book-appointment', async (req, res) => {
     // Queue calendar sync for all connected calendars
     await calendarSyncService.queueSessionSync(coachId, newAppointment.id, 'create');
 
-    // TODO: Send booking confirmation emails
-    // TODO: Create VideoSDK meeting room
+    // Schedule appointment reminders
+    try {
+      await appointmentReminderService.scheduleSessionReminders(newAppointment.id);
+      console.log(`✅ Scheduled reminders for session ${newAppointment.id}`);
+    } catch (reminderError) {
+      console.error('Failed to schedule reminders:', reminderError);
+      // Don't fail the booking if reminder scheduling fails
+    }
+
+    // Send booking confirmation emails
+    try {
+      const client = newAppointment.clients;
+      const coach = newAppointment.coaches;
+
+      if (client.email && coach.email) {
+        const scheduledDateTime = new Date(newAppointment.starts_at);
+        const appointmentDate = scheduledDateTime.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+        const appointmentTime = scheduledDateTime.toLocaleTimeString('en-US', {
+          hour: 'numeric',
+          minute: '2-digit',
+          hour12: true
+        });
+
+        // Calculate duration in minutes
+        const duration = Math.round((new Date(newAppointment.ends_at).getTime() - new Date(newAppointment.starts_at).getTime()) / 60000);
+
+        await emailService.sendAppointmentConfirmation({
+          clientEmail: client.email,
+          coachEmail: coach.email,
+          clientName: `${client.first_name} ${client.last_name}`,
+          coachName: `${coach.first_name} ${coach.last_name}`,
+          appointmentDetails: {
+            date: appointmentDate,
+            time: appointmentTime,
+            duration: `${duration} minutes`,
+            type: duration <= 15 ? 'Free Consultation' : 'Coaching Session'
+          }
+        });
+
+        console.log(`✅ Confirmation emails sent to ${client.email} and ${coach.email}`);
+      } else {
+        console.warn('⚠️ Missing email address(es) - cannot send confirmation emails');
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send confirmation emails:', emailError);
+      // Don't fail the booking if email sending fails
+    }
 
     res.status(201).json({
       success: true,
