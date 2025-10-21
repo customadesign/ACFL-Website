@@ -23,8 +23,8 @@ interface ReminderSettings {
 export class AppointmentReminderService {
   private emailService = EmailService;
   private defaultSettings: ReminderSettings = {
-    emailReminderHours: [24, 2], // 24 hours and 2 hours before
-    messageReminderHours: [24, 1], // 24 hours and 1 hour before
+    emailReminderHours: [24, 6, 1, 10/60], // 24 hours, 6 hours, 1 hour, and 10 minutes before
+    messageReminderHours: [24, 6, 1, 10/60], // 24 hours, 6 hours, 1 hour, and 10 minutes before
     enableEmailReminders: true,
     enableMessageReminders: true
   };
@@ -355,7 +355,16 @@ export class AppointmentReminderService {
     const data: SessionReminderData = JSON.parse(reminder.data);
     const sessionTime = new Date(data.sessionTime);
 
-    const hoursText = reminder.hours_before === 1 ? 'in 1 hour' : `in ${reminder.hours_before} hours`;
+    // Format time text based on hours
+    let hoursText: string;
+    if (reminder.hours_before < 1) {
+      const minutes = Math.round(reminder.hours_before * 60);
+      hoursText = minutes === 1 ? 'in 1 minute' : `in ${minutes} minutes`;
+    } else if (reminder.hours_before === 1) {
+      hoursText = 'in 1 hour';
+    } else {
+      hoursText = `in ${reminder.hours_before} hours`;
+    }
 
     const appointmentDetails = {
       date: sessionTime.toLocaleDateString('en-US', {
@@ -399,7 +408,16 @@ export class AppointmentReminderService {
       timeZoneName: 'short'
     });
 
-    const hoursText = reminder.hours_before === 1 ? '1 hour' : `${reminder.hours_before} hours`;
+    // Format time text based on hours
+    let hoursText: string;
+    if (reminder.hours_before < 1) {
+      const minutes = Math.round(reminder.hours_before * 60);
+      hoursText = minutes === 1 ? '1 minute' : `${minutes} minutes`;
+    } else if (reminder.hours_before === 1) {
+      hoursText = '1 hour';
+    } else {
+      hoursText = `${reminder.hours_before} hours`;
+    }
 
     const messageBody = `Hi ${data.clientName}! This is a friendly reminder that we have a coaching session scheduled in ${hoursText} on ${timeString}. Looking forward to our session together! If you need to reschedule, please let me know as soon as possible.`;
 
