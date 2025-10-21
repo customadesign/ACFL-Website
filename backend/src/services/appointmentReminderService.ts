@@ -23,8 +23,8 @@ interface ReminderSettings {
 export class AppointmentReminderService {
   private emailService = EmailService;
   private defaultSettings: ReminderSettings = {
-    emailReminderHours: [24, 6, 1, 10/60], // 24 hours, 6 hours, 1 hour, and 10 minutes before
-    messageReminderHours: [24, 6, 1, 10/60], // 24 hours, 6 hours, 1 hour, and 10 minutes before
+    emailReminderHours: [24, 6, 1], // 24 hours, 6 hours, and 1 hour before
+    messageReminderHours: [24, 6, 1], // 24 hours, 6 hours, and 1 hour before
     enableEmailReminders: true,
     enableMessageReminders: true
   };
