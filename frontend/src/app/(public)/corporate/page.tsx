@@ -12,6 +12,7 @@ import CountUp from "@/components/CountUp"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 import Footer from "@/components/Footer"
 import { getApiUrl } from "@/lib/api"
+import { CorporatePageSkeleton } from "@/components/skeletons/CorporatePageSkeleton"
 
 interface ContentData {
   id: string
@@ -164,6 +165,19 @@ export default function CorporateProgramsPage() {
   const benefits = cmsContent?.benefits?.items || defaultBenefits
   const programs = cmsContent?.programs?.types || defaultPrograms
   const stats = cmsContent?.stats
+
+  // Show skeleton while loading
+  if (loading) {
+    return (
+      <>
+        <nav>
+          <NavbarLandingPage />
+        </nav>
+        <CorporatePageSkeleton />
+        <Footer />
+      </>
+    )
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white ">
