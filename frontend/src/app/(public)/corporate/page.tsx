@@ -204,13 +204,17 @@ export default function CorporateProgramsPage() {
                 "Transform your workplace culture with evidence-based ACT coaching programs designed to boost employee wellbeing, productivity, and organizational resilience."}
             </p>
             <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-6 text-lg font-semibold shadow-lg shadow-brand-teal/30 hover:shadow-xl hover:scale-105 transition-all duration-300">
-                Schedule Demo
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button variant="outline" className="border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-10 py-6 text-lg font-semibold hover:scale-105 transition-all duration-300">
-                Download Brochure
-              </Button>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-6 text-lg font-semibold shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
+                  Schedule Demo
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" className="border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-10 py-6 text-lg font-semibold transition-all duration-300">
+                  Download Brochure
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>
@@ -289,11 +293,17 @@ export default function CorporateProgramsPage() {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="text-center"
+                  className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-teal/5 hover:to-transparent transition-colors duration-300"
                 >
-                  <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  >
+                    <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
+                  </motion.div>
+                  <h3 className="text-lg font-semibold text-ink-dark mb-3 group-hover:text-brand-teal transition-colors duration-300">{benefit.title}</h3>
                   <p className="text-gray-600 text-sm">{benefit.description}</p>
                 </motion.div>
               )
