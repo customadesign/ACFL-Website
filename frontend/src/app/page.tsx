@@ -61,7 +61,7 @@ export default function HomePage() {
         <NavbarLandingPage />
       </nav>
       {/* Hero Section */}
-      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 pt-4 pb-12 lg:pt-6 lg:pb-16 overflow-hidden">
+      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 pt-[3px] pb-12 lg:pt-[18px] lg:pb-16 overflow-hidden">
         {/* Background Lottie Animation */}
         <div className="absolute top-10 right-10 opacity-60 hidden md:block z-0">
           <LottieAnimation width={280} height={280} />
