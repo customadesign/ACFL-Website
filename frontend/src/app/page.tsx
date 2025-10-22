@@ -374,7 +374,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8 }}
-              className="text-center lg:text-left"
+              className="text-center lg:text-left -mt-4 lg:-mt-6"
             >
               <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6 leading-tight">
                 Find the perfect coach for meaningful change
