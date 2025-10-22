@@ -173,7 +173,7 @@ export default function CorporateProgramsPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-24 md:py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -181,20 +181,20 @@ export default function CorporateProgramsPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-           
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
               {renderTitle()}
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
               {heroContent.description || corporateContent?.meta_description ||
                 "Transform your workplace culture with evidence-based ACT coaching programs designed to boost employee wellbeing, productivity, and organizational resilience."}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg">
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-6 text-lg font-semibold shadow-lg shadow-brand-teal/30 hover:shadow-xl hover:scale-105 transition-all duration-300">
                 Schedule Demo
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
-              <Button variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-8 py-4 text-lg">
+              <Button variant="outline" className="border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-10 py-6 text-lg font-semibold hover:scale-105 transition-all duration-300">
                 Download Brochure
               </Button>
             </div>
@@ -203,18 +203,18 @@ export default function CorporateProgramsPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 md:py-28 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid md:grid-cols-4 gap-12 md:gap-16 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="text-4xl font-bold text-brand-teal mb-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-teal to-brand-teal/70 bg-clip-text text-transparent mb-3">
                 <CountUp to={stats?.companiesServed || 150} duration={2} />+
               </div>
-              <div className="text-gray-600">{stats?.companiesServedLabel || "Companies Served"}</div>
+              <div className="text-lg text-gray-600 font-medium">{stats?.companiesServedLabel || "Companies Served"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
