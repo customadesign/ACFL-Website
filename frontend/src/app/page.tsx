@@ -61,7 +61,7 @@ export default function HomePage() {
         <NavbarLandingPage />
       </nav>
       {/* Hero Section */}
-      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 pt-[30px] pb-12 lg:pt-[30px] lg:pb-16 overflow-hidden">
+      <section id="quick-assessment" className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 pt-2 pb-8 lg:pt-4 lg:pb-12 overflow-hidden">
         {/* Background Lottie Animation */}
         <div className="absolute top-10 right-10 opacity-60 hidden md:block z-0">
           <LottieAnimation width={280} height={280} />
@@ -376,10 +376,10 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
               className="text-center lg:text-left"
             >
-              <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+              <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6 leading-tight">
                 Find the perfect coach for meaningful change
               </h1>
-              <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="text-xl text-gray-600 mb-8 leading-snug">
                 Professional ACT coaching that helps you overcome challenges, build resilience, 
                 and create meaningful life changes. Get matched with qualified coaches in 24 hours.
               </p>
