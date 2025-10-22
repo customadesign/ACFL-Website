@@ -335,24 +335,47 @@ export default function CorporateProgramsPage() {
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <SpotlightCard className="h-full p-6 hover:shadow-lg transition-shadow">
-                  <h3 className="text-xl font-semibold text-ink-dark mb-3">{program.title}</h3>
-                  <p className="text-gray-600 mb-4">{program.description}</p>
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-ink-dark mb-2">What's Included:</h4>
-                    <ul className="space-y-1">
-                      {program.features.map((feature, idx) => (
-                        <li key={idx} className="flex items-center text-sm text-gray-600">
-                          <CheckCircle className="w-4 h-4 text-brand-teal mr-2" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    Duration: {program.duration}
+                <SpotlightCard className="h-full p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50 group">
+                  <div className="relative">
+                    <div className="absolute -inset-1 bg-gradient-to-r from-brand-teal to-brand-orange rounded-lg blur opacity-0 group-hover:opacity-20 transition duration-500"></div>
+                    <div className="relative">
+                      <h3 className="text-2xl font-bold text-ink-dark mb-4 group-hover:text-brand-teal transition-colors duration-300">{program.title}</h3>
+                      <p className="text-gray-600 mb-6 leading-relaxed">{program.description}</p>
+                      <div className="mb-6">
+                        <h4 className="font-semibold text-ink-dark mb-3 flex items-center">
+                          <div className="w-1 h-4 bg-brand-teal rounded mr-2"></div>
+                          What's Included:
+                        </h4>
+                        <ul className="space-y-2">
+                          {program.features.map((feature, idx) => (
+                            <motion.li
+                              key={idx}
+                              className="flex items-start text-sm text-gray-600"
+                              initial={{ opacity: 0, x: -10 }}
+                              whileInView={{ opacity: 1, x: 0 }}
+                              transition={{ delay: idx * 0.1 }}
+                            >
+                              <CheckCircle className="w-5 h-5 text-brand-teal mr-3 flex-shrink-0 mt-0.5" />
+                              <span>{feature}</span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                        <div className="text-sm font-medium text-brand-teal">
+                          Duration: {program.duration}
+                        </div>
+                        <motion.div
+                          whileHover={{ x: 5 }}
+                          className="text-brand-teal cursor-pointer"
+                        >
+                          <ChevronRight className="w-5 h-5" />
+                        </motion.div>
+                      </div>
+                    </div>
                   </div>
                 </SpotlightCard>
               </motion.div>
@@ -389,14 +412,19 @@ export default function CorporateProgramsPage() {
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8, scale: 1.05 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
-                className="text-center"
+                className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-teal/5 hover:to-transparent transition-all duration-300"
               >
-                <div className="w-12 h-12 bg-brand-teal rounded-full flex items-center justify-center text-white font-bold text-lg mx-auto mb-4">
+                <motion.div
+                  whileHover={{ scale: 1.2, rotate: 360 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                  className="w-16 h-16 bg-gradient-to-br from-brand-teal to-brand-teal/80 rounded-full flex items-center justify-center text-white font-bold text-xl mx-auto mb-4 shadow-lg shadow-brand-teal/30 group-hover:shadow-xl group-hover:shadow-brand-teal/50"
+                >
                   {item.step}
-                </div>
-                <h3 className="text-lg font-semibold text-ink-dark mb-2">{item.title}</h3>
-                <p className="text-gray-600 text-sm">{item.description}</p>
+                </motion.div>
+                <h3 className="text-lg font-semibold text-ink-dark mb-2 group-hover:text-brand-teal transition-colors duration-300">{item.title}</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">{item.description}</p>
               </motion.div>
             ))}
           </div>
