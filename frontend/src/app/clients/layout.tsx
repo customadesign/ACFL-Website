@@ -142,6 +142,47 @@ export default function ClientLayout({
     };
   }, []);
 
+  // Auto-minimize sidebar when modals open (desktop only)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const checkAndCollapseForModal = () => {
+      const isDesktop = window.innerWidth >= 1024;
+      if (!isDesktop || sidebarCollapsed) return;
+
+      const hasModal =
+        document.querySelector('[role="dialog"]') ||
+        document.querySelector('.fixed.inset-0[class*="z-"]') ||
+        document.querySelector('.fixed.inset-0.bg-black') ||
+        document.querySelector('.fixed.inset-0.bg-black\\/50') ||
+        Array.from(document.querySelectorAll('.fixed')).some(el => {
+          const classes = el.className;
+          return classes.includes('z-50') || classes.includes('z-[50]') ||
+                 classes.includes('inset-0') || classes.includes('modal');
+        });
+
+      if (hasModal) {
+        console.log('Modal detected, collapsing sidebar');
+        setSidebarCollapsed(true);
+      }
+    };
+
+    const observer = new MutationObserver(() => {
+      setTimeout(checkAndCollapseForModal, 50);
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ['class', 'style']
+    });
+
+    checkAndCollapseForModal();
+
+    return () => observer.disconnect();
+  }, [sidebarCollapsed]);
+
   const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light';
 

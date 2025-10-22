@@ -259,7 +259,7 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Cardholder Name Input */}
           <div>
-            <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="cardholderName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Cardholder Name
             </label>
             <input
@@ -268,7 +268,7 @@ const SquareImmediatePaymentForm: React.FC<SquareImmediatePaymentFormProps> = ({
               value={cardholderName}
               onChange={(e) => setCardholderName(e.target.value)}
               placeholder="John Doe"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
               required
             />
           </div>
