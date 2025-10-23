@@ -168,8 +168,8 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
   const progress = ((currentStep + 1) / steps.length) * 100
 
   return (
-    <Card className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-      <CardContent className="p-0">
+    <Card className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden min-h-[420px]">
+      <CardContent className="p-0 h-full flex flex-col">
         {/* Progress Bar */}
         <div className="h-1 bg-gray-100">
           <motion.div 
@@ -180,7 +180,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
           />
         </div>
 
-        <div className="p-6">
+        <div className="p-6 flex-1 flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <div>
@@ -200,6 +200,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
+              className="flex-1"
             >
               <h4 className="text-base font-medium text-ink-dark mb-1.5">
                 {steps[currentStep].title}
