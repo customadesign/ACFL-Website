@@ -159,7 +159,7 @@ const NavbarLandingPage = () => {
               
               <a href="/">
                 <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                  Get Started
+                  Register
                 </Button>
               </a>
             </div>
@@ -240,7 +240,7 @@ const NavbarLandingPage = () => {
                 </Link>
                 <a href="/" className="w-full">
                   <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white">
-                    Get Started
+                    Register
                   </Button>
                 </a>
               </div>
