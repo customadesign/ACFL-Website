@@ -143,6 +143,7 @@ export default function ClientLayout({
   }, []);
 
   // Auto-minimize sidebar when modals open (desktop only)
+  // EXCLUDES: Notification dropdown and Profile dropdown
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
@@ -150,19 +151,58 @@ export default function ClientLayout({
       const isDesktop = window.innerWidth >= 1024;
       if (!isDesktop || sidebarCollapsed) return;
 
-      const hasModal =
-        document.querySelector('[role="dialog"]') ||
-        document.querySelector('.fixed.inset-0[class*="z-"]') ||
-        document.querySelector('.fixed.inset-0.bg-black') ||
-        document.querySelector('.fixed.inset-0.bg-black\\/50') ||
-        Array.from(document.querySelectorAll('.fixed')).some(el => {
-          const classes = el.className;
-          return classes.includes('z-50') || classes.includes('z-[50]') ||
-                 classes.includes('inset-0') || classes.includes('modal');
-        });
+      // Helper function to check if an element is a notification or profile dropdown
+      const isExcludedDropdown = (element: Element): boolean => {
+        let current: Element | null = element;
+        while (current) {
+          const classes = current.className;
+          if (typeof classes === 'string') {
+            if (current.hasAttribute('aria-label') &&
+                (current.getAttribute('aria-label') === 'Notifications' ||
+                 current.getAttribute('aria-label') === 'User menu')) {
+              return true;
+            }
+            if (current === notificationRef.current ||
+                current === dropdownRef.current ||
+                current === mobileNotificationRef.current ||
+                current === mobileDropdownRef.current) {
+              return true;
+            }
+            if (notificationRef.current?.contains(current) ||
+                dropdownRef.current?.contains(current) ||
+                mobileNotificationRef.current?.contains(current) ||
+                mobileDropdownRef.current?.contains(current)) {
+              return true;
+            }
+          }
+          current = current.parentElement;
+        }
+        return false;
+      };
+
+      // Check for various modal patterns, excluding notification/profile dropdowns
+      const dialogElements = Array.from(document.querySelectorAll('[role="dialog"]'));
+      const hasRealModal = dialogElements.some(el => !isExcludedDropdown(el));
+
+      const backdropElements = Array.from(document.querySelectorAll('.fixed.inset-0'));
+      const hasRealBackdrop = backdropElements.some(el => {
+        if (isExcludedDropdown(el)) return false;
+        const classes = el.className;
+        return classes.includes('bg-black') || classes.includes('backdrop');
+      });
+
+      const modalElements = Array.from(document.querySelectorAll('.fixed'));
+      const hasRealModalElement = modalElements.some(el => {
+        if (isExcludedDropdown(el)) return false;
+        const classes = el.className;
+        return (classes.includes('z-50') || classes.includes('z-[50]') || classes.includes('modal')) &&
+               classes.includes('inset-0');
+      });
+
+      const hasModal = hasRealModal || hasRealBackdrop || hasRealModalElement;
 
       if (hasModal) {
-        console.log('Modal detected, collapsing sidebar');
+        console.log('Modal detected (excluding notifications/profile), collapsing sidebar');
         setSidebarCollapsed(true);
       }
     };
