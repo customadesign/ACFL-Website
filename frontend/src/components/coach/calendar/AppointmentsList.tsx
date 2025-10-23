@@ -77,6 +77,17 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
 
   const API_URL = getApiUrl()
 
+  // Check URL params for filter on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const filterParam = urlParams.get('filter')
+      if (filterParam && ['all', 'upcoming', 'past', 'pending'].includes(filterParam)) {
+        setFilter(filterParam as 'all' | 'upcoming' | 'past' | 'pending')
+      }
+    }
+  }, [])
+
   // Scroll to appointment from hash navigation
   useEffect(() => {
     if (typeof window !== 'undefined' && !loading && filteredAppointments.length > 0) {

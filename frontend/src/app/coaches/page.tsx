@@ -29,8 +29,18 @@ export default function CoachDashboardPage() {
 
   const API_URL = getApiUrl()
 
-  const handleAppointmentClick = (appointmentId: string) => {
-    router.push(`/coaches/calendar?activeTab=appointments#appointment-${appointmentId}`)
+  const handleAppointmentClick = (appointmentId: string, status: string) => {
+    // Map appointment status to the correct filter
+    let filterParam = 'upcoming'
+    if (status === 'confirmed') {
+      filterParam = 'pending'
+    } else if (status === 'cancelled' || status === 'completed') {
+      filterParam = 'past'
+    } else if (status === 'scheduled') {
+      filterParam = 'upcoming'
+    }
+
+    router.push(`/coaches/calendar?activeTab=appointments&filter=${filterParam}#appointment-${appointmentId}`)
   }
 
   useEffect(() => {
@@ -170,13 +180,13 @@ export default function CoachDashboardPage() {
                         <div
                           key={appointment.id}
                           className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 cursor-pointer group border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm"
-                          onClick={() => handleAppointmentClick(appointment.id)}
+                          onClick={() => handleAppointmentClick(appointment.id, appointment.status)}
                           role="button"
                           tabIndex={0}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault()
-                              handleAppointmentClick(appointment.id)
+                              handleAppointmentClick(appointment.id, appointment.status)
                             }
                           }}
                         >
