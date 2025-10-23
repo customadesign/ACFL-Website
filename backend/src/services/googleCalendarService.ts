@@ -51,12 +51,18 @@ export class GoogleCalendarService {
       'https://www.googleapis.com/auth/userinfo.profile'
     ];
 
-    return this.oauth2Client.generateAuthUrl({
+    console.log('🔍 Generating Google OAuth URL with redirect URI:', process.env.GOOGLE_REDIRECT_URI);
+
+    const authUrl = this.oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: scopes,
       state: JSON.stringify({ coachId, provider: 'google' }),
-      prompt: 'consent' // Force consent to get refresh token
+      prompt: 'consent', // Force consent to get refresh token
+      redirect_uri: process.env.GOOGLE_REDIRECT_URI // Explicitly set redirect URI
     });
+
+    console.log('🔗 Generated OAuth URL:', authUrl);
+    return authUrl;
   }
 
   /**
