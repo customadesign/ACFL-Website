@@ -127,7 +127,7 @@ export default function AboutPage() {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
       {/* Navigation */}
       <nav>
         <NavbarLandingPage />
@@ -142,10 +142,10 @@ export default function AboutPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark dark:text-white mb-8 tracking-tight">
               {renderTitle()}
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed">
               {heroContent.description || aboutContent?.meta_description ||
                 "We're transforming lives through evidence-based Acceptance and Commitment Therapy coaching, helping people create meaningful change and live authentically."}
             </p>
@@ -154,7 +154,7 @@ export default function AboutPage() {
       </section>
 
       {/* Mission Section */}
-      <section className="py-16 bg-white">
+      <section className="py-16 bg-white dark:bg-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
@@ -162,20 +162,20 @@ export default function AboutPage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
+              <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark dark:text-white mb-6">
                 {cmsContent?.mission?.title || "Our Mission"}
               </h2>
-              <div className="prose prose-lg text-gray-600 mb-8">
+              <div className="prose prose-lg text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-8">
                 {cmsContent?.mission?.content ? (
                   <div dangerouslySetInnerHTML={{ __html: cmsContent.mission.content }} />
                 ) : (
                   <>
-                    <p className="text-lg text-gray-600 mb-6 leading-relaxed">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
                       At ACT Coaching for Life, we believe everyone deserves to live a life aligned with their values.
                       Our mission is to make professional, evidence-based coaching accessible to anyone seeking
                       meaningful change.
                     </p>
-                    <p className="text-lg text-gray-600 mb-8 leading-relaxed">
+                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
                       Through our innovative matching platform, we connect you with qualified ACT coaches who
                       understand your unique challenges and can guide you toward psychological flexibility,
                       resilience, and authentic living.
@@ -208,25 +208,25 @@ export default function AboutPage() {
                     <div className="text-3xl font-bold text-brand-teal mb-2">
                       <CountUp to={cmsContent?.stats?.livesChanged || 3000} duration={2.5} separator="," />+
                     </div>
-                    <div className="text-gray-600">Lives Changed</div>
+                    <div className="text-gray-600 dark:text-gray-300">Lives Changed</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-orange mb-2">
                       <CountUp to={cmsContent?.stats?.certifiedCoaches || 150} duration={2.5} separator="," />+
                     </div>
-                    <div className="text-gray-600">Certified Coaches</div>
+                    <div className="text-gray-600 dark:text-gray-300">Certified Coaches</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-purple mb-2">
                       <CountUp to={cmsContent?.stats?.satisfaction || 98} duration={2.5} />%
                     </div>
-                    <div className="text-gray-600">Satisfaction Rate</div>
+                    <div className="text-gray-600 dark:text-gray-300">Satisfaction Rate</div>
                   </div>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-coral mb-2">
                       <CountUp to={cmsContent?.stats?.countries || 25} duration={2.5} />+
                     </div>
-                    <div className="text-gray-600">Countries</div>
+                    <div className="text-gray-600 dark:text-gray-300">Countries</div>
                   </div>
                 </div>
               </SpotlightCard>
@@ -236,7 +236,7 @@ export default function AboutPage() {
       </section>
 
       {/* Values Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}
@@ -247,7 +247,7 @@ export default function AboutPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
               {cmsContent?.values?.title || "Our Core Values"}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               {cmsContent?.values?.subtitle || "These principles guide everything we do"}
             </p>
           </motion.div>
@@ -297,7 +297,7 @@ export default function AboutPage() {
                         <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
                       </motion.div>
                       <h3 className="text-lg font-semibold text-ink-dark mb-2">{value.title}</h3>
-                      <p className="text-gray-600">{value.description}</p>
+                      <p className="text-gray-600 dark:text-gray-300">{value.description}</p>
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -320,7 +320,7 @@ export default function AboutPage() {
               {cmsContent?.story?.title || "Our Story"}
             </h2>
 
-            <div className="prose prose-lg text-gray-600 mx-auto">
+            <div className="prose prose-lg text-gray-600 dark:text-gray-300 mx-auto">
               {cmsContent?.story?.content ? (
                 <div dangerouslySetInnerHTML={{ __html: cmsContent.story.content }} />
               ) : (
@@ -348,7 +348,7 @@ export default function AboutPage() {
       </section>
 
       {/* Team Section */}
-      <section className="py-16 bg-gray-50">
+      <section className="py-16 bg-gray-50 dark:bg-gray-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0 }}
@@ -359,7 +359,7 @@ export default function AboutPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
               {cmsContent?.team?.title || "Meet Our Leadership"}
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
               {cmsContent?.team?.subtitle || "Dedicated professionals committed to your growth"}
             </p>
           </motion.div>
@@ -393,7 +393,7 @@ export default function AboutPage() {
                   <div className="w-24 h-24 bg-gradient-to-br from-brand-teal to-brand-orange rounded-full mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-ink-dark mb-1">{member.name}</h3>
                   <p className="text-brand-teal font-medium mb-3">{member.role}</p>
-                  <p className="text-gray-600">{member.description}</p>
+                  <p className="text-gray-600 dark:text-gray-300">{member.description}</p>
                 </SpotlightCard>
               </motion.div>
             ))}
@@ -420,7 +420,7 @@ export default function AboutPage() {
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                 <Button
                   size="lg"
-                  className="bg-white text-brand-teal hover:bg-gray-50 text-lg px-10 py-6 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group"
+                  className="bg-white text-brand-teal hover:bg-gray-50 dark:bg-gray-800 text-lg px-10 py-6 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group"
                 >
                   Find Your Coach
                   <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
