@@ -72,7 +72,7 @@ export default function DeactivatedAccountBanner() {
     : 0
 
   return (
-    <Alert className="border-orange-200 bg-orange-50 text-orange-800 mb-4 relative">
+    <Alert className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20 text-orange-800 dark:text-orange-300 mb-4 relative">
       <AlertTriangle className="h-4 w-4" />
       <div className="flex-1">
         <AlertDescription className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -90,7 +90,7 @@ export default function DeactivatedAccountBanner() {
               size="sm"
               variant="outline"
               onClick={() => router.push(`/${user?.role}/settings`)}
-              className="text-orange-700 border-orange-300 hover:bg-orange-100"
+              className="text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40"
             >
               <Download className="w-3 h-3 mr-1" />
               Export Data
@@ -100,7 +100,7 @@ export default function DeactivatedAccountBanner() {
               <Button
                 size="sm"
                 onClick={() => router.push(`/${user?.role}/settings`)}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-800 text-white"
               >
                 <RefreshCw className="w-3 h-3 mr-1" />
                 Cancel Deletion
@@ -111,7 +111,7 @@ export default function DeactivatedAccountBanner() {
               size="sm"
               variant="outline"
               onClick={() => router.push(`/${user?.role}/settings`)}
-              className="text-orange-700 border-orange-300 hover:bg-orange-100"
+              className="text-orange-700 dark:text-orange-300 border-orange-300 dark:border-orange-700 hover:bg-orange-100 dark:hover:bg-orange-900/40"
             >
               <Settings className="w-3 h-3 mr-1" />
               Settings

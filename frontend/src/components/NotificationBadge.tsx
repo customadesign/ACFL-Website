@@ -93,7 +93,7 @@ export default function NotificationBadge({
         ${variantClasses[variant]}
         inline-flex items-center justify-center
         rounded-full font-bold leading-none
-        border-2 border-white
+        border-2 border-white dark:border-gray-800
         shadow-sm transition-colors duration-200
         ${className}
       `}

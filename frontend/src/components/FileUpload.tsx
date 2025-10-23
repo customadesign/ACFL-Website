@@ -121,10 +121,10 @@ export default function FileUpload({
       <div
         className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
           dragActive
-            ? 'border-blue-400 bg-blue-50'
+            ? 'border-blue-400 dark:border-blue-500 bg-blue-50 dark:bg-blue-900/20'
             : error
-            ? 'border-red-300 bg-red-50'
-            : 'border-gray-300 hover:border-gray-400'
+            ? 'border-red-300 dark:border-red-500 bg-red-50 dark:bg-red-900/20'
+            : 'border-gray-300 dark:border-gray-600 hover:border-gray-400 dark:hover:border-gray-500'
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -139,17 +139,17 @@ export default function FileUpload({
           onChange={(e) => handleFiles(e.target.files)}
           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
         />
-        
+
         <div className="space-y-2">
-          <Upload className="mx-auto h-8 w-8 text-gray-400" />
+          <Upload className="mx-auto h-8 w-8 text-gray-400 dark:text-gray-500" />
           <div>
-            <p className="text-sm text-gray-600">
-              <span className="font-medium text-blue-600 hover:text-blue-500 cursor-pointer">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              <span className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500 dark:hover:text-blue-300 cursor-pointer">
                 Click to upload
               </span>{' '}
               or drag and drop
             </p>
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               {acceptedTypes.join(', ')} up to {maxSizePerFile}MB each
             </p>
           </div>
@@ -166,28 +166,28 @@ export default function FileUpload({
       {/* Uploaded Files List */}
       {uploadedFiles.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-sm font-medium text-gray-700">
+          <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300">
             Uploaded Files ({uploadedFiles.length}/{maxFiles})
           </h4>
-          
+
           <div className="space-y-2">
             {uploadedFiles.map((uploadedFile) => (
               <div
                 key={uploadedFile.id}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border"
+                className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
               >
                 <div className="flex items-center space-x-3">
-                  <FileText className="h-5 w-5 text-gray-400" />
+                  <FileText className="h-5 w-5 text-gray-400 dark:text-gray-500" />
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
                       {uploadedFile.file.name}
                     </p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                       {formatFileSize(uploadedFile.file.size)}
                     </p>
                   </div>
                 </div>
-                
+
                 <Button
                   type="button"
                   variant="outline"
@@ -204,9 +204,9 @@ export default function FileUpload({
       )}
 
       {/* Upload Guidelines */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-        <h4 className="text-sm font-medium text-blue-800 mb-1">Recommended Documents:</h4>
-        <ul className="text-xs text-blue-700 space-y-1">
+      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+        <h4 className="text-sm font-medium text-blue-800 dark:text-blue-300 mb-1">Recommended Documents:</h4>
+        <ul className="text-xs text-blue-700 dark:text-blue-400 space-y-1">
           <li>• Professional coaching certifications</li>
           <li>• Educational transcripts or diplomas</li>
           <li>• Professional licenses (if applicable)</li>

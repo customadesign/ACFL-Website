@@ -262,11 +262,11 @@ export function PhoneInput({ value, onChange, error, placeholder, className }: P
 
           {/* Country Dropdown */}
           {isOpen && (
-            <div className="absolute top-full left-0 z-50 w-80 bg-white border border-gray-200 rounded-lg shadow-lg max-h-96 overflow-hidden">
+            <div className="absolute top-full left-0 z-50 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-96 overflow-hidden">
               {/* Search */}
-              <div className="p-3 border-b border-gray-200">
+              <div className="p-3 border-b border-gray-200 dark:border-gray-700">
                 <div className="relative">
-                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
                   <Input
                     type="text"
                     placeholder="Search countries..."
@@ -284,12 +284,12 @@ export function PhoneInput({ value, onChange, error, placeholder, className }: P
                     key={country.code}
                     type="button"
                     onClick={() => handleCountrySelect(country)}
-                    className="w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center gap-3 border-b border-gray-100 last:border-b-0"
+                    className="w-full px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 border-b border-gray-100 dark:border-gray-700 last:border-b-0"
                   >
                     <span className="text-lg">{country.flag}</span>
                     <div className="flex-1">
-                      <div className="font-medium text-gray-900">{country.name}</div>
-                      <div className="text-sm text-gray-500">{country.dialCode}</div>
+                      <div className="font-medium text-gray-900 dark:text-white">{country.name}</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{country.dialCode}</div>
                     </div>
                   </button>
                 ))}
