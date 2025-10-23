@@ -157,7 +157,7 @@ const NavbarLandingPage = () => {
                 </Button>
               </Link>
               
-              <a href="/">
+              <a href="/register/client">
                 <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
                   Register
                 </Button>
@@ -238,7 +238,7 @@ const NavbarLandingPage = () => {
                     Login
                   </Button>
                 </Link>
-                <a href="/" className="w-full">
+                <a href="/register/client" className="w-full">
                   <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white">
                     Register
                   </Button>
