@@ -169,30 +169,38 @@ export default function CoachDashboardPage() {
                       .map((appointment: any) => (
                         <div
                           key={appointment.id}
-                          className="flex items-center space-x-3 p-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors cursor-pointer"
+                          className="flex items-center space-x-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 cursor-pointer group border border-transparent hover:border-gray-200 dark:hover:border-gray-700 hover:shadow-sm"
                           onClick={() => handleAppointmentClick(appointment.id)}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault()
+                              handleAppointmentClick(appointment.id)
+                            }
+                          }}
                         >
-                          <div className="p-2 bg-blue-100 rounded-full">
-                            <User className="w-5 h-5 text-blue-600" />
+                          <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full transition-transform group-hover:scale-110">
+                            <User className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                           </div>
                           <div className="flex-1">
-                            <p className="font-medium text-gray-900 dark:text-white">
+                            <p className="font-medium text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                               {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                             </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-300">
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
                               {new Date(appointment.scheduled_at || appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </p>
                             <span className={`inline-block mt-1 px-2 py-1 text-xs font-medium rounded-full ${
                               appointment.status === 'confirmed'
-                                ? 'bg-green-100 text-green-800'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
                                 : appointment.status === 'scheduled'
-                                ? 'bg-yellow-100 text-yellow-800'
-                                : 'bg-blue-100 text-blue-800'
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                : 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400'
                             }`}>
                               {appointment.status}
                             </span>
                           </div>
-                          <ArrowRight className="w-4 h-4 text-gray-400" />
+                          <ArrowRight className="w-4 h-4 text-gray-400 dark:text-gray-500 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-all group-hover:translate-x-1" />
                         </div>
                       ))
                   )}

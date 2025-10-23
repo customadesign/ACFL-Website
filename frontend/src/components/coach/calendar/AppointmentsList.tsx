@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,6 +53,7 @@ interface AppointmentsListProps {
 }
 
 export default function AppointmentsList({ coachId }: AppointmentsListProps) {
+  const router = useRouter()
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
   const [filter, setFilter] = useState<'all' | 'upcoming' | 'past' | 'pending'>('upcoming')
@@ -70,9 +72,34 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
   const [showMeeting, setShowMeeting] = useState(false)
   const [meetingAppointment, setMeetingAppointment] = useState<Appointment | null>(null)
   const [nowMs, setNowMs] = useState<number>(Date.now())
+  const [highlightedAppointmentId, setHighlightedAppointmentId] = useState<string | null>(null)
   const socketRef = useRef<Socket | null>(null)
 
   const API_URL = getApiUrl()
+
+  // Scroll to appointment from hash navigation
+  useEffect(() => {
+    if (typeof window !== 'undefined' && !loading && filteredAppointments.length > 0) {
+      const hash = window.location.hash
+      if (hash.startsWith('#appointment-')) {
+        const appointmentId = hash.replace('#appointment-', '')
+
+        // Wait for the DOM to update
+        setTimeout(() => {
+          const element = document.getElementById(`appointment-${appointmentId}`)
+          if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            setHighlightedAppointmentId(appointmentId)
+
+            // Remove highlight after 3 seconds
+            setTimeout(() => {
+              setHighlightedAppointmentId(null)
+            }, 3000)
+          }
+        }, 300)
+      }
+    }
+  }, [loading, filteredAppointments])
 
   // Apply filters function
   const applyFilters = () => {
@@ -488,7 +515,15 @@ export default function AppointmentsList({ coachId }: AppointmentsListProps) {
           </Card>
         ) : (
           filteredAppointments.map((appointment) => (
-            <Card key={appointment.id} className="overflow-hidden">
+            <Card
+              key={appointment.id}
+              id={`appointment-${appointment.id}`}
+              className={`overflow-hidden transition-all duration-300 ${
+                highlightedAppointmentId === appointment.id
+                  ? 'ring-2 ring-blue-500 shadow-lg shadow-blue-500/20'
+                  : ''
+              }`}
+            >
               <CardContent className="p-4 sm:p-6">
                 <div className="flex flex-col">
                   <div className="flex-1">
