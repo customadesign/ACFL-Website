@@ -611,34 +611,34 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-white">
+      <section id="how-it-works" className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            className="text-center mb-10"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
+            <h2 className="text-2xl md:text-3xl font-bold text-ink-dark mb-3">
               How it works
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+            <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto">
               Getting started with your coaching journey is simple and takes just a few minutes.
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
               className="text-center"
             >
-              <div className="w-16 h-16 bg-brand-teal rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-white">1</span>
+              <div className="w-12 h-12 bg-brand-teal rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl font-bold text-white">1</span>
               </div>
-              <h3 className="text-xl font-semibold text-ink-dark mb-4">Take Assessment</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-lg font-semibold text-ink-dark mb-2">Take Assessment</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Complete our quick 2-minute assessment to help us understand your goals, preferences, and coaching needs.
               </p>
             </motion.div>
@@ -649,11 +649,11 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.2 }}
               className="text-center"
             >
-              <div className="w-16 h-16 bg-brand-orange rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-white">2</span>
+              <div className="w-12 h-12 bg-brand-orange rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl font-bold text-white">2</span>
               </div>
-              <h3 className="text-xl font-semibold text-ink-dark mb-4">Get Matched</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-lg font-semibold text-ink-dark mb-2">Get Matched</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Within 24 hours, we'll match you with 3-5 coaches who fit your needs. Review their profiles and choose your favorite.
               </p>
             </motion.div>
@@ -664,11 +664,11 @@ export default function HomePage() {
               transition={{ duration: 0.6, delay: 0.4 }}
               className="text-center"
             >
-              <div className="w-16 h-16 bg-brand-leaf rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-white">3</span>
+              <div className="w-12 h-12 bg-brand-leaf rounded-full flex items-center justify-center mx-auto mb-4">
+                <span className="text-xl font-bold text-white">3</span>
               </div>
-              <h3 className="text-xl font-semibold text-ink-dark mb-4">Start Coaching</h3>
-              <p className="text-gray-600 leading-relaxed">
+              <h3 className="text-lg font-semibold text-ink-dark mb-2">Start Coaching</h3>
+              <p className="text-sm text-gray-600 leading-relaxed">
                 Schedule your first session and begin your journey to positive change with ongoing support from your coach.
               </p>
             </motion.div>
@@ -678,10 +678,10 @@ export default function HomePage() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center mt-12"
+            className="text-center mt-8"
           >
             <a href="#quick-assessment">
-              <Button size="lg" className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg">
+              <Button size="lg" className="bg-brand-teal hover:bg-brand-teal/90 text-white px-6 py-3 text-base">
                 <ShinyText text="Start Your Journey Today" speed={4} />
                 <ChevronRight className="ml-2 w-5 h-5" />
               </Button>
