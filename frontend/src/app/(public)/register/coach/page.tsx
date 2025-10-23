@@ -163,7 +163,7 @@ export default function CoachRegister() {
   };
 
   return (
-      <div className="flex flex-col min-h-screen bg-white ">
+      <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <nav>
         <NavbarLandingPage />
       </nav>
