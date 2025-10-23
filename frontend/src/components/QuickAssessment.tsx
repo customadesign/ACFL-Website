@@ -180,14 +180,14 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
           />
         </div>
 
-        <div className="p-8">
+        <div className="p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-semibold text-ink-dark">Quick Assessment</h3>
-              <p className="text-sm text-gray-500">Step {currentStep + 1} of {steps.length}</p>
+              <h3 className="text-lg font-semibold text-ink-dark">Quick Assessment</h3>
+              <p className="text-xs text-gray-500">Step {currentStep + 1} of {steps.length}</p>
             </div>
-            <span className="bg-brand-leaf text-white px-3 py-1 rounded-full text-sm font-medium">
+            <span className="bg-brand-leaf text-white px-2.5 py-1 rounded-full text-xs font-medium">
               2 min
             </span>
           </div>
@@ -201,31 +201,31 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.3 }}
             >
-              <h4 className="text-lg font-medium text-ink-dark mb-2">
+              <h4 className="text-base font-medium text-ink-dark mb-1.5">
                 {steps[currentStep].title}
               </h4>
-              <p className="text-gray-600 mb-6">{steps[currentStep].subtitle}</p>
+              <p className="text-sm text-gray-600 mb-4">{steps[currentStep].subtitle}</p>
 
               {/* Options */}
               {steps[currentStep].id === "location" ? (
-                <div className="mb-8">
+                <div className="mb-6">
                   <div className="relative" ref={dropdownRef}>
                     <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <Input
                         type="text"
                         placeholder="Search for your state..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         onFocus={() => setIsDropdownOpen(true)}
-                        className="pl-10 pr-4 py-3 w-full border-2 border-gray-200 rounded-xl focus:border-brand-teal focus:outline-none"
+                        className="pl-9 pr-3 py-2 text-sm w-full border-2 border-gray-200 rounded-lg focus:border-brand-teal focus:outline-none"
                       />
                     </div>
-                    
+
                     {isDropdownOpen && (
-                      <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                      <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                         {Object.values(STATE_NAMES)
-                          .filter(state => 
+                          .filter(state =>
                             state.toLowerCase().includes(searchTerm.toLowerCase())
                           )
                           .map((state, index) => (
@@ -236,7 +236,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                                 setSearchTerm(state)
                                 setIsDropdownOpen(false)
                               }}
-                              className={`px-4 py-3 cursor-pointer transition-colors ${
+                              className={`px-3 py-2 cursor-pointer transition-colors text-sm ${
                                 answers.location === state
                                   ? 'bg-brand-teal/10 text-brand-teal font-medium'
                                   : 'hover:bg-gray-50 text-gray-700'
@@ -263,14 +263,14 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                   </div>
                   
                   {answers.location && (
-                    <div className="mt-3 px-4 py-2 bg-brand-teal/10 rounded-lg inline-flex items-center gap-2">
-                      <Check className="w-4 h-4 text-brand-teal" />
-                      <span className="text-brand-teal font-medium">Selected: {answers.location}</span>
+                    <div className="mt-2 px-3 py-1.5 bg-brand-teal/10 rounded-lg inline-flex items-center gap-1.5">
+                      <Check className="w-3.5 h-3.5 text-brand-teal" />
+                      <span className="text-brand-teal font-medium text-sm">Selected: {answers.location}</span>
                     </div>
                   )}
                 </div>
               ) : (
-                <div className="space-y-3 mb-8">
+                <div className="space-y-2 mb-6">
                   {getOptions().map((option, index) => (
                     <motion.div
                       key={option.value}
@@ -278,7 +278,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleAnswer(steps[currentStep].id, option.value)}
-                      className={`w-full p-4 text-left rounded-xl border-2 transition-all cursor-pointer ${
+                      className={`w-full px-3 py-2.5 text-left rounded-lg border-2 transition-all cursor-pointer text-sm ${
                         isSelected(option.value)
                           ? 'border-brand-teal bg-brand-teal/5 text-brand-teal'
                           : 'border-gray-200 hover:border-gray-300 text-gray-700 hover:bg-gray-50'
@@ -304,22 +304,22 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
           </AnimatePresence>
 
           {/* Navigation */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between pt-2">
             <Button
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 0}
-              className="border-gray-300 text-gray-600 hover:border-gray-400"
+              className="border-gray-300 text-gray-600 hover:border-gray-400 h-9 text-sm px-3"
             >
-              <ChevronLeft className="w-4 h-4 mr-2" />
+              <ChevronLeft className="w-4 h-4 mr-1" />
               Back
             </Button>
 
-            <div className="flex space-x-2">
+            <div className="flex space-x-1.5">
               {steps.map((_, index) => (
                 <div
                   key={index}
-                  className={`w-2 h-2 rounded-full transition-colors ${
+                  className={`w-1.5 h-1.5 rounded-full transition-colors ${
                     index <= currentStep ? 'bg-brand-teal' : 'bg-gray-300'
                   }`}
                 />
@@ -329,14 +329,14 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
             <Button
               onClick={nextStep}
               disabled={!canProceed()}
-              className={`text-white transition-all ${
-                canProceed() 
-                  ? 'bg-brand-teal hover:bg-brand-teal/90 cursor-pointer' 
+              className={`text-white transition-all h-9 text-sm px-4 ${
+                canProceed()
+                  ? 'bg-brand-teal hover:bg-brand-teal/90 cursor-pointer'
                   : 'bg-gray-400 cursor-not-allowed opacity-50'
               }`}
             >
               {currentStep === steps.length - 1 ? 'Get Matches' : 'Next'}
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ChevronRight className="w-4 h-4 ml-1" />
             </Button>
           </div>
         </div>

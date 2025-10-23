@@ -215,7 +215,7 @@ export default function GroupCoachingPage() {
       
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-24 md:py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -223,70 +223,74 @@ export default function GroupCoachingPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-           
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
               {renderTitle()}
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
               {heroContent.description || groupContent?.meta_description ||
                 "Experience the power of ACT coaching in a supportive group setting. Connect with others, share experiences, and grow together on your journey to psychological flexibility."}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg">
-                View Available Groups
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button variant="outline" className="border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-8 py-4 text-lg">
-                Learn More
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-6 text-lg font-semibold shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
+                  View Available Groups
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" className="border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-10 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
+                  Learn More
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-white">
+      <section className="py-20 md:py-28 bg-gradient-to-b from-gray-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-8 text-center">
+          <div className="grid md:grid-cols-4 gap-12 md:gap-16 text-center">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
             >
-              <div className="text-4xl font-bold text-brand-teal mb-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-teal to-brand-teal/80 bg-clip-text text-transparent mb-3">
                 <CountUp to={stats?.groupsCompleted || 200} duration={2} />+
               </div>
-              <div className="text-gray-600">{stats?.groupsCompletedLabel || "Groups Completed"}</div>
+              <div className="text-lg text-gray-600 font-medium">{stats?.groupsCompletedLabel || "Groups Completed"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <div className="text-4xl font-bold text-brand-orange mb-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-orange to-brand-orange/80 bg-clip-text text-transparent mb-3">
                 <CountUp to={stats?.participants || 1800} duration={2.5} separator="," />+
               </div>
-              <div className="text-gray-600">{stats?.participantsLabel || "Participants"}</div>
+              <div className="text-lg text-gray-600 font-medium">{stats?.participantsLabel || "Participants"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <div className="text-4xl font-bold text-brand-leaf mb-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-leaf to-brand-leaf/80 bg-clip-text text-transparent mb-3">
                 <CountUp to={stats?.completionRate || 92} duration={2.2} />%
               </div>
-              <div className="text-gray-600">{stats?.completionRateLabel || "Completion Rate"}</div>
+              <div className="text-lg text-gray-600 font-medium">{stats?.completionRateLabel || "Completion Rate"}</div>
             </motion.div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 }}
             >
-              <div className="text-4xl font-bold text-brand-coral mb-2">
+              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-coral to-brand-coral/80 bg-clip-text text-transparent mb-3">
                 <CountUp to={stats?.averageRating || 4.9} duration={2} />/<CountUp to={5} duration={1.5} />
               </div>
-              <div className="text-gray-600">{stats?.averageRatingLabel || "Average Rating"}</div>
+              <div className="text-lg text-gray-600 font-medium">{stats?.averageRatingLabel || "Average Rating"}</div>
             </motion.div>
           </div>
         </div>
@@ -317,10 +321,16 @@ export default function GroupCoachingPage() {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="text-center"
+                  className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-teal/5 hover:to-transparent transition-colors duration-300"
                 >
-                  <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                  <motion.div
+                    whileHover={{ scale: 1.1, rotate: 5 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                  >
+                    <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
+                  </motion.div>
                   <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
                   <p className="text-gray-600 text-sm">{benefit.description}</p>
                 </motion.div>
@@ -353,9 +363,10 @@ export default function GroupCoachingPage() {
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8, scale: 1.02 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <SpotlightCard className="h-full p-6 hover:shadow-lg transition-shadow">
+                <SpotlightCard className="h-full p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50 group">
                   <h3 className="text-xl font-semibold text-ink-dark mb-3">{group.title}</h3>
                   <p className="text-gray-600 mb-4">{group.description}</p>
                   
@@ -421,9 +432,10 @@ export default function GroupCoachingPage() {
                 key={index}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
+                whileHover={{ x: 8, transition: { duration: 0.3 } }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <SpotlightCard className="p-6 hover:shadow-lg transition-shadow">
+                <SpotlightCard className="p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
                   <div className="flex flex-col md:flex-row md:items-center md:justify-between">
                     <div className="mb-4 md:mb-0">
                       <h3 className="text-xl font-semibold text-ink-dark mb-2">{group.title}</h3>
@@ -453,10 +465,12 @@ export default function GroupCoachingPage() {
                         </span>
                       </div>
                     </div>
-                    <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                      Join Group
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
+                        Join Group
+                        <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                      </Button>
+                    </motion.div>
                   </div>
                 </SpotlightCard>
               </motion.div>
@@ -514,14 +528,18 @@ export default function GroupCoachingPage() {
             <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
               {cmsContent?.cta?.subtitle || "Experience the power of group learning and support. Find your group and start your journey today."}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg">
-                View Available Groups
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
-              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-brand-teal px-8 py-4 text-lg">
-                Ask a Question
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button className="bg-white text-brand-teal hover:bg-gray-50 px-10 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group">
+                  View Available Groups
+                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-brand-teal px-10 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
+                  Ask a Question
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>

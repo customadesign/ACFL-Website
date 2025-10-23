@@ -134,7 +134,7 @@ export default function AboutPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-24 md:py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -142,10 +142,10 @@ export default function AboutPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
               {renderTitle()}
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
               {heroContent.description || aboutContent?.meta_description ||
                 "We're transforming lives through evidence-based Acceptance and Commitment Therapy coaching, helping people create meaningful change and live authentically."}
             </p>
@@ -184,7 +184,12 @@ export default function AboutPage() {
                 )}
               </div>
               <div className="flex items-center space-x-4">
-                <Heart className="w-8 h-8 text-brand-coral" />
+                <motion.div
+                  whileHover={{ scale: 1.1, rotate: 5 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                >
+                  <Heart className="w-8 h-8 text-brand-coral" />
+                </motion.div>
                 <span className="text-lg font-semibold text-ink-dark">
                   {cmsContent?.mission?.tagline || "Compassionate, evidence-based care"}
                 </span>
@@ -194,9 +199,10 @@ export default function AboutPage() {
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               whileInView={{ opacity: 1, x: 0 }}
+              whileHover={{ scale: 1.02 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <SpotlightCard className="p-8">
+              <SpotlightCard className="p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="text-center">
                     <div className="text-3xl font-bold text-brand-teal mb-2">
@@ -279,11 +285,17 @@ export default function AboutPage() {
                   key={index}
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
                   transition={{ duration: 0.6, delay: index * 0.1 }}
                 >
-                  <Card className="h-full hover:shadow-lg transition-shadow">
+                  <Card className="h-full shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 group cursor-pointer">
                     <CardContent className="p-6 text-center">
-                      <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                      <motion.div
+                        whileHover={{ scale: 1.1, rotate: 5 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                      >
+                        <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
+                      </motion.div>
                       <h3 className="text-lg font-semibold text-ink-dark mb-2">{value.title}</h3>
                       <p className="text-gray-600">{value.description}</p>
                     </CardContent>
@@ -374,9 +386,10 @@ export default function AboutPage() {
                 key={index}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
+                whileHover={{ y: -8, scale: 1.02 }}
                 transition={{ duration: 0.6, delay: index * 0.1 }}
               >
-                <SpotlightCard className="p-6 text-center h-full">
+                <SpotlightCard className="p-6 text-center h-full shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
                   <div className="w-24 h-24 bg-gradient-to-br from-brand-teal to-brand-orange rounded-full mx-auto mb-4" />
                   <h3 className="text-xl font-semibold text-ink-dark mb-1">{member.name}</h3>
                   <p className="text-brand-teal font-medium mb-3">{member.role}</p>
@@ -403,21 +416,25 @@ export default function AboutPage() {
             <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
               Join thousands who've discovered a more meaningful life through ACT coaching.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-white text-brand-teal hover:bg-gray-50 text-lg px-8"
-              >
-                Find Your Coach
-                <ChevronRight className="w-5 h-5 ml-2" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 text-lg px-8"
-              >
-                Become a Coach
-              </Button>
+            <div className="flex flex-col sm:flex-row gap-6 justify-center">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  className="bg-white text-brand-teal hover:bg-gray-50 text-lg px-10 py-6 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group"
+                >
+                  Find Your Coach
+                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-10 py-6 font-semibold shadow-lg transition-all duration-300"
+                >
+                  Become a Coach
+                </Button>
+              </motion.div>
             </div>
           </motion.div>
         </div>

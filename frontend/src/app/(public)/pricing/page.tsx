@@ -160,7 +160,7 @@ export default function PricingPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-24 md:py-32 lg:py-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -168,12 +168,12 @@ export default function PricingPage() {
             transition={{ duration: 0.8 }}
             className="text-center"
           >
-           
-            
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6 leading-tight">
+
+
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
               {renderTitle()}
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
               {heroContent.description || pricingContent?.meta_description ||
                 "Professional ACT coaching tailored to your needs. All plans include qualified coaches, flexible scheduling, and unlimited messaging support between sessions."}
             </p>
@@ -190,12 +190,18 @@ export default function PricingPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, scale: 1.02 }}
               transition={{ duration: 0.6 }}
             >
-              <SpotlightCard className="h-full p-8 relative">
+              <SpotlightCard className="h-full p-8 relative shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50 group">
                 <div className="text-center">
                   <div className="mb-6">
-                    <Calendar className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                    >
+                      <Calendar className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
+                    </motion.div>
                     <h3 className="text-2xl font-bold text-ink-dark mb-2">{plans.monthly?.name || "Monthly Sessions"}</h3>
                     <p className="text-gray-600">{plans.monthly?.description || "Perfect for ongoing support"}</p>
                   </div>
@@ -228,10 +234,12 @@ export default function PricingPage() {
                   </div>
 
                   <a href="/#quick-assessment">
-                    <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white py-3 text-lg">
-                      <ShinyText text="Start Monthly Plan" speed={4} />
-                      <ChevronRight className="ml-2 w-5 h-5" />
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button className="w-full bg-brand-teal hover:bg-brand-teal/90 text-white py-3 text-lg shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
+                        <ShinyText text="Start Monthly Plan" speed={4} />
+                        <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                      </Button>
+                    </motion.div>
                   </a>
                 </div>
               </SpotlightCard>
@@ -241,9 +249,10 @@ export default function PricingPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, scale: 1.02 }}
               transition={{ duration: 0.6, delay: 0.2 }}
             >
-              <SpotlightCard className={`h-full p-8 relative ${plans.weekly?.popular ? 'border-2 border-brand-teal' : ''}`}>
+              <SpotlightCard className={`h-full p-8 relative shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-orange/30 bg-gradient-to-br from-white to-gray-50/50 group ${plans.weekly?.popular ? 'border-2 border-brand-teal' : ''}`}>
                 {/* Popular Badge */}
                 {plans.weekly?.popular && (
                   <div className="absolute top-4 right-4 z-10">
@@ -259,7 +268,12 @@ export default function PricingPage() {
 
                 <div className="text-center">
                   <div className={`mb-6 ${plans.weekly?.popular ? 'mt-4' : ''}`}>
-                    <Users className="w-12 h-12 text-brand-orange mx-auto mb-4" />
+                    <motion.div
+                      whileHover={{ scale: 1.1, rotate: 5 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                    >
+                      <Users className="w-12 h-12 text-brand-orange mx-auto mb-4 group-hover:text-brand-teal transition-colors duration-300" />
+                    </motion.div>
                     <h3 className="text-2xl font-bold text-ink-dark mb-2">{plans.weekly?.name || "Weekly Sessions"}</h3>
                     <p className="text-gray-600">{plans.weekly?.description || "Intensive transformation support"}</p>
                   </div>
@@ -292,10 +306,12 @@ export default function PricingPage() {
                   </div>
 
                   <a href="/#quick-assessment">
-                    <Button className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white py-3 text-lg">
-                      <ShinyText text="Start Weekly Plan" speed={4} />
-                      <ChevronRight className="ml-2 w-5 h-5" />
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                      <Button className="w-full bg-brand-orange hover:bg-brand-orange/90 text-white py-3 text-lg shadow-lg shadow-brand-orange/30 hover:shadow-xl transition-all duration-300 group">
+                        <ShinyText text="Start Weekly Plan" speed={4} />
+                        <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                      </Button>
+                    </motion.div>
                   </a>
                 </div>
               </SpotlightCard>
@@ -325,10 +341,16 @@ export default function PricingPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
               transition={{ duration: 0.6 }}
-              className="text-center"
+              className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-teal/5 hover:to-transparent transition-colors duration-300"
             >
-              <Shield className="w-12 h-12 text-brand-teal mx-auto mb-4" />
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Shield className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
+              </motion.div>
               <h3 className="text-xl font-semibold text-ink-dark mb-3">Qualified Professionals</h3>
               <p className="text-gray-600">Our coaches are carefully vetted professionals with specialized ACT training and experience.</p>
             </motion.div>
@@ -336,10 +358,16 @@ export default function PricingPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
               transition={{ duration: 0.6, delay: 0.1 }}
-              className="text-center"
+              className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-orange/5 hover:to-transparent transition-colors duration-300"
             >
-              <MessageSquare className="w-12 h-12 text-brand-orange mx-auto mb-4" />
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <MessageSquare className="w-12 h-12 text-brand-orange mx-auto mb-4 group-hover:text-brand-leaf transition-colors duration-300" />
+              </motion.div>
               <h3 className="text-xl font-semibold text-ink-dark mb-3">24/7 Messaging</h3>
               <p className="text-gray-600">Send messages to your coach anytime between sessions for continuous support.</p>
             </motion.div>
@@ -347,10 +375,16 @@ export default function PricingPage() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
+              whileHover={{ y: -8, transition: { duration: 0.3 } }}
               transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center"
+              className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-leaf/5 hover:to-transparent transition-colors duration-300"
             >
-              <Clock className="w-12 h-12 text-brand-leaf mx-auto mb-4" />
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 5 }}
+                transition={{ type: "spring", stiffness: 300, damping: 10 }}
+              >
+                <Clock className="w-12 h-12 text-brand-leaf mx-auto mb-4 group-hover:text-brand-teal transition-colors duration-300" />
+              </motion.div>
               <h3 className="text-xl font-semibold text-ink-dark mb-3">Flexible Scheduling</h3>
               <p className="text-gray-600">Book sessions at times that work for you with easy rescheduling options.</p>
             </motion.div>
@@ -374,13 +408,15 @@ export default function PricingPage() {
             </p>
             <div className="flex justify-center">
               <a href="/#quick-assessment">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg"
-                >
-                  <span className="text-brand-teal font-semibold">Start Your Assessment</span>
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Button>
+                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                  <Button
+                    size="lg"
+                    className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg shadow-xl hover:shadow-2xl transition-all duration-300 group"
+                  >
+                    <span className="text-brand-teal font-semibold">Start Your Assessment</span>
+                    <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+                  </Button>
+                </motion.div>
               </a>
             </div>
           </motion.div>

@@ -190,7 +190,7 @@ export default function HelpCenterPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-white my-28 mx-auto">
+      <section className="py-24 md:py-32 lg:py-40 bg-white my-28 mx-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -198,10 +198,10 @@ export default function HelpCenterPage() {
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight text-ink-dark mb-8">
               {renderTitle()}
             </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
+            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-3xl mx-auto leading-relaxed">
               {heroContent.description || helpContent?.meta_description || "Find answers to your questions and get the support you need for your coaching journey."}
             </p>
 
@@ -238,15 +238,16 @@ export default function HelpCenterPage() {
                   initial={{ opacity: 0, x: -20 }}
                   whileInView={{ opacity: 1, x: 0 }}
                   transition={{ duration: 0.4, delay: index * 0.05 }}
+                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
                 >
                   <Link
                     href="#"
-                    className="flex items-center justify-between p-4 bg-white rounded-lg hover:shadow-md transition-shadow group"
+                    className="flex items-center justify-between p-4 bg-white rounded-lg shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50 group cursor-pointer"
                   >
                     <span className="text-gray-700 group-hover:text-brand-teal transition-colors">
                       {article}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-brand-teal transition-colors" />
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-brand-teal group-hover:translate-x-1 transition-all duration-300" />
                   </Link>
                 </motion.div>
               ))}
