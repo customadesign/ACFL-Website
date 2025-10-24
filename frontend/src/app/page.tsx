@@ -883,20 +883,20 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-center max-w-6xl mx-auto">
             {/* Left side - Stats */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
               >
-                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
                   3,000+
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Active clients
                 </p>
               </motion.div>
@@ -906,12 +906,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
               >
-                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
                   500+
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Professional coaches
                 </p>
               </motion.div>
@@ -921,12 +921,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
               >
-                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
                   4.8/5
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Client rating
                 </p>
               </motion.div>
@@ -936,12 +936,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
               >
-                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
                   24hr
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-sm">
+                <p className="text-gray-600 dark:text-gray-400 text-xs">
                   Match guarantee
                 </p>
               </motion.div>
@@ -953,9 +953,9 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className="relative lg:ml-auto"
+              className="relative"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl max-w-lg">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
                   src="/images/coaching-numbers.png"
                   alt="ACT Coaching by the numbers"
