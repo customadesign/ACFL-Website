@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Logo from "@/components/Logo"
-import QuickAssessment from "@/components/QuickAssessment"
+// QuickAssessment moved to /get-started page
 import AssessmentCompleteModal from "@/components/AssessmentCompleteModal"
 import GradientText from "@/components/GradientText"
 import CountUp from "@/components/CountUp"
@@ -31,26 +31,18 @@ import {
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 export default function HomePage() {
-  const router = useRouter()
   const [showAssessmentModal, setShowAssessmentModal] = useState(false)
 
+  // Assessment handling moved to /get-started page
   const handleAssessmentComplete = (data: any) => {
-    // Store the assessment data for later use after login/registration
-    localStorage.setItem('assessmentData', JSON.stringify({
-      areaOfConcern: data.areaOfConcern || [],
-      location: data.location || '',
-      availability: data.availability || [],
-      priceRange: data.priceRange || '',
-      completedAt: new Date().toISOString()
-    }))
-
+    // This function is no longer used on landing page
     console.log('Assessment completed, data stored:', {
       areaOfConcern: data.areaOfConcern,
       location: data.location,
       availability: data.availability,
       priceRange: data.priceRange
     })
-
+    
     // Show modal for user to choose login or register
     setShowAssessmentModal(true)
   }
@@ -421,9 +413,17 @@ export default function HomePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative z-20"
+              className="relative z-20 hidden lg:block"
             >
-              <QuickAssessment onComplete={handleAssessmentComplete} />
+              {/* Hero Image or Animation Placeholder */}
+              <div className="relative">
+                <div className="aspect-square rounded-2xl bg-gradient-to-br from-brand-teal/10 to-brand-leaf/10 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <Users className="w-24 h-24 text-brand-teal mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-700">Connect with certified ACT coaches</p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
