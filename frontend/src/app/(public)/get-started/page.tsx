@@ -79,7 +79,7 @@ export default function GetStartedPage() {
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
-                  src="/images/coaching-hero.jpg"
+                  src="/images/coaching-hero.png"
                   alt="Professional ACT coaching session"
                   className="w-full h-full object-cover"
                 />
