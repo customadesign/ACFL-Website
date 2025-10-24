@@ -453,13 +453,12 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
-                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-                  <div className="text-center text-gray-400 dark:text-gray-600">
-                    <div className="text-6xl mb-2">📊</div>
-                    <p className="text-sm">Coaching by Numbers Image</p>
-                  </div>
-                </div>
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/coaching-numbers.png"
+                  alt="ACT Coaching by the numbers"
+                  className="w-full h-full object-cover"
+                />
               </div>
             </motion.div>
           </div>
