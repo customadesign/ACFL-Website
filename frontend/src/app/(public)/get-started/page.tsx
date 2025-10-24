@@ -99,9 +99,6 @@ export default function GetStartedPage() {
             viewport={{ once: true }}
             className="text-center mb-12"
           >
-            <p className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">
-              Coaching
-            </p>
             <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
               Why choose ACT coaching
             </h2>
@@ -196,6 +193,87 @@ export default function GetStartedPage() {
                   </h3>
                   <p className="text-sm text-gray-200">
                     Video, phone, and text coaching to fit your lifestyle and preferences.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 4 - Ongoing Support */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-4.png"
+                  alt="Ongoing support between coaching sessions"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+
+                {/* Content Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Ongoing Support
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Get continuous support between sessions with messaging, resources, and check-ins from your coach.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 5 - Proven Results */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-5.png"
+                  alt="Proven results from ACT coaching"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+
+                {/* Content Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Proven Results
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Our clients report 85% improvement in their mental well-being within 3 months of starting coaching.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 6 - Multiple Formats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-6.png"
+                  alt="Multiple coaching formats available"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+
+                {/* Content Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Multiple Formats
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Choose from video calls, phone sessions, or text-based coaching to match your communication preference.
                   </p>
                 </div>
               </div>
