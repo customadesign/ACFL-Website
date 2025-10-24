@@ -17,16 +17,19 @@ import Footer from "@/components/Footer"
 import Ballpit from "@/components/Ballpit"
 import { useRouter } from "next/navigation"
 import {
-  CheckCircle, 
-  Heart, 
-  Clock, 
-  Shield, 
+  CheckCircle,
+  Heart,
+  Clock,
+  Shield,
   Star,
   ChevronRight,
   Play,
   Users,
   Award,
-  MessageCircle
+  MessageCircle,
+  Calendar,
+  MessageSquare,
+  ArrowRight
 } from "lucide-react"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 
@@ -690,130 +693,408 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="py-20 bg-gray-lite">
+      {/* Why Choose ACT Coaching Section */}
+      <section className="py-16 bg-gradient-to-br from-teal-50/30 via-cyan-50/20 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-16"
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              What our clients say
+            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
+              Why choose ACT coaching
             </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Real stories from people who have transformed their lives through ACT coaching.
+            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+              Proven strategies for personal and professional growth
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
+            {/* Card 1 - Personalized Matching */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <SpotlightCard className="h-full p-6">
-                  <div className="flex items-start space-x-4">
-                    <img 
-                      src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=96&h=96&fit=crop&crop=face&auto=format&q=80" 
-                      alt="Sarah Martinez"
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="font-semibold text-gray-900">Sarah Martinez</div>
-                          <div className="text-sm text-gray-500">Local Guide • 47 reviews</div>
-                        </div>
-                        <div className="flex items-center space-x-1">
-                          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%234285f4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334a853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23fbbc05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23ea4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E" alt="Google" className="w-4 h-4" />
-                        </div>
-                      </div>
-                      <div className="flex items-center mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                        <span className="text-sm text-gray-500 ml-2">3 months ago</span>
-                          </div>
-                      <p className="text-gray-700 leading-relaxed">
-                        My coach helped me work through anxiety that was holding me back for years. The ACT approach really clicked with me, and I finally feel like I'm living authentically. Highly recommend!
-                      </p>
-                        </div>
-                  </div>
-              </SpotlightCard>
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-1.png"
+                  alt="Evidence-based ACT coaching approach"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Personalized Matching
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Our advanced algorithm considers your goals, personality, and preferences to match you with the perfect coach.
+                  </p>
+                </div>
+              </div>
             </motion.div>
 
+            {/* Card 2 - Flexible Scheduling */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <SpotlightCard className="h-full p-6">
-                  <div className="flex items-start space-x-4">
-                    <img 
-                      src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=96&h=96&fit=crop&crop=face&auto=format&q=80" 
-                      alt="Michael Rodriguez"
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="font-semibold text-gray-900">Michael Rodriguez</div>
-                          <div className="text-sm text-gray-500">Local Guide • 29 reviews</div>
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-2.png"
+                  alt="Flexible coaching session scheduling"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Flexible Scheduling
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Book sessions that fit your schedule. Morning, evening, or weekend - we have coaches available when you need them.
+                  </p>
                 </div>
-                        <div className="flex items-center space-x-1">
-                          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%234285f4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334a853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23fbbc05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23ea4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E" alt="Google" className="w-4 h-4" />
               </div>
-                      </div>
-                      <div className="flex items-center mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                        <span className="text-sm text-gray-500 ml-2">2 months ago</span>
-                      </div>
-                      <p className="text-gray-700 leading-relaxed">
-                        The matching process was incredible - they found me a coach who understood my specific challenges. Three months later, I feel more confident and focused than ever. Worth every penny.
-                      </p>
-                    </div>
-                  </div>
-              </SpotlightCard>
             </motion.div>
 
+            {/* Card 3 - Qualified Professionals */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-3.png"
+                  alt="Qualified professional ACT coaches"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Qualified Professionals
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Our coaches are carefully vetted, trained in ACT methodology, and committed to helping you achieve your goals.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 4 - Ongoing Support */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <SpotlightCard className="h-full p-6">
-                  <div className="flex items-start space-x-4">
-                    <img 
-                      src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=96&h=96&fit=crop&crop=face&auto=format&q=80" 
-                      alt="Jennifer Lee"
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between mb-2">
-                        <div>
-                          <div className="font-semibold text-gray-900">Jennifer Lee</div>
-                          <div className="text-sm text-gray-500">Local Guide • 63 reviews</div>
-                  </div>
-                        <div className="flex items-center space-x-1">
-                          <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%234285f4' d='M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z'/%3E%3Cpath fill='%2334a853' d='M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z'/%3E%3Cpath fill='%23fbbc05' d='M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z'/%3E%3Cpath fill='%23ea4335' d='M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z'/%3E%3C/svg%3E" alt="Google" className="w-4 h-4" />
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-4.png"
+                  alt="Ongoing support between coaching sessions"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Ongoing Support
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Get continuous support between sessions with messaging, resources, and check-ins from your coach.
+                  </p>
                 </div>
-                      </div>
-                      <div className="flex items-center mb-3">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                        <span className="text-sm text-gray-500 ml-2">1 month ago</span>
-                </div>
-                      <p className="text-gray-700 leading-relaxed">
-                        I was skeptical about online coaching, but the platform made it so easy to connect with my coach. The flexibility to message between sessions has been a game-changer. Amazing service!
-                      </p>
               </div>
+            </motion.div>
+
+            {/* Card 5 - Proven Results */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-5.png"
+                  alt="Proven results from ACT coaching"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Proven Results
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Our clients report 85% improvement in their mental well-being within 3 months of starting coaching.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Card 6 - Multiple Formats */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.6 }}
+              viewport={{ once: true }}
+              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
+            >
+              <div className="relative h-64">
+                <img
+                  src="/images/why-coaching-6.png"
+                  alt="Multiple coaching formats available"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
+                  <h3 className="text-2xl font-bold mb-3">
+                    Multiple Formats
+                  </h3>
+                  <p className="text-sm text-gray-200">
+                    Choose from video calls, phone sessions, or text-based coaching to match your communication preference.
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Coaching by the Numbers Section */}
+      <section className="py-16 bg-gradient-to-br from-cyan-50/30 via-blue-50/20 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
+              Our Coaching by the Numbers
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Transformative results across personal and professional domains
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-[auto_1fr] gap-12 items-center">
+            {/* Left side - Stats */}
+            <div className="space-y-8">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  3,000+
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-base">
+                  Active clients
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  500+
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-base">
+                  Professional coaches
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  4.8/5
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-base">
+                  Client rating
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  24hr
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 text-base">
+                  Match guarantee
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Right side - Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative max-w-md mx-auto lg:mx-0"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <img
+                  src="/images/coaching-numbers.png"
+                  alt="ACT Coaching by the numbers"
+                  className="w-full h-auto object-cover"
+                />
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Client Stories Section */}
+      <section className="py-16 bg-white dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
+              Client stories
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Real people, real transformations through ACT coaching
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {/* Testimonial 1 - Sarah Martinez */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
+            >
+              {/* Star Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+
+              {/* Review Text */}
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                My coach helped me work through anxiety that was holding me back for years. The ACT approach really clicked with me, and I finally feel like I'm living authentically. Highly recommend!
+              </p>
+
+              {/* Reviewer Info */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">SM</span>
+                </div>
+                <div>
+                  <div className="font-semibold text-ink-dark dark:text-white">Sarah Martinez</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Local Guide • 47 reviews
                   </div>
-              </SpotlightCard>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                    Google • 3 months ago
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 2 - Michael Rodriguez */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
+            >
+              {/* Star Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+
+              {/* Review Text */}
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                The matching process was incredible - they found me a coach who understood my specific challenges. Three months later, I feel more confident and focused than ever. Worth every penny.
+              </p>
+
+              {/* Reviewer Info */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">MR</span>
+                </div>
+                <div>
+                  <div className="font-semibold text-ink-dark dark:text-white">Michael Rodriguez</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Local Guide • 29 reviews
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                    Google • 2 months ago
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Testimonial 3 - Jennifer Lee */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
+            >
+              {/* Star Rating */}
+              <div className="flex gap-1 mb-4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                ))}
+              </div>
+
+              {/* Review Text */}
+              <p className="text-gray-700 dark:text-gray-300 mb-6">
+                I was skeptical about online coaching, but the platform made it so easy to connect with my coach. The flexibility to message between sessions has been a game-changer. Amazing service!
+              </p>
+
+              {/* Reviewer Info */}
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
+                  <span className="text-white font-semibold text-lg">JL</span>
+                </div>
+                <div>
+                  <div className="font-semibold text-ink-dark dark:text-white">Jennifer Lee</div>
+                  <div className="text-sm text-gray-500 dark:text-gray-400">
+                    Local Guide • 63 reviews
+                  </div>
+                  <div className="text-xs text-gray-400 dark:text-gray-500">
+                    Google • 1 month ago
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
