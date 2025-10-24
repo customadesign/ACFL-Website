@@ -383,7 +383,7 @@ export default function GetStartedPage() {
 
           <div className="grid lg:grid-cols-2 gap-8 items-center">
             {/* Left side - Stats */}
-            <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
@@ -391,11 +391,11 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-brand-teal mb-2">
                   3,000+
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  Active clients worldwide
+                  Active clients
                 </p>
               </motion.div>
 
@@ -406,11 +406,11 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
-                  150+
+                <div className="text-4xl md:text-5xl font-bold text-brand-orange mb-2">
+                  500+
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  Certified ACT coaches
+                  Professional coaches
                 </p>
               </motion.div>
 
@@ -421,11 +421,26 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
-                  25+
+                <div className="text-4xl md:text-5xl font-bold text-brand-leaf mb-2">
+                  4.8/5
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 text-lg">
-                  Countries served
+                  Client rating
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.4 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-pink-500 mb-2">
+                  24hr
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                  Match guarantee
                 </p>
               </motion.div>
             </div>
