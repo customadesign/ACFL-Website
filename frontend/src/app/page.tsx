@@ -883,20 +883,20 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-[auto_1fr] gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Left side - Stats */}
-            <div className="space-y-8">
+            <div className="space-y-6">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
                   3,000+
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-base">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Active clients
                 </p>
               </motion.div>
@@ -906,12 +906,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
                   500+
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-base">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Professional coaches
                 </p>
               </motion.div>
@@ -921,12 +921,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
                   4.8/5
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-base">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Client rating
                 </p>
               </motion.div>
@@ -936,12 +936,12 @@ export default function HomePage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-2">
                   24hr
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-base">
+                <p className="text-gray-600 dark:text-gray-400 text-sm">
                   Match guarantee
                 </p>
               </motion.div>
@@ -953,9 +953,9 @@ export default function HomePage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className="relative max-w-md mx-auto lg:mx-0"
+              className="relative lg:ml-auto"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl max-w-lg">
                 <img
                   src="/images/coaching-numbers.png"
                   alt="ACT Coaching by the numbers"
