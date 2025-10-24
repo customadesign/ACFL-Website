@@ -119,14 +119,12 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80 bg-gradient-to-br from-gray-400 to-gray-600">
-                {/* Placeholder for image - replace with actual image */}
-                <div className="absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700 flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <Award className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm">Replace with wooden interior image</p>
-                  </div>
-                </div>
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-1.png"
+                  alt="Evidence-based ACT coaching approach"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
@@ -157,14 +155,12 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80 bg-gradient-to-br from-gray-400 to-gray-600">
-                {/* Placeholder for image - replace with actual image */}
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-gray-800 flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <Calendar className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm">Replace with coaching session image</p>
-                  </div>
-                </div>
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-2.png"
+                  alt="Flexible coaching session formats"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
@@ -186,14 +182,12 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80 bg-gradient-to-br from-gray-400 to-gray-600">
-                {/* Placeholder for image - replace with actual image */}
-                <div className="absolute inset-0 bg-gradient-to-br from-amber-900 to-gray-700 flex items-center justify-center">
-                  <div className="text-center text-white p-6">
-                    <MessageSquare className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm">Replace with lifestyle coaching image</p>
-                  </div>
-                </div>
+              <div className="relative h-80">
+                <img
+                  src="/images/why-coaching-3.png"
+                  alt="Video, phone, and text coaching options"
+                  className="absolute inset-0 w-full h-full object-cover"
+                />
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
