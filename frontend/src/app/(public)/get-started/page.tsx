@@ -126,25 +126,16 @@ export default function GetStartedPage() {
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
                   <h3 className="text-2xl font-bold mb-3">
-                    Evidence-based approach
+                    Personalized Matching
                   </h3>
-                  <p className="text-sm mb-4 text-gray-200">
-                    We promise three to five perfectly matched coaches within 24 hours.
+                  <p className="text-sm text-gray-200">
+                    Our advanced algorithm considers your goals, personality, and preferences to match you with the perfect coach.
                   </p>
-                  <div className="flex gap-3">
-                    <button className="text-sm font-semibold hover:underline">
-                      Learn more
-                    </button>
-                    <button className="text-sm font-semibold hover:underline flex items-center gap-1">
-                      How it works
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
                 </div>
               </div>
             </motion.div>
 
-            {/* Card 2 - Flexible session formats (1) */}
+            {/* Card 2 - Flexible Scheduling */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -155,23 +146,23 @@ export default function GetStartedPage() {
               <div className="relative h-80">
                 <img
                   src="/images/why-coaching-2.png"
-                  alt="Flexible coaching session formats"
+                  alt="Flexible coaching session scheduling"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
                   <h3 className="text-2xl font-bold mb-3">
-                    Flexible session formats
+                    Flexible Scheduling
                   </h3>
                   <p className="text-sm text-gray-200">
-                    Scientifically validated techniques that drive real, lasting change.
+                    Book sessions that fit your schedule. Morning, evening, or weekend - we have coaches available when you need them.
                   </p>
                 </div>
               </div>
             </motion.div>
 
-            {/* Card 3 - Flexible session formats (2) */}
+            {/* Card 3 - Qualified Professionals */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -182,17 +173,17 @@ export default function GetStartedPage() {
               <div className="relative h-80">
                 <img
                   src="/images/why-coaching-3.png"
-                  alt="Video, phone, and text coaching options"
+                  alt="Qualified professional ACT coaches"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
 
                 {/* Content Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
                   <h3 className="text-2xl font-bold mb-3">
-                    Flexible session formats
+                    Qualified Professionals
                   </h3>
                   <p className="text-sm text-gray-200">
-                    Video, phone, and text coaching to fit your lifestyle and preferences.
+                    Our coaches are carefully vetted, trained in ACT methodology, and committed to helping you achieve your goals.
                   </p>
                 </div>
               </div>
