@@ -6,7 +6,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import Logo from "@/components/Logo"
-import QuickAssessment from "@/components/QuickAssessment"
+// QuickAssessment moved to /get-started page
 import AssessmentCompleteModal from "@/components/AssessmentCompleteModal"
 import GradientText from "@/components/GradientText"
 import CountUp from "@/components/CountUp"
@@ -31,19 +31,11 @@ import {
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 
 export default function HomePage() {
-  const router = useRouter()
   const [showAssessmentModal, setShowAssessmentModal] = useState(false)
 
+  // Assessment handling moved to /get-started page
   const handleAssessmentComplete = (data: any) => {
-    // Store the assessment data for later use after login/registration
-    localStorage.setItem('assessmentData', JSON.stringify({
-      areaOfConcern: data.areaOfConcern || [],
-      location: data.location || '',
-      availability: data.availability || [],
-      priceRange: data.priceRange || '',
-      completedAt: new Date().toISOString()
-    }))
-    
+    // This function is no longer used on landing page
     console.log('Assessment completed, data stored:', {
       areaOfConcern: data.areaOfConcern,
       location: data.location,
@@ -384,9 +376,9 @@ export default function HomePage() {
                 and create meaningful life changes. Get matched with qualified coaches in 24 hours.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-8">
-                <a href="#quick-assessment">
-                  <Button 
-                    size="lg" 
+                <a href="/get-started">
+                  <Button
+                    size="lg"
                     className="bg-brand-teal hover:bg-brand-teal/90 text-white px-8 py-4 text-lg w-full sm:w-auto"
                   >
                     <ShinyText text="Get Started Today" speed={3} />
@@ -421,9 +413,17 @@ export default function HomePage() {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, delay: 0.2 }}
-              className="relative z-20"
+              className="relative z-20 hidden lg:block"
             >
-              <QuickAssessment onComplete={handleAssessmentComplete} />
+              {/* Hero Image or Animation Placeholder */}
+              <div className="relative">
+                <div className="aspect-square rounded-2xl bg-gradient-to-br from-brand-teal/10 to-brand-leaf/10 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <Users className="w-24 h-24 text-brand-teal mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-700">Connect with certified ACT coaches</p>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </div>
         </div>
@@ -680,7 +680,7 @@ export default function HomePage() {
             transition={{ duration: 0.6, delay: 0.6 }}
             className="text-center mt-8"
           >
-            <a href="#quick-assessment">
+            <a href="/get-started">
               <Button size="lg" className="bg-brand-teal hover:bg-brand-teal/90 text-white px-6 py-3 text-base">
                 <ShinyText text="Start Your Journey Today" speed={4} />
                 <ChevronRight className="ml-2 w-5 h-5" />
@@ -854,7 +854,7 @@ export default function HomePage() {
               Join thousands of people who have found their perfect coach match and are living more fulfilling lives.
             </p>
             <div className="flex justify-center">
-              <a href="#quick-assessment">
+              <a href="/get-started">
                 <Button 
                   size="lg" 
                   className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg shadow-2xl"
