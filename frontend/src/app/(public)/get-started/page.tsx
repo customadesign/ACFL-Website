@@ -78,25 +78,11 @@ export default function GetStartedPage() {
               className="relative hidden lg:block"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                {/* Placeholder for actual image - replace with your image */}
-                <div className="aspect-[4/3] bg-gradient-to-br from-brand-teal/20 to-brand-leaf/20 flex items-center justify-center">
-                  <div className="text-center p-8">
-                    <Users className="w-32 h-32 text-brand-teal/40 mx-auto mb-4" />
-                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-400">
-                      Replace with your coaching image
-                    </p>
-                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-                      Recommended: 800x600px
-                    </p>
-                  </div>
-                </div>
-                {/* Uncomment when you have the image:
                 <img
                   src="/images/coaching-hero.jpg"
-                  alt="Professional coaching session"
+                  alt="Professional ACT coaching session"
                   className="w-full h-full object-cover"
                 />
-                */}
               </div>
             </motion.div>
           </div>
