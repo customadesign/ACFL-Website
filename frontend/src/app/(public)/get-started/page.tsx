@@ -37,37 +37,69 @@ export default function GetStartedPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-16 md:py-24 lg:py-32 bg-gradient-to-b from-blue-50 via-white to-white dark:from-gray-800 dark:via-gray-900 dark:to-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-ink-dark dark:text-white mb-6 tracking-tight">
-              Find Your Perfect <span className="text-brand-teal">ACT Coach</span>
-            </h1>
-            <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 mb-12 max-w-3xl mx-auto leading-relaxed">
-              Take our quick assessment to get matched with certified ACT coaches who align with your goals, preferences, and needs.
-            </p>
+          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            {/* Left Content */}
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-left"
+            >
+              <h1 className="text-4xl md:text-5xl lg:text-5xl font-bold text-ink-dark dark:text-white mb-6 leading-tight">
+                Find the Perfect Coach for Meaningful Change
+              </h1>
+              <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
+                Professional ACT coaching that helps you overcome challenges, build resilience, and create meaningful life changes. Get matched with qualified coaches in 24 hours.
+              </p>
 
-            {/* Trust Indicators */}
-            <div className="flex flex-wrap justify-center gap-6 md:gap-8 mb-12">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-brand-leaf" />
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-300">Certified ACT Coaches</span>
+              {/* CTA Buttons */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <button
+                  onClick={handleStartAssessment}
+                  className="inline-flex items-center justify-center gap-2 bg-ink-dark dark:bg-brand-teal hover:bg-ink-dark/90 dark:hover:bg-brand-teal/90 text-white px-6 py-3 rounded-lg font-semibold shadow-md hover:shadow-lg transition-all duration-200"
+                >
+                  Get Started Today
+                  <ArrowRight className="w-5 h-5" />
+                </button>
+                <button className="inline-flex items-center justify-center gap-2 border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent hover:border-brand-teal dark:hover:border-brand-teal text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-semibold transition-all duration-200">
+                  Watch video
+                  <ArrowRight className="w-5 h-5" />
+                </button>
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-brand-leaf" />
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-300">Personalized Matching</span>
+            </motion.div>
+
+            {/* Right Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="relative hidden lg:block"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                {/* Placeholder for actual image - replace with your image */}
+                <div className="aspect-[4/3] bg-gradient-to-br from-brand-teal/20 to-brand-leaf/20 flex items-center justify-center">
+                  <div className="text-center p-8">
+                    <Users className="w-32 h-32 text-brand-teal/40 mx-auto mb-4" />
+                    <p className="text-lg font-semibold text-gray-600 dark:text-gray-400">
+                      Replace with your coaching image
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
+                      Recommended: 800x600px
+                    </p>
+                  </div>
+                </div>
+                {/* Uncomment when you have the image:
+                <img
+                  src="/images/coaching-hero.jpg"
+                  alt="Professional coaching session"
+                  className="w-full h-full object-cover"
+                />
+                */}
               </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-5 h-5 text-brand-leaf" />
-                <span className="text-sm md:text-base text-gray-600 dark:text-gray-300">100% Confidential</span>
-              </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </div>
       </section>
 
