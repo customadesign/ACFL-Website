@@ -374,7 +374,7 @@ export default function GetStartedPage() {
             className="text-center mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
-              Our coaching by the numbers
+              Our Coaching by the Numbers
             </h2>
             <p className="text-lg text-gray-600 dark:text-gray-300">
               Transformative results across personal and professional domains
@@ -391,7 +391,7 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
                   3,000+
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-base">
@@ -406,7 +406,7 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
                   500+
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-base">
@@ -421,7 +421,7 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
                   4.8/5
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-base">
@@ -436,7 +436,7 @@ export default function GetStartedPage() {
                 viewport={{ once: true }}
                 className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
                   24hr
                 </div>
                 <p className="text-gray-600 dark:text-gray-400 text-base">
