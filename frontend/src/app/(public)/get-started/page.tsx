@@ -1,32 +1,17 @@
 'use client'
 
-import { useState } from 'react'
 import { motion } from 'framer-motion'
 import NavbarLandingPage from '@/components/NavbarLandingPage'
 import Footer from '@/components/Footer'
-import QuickAssessment from '@/components/QuickAssessment'
 import { Users, Calendar, MessageSquare, ArrowRight } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 export default function GetStartedPage() {
   const router = useRouter()
-  const [assessmentStarted, setAssessmentStarted] = useState(false)
-
-  const handleAssessmentComplete = (data: any) => {
-    console.log('Assessment completed:', data)
-    // Navigate to search coaches page with the assessment data
-    router.push('/clients/search-coaches')
-  }
 
   const handleStartAssessment = () => {
-    setAssessmentStarted(true)
-    // Scroll to assessment
-    setTimeout(() => {
-      const assessmentElement = document.getElementById('assessment-section')
-      if (assessmentElement) {
-        assessmentElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }
-    }, 100)
+    // Navigate to the dedicated assessment page
+    router.push('/assessment')
   }
 
   return (
@@ -274,8 +259,7 @@ export default function GetStartedPage() {
       </section>
 
       {/* How It Works Section */}
-      {!assessmentStarted && (
-        <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-white dark:bg-gray-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -378,37 +362,6 @@ export default function GetStartedPage() {
             </motion.div>
           </div>
         </section>
-      )}
-
-      {/* Quick Assessment Section */}
-      <section id="assessment-section" className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          {!assessmentStarted && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ duration: 0.6 }}
-              viewport={{ once: true }}
-              className="text-center mb-8"
-            >
-              <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
-                Quick Assessment
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-300">
-                Help us understand your needs to find the perfect match
-              </p>
-            </motion.div>
-          )}
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-          >
-            <QuickAssessment onComplete={handleAssessmentComplete} />
-          </motion.div>
-        </div>
-      </section>
 
       {/* Footer */}
       <Footer />
