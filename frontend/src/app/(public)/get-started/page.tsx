@@ -451,13 +451,13 @@ export default function GetStartedPage() {
               whileInView={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.6, delay: 0.2 }}
               viewport={{ once: true }}
-              className="relative"
+              className="relative max-w-md mx-auto lg:mx-0"
             >
               <div className="relative rounded-2xl overflow-hidden shadow-2xl">
                 <img
                   src="/images/coaching-numbers.png"
                   alt="ACT Coaching by the numbers"
-                  className="w-full h-full object-cover"
+                  className="w-full h-auto object-cover"
                 />
               </div>
             </motion.div>
