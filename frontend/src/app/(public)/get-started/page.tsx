@@ -90,7 +90,7 @@ export default function GetStartedPage() {
       </section>
 
       {/* Why Choose ACT Coaching Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-16 bg-gradient-to-br from-teal-50/30 via-cyan-50/20 to-white dark:from-gray-900 dark:via-gray-900 dark:to-gray-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
