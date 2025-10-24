@@ -363,6 +363,94 @@ export default function GetStartedPage() {
           </div>
         </section>
 
+      {/* Coaching by the Numbers Section */}
+      <section className="py-16 bg-gradient-to-br from-cyan-50/30 via-blue-50/20 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
+              Our coaching by the numbers
+            </h2>
+            <p className="text-lg text-gray-600 dark:text-gray-300">
+              Transformative results across personal and professional domains
+            </p>
+          </motion.div>
+
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            {/* Left side - Stats */}
+            <div className="space-y-6">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  3,000+
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                  Active clients worldwide
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  150+
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                  Certified ACT coaches
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.3 }}
+                viewport={{ once: true }}
+                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+              >
+                <div className="text-4xl md:text-5xl font-bold text-ink-dark dark:text-white mb-2">
+                  25+
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                  Countries served
+                </p>
+              </motion.div>
+            </div>
+
+            {/* Right side - Image */}
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              className="relative"
+            >
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+                <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+                  <div className="text-center text-gray-400 dark:text-gray-600">
+                    <div className="text-6xl mb-2">📊</div>
+                    <p className="text-sm">Coaching by Numbers Image</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <Footer />
     </div>
