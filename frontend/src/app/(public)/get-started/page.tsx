@@ -305,9 +305,6 @@ export default function GetStartedPage() {
                   <MessageSquare className="w-8 h-8 text-brand-teal" />
                 </div>
                 <div className="mb-4">
-                  <span className="inline-block w-8 h-8 bg-brand-teal text-white rounded-full font-bold flex items-center justify-center mb-3">
-                    1
-                  </span>
                   <h3 className="text-xl font-semibold text-ink-dark dark:text-white mb-2">
                     Answer Questions
                   </h3>
@@ -329,9 +326,6 @@ export default function GetStartedPage() {
                   <Users className="w-8 h-8 text-brand-orange" />
                 </div>
                 <div className="mb-4">
-                  <span className="inline-block w-8 h-8 bg-brand-orange text-white rounded-full font-bold flex items-center justify-center mb-3">
-                    2
-                  </span>
                   <h3 className="text-xl font-semibold text-ink-dark dark:text-white mb-2">
                     Get Matched
                   </h3>
@@ -353,9 +347,6 @@ export default function GetStartedPage() {
                   <Calendar className="w-8 h-8 text-brand-leaf" />
                 </div>
                 <div className="mb-4">
-                  <span className="inline-block w-8 h-8 bg-brand-leaf text-white rounded-full font-bold flex items-center justify-center mb-3">
-                    3
-                  </span>
                   <h3 className="text-xl font-semibold text-ink-dark dark:text-white mb-2">
                     Book Your Session
                   </h3>
