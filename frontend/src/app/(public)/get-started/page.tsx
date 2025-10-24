@@ -116,7 +116,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-1.png"
                   alt="Evidence-based ACT coaching approach"
@@ -143,7 +143,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-2.png"
                   alt="Flexible coaching session scheduling"
@@ -170,7 +170,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-3.png"
                   alt="Qualified professional ACT coaches"
@@ -197,7 +197,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-4.png"
                   alt="Ongoing support between coaching sessions"
@@ -224,7 +224,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-5.png"
                   alt="Proven results from ACT coaching"
@@ -251,7 +251,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
             >
-              <div className="relative h-80">
+              <div className="relative h-64">
                 <img
                   src="/images/why-coaching-6.png"
                   alt="Multiple coaching formats available"
