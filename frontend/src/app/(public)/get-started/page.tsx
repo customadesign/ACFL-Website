@@ -381,20 +381,20 @@ export default function GetStartedPage() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
+          <div className="grid lg:grid-cols-[auto_1fr] gap-12 items-center">
             {/* Left side - Stats */}
-            <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-8">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-brand-teal mb-2">
+                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
                   3,000+
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 text-base">
                   Active clients
                 </p>
               </motion.div>
@@ -404,12 +404,12 @@ export default function GetStartedPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-brand-orange mb-2">
+                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
                   500+
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 text-base">
                   Professional coaches
                 </p>
               </motion.div>
@@ -419,12 +419,12 @@ export default function GetStartedPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.3 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-brand-leaf mb-2">
+                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
                   4.8/5
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 text-base">
                   Client rating
                 </p>
               </motion.div>
@@ -434,12 +434,12 @@ export default function GetStartedPage() {
                 whileInView={{ opacity: 1, x: 0 }}
                 transition={{ duration: 0.6, delay: 0.4 }}
                 viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md"
+                className="bg-white dark:bg-gray-800 rounded-xl p-8 shadow-md"
               >
-                <div className="text-4xl md:text-5xl font-bold text-pink-500 mb-2">
+                <div className="text-5xl md:text-6xl font-bold text-ink-dark dark:text-white mb-2">
                   24hr
                 </div>
-                <p className="text-gray-600 dark:text-gray-300 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 text-base">
                   Match guarantee
                 </p>
               </motion.div>
@@ -453,7 +453,7 @@ export default function GetStartedPage() {
               viewport={{ once: true }}
               className="relative"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative rounded-2xl overflow-hidden shadow-2xl aspect-[4/3]">
                 <div className="absolute inset-0 w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
                   <div className="text-center text-gray-400 dark:text-gray-600">
                     <div className="text-6xl mb-2">📊</div>
