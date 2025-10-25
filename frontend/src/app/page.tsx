@@ -1,21 +1,30 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import ShinyText from "@/components/ShinyText"
-import Footer from "@/components/Footer"
-import Ballpit from "@/components/Ballpit"
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import ShinyText from "@/components/ShinyText";
+import Footer from "@/components/Footer";
+import Ballpit from "@/components/Ballpit";
 import {
   Star,
   ChevronRight,
-  ArrowRight
-} from "lucide-react"
-import NavbarLandingPage from "@/components/NavbarLandingPage"
-import AssessmentCompleteModal from "@/components/AssessmentCompleteModal"
+  ArrowRight,
+  Globe,
+  Sprout,
+  Users,
+} from "lucide-react";
+import NavbarLandingPage from "@/components/NavbarLandingPage";
+import AssessmentCompleteModal from "@/components/AssessmentCompleteModal";
+import Testimonial from "./(public)/component/testimonial";
+import Contact from "./(public)/component/contactUs";
+import imgone from "./(public)/images/HomeImg1.png";
+import imgtwo from "./(public)/images/HomeImg2.png";
+import imgthree from "./(public)/images/HomeImg3.png";
+import imgfour from "./(public)/images/HomeImg4.png";
 
 export default function HomePage() {
-  const [showAssessmentModal, setShowAssessmentModal] = useState(false)
+  const [showAssessmentModal, setShowAssessmentModal] = useState(false);
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -23,7 +32,7 @@ export default function HomePage() {
         <NavbarLandingPage />
       </nav>
       {/* Hero Section */}
-      <section className="py-12 md:py-16 lg:py-20 bg-gradient-to-br from-gray-50 via-blue-50/30 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-[#e9f6f7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
@@ -37,28 +46,25 @@ export default function HomePage() {
                 Find the Perfect Coach for Meaningful Change
               </h1>
               <p className="text-base md:text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                Professional ACT coaching that helps you overcome challenges, build resilience, and create meaningful life changes. Get matched with qualified coaches in 24 hours.
+                Professional ACT coaching that helps you overcome challenges,
+                build resilience, and create meaningful life changes. Get
+                matched with qualified coaches in 24 hours.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 mb-8">
+              <div className="flex flex-row gap-4 mb-8 items-center">
                 <a href="/assessment">
-                  <Button
-                    size="lg"
-                    className="bg-ink-dark dark:bg-brand-teal hover:bg-ink-dark/90 dark:hover:bg-brand-teal/90 text-white px-6 py-3 w-full sm:w-auto"
-                  >
-                    <ShinyText text="Get Started Today" speed={3} />
+                  <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                    Get Started Today
                     <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
+                  </button>
                 </a>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-transparent hover:border-brand-teal dark:hover:border-brand-teal text-gray-700 dark:text-gray-300 px-6 py-3 w-full sm:w-auto"
-                >
-                  Watch video
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
+                <a href="/assessment">
+                  <button className="flex items-center rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                    Watch Video
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </button>
+                </a>
               </div>
             </motion.div>
 
@@ -69,9 +75,9 @@ export default function HomePage() {
               transition={{ duration: 0.8, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
+              <div className="relative overflow-hidden shadow-2xl">
                 <img
-                  src="/images/coaching-hero.png"
+                  src={imgone.src}
                   alt="Professional ACT coaching session"
                   className="w-full h-full object-cover"
                 />
@@ -84,546 +90,409 @@ export default function HomePage() {
       {/* How It Works */}
       <section id="how-it-works" className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center mb-10"
-          >
-            <h2 className="text-2xl md:text-3xl font-bold text-ink-dark mb-3">
-              How it works
-            </h2>
-            <p className="text-base md:text-lg text-gray-600 max-w-3xl mx-auto">
-              Getting started with your coaching journey is simple and takes just a few minutes.
+          {/* Header */}
+          <div className="text-center mb-16">
+            <p className="text-sm uppercase tracking-wider text-gray-600 mb-4">
+              Coaching
             </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-6 md:gap-8">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-brand-teal rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">1</span>
-              </div>
-              <h3 className="text-lg font-semibold text-ink-dark mb-2">Take Assessment</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Complete our quick 2-minute assessment to help us understand your goals, preferences, and coaching needs.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-brand-orange rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">2</span>
-              </div>
-              <h3 className="text-lg font-semibold text-ink-dark mb-2">Get Matched</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Within 24 hours, we'll match you with 3-5 coaches who fit your needs. Review their profiles and choose your favorite.
-              </p>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              className="text-center"
-            >
-              <div className="w-12 h-12 bg-brand-leaf rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-xl font-bold text-white">3</span>
-              </div>
-              <h3 className="text-lg font-semibold text-ink-dark mb-2">Start Coaching</h3>
-              <p className="text-sm text-gray-600 leading-relaxed">
-                Schedule your first session and begin your journey to positive change with ongoing support from your coach.
-              </p>
-            </motion.div>
-          </div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.6 }}
-            className="text-center mt-8"
-          >
-            <a href="/get-started">
-              <Button size="lg" className="bg-brand-teal hover:bg-brand-teal/90 text-white px-6 py-3 text-base">
-                <ShinyText text="Start Your Journey Today" speed={4} />
-                <ChevronRight className="ml-2 w-5 h-5" />
-              </Button>
-            </a>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Why Choose ACT Coaching Section */}
-      <section className="py-16 bg-gradient-to-br from-teal-50/30 via-cyan-50/20 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
               Why choose ACT coaching
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+            </h1>
+            <p className="text-xl text-gray-600">
               Proven strategies for personal and professional growth
             </p>
-          </motion.div>
+          </div>
 
-          <div className="grid md:grid-cols-3 gap-6 lg:gap-8">
-            {/* Card 1 - Personalized Matching */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-1.png"
-                  alt="Evidence-based ACT coaching approach"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Personalized Matching
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Our advanced algorithm considers your goals, personality, and preferences to match you with the perfect coach.
+          {/* Cards Grid */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Card 1 - Evidence-based approach (with hover state) */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
+                alt="Modern office"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Evidence-based approach
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    We promise three to five perfectly matched coaches within 24
+                    hours.
                   </p>
                 </div>
-              </div>
-            </motion.div>
-
-            {/* Card 2 - Flexible Scheduling */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-2.png"
-                  alt="Flexible coaching session scheduling"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Flexible Scheduling
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Book sessions that fit your schedule. Morning, evening, or weekend - we have coaches available when you need them.
-                  </p>
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Learn more
+                  </button>
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                    How it works
+                    <span>→</span>
+                  </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Card 3 - Qualified Professionals */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-3.png"
-                  alt="Qualified professional ACT coaches"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Qualified Professionals
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Our coaches are carefully vetted, trained in ACT methodology, and committed to helping you achieve your goals.
+            {/* Card 2 - Flexible session formats */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
+                alt="Coaching session"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Flexible session formats
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    Scientifically validated techniques that drive real, lasting
+                    change.
                   </p>
                 </div>
-              </div>
-            </motion.div>
-
-            {/* Card 4 - Ongoing Support */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.4 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-4.png"
-                  alt="Ongoing support between coaching sessions"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Ongoing Support
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Get continuous support between sessions with messaging, resources, and check-ins from your coach.
-                  </p>
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Learn more
+                  </button>
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                    How it works
+                    <span>→</span>
+                  </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            {/* Card 5 - Proven Results */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.5 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-5.png"
-                  alt="Proven results from ACT coaching"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Proven Results
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Our clients report 85% improvement in their mental well-being within 3 months of starting coaching.
+            {/* Card 3 - Flexible session formats */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                alt="Mobile coaching"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Flexible session formats
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    Video, phone, and text coaching to fit your lifestyle and
+                    preferences.
                   </p>
                 </div>
-              </div>
-            </motion.div>
-
-            {/* Card 6 - Multiple Formats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.6 }}
-              viewport={{ once: true }}
-              className="relative group overflow-hidden rounded-2xl shadow-lg hover:shadow-2xl transition-shadow duration-300"
-            >
-              <div className="relative h-64">
-                <img
-                  src="/images/why-coaching-6.png"
-                  alt="Multiple coaching formats available"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent flex flex-col justify-end p-6 text-white">
-                  <h3 className="text-2xl font-bold mb-3">
-                    Multiple Formats
-                  </h3>
-                  <p className="text-sm text-gray-200">
-                    Choose from video calls, phone sessions, or text-based coaching to match your communication preference.
-                  </p>
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Learn more
+                  </button>
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                    How it works
+                    <span>→</span>
+                  </button>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Coaching by the Numbers Section */}
-      <section className="py-16 bg-gradient-to-br from-cyan-50/30 via-blue-50/20 to-white dark:from-gray-800 dark:via-gray-800 dark:to-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-[#e9f6f7]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
-              Our Coaching by the Numbers
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Transformative results across personal and professional domains
+          <div className=" overflow-hidden">
+            <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 p-6 md:p-10 lg:p-16">
+              {/* Left Content Section */}
+              <div className="space-y-8 lg:space-y-10 flex flex-col justify-center">
+                {/* Personal Growth */}
+                <div className="flex gap-4 md:gap-5">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                      <Sprout className="w-6 h-6 md:w-7 md:h-7 text-slate-700" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-semibold text-slate-900 mb-2">
+                      Personal growth
+                    </h3>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                      Develop resilience and emotional intelligence through
+                      targeted psychological strategies.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Accessibility */}
+                <div className="flex gap-4 md:gap-5">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                      <Users className="w-6 h-6 md:w-7 md:h-7 text-slate-700" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-semibold text-slate-900 mb-2">
+                      Accessibility
+                    </h3>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                      Coaching available globally, with sessions in multiple
+                      languages and time zones.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Holistic Support */}
+                <div className="flex gap-4 md:gap-5">
+                  <div className="flex-shrink-0">
+                    <div className="w-12 h-12 md:w-14 md:h-14 bg-slate-100 rounded-xl flex items-center justify-center">
+                      <Globe className="w-6 h-6 md:w-7 md:h-7 text-slate-700" />
+                    </div>
+                  </div>
+                  <div>
+                    <h3 className="text-xl md:text-2xl font-semibold text-slate-900 mb-2">
+                      Holistic support
+                    </h3>
+                    <p className="text-slate-600 text-sm md:text-base leading-relaxed">
+                      Comprehensive guidance addressing mental, emotional, and
+                      professional development.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+              <div className="flex flex-col  sm:flex-row gap-4 mb-8 items-center">
+                <a href="/assessment">
+                  <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                    Get Started
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </button>
+                </a>
+                <a href="/assessment">
+                  <button className="flex items-center rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                    Explore Benefits
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </button>
+                </a>
+              </div>
+              </div>
+
+              {/* Right Image Section */}
+              <div className="relative order-first lg:order-last">
+                <div className="relative overflow-hidden shadow-2xl aspect-[4/3] lg:aspect-auto lg:h-full">
+                  <img
+                    src={imgtwo.src}
+                    alt="Person working on laptop with cozy workspace setup"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Services Section */}
+      <section id="services" className="py-12 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <p className="text-sm uppercase tracking-wider text-gray-600 mb-4">
+              Services
             </p>
-          </motion.div>
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Coaching solutions for every need
+            </h1>
+            <p className="text-xl text-gray-600">
+              Personalized support across individual, group, and corporate
+              programs
+            </p>
+          </div>
 
-          <div className="grid lg:grid-cols-[280px_1fr] gap-8 items-center max-w-6xl mx-auto">
-            {/* Left side - Stats */}
-            <div className="space-y-4">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
-              >
-                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
-                  3,000+
+          {/* Cards Grid */}
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Card 1 - Individual coaching plans */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
+                alt="Individual coaching"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <p className="text-sm text-gray-300 mb-2">Recommended</p>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Individual coaching plans
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    Tailored one-on-one sessions addressing personal growth and
+                    specific challenges.
+                  </p>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Active clients
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-                viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
-              >
-                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
-                  500+
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    View plans
+                  </button>
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Book consultation →
+                  </button>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Professional coaches
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.3 }}
-                viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
-              >
-                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
-                  4.8/5
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Client rating
-                </p>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.4 }}
-                viewport={{ once: true }}
-                className="bg-white dark:bg-gray-800 rounded-lg p-5 shadow-sm"
-              >
-                <div className="text-2xl md:text-3xl font-bold text-ink-dark dark:text-white mb-1">
-                  24hr
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 text-xs">
-                  Match guarantee
-                </p>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Right side - Image */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              <div className="relative rounded-2xl overflow-hidden shadow-2xl">
-                <img
-                  src="/images/coaching-numbers.png"
-                  alt="ACT Coaching by the numbers"
-                  className="w-full h-auto object-cover"
-                />
+            {/* Card 2 - Group coaching programs */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
+                alt="Group coaching"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Group coaching programs
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    Collaborative sessions focusing on shared goals and
+                    collective growth.
+                  </p>
+                </div>
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Explore groups →
+                  </button>
+                </div>
               </div>
-            </motion.div>
+            </div>
+
+            {/* Card 3 - Corporate wellness programs */}
+            <div className="relative h-80 rounded-lg overflow-hidden group cursor-pointer flex-1 transition-all duration-500 lg:hover:flex-[2]">
+              <img
+                src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
+                alt="Corporate wellness"
+                className="absolute inset-0 w-full h-full object-cover brightness-50"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
+              <div className="relative h-full p-8 flex flex-col justify-between text-white">
+                <div>
+                  <h2 className="text-3xl font-bold mb-4">
+                    Corporate wellness programs
+                  </h2>
+                  <p className="text-sm text-gray-200 mb-6">
+                    Organizational solutions for leadership development and team
+                    performance.
+                  </p>
+                </div>
+                <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                    Contact sales →
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="services" className="py-12 md:py-16 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <div className="text-center mb-16">
+            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
+              Impact
+            </p>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              Our coaching by the numbers
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Transformative results across personal and professional domains
+            </p>
+          </div>
+
+          {/* Content Grid */}
+          <div className="grid md:grid-cols-6 gap-8 items-center">
+            {/* Statistics Cards */}
+            <div className="md:col-span-2 space-y-5">
+              <div className="bg-white shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow text-center">
+                <div className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
+                  3,000+
+                </div>
+                <p className="text-gray-700 font-medium text-lg">
+                  Active clients worldwide
+                </p>
+              </div>
+
+              <div className="bg-white  shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow text-center">
+                <div className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
+                  150+
+                </div>
+                <p className="text-gray-700 font-medium text-lg">
+                  Certified ACT coaches
+                </p>
+              </div>
+
+              <div className="bg-white  shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow text-center">
+                <div className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
+                  25+
+                </div>
+                <p className="text-gray-700 font-medium text-lg">
+                  Countries served
+                </p>
+              </div>
+            </div>
+
+            {/* Image */}
+            <div className="md:col-span-4 shadow-lg">
+              <img
+                src={imgthree.src}
+                alt="Professional coaching session"
+                className="w-full h-full object-cover"
+              />
+            </div>
           </div>
         </div>
       </section>
 
       {/* Client Stories Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            viewport={{ once: true }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl md:text-4xl font-bold text-ink-dark dark:text-white mb-4">
-              Client stories
-            </h2>
-            <p className="text-lg text-gray-600 dark:text-gray-300">
-              Real people, real transformations through ACT coaching
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {/* Testimonial 1 - Sarah Martinez */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-              viewport={{ once: true }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
-            >
-              {/* Star Rating */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-
-              {/* Review Text */}
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
-                My coach helped me work through anxiety that was holding me back for years. The ACT approach really clicked with me, and I finally feel like I'm living authentically. Highly recommend!
+      <Testimonial />
+      {/* Start Your Transformation Today Section */}
+      <section className="bg-white min-h-screen flex flex-col items-center justify-center px-4 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row justify-center gap-4">
+            <div className="flex flex-col gap-4 text-center mb-16">
+              <h1 className="text-4xl">Start your transformation today</h1>
+              <p>
+                Unlock your potential with personalized coaching matched to your
+                unique journey
               </p>
-
-              {/* Reviewer Info */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-lg">SM</span>
-                </div>
-                <div>
-                  <div className="font-semibold text-ink-dark dark:text-white">Sarah Martinez</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Local Guide • 47 reviews
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    Google • 3 months ago
-                  </div>
-                </div>
+              <div className="flex justify-center gap-2">
+                <button className="bg-[#25a7b8] text-white rounded-md p-2">
+                  Take Assessment
+                </button>
+                <button className="border border-gray-400 rounded-md p-2">
+                  Learn More
+                </button>
               </div>
-            </motion.div>
-
-            {/* Testimonial 2 - Michael Rodriguez */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-              viewport={{ once: true }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
-            >
-              {/* Star Rating */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-
-              {/* Review Text */}
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
-                The matching process was incredible - they found me a coach who understood my specific challenges. Three months later, I feel more confident and focused than ever. Worth every penny.
-              </p>
-
-              {/* Reviewer Info */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-lg">MR</span>
-                </div>
-                <div>
-                  <div className="font-semibold text-ink-dark dark:text-white">Michael Rodriguez</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Local Guide • 29 reviews
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    Google • 2 months ago
-                  </div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Testimonial 3 - Jennifer Lee */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-              viewport={{ once: true }}
-              className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-md border border-gray-200 dark:border-gray-700"
-            >
-              {/* Star Rating */}
-              <div className="flex gap-1 mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                ))}
-              </div>
-
-              {/* Review Text */}
-              <p className="text-gray-700 dark:text-gray-300 mb-6">
-                I was skeptical about online coaching, but the platform made it so easy to connect with my coach. The flexibility to message between sessions has been a game-changer. Amazing service!
-              </p>
-
-              {/* Reviewer Info */}
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 bg-gradient-to-br from-purple-400 to-purple-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-lg">JL</span>
-                </div>
-                <div>
-                  <div className="font-semibold text-ink-dark dark:text-white">Jennifer Lee</div>
-                  <div className="text-sm text-gray-500 dark:text-gray-400">
-                    Local Guide • 63 reviews
-                  </div>
-                  <div className="text-xs text-gray-400 dark:text-gray-500">
-                    Google • 1 month ago
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+            </div>
           </div>
-        </div>
-      </section>
-
-      {/* CTA Section with Ballpit Background */}
-      <section className="relative py-20 bg-brand-teal overflow-hidden">
-        {/* Ballpit Background */}
-        <div className="absolute inset-0 z-0">
-          <Ballpit 
-            count={50}
-            colors={[0xFFFFFF, 0x25A7B8, 0xF7931D]}
-            gravity={0.3}
-            friction={0.998}
-            followCursor={true}
-            materialParams={{
-              metalness: 0.8,
-              roughness: 0.2,
-              clearcoat: 1,
-              clearcoatRoughness: 0.1,
-              transmission: 0.1,
-              opacity: 0.9
-            }}
+          <img
+            src={imgfour.src}
+            alt=""
+            className="w-full h-auto object-cover"
           />
         </div>
-        
-        {/* Content */}
-        <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Ready to start your transformation?
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Join thousands of people who have found their perfect coach match and are living more fulfilling lives.
-            </p>
-            <div className="flex justify-center">
-              <a href="/get-started">
-                <Button 
-                  size="lg" 
-                  className="bg-white text-brand-teal hover:bg-gray-50 px-8 py-4 text-lg shadow-2xl"
-                >
-                  <span className="text-brand-teal font-semibold">Find Your Coach</span>
-                  <ChevronRight className="ml-2 w-5 h-5" />
-                </Button>
-              </a>
-              </div>
-          </motion.div>
-    </div>
       </section>
 
-     <Footer />
-     
-     {/* Assessment Complete Modal */}
-     <AssessmentCompleteModal 
-       isOpen={showAssessmentModal}
-       onClose={() => setShowAssessmentModal(false)}
-     />
-  </div>
-  )
+      {/* Contact Us Section */}
+      <Contact />
+      {/* Footer */}
+      <Footer />
+      {/* Assessment Complete Modal */}
+      <AssessmentCompleteModal
+        isOpen={showAssessmentModal}
+        onClose={() => setShowAssessmentModal(false)}
+      />
+    </div>
+  );
 }

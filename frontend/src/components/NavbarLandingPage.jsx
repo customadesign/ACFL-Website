@@ -32,7 +32,7 @@ const NavbarLandingPage = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <Logo size={32} />
-              <span className="text-xl font-bold text-ink-dark dark:text-white">ACT Coaching For Life</span>
+              <span className="text-xl font-bold text-ink-dark dark:text-white hidden lg:block ">ACT Coaching For Life</span>
             </div>
             <div className="hidden md:flex items-center space-x-6">
               <a href="/" className="text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal transition-colors cursor-pointer">

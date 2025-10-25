@@ -44,7 +44,6 @@ export default function Navigation({ variant = 'default' }: NavigationProps) {
         <div className="flex justify-between items-center h-16">
           <Link href="/" className="flex items-center space-x-3">
             <Logo size={32} />
-            <span className="hidden sm:block text-xl font-bold text-ink-dark">ACT Coaching For Life</span>
           </Link>
           
           {/* Desktop Navigation */}
