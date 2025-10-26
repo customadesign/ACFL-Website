@@ -83,6 +83,7 @@ export default function AboutPage() {
                 src="/images/coaching-hero.png"
                 alt="Our Story"
                 className="w-full h-96 object-cover shadow-lg rounded-lg"
+                loading="lazy"
               />
             </div>
           </div>
@@ -142,6 +143,7 @@ export default function AboutPage() {
                 src="/images/why-coaching-1.png"
                 alt="Evidence-based Coaching"
                 className="w-full h-96 object-cover shadow-lg rounded-lg"
+                loading="lazy"
               />
             </div>
           </div>
@@ -193,6 +195,7 @@ export default function AboutPage() {
                   src="/images/why-coaching-2.png"
                   alt="Intelligent Matching"
                   className="w-full h-48 object-cover"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -223,6 +226,7 @@ export default function AboutPage() {
                   src="/images/why-coaching-3.png"
                   alt="Multiple Session Formats"
                   className="w-full h-48 object-cover"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -253,6 +257,7 @@ export default function AboutPage() {
                   src="/images/why-coaching-4.png"
                   alt="Continuous Guidance"
                   className="w-full h-48 object-cover"
+                  loading="lazy"
                 />
               </div>
             </div>
@@ -298,6 +303,7 @@ export default function AboutPage() {
                   src="/images/coaching-numbers.png"
                   alt="Growth Statistics"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
 
@@ -330,6 +336,7 @@ export default function AboutPage() {
                   src="/images/why-coaching-5.png"
                   alt="Global Reach"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
             </div>

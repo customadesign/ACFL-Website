@@ -37,7 +37,14 @@ export default function BlogPage() {
           {/* Author and Meta Info */}
           <div className="flex items-center justify-between mb-12">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-white rounded-full"></div>
+              <div className="w-10 h-10 bg-white rounded-full overflow-hidden">
+                <img
+                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"
+                  alt="Sarah Thompson"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
               <div>
                 <p className="text-sm font-medium text-gray-900">Sarah Thompson</p>
                 <p className="text-sm text-gray-600">15 Mar 2024 • 5 min read</p>
@@ -69,6 +76,7 @@ export default function BlogPage() {
             src={imgone.src}
             alt=""
             className="w-full h-auto object-cover"
+            loading="lazy"
           />
           </div>
 
@@ -176,8 +184,13 @@ export default function BlogPage() {
         {/* Author Section */}
         <div className="mt-8 pt-8 border-t border-gray-200">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-gray-500 text-xl">ST</span>
+            <div className="w-16 h-16 bg-gray-200 rounded-full overflow-hidden">
+              <img
+                src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"
+                alt="Sarah Thompson"
+                className="w-full h-full object-cover"
+                loading="lazy"
+              />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Sarah Thompson</h3>
@@ -210,6 +223,7 @@ export default function BlogPage() {
             src={imgfour.src}
             alt=""
             className="w-full h-auto object-cover"
+            loading="lazy"
           />
         </div>
       </section>

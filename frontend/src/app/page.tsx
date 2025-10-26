@@ -80,6 +80,7 @@ export default function HomePage() {
                   src={imgone.src}
                   alt="Professional ACT coaching session"
                   className="w-full h-full object-cover"
+                  loading="lazy"
                 />
               </div>
             </motion.div>
@@ -111,6 +112,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
                 alt="Modern office"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -141,6 +143,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
                 alt="Coaching session"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -171,6 +174,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
                 alt="Mobile coaching"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -282,6 +286,7 @@ export default function HomePage() {
                     src={imgtwo.src}
                     alt="Person working on laptop with cozy workspace setup"
                     className="w-full h-full object-cover"
+                    loading="lazy"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                 </div>
@@ -316,6 +321,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80"
                 alt="Individual coaching"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -346,6 +352,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&q=80"
                 alt="Group coaching"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -372,6 +379,7 @@ export default function HomePage() {
                 src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&q=80"
                 alt="Corporate wellness"
                 className="absolute inset-0 w-full h-full object-cover brightness-50"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-black/30 group-hover:from-black/80 group-hover:to-black/40 transition-all duration-300"></div>
               <div className="relative h-full p-8 flex flex-col justify-between text-white">
@@ -448,6 +456,7 @@ export default function HomePage() {
                 src={imgthree.src}
                 alt="Professional coaching session"
                 className="w-full h-full object-cover"
+                loading="lazy"
               />
             </div>
           </div>
@@ -480,6 +489,7 @@ export default function HomePage() {
             src={imgfour.src}
             alt=""
             className="w-full h-auto object-cover"
+            loading="lazy"
           />
         </div>
       </section>
