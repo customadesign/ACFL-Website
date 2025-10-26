@@ -1,435 +1,220 @@
-"use client"
+"use client";
+import Footer from "@/components/Footer";
+import NavbarLandingPage from "@/components/NavbarLandingPage";
+import Contact from "../component/contactUs";
+import Testimonial from "../component/testimonial";
+import imgone from "../images/BlogImg1.jpg";
+import imgfour from "../images/HomeImg4.png";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { ArrowLeft, Search, Clock, User, Calendar, ArrowRight, BookOpen, Users, Heart, Brain, Star } from "lucide-react"
-import GradientText from "@/components/GradientText"
-import SpotlightCard from "@/components/SpotlightCard"
-import Footer from "@/components/Footer"
-import NavbarLandingPage from "@/components/NavbarLandingPage"
-import { getApiUrl } from "@/lib/api"
+import React from 'react';
+import { Share2, Linkedin, X, Facebook, Link2 } from 'lucide-react';
 
-interface ContentData {
-  id: string
-  title: string
-  content: string
-  slug: string
-  meta_description?: string
-}
 
 export default function BlogPage() {
-  const [blogContent, setBlogContent] = useState<ContentData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  // Default blog posts if CMS content is not available
-  const defaultFeaturedPosts = [
-    {
-      title: "Understanding the Six Core Processes of ACT",
-      excerpt: "Dive deep into the fundamental processes that make ACT such an effective therapeutic approach for lasting change.",
-      author: "Dr. Sarah Mitchell",
-      date: "March 15, 2024",
-      category: "ACT Fundamentals",
-      readTime: "8 min read",
-      image: "/blog/act-processes.jpg",
-      featured: true
-    },
-    {
-      title: "Mindfulness in Daily Life: Practical Exercises",
-      excerpt: "Learn simple yet powerful mindfulness techniques you can integrate into your everyday routine.",
-      author: "Michael Chen",
-      date: "March 12, 2024",
-      category: "Mindfulness",
-      readTime: "6 min read",
-      image: "/blog/mindfulness-daily.jpg"
-    }
-  ]
-
-  const defaultRecentPosts = [
-    {
-      title: "Values-Based Living: Your Compass for Life Decisions",
-      excerpt: "How to identify your core values and use them to guide important life choices and daily actions.",
-      author: "Dr. Emily Rodriguez",
-      date: "March 10, 2024",
-      category: "Values & Purpose",
-      readTime: "7 min read"
-    },
-    {
-      title: "Cognitive Defusion: Changing Your Relationship with Thoughts",
-      excerpt: "Practical strategies to create distance from unhelpful thoughts and reduce their impact on your life.",
-      author: "James Wilson",
-      date: "March 8, 2024",
-      category: "Cognitive Flexibility",
-      readTime: "5 min read"
-    },
-    {
-      title: "The Science Behind ACT: Research and Evidence",
-      excerpt: "Exploring the extensive research that supports ACT as an evidence-based therapeutic approach.",
-      author: "Dr. Lisa Park",
-      date: "March 5, 2024",
-      category: "Research & Science",
-      readTime: "10 min read"
-    }
-  ]
-
-  const defaultCategories = [
-    { name: "ACT Fundamentals", count: 12, color: "bg-brand-teal", icon: Brain },
-    { name: "Mindfulness", count: 8, color: "bg-brand-orange", icon: Heart },
-    { name: "Values & Purpose", count: 6, color: "bg-brand-purple", icon: Star },
-    { name: "Research & Science", count: 4, color: "bg-brand-coral", icon: BookOpen },
-    { name: "Client Stories", count: 10, color: "bg-brand-leaf", icon: Users }
-  ]
-
-  useEffect(() => {
-    fetchBlogContent()
-  }, [])
-
-  const fetchBlogContent = async () => {
-    try {
-      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=blog`)
-      console.log('Blog content response status:', response.status)
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Blog content data:', data)
-        setBlogContent(data)
-      } else {
-        console.log('Failed to fetch blog content, status:', response.status)
-      }
-    } catch (error) {
-      console.error('Error fetching blog content:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Parse content from CMS if available
-  const parseContent = () => {
-    if (!blogContent?.content) return null
-
-    try {
-      const parsed = JSON.parse(blogContent.content)
-      console.log('Parsed blog content:', parsed)
-      return parsed
-    } catch {
-      return null
-    }
-  }
-
-  const cmsContent = parseContent()
-
-  // Parse hero content
-  const getHeroContent = () => {
-    if (!cmsContent) return { title: null, description: null }
-    return {
-      title: cmsContent.hero?.title || null,
-      description: cmsContent.hero?.subtitle || null
-    }
-  }
-
-  const heroContent = getHeroContent()
-
-  // Smart title rendering that preserves styling
-  const renderTitle = () => {
-    if (heroContent.title) {
-      // If CMS has custom title, check if it contains "Blog" to apply gradient
-      const title = heroContent.title
-      if (title.toLowerCase().includes('blog')) {
-        const parts = title.split(/blog/i)
-        const match = title.match(/blog/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      }
-      // Return CMS title as-is if no special formatting needed
-      return title
-    }
-    // Fallback to default styled content
-    return <>Our <GradientText className="inline-block">Blog</GradientText></>
-  }
-
-  const featuredPosts = cmsContent?.featured?.posts || defaultFeaturedPosts
-  const recentPosts = cmsContent?.recentPosts?.posts || defaultRecentPosts
-  const blogCategories = cmsContent?.categories?.categories || defaultCategories
-
   return (
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Navigation */}
       <nav>
         <NavbarLandingPage />
       </nav>
-
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-12 md:py-16 lg:py-20 bg-gray-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="text-center"
-          >
-            <Link
-              href="/"
-              className="inline-flex items-center text-brand-teal hover:text-brand-teal/80 mb-6 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Home
-            </Link>
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              {renderTitle()}
-            </h1>
-            <p className="text-xl text-gray-600 mb-12 max-w-3xl mx-auto leading-relaxed">
-              {heroContent.description || blogContent?.meta_description ||
-                "Insights, tips, and stories from our coaching community to support your journey toward psychological flexibility."}
-            </p>
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
+          <a href="#" className="hover:text-gray-900">Blog</a>
+          <span>›</span>
+          <a href="#" className="hover:text-gray-900">ACT Insights</a>
+        </nav>
 
-            {/* Search Bar */}
-            <div className="max-w-2xl mx-auto">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <Input
-                  type="search"
-                  placeholder="Search articles..."
-                  className="pl-12 pr-4 h-14 w-full text-lg border-gray-300 focus:border-brand-teal focus:ring-brand-teal"
-                />
+        {/* Article Header */}
+        <article>
+          <h1 className="text-5xl font-bold text-gray-900 mb-8 leading-tight">
+            Understanding acceptance<br />
+            and commitment in<br />
+            personal growth
+          </h1>
+
+          {/* Author and Meta Info */}
+          <div className="flex items-center justify-between mb-12">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-white rounded-full"></div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Sarah Thompson</p>
+                <p className="text-sm text-gray-600">15 Mar 2024 • 5 min read</p>
               </div>
             </div>
-          </motion.div>
-        </div>
+
+            {/* Share Icons */}
+            <div className="flex items-center gap-3">
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
+                <Link2 className="w-5 h-5 text-gray-700" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
+                <Linkedin className="w-5 h-5 text-gray-700" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
+                <Share2 className="w-5 h-5 text-gray-700" />
+              </button>
+              <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
+                <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          {/* Featured Image Placeholder */}
+          <div className="w-full aspect-video bg-gray-200 rounded-lg flex items-center justify-center mb-12">
+             <img
+            src={imgone.src}
+            alt=""
+            className="w-full h-auto object-cover"
+          />
+          </div>
+
+          {/* Article Content would go here */}
+        </article>
+      </div>
       </section>
 
-      {/* Featured Posts */}
-      <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              {cmsContent?.featured?.title || "Featured Articles"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Our most popular and insightful content to help you on your journey
-            </p>
-          </motion.div>
+      <article className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8 md:p-12">
+        {/* Main Content */}
+        <div className="prose prose-gray max-w-none">
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Acceptance is a journey, not a destination. In the landscape of personal growth, we often struggle 
+            against our inner experiences, believing that fighting will bring peace. But what if true strength lies in 
+            embracing our thoughts and feelings, not battling them?
+          </p>
 
-          {featuredPosts.length > 0 && (
-            <div className="grid lg:grid-cols-2 gap-8 mb-8">
-              {/* Main Featured Post */}
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-                className="lg:col-span-1"
-              >
-                <SpotlightCard className="p-0 overflow-hidden hover:shadow-xl transition-shadow">
-                  {featuredPosts[0].image && (
-                    <div className="h-48 bg-gradient-to-br from-brand-teal to-brand-orange" />
-                  )}
-                  <div className="p-6">
-                    <Badge className="mb-3 bg-brand-teal/10 text-brand-teal hover:bg-brand-teal/20">
-                      {featuredPosts[0].category}
-                    </Badge>
-                    <h3 className="text-2xl font-bold text-ink-dark mb-3 leading-tight">
-                      {featuredPosts[0].title}
-                    </h3>
-                    <p className="text-gray-600 mb-4 line-clamp-3">{featuredPosts[0].excerpt}</p>
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Acceptance and Commitment Therapy (ACT) offers a unique approach to mental wellness. It teaches 
+            us that pain is an inevitable part of human experience. Our suffering increases when we resist what 
+            cannot be changed. Instead, ACT guides us to accept our emotions, thoughts, and circumstances 
+            while committing to actions aligned with our core values.
+          </p>
 
-                    <div className="flex items-center text-sm text-gray-500 mb-4">
-                      <User className="w-4 h-4 mr-2" />
-                      <span className="mr-4">{featuredPosts[0].author}</span>
-                      <Calendar className="w-4 h-4 mr-2" />
-                      <span className="mr-4">{featuredPosts[0].date}</span>
-                      <Clock className="w-4 h-4 mr-2" />
-                      <span>{featuredPosts[0].readTime}</span>
-                    </div>
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Imagine your mind as a vast ocean. Thoughts are waves that come and go. Traditional therapy 
+            might teach you to calm the waves. ACT teaches you to become a skilled navigator, riding those 
+            waves with purpose and resilience.
+          </p>
 
-                    <Button className="bg-brand-teal hover:bg-brand-teal/90">
-                      Read Article
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </div>
-                </SpotlightCard>
-              </motion.div>
+          <p className="text-gray-700 leading-relaxed mb-6">
+            The core of ACT revolves around six key processes: psychological flexibility, cognitive defusion, 
+            acceptance, contact with the present moment, values, and committed action. These aren't just 
+            theoretical concepts but practical skills that transform how we engage with life's challenges.
+          </p>
 
-              {/* Secondary Featured Posts */}
-              <div className="space-y-4">
-                {featuredPosts.slice(1, 3).map((post: any, index: number) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, x: 20 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.6, delay: index * 0.1 }}
-                  >
-                    <SpotlightCard className="p-6 hover:shadow-lg transition-shadow">
-                      <div className="flex justify-between items-start mb-2">
-                        <Badge className="bg-brand-orange/10 text-brand-orange hover:bg-brand-orange/20">
-                          {post.category}
-                        </Badge>
-                        <span className="text-xs text-gray-500">{post.readTime}</span>
-                      </div>
-                      <h4 className="text-lg font-semibold text-ink-dark mb-2 leading-tight">
-                        {post.title}
-                      </h4>
-                      <p className="text-gray-600 text-sm mb-3 line-clamp-2">{post.excerpt}</p>
-                      <div className="flex items-center text-xs text-gray-500">
-                        <span>{post.author}</span>
-                        <span className="mx-2">•</span>
-                        <span>{post.date}</span>
-                      </div>
-                    </SpotlightCard>
-                  </motion.div>
-                ))}
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Cognitive defusion helps us see thoughts as mental events, not absolute truths. Acceptance allows 
+            us to experience emotions without being consumed by them. Connecting with the present moment 
+            grounds us in reality, not hypothetical fears or regrets.
+          </p>
+
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Values become our compass. They are the deeply held principles that give meaning to our actions. 
+            When we align our behaviors with these values, we create a life of purpose and authenticity.
+          </p>
+
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Committed action is where theory meets practice. It's about taking meaningful steps towards our 
+            goals, even when discomfort or fear tries to hold us back. Small, consistent actions build resilience 
+            and create lasting change.
+          </p>
+
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Personal growth isn't about eliminating negative experiences. It's about developing the capacity to 
+            move forward despite them. ACT empowers individuals to live fully, embracing both joy and 
+            challenge with equal courage.
+          </p>
+
+          <p className="text-gray-700 leading-relaxed mb-6">
+            Remember, healing is not linear. Some days will feel easier than others. The practice of acceptance is 
+            itself a form of strength. By learning to be with our experiences rather than fighting them, we open 
+            the door to genuine transformation.
+          </p>
+        </div>
+
+        {/* Share Section */}
+        <div className="mt-12 pt-8 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="text-gray-600 font-medium">Share this post</span>
+              <div className="flex items-center gap-2">
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Share2 className="w-5 h-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Linkedin className="w-5 h-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <X className="w-5 h-5 text-gray-600" />
+                </button>
+                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                  <Facebook className="w-5 h-5 text-gray-600" />
+                </button>
               </div>
             </div>
-          )}
-        </div>
-      </section>
 
-      {/* Categories */}
-      <section className="py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl font-bold text-ink-dark mb-6">
-              {cmsContent?.categories?.title || "Explore by Topic"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Browse articles by category to find content most relevant to your interests
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {blogCategories.map((category: any, index: number) => {
-              const IconComponent = category.icon || BookOpen
-
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <SpotlightCard className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
-                    <div className={`w-12 h-12 ${category.color || 'bg-brand-teal'} rounded-full flex items-center justify-center mx-auto mb-3`}>
-                      <IconComponent className="w-6 h-6 text-white" />
-                    </div>
-                    <h3 className="font-semibold text-ink-dark mb-1">{category.name}</h3>
-                    <p className="text-sm text-gray-500">{category.count} articles</p>
-                  </SpotlightCard>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Recent Posts */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl font-bold text-ink-dark mb-6">
-              {cmsContent?.recentPosts?.title || "Latest Posts"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Stay up to date with our newest insights and resources
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {recentPosts.map((post: any, index: number) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="p-6 h-full hover:shadow-lg transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
-                    <Badge className="bg-brand-purple/10 text-brand-purple hover:bg-brand-purple/20">
-                      {post.category}
-                    </Badge>
-                    <span className="text-xs text-gray-500">{post.readTime}</span>
-                  </div>
-                  <h3 className="text-xl font-semibold text-ink-dark mb-3 leading-tight">
-                    {post.title}
-                  </h3>
-                  <p className="text-gray-600 mb-4 flex-1">{post.excerpt}</p>
-
-                  <div className="flex items-center text-sm text-gray-500 mb-4">
-                    <User className="w-4 h-4 mr-2" />
-                    <span className="mr-4">{post.author}</span>
-                    <Calendar className="w-4 h-4 mr-2" />
-                    <span>{post.date}</span>
-                  </div>
-
-                  <Button variant="outline" className="w-full border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white">
-                    Read More
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="text-center mt-12">
-            <Button size="lg" className="bg-brand-teal hover:bg-brand-teal/90">
-              View All Posts
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Newsletter CTA */}
-      <section className="py-20 bg-gradient-to-r from-brand-teal to-brand-orange">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Never Miss an Update
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              Subscribe to our newsletter and get the latest insights delivered directly to your inbox.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-              <Input
-                type="email"
-                placeholder="Enter your email"
-                className="bg-white/10 border-white/20 text-white placeholder:text-white/70 focus:bg-white/20"
-              />
-              <Button className="bg-white text-brand-teal hover:bg-gray-50 px-8">
-                Subscribe
-              </Button>
+            <div className="flex flex-wrap gap-2">
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                Personal growth
+              </span>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                Mental wellness
+              </span>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                ACT therapy
+              </span>
+              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                Psychological flexibility
+              </span>
             </div>
-          </motion.div>
+          </div>
+        </div>
+
+        {/* Author Section */}
+        <div className="mt-8 pt-8 border-t border-gray-200">
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-gray-500 text-xl">ST</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-900">Sarah Thompson</h3>
+              <p className="text-gray-600 text-sm">Lead coach, ACT Coaching for Life</p>
+            </div>
+          </div>
+        </div>
+      </article>
+      <Testimonial />
+      <section className="bg-white min-h-screen flex flex-col items-center justify-center px-4 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="flex flex-col md:flex-row justify-center gap-4">
+            <div className="flex flex-col gap-4 text-center mb-16">
+              <h1 className="text-4xl">Ready to start your journey?</h1>
+              <p>
+                Discover personalized coaching that helps you live with purpose
+                and clarity
+              </p>
+              <div className="flex justify-center gap-2">
+                <button className="bg-[#25a7b8] text-white rounded-md p-2">
+                  Start assessment{" "}
+                </button>
+                <button className="border border-gray-400 rounded-md p-2">
+                  Browse resources{" "}
+                </button>
+              </div>
+            </div>
+          </div>
+          <img
+            src={imgfour.src}
+            alt=""
+            className="w-full h-auto object-cover"
+          />
         </div>
       </section>
-
+      <Contact />
       <Footer />
     </div>
-  )
+  );
 }

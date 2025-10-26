@@ -52,7 +52,7 @@ export default function HomePage() {
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-row gap-4 mb-8 items-center">
+              <div className="flex flex-col  sm:flex-row gap-4 mb-8 items-center">
                 <a href="/assessment">
                   <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
                     Get Started Today
@@ -259,20 +259,20 @@ export default function HomePage() {
                 </div>
 
                 {/* Action Buttons */}
-              <div className="flex flex-col  sm:flex-row gap-4 mb-8 items-center">
-                <a href="/assessment">
-                  <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
-                    Get Started
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </button>
-                </a>
-                <a href="/assessment">
-                  <button className="flex items-center rounded-md text-black px-6 py-3 w-full sm:w-auto">
-                    Explore Benefits
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </button>
-                </a>
-              </div>
+                <div className="flex flex-col  sm:flex-row gap-4 mb-8 items-center">
+                  <a href="/assessment">
+                    <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                      Get Started
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </button>
+                  </a>
+                  <a href="/assessment">
+                    <button className="flex items-center rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                      Explore Benefits
+                      <ArrowRight className="ml-2 w-5 h-5" />
+                    </button>
+                  </a>
+                </div>
               </div>
 
               {/* Right Image Section */}

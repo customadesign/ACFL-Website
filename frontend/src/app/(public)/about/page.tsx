@@ -1,446 +1,344 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import Logo from "@/components/Logo"
-import GradientText from "@/components/GradientText"
-import CountUp from "@/components/CountUp"
-import SpotlightCard from "@/components/SpotlightCard"
-import ShinyText from "@/components/ShinyText"
-import NavbarLandingPage from "@/components/NavbarLandingPage"
-import Footer from "@/components/Footer"
-import { getApiUrl } from "@/lib/api"
+import NavbarLandingPage from "@/components/NavbarLandingPage";
+import Testimonial from "../component/testimonial";
+import Contact from "../component/contactUs";
+import Footer from "@/components/Footer";
 import {
-  Heart,
   Users,
-  Target,
-  Shield,
-  Award,
-  Lightbulb,
-  ArrowLeft,
-  ChevronRight,
-  CheckCircle,
-  Star,
-  Brain,
-  Compass,
-  Zap
-} from "lucide-react"
-
-interface ContentData {
-  id: string
-  title: string
-  content: string
-  slug: string
-  meta_description?: string
-}
+  TrendingUp,
+  Globe,
+  ArrowRight,
+  Video,
+  MessageCircle,
+  Image,
+} from "lucide-react";
 
 export default function AboutPage() {
-  const [aboutContent, setAboutContent] = useState<ContentData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchAboutContent()
-  }, [])
-
-  const fetchAboutContent = async () => {
-    try {
-      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=about`)
-      console.log('About content response status:', response.status)
-      if (response.ok) {
-        const data = await response.json()
-        console.log('About content data:', data)
-        setAboutContent(data)
-      } else {
-        console.log('Failed to fetch about content, status:', response.status)
-      }
-    } catch (error) {
-      console.error('Error fetching about content:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Parse content from CMS if available
-  const parseContent = () => {
-    if (!aboutContent?.content) return null
-
-    try {
-      const parsed = JSON.parse(aboutContent.content)
-      console.log('Parsed about content:', parsed)
-      return parsed
-    } catch {
-      return null
-    }
-  }
-
-  const cmsContent = parseContent()
-
-  // Parse hero content
-  const getHeroContent = () => {
-    if (!cmsContent) return { title: null, description: null }
-    return {
-      title: cmsContent.hero?.title || null,
-      description: cmsContent.hero?.subtitle || null
-    }
-  }
-
-  const heroContent = getHeroContent()
-
-  // Smart title rendering that preserves styling
-  const renderTitle = () => {
-    if (heroContent.title) {
-      // If CMS has custom title, check if it contains "ACT" or "Coaching" to apply gradient
-      const title = heroContent.title
-      if (title.toLowerCase().includes('act coaching')) {
-        const parts = title.split(/act coaching/i)
-        const match = title.match(/act coaching/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      } else if (title.toLowerCase().includes('act')) {
-        const parts = title.split(/act/i)
-        const match = title.match(/act/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      }
-      // Return CMS title as-is if no special formatting needed
-      return title
-    }
-    // Fallback to default styled content
-    return <>About <GradientText className="inline-block">ACT Coaching</GradientText> for Life</>
-  }
-
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-gray-900">
-      {/* Navigation */}
+    <div className="flex flex-col min-h-screen bg-white">
       <nav>
         <NavbarLandingPage />
       </nav>
+      <section className="py-12 md:py-16 lg:py-20 bg-[url('/images/AboutHeaderImg.jpg')] bg-cover bg-center bg-no-repeat">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-12">
+          {/* Label */}
+          <p className="text-sm text-gray-300 uppercase tracking-wider mb-6">
+            Transform
+          </p>
 
-      {/* Hero Section */}
-      <section className="py-24 md:py-32 lg:py-40">
+          {/* Main Heading */}
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+            Your path to meaningful change
+          </h1>
+
+          {/* Subheading */}
+          <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-3xl mx-auto">
+            Discover personalized coaching that helps you navigate life's
+            challenges with purpose and clarity.
+          </p>
+
+          {/* CTA Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+            <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold px-8 py-3 rounded-lg transition-colors w-full sm:w-auto">
+              Start assessment
+            </button>
+            <button className="bg-transparent hover:bg-white/10 text-white font-semibold px-8 py-3 rounded-lg border border-white/30 hover:border-white/50 transition-all w-full sm:w-auto">
+              Learn more
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark dark:text-white mb-8 tracking-tight">
-              {renderTitle()}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                Our story of helping people find their way{" "}
+              </h1>
+              <p className="text-gray-600 text-lg mb-8">
+                Founded by experienced psychologists, ACT Coaching for Life
+                emerged from a deep understanding of human potential. We believe
+                in empowering individuals to live with intention and overcome
+                obstacles.
+              </p>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-4">
+                <button className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-6 py-3 rounded-lg border border-gray-300 transition-colors">
+                  Our approach
+                </button>
+                <button className="bg-transparent hover:bg-white/50 text-gray-800 font-medium px-6 py-3 rounded-lg border border-transparent hover:border-gray-300 transition-all inline-flex items-center">
+                  Learn more
+                  <ArrowRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Image */}
+            <div className="lg:pl-12">
+              <img
+                src="/images/coaching-hero.png"
+                alt="Our Story"
+                className="w-full h-96 object-cover shadow-lg rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 lg:py-20 bg-[#e9f6f7]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Content */}
+            <div>
+              <p className="text-sm text-gray-600 uppercase tracking-wider mb-4">
+                Science
+              </p>
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
+                Evidence-based coaching for real transformation
+              </h1>
+              <p className="text-gray-600 text-lg mb-8">
+                Acceptance and Commitment Therapy provides a proven framework
+                for personal growth and psychological flexibility.
+              </p>
+
+              {/* Benefits List */}
+              <ul className="space-y-3 mb-10">
+                <li className="flex items-start">
+                  <span className="text-gray-700 text-base">
+                    • Understand your values
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-gray-700 text-base">
+                    • Build psychological resilience
+                  </span>
+                </li>
+                <li className="flex items-start">
+                  <span className="text-gray-700 text-base">
+                    • Create meaningful life changes
+                  </span>
+                </li>
+              </ul>
+
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-4">
+                <button className="bg-white hover:bg-gray-50 text-gray-800 font-medium px-6 py-3 rounded-lg border border-gray-300 transition-colors">
+                  Learn more
+                </button>
+                <button className="bg-transparent hover:bg-white/50 text-gray-800 font-medium px-6 py-3 rounded-lg border border-transparent hover:border-gray-300 transition-all inline-flex items-center">
+                  Get started
+                  <ArrowRight size={18} className="ml-2" />
+                </button>
+              </div>
+            </div>
+
+            {/* Right Image */}
+            <div className="lg:pl-12">
+              <img
+                src="/images/why-coaching-1.png"
+                alt="Evidence-based Coaching"
+                className="w-full h-96 object-cover shadow-lg rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-12 md:py-16 lg:py-20 bg-white">
+        {" "}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <div className="text-center mb-16">
+            <p className="text-sm text-gray-500 uppercase tracking-wider mb-4">
+              Innovative
+            </p>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+              How we support your journey
             </h1>
-            <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-16 max-w-4xl mx-auto leading-relaxed">
-              {heroContent.description || aboutContent?.meta_description ||
-                "We're transforming lives through evidence-based Acceptance and Commitment Therapy coaching, helping people create meaningful change and live authentically."}
+            <p className="text-gray-600 text-lg">
+              Personalized coaching tailored to your unique needs and goals.
             </p>
-          </motion.div>
+          </div>
+
+          {/* Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Card 1: Matching */}
+            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+              <div className="p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                  Matching
+                </p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Intelligent coach matching within 24 hours
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Find your perfect coaching match quickly and easily.
+                </p>
+                <a
+                  href="#"
+                  className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  Explore matching
+                  <ArrowRight size={16} className="ml-2" />
+                </a>
+              </div>
+
+              {/* Image */}
+              <div className="mt-4">
+                <img
+                  src="/images/why-coaching-2.png"
+                  alt="Intelligent Matching"
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Card 2: Flexible */}
+            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+              <div className="p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                  Flexible
+                </p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Multiple session formats{" "}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Video, phone, and text coaching to fit your lifestyle.{" "}
+                </p>
+                <a
+                  href="#"
+                  className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  View options <ArrowRight size={16} className="ml-2" />
+                </a>
+              </div>
+
+              {/* Image */}
+              <div className="mt-4">
+                <img
+                  src="/images/why-coaching-3.png"
+                  alt="Multiple Session Formats"
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            </div>
+
+            {/* Card 3: Support */}
+            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+              <div className="p-4">
+                <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
+                  Support
+                </p>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Continuous guidance and messaging{" "}
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Stay connected with your coach between sessions.{" "}
+                </p>
+                <a
+                  href="#"
+                  className="inline-flex items-center text-sm text-gray-700 hover:text-gray-900 font-medium"
+                >
+                  Learn more <ArrowRight size={16} className="ml-2" />
+                </a>
+              </div>
+
+              {/* Image */}
+              <div className="mt-4">
+                <img
+                  src="/images/why-coaching-4.png"
+                  alt="Continuous Guidance"
+                  className="w-full h-48 object-cover"
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Mission Section */}
-      <section className="py-16 bg-white dark:bg-gray-900">
+      <section className="py-12 md:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark dark:text-white mb-6">
-                {cmsContent?.mission?.title || "Our Mission"}
-              </h2>
-              <div className="prose prose-lg text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-8">
-                {cmsContent?.mission?.content ? (
-                  <div dangerouslySetInnerHTML={{ __html: cmsContent.mission.content }} />
-                ) : (
-                  <>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-6 leading-relaxed">
-                      At ACT Coaching for Life, we believe everyone deserves to live a life aligned with their values.
-                      Our mission is to make professional, evidence-based coaching accessible to anyone seeking
-                      meaningful change.
-                    </p>
-                    <p className="text-lg text-gray-600 dark:text-gray-300 mb-8 leading-relaxed">
-                      Through our innovative matching platform, we connect you with qualified ACT coaches who
-                      understand your unique challenges and can guide you toward psychological flexibility,
-                      resilience, and authentic living.
-                    </p>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center space-x-4">
-                <motion.div
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                >
-                  <Heart className="w-8 h-8 text-brand-coral" />
-                </motion.div>
-                <span className="text-lg font-semibold text-ink-dark">
-                  {cmsContent?.mission?.tagline || "Compassionate, evidence-based care"}
-                </span>
-              </div>
-            </motion.div>
+          {/* Header Section */}
+          <div className="flex flex-col md:flex-row mb-16">
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              Our impact goes beyond numbers
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl">
+              We measure success through the lives we've touched and
+              transformed. Our commitment to evidence-based coaching drives
+              continuous improvement and meaningful change.
+            </p>
+          </div>
 
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              whileHover={{ scale: 1.02 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <SpotlightCard className="p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-teal mb-2">
-                      <CountUp to={cmsContent?.stats?.livesChanged || 3000} duration={2.5} separator="," />+
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">Lives Changed</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-orange mb-2">
-                      <CountUp to={cmsContent?.stats?.certifiedCoaches || 150} duration={2.5} separator="," />+
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">Certified Coaches</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-purple mb-2">
-                      <CountUp to={cmsContent?.stats?.satisfaction || 98} duration={2.5} />%
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">Satisfaction Rate</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-brand-coral mb-2">
-                      <CountUp to={cmsContent?.stats?.countries || 25} duration={2.5} />+
-                    </div>
-                    <div className="text-gray-600 dark:text-gray-300">Countries</div>
-                  </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {/* Lives Changed */}
+            <div className="bg-white border border-gray-200 p-8 hover:shadow-lg transition-shadow">
+              <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="mb-4 text-gray-300">
+                  <Users size={48} />
                 </div>
-              </SpotlightCard>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Values Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              {cmsContent?.values?.title || "Our Core Values"}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              {cmsContent?.values?.subtitle || "These principles guide everything we do"}
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {(cmsContent?.values?.items || [
-              {
-                icon: Brain,
-                title: "Evidence-Based",
-                description: "Rooted in psychological science and research"
-              },
-              {
-                icon: Heart,
-                title: "Compassionate",
-                description: "Creating a safe, non-judgmental space for growth"
-              },
-              {
-                icon: Users,
-                title: "Accessible",
-                description: "Making quality coaching available to everyone"
-              },
-              {
-                icon: Target,
-                title: "Action-Oriented",
-                description: "Focusing on practical steps toward your goals"
-              }
-            ]).map((value: any, index: number) => {
-              const iconMap: { [key: string]: any } = { Brain, Heart, Users, Target, Shield, Award, Lightbulb, Compass, Zap }
-              const IconComponent = value.iconName ?
-                iconMap[value.iconName] || Brain
-                : value.icon
-
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <Card className="h-full shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 group cursor-pointer">
-                    <CardContent className="p-6 text-center">
-                      <motion.div
-                        whileHover={{ scale: 1.1, rotate: 5 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                      >
-                        <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
-                      </motion.div>
-                      <h3 className="text-lg font-semibold text-ink-dark mb-2">{value.title}</h3>
-                      <p className="text-gray-600 dark:text-gray-300">{value.description}</p>
-                    </CardContent>
-                  </Card>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Story Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-4xl mx-auto"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-8 text-center">
-              {cmsContent?.story?.title || "Our Story"}
-            </h2>
-
-            <div className="prose prose-lg text-gray-600 dark:text-gray-300 mx-auto">
-              {cmsContent?.story?.content ? (
-                <div dangerouslySetInnerHTML={{ __html: cmsContent.story.content }} />
-              ) : (
-                <>
-                  <p className="mb-6">
-                    ACT Coaching for Life was founded with a simple yet powerful vision: to bridge the gap
-                    between those seeking personal growth and qualified ACT practitioners who could guide them.
-                  </p>
-                  <p className="mb-6">
-                    We recognized that while Acceptance and Commitment Therapy has helped millions worldwide,
-                    finding the right coach remained a challenge. Our platform was created to solve this problem
-                    by using intelligent matching technology to connect you with coaches who truly understand
-                    your unique needs.
-                  </p>
-                  <p>
-                    Today, we're proud to be the leading platform for ACT coaching, with a growing community
-                    of certified coaches and thousands of success stories from people who've transformed their
-                    lives through our service.
-                  </p>
-                </>
-              )}
+                <h2 className="text-6xl font-bold text-gray-900 mb-3">
+                  3,000+
+                </h2>
+                <p className="text-lg text-gray-700 font-medium">
+                  Lives changed
+                </p>
+              </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Team Section */}
-      <section className="py-16 bg-gray-50 dark:bg-gray-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-4">
-              {cmsContent?.team?.title || "Meet Our Leadership"}
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              {cmsContent?.team?.subtitle || "Dedicated professionals committed to your growth"}
-            </p>
-          </motion.div>
+            <div className="flex flex-col gap-4">
+              {/* Image Card */}
+              <div className="bg-gray-100 flex items-center justify-center overflow-hidden">
+                <img
+                  src="/images/coaching-numbers.png"
+                  alt="Growth Statistics"
+                  className="w-full h-full object-cover"
+                />
+              </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {(cmsContent?.team?.members || [
-              {
-                name: "Dr. Sarah Chen",
-                role: "Founder & CEO",
-                description: "Clinical psychologist with 15+ years in ACT therapy"
-              },
-              {
-                name: "Michael Rodriguez",
-                role: "Head of Coaching",
-                description: "Certified ACT trainer and master coach"
-              },
-              {
-                name: "Emily Thompson",
-                role: "Chief Technology Officer",
-                description: "Building technology that connects and empowers"
-              }
-            ]).map((member: any, index: number) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="p-6 text-center h-full shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
-                  <div className="w-24 h-24 bg-gradient-to-br from-brand-teal to-brand-orange rounded-full mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold text-ink-dark mb-1">{member.name}</h3>
-                  <p className="text-brand-teal font-medium mb-3">{member.role}</p>
-                  <p className="text-gray-600 dark:text-gray-300">{member.description}</p>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-teal to-brand-orange">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Ready to Start Your Journey?
-            </h2>
-            <p className="text-xl text-white/90 mb-12 max-w-2xl mx-auto">
-              Join thousands who've discovered a more meaningful life through ACT coaching.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  className="bg-white text-brand-teal hover:bg-gray-50 dark:bg-gray-800 text-lg px-10 py-6 font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group"
-                >
-                  Find Your Coach
-                  <ChevronRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-2 border-white text-white hover:bg-white/10 text-lg px-10 py-6 font-semibold shadow-lg transition-all duration-300"
-                >
-                  Become a Coach
-                </Button>
-              </motion.div>
+              {/* Certified Coaches */}
+              <div className="bg-white border border-gray-200 px-8 py-14 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <h2 className="text-6xl font-bold text-gray-900 mb-3">
+                    150+
+                  </h2>
+                  <p className="text-lg text-gray-700 font-medium">
+                    Certified coaches
+                  </p>
+                </div>
+              </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
+            {/* Countries Served */}
+            <div className="flex flex-col gap-4">
+              <div className="bg-white border border-gray-200 px-8 py-14 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <h2 className="text-6xl font-bold text-gray-900 mb-3">25+</h2>
+                  <p className="text-lg text-gray-700 font-medium">
+                    Countries served
+                  </p>
+                </div>
+              </div>
 
+              {/* Image Card */}
+              <div className="bg-gray-100 flex items-center justify-center overflow-hidden">
+                <img
+                  src="/images/why-coaching-5.png"
+                  alt="Global Reach"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            </div>
+          </div>
+        </div>{" "}
+      </section>
+      <Testimonial />
+      <Contact />
       <Footer />
     </div>
-  )
+  );
 }
