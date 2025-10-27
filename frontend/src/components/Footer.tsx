@@ -6,9 +6,9 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Top Section */}
         <div className="flex flex-col lg:flex-row justify-between gap-8 border border-gray-200 p-8">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4 md:gap-10">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 md:gap-16">
             {/* Logo */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col items-center gap-4">
             <img
               src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
               alt="ACT Coaching for Life logo"
@@ -23,11 +23,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Company</h3>
             <ul className="space-y-2 text-gray-600">
-              <li>Home</li>
-              <li>Services</li>
-              <li>Coaches</li>
-              <li>Resources</li>
-              <li>Link Five</li>
+              <li><a href="/" className="hover:text-gray-900">Home</a></li>
+              <li><span className="text-gray-400 cursor-not-allowed">Services</span></li>
+              <li><span className="text-gray-400 cursor-not-allowed">Coaches</span></li>
+              <li><a href="/resources" className="hover:text-gray-900">Resources</a></li>
             </ul>
           </div>
 
@@ -35,11 +34,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Support</h3>
             <ul className="space-y-2 text-gray-600">
-              <li>FAQ</li>
-              <li>Contact</li>
-              <li>Help</li>
-              <li>Chat</li>
-              <li>Link Ten</li>
+              <li><a href="/faq" className="hover:text-gray-900">FAQ</a></li>
+              <li><a href="/contact" className="hover:text-gray-900">Contact</a></li>
+              <li><a href="/help" className="hover:text-gray-900">Help</a></li>
+              <li><span className="text-gray-400 cursor-not-allowed">Chat</span></li>
             </ul>
           </div>
 
@@ -47,11 +45,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold text-gray-900 mb-4">Legal</h3>
             <ul className="space-y-2 text-gray-600">
-              <li>Privacy</li>
-              <li>Terms</li>
-              <li>Cookies</li>
-              <li>Disclaimer</li>
-              <li>Link Fifteen</li>
+              <li><a href="/privacy" className="hover:text-gray-900">Privacy</a></li>
+              <li><a href="/terms" className="hover:text-gray-900">Terms</a></li>
+              <li><span className="text-gray-400 cursor-not-allowed">Cookies</span></li>
+              <li><span className="text-gray-400 cursor-not-allowed">Disclaimer</span></li>
             </ul>
           </div>
           </div>
@@ -90,15 +87,15 @@ const Footer = () => {
             </div>
 
             <div className="flex flex-wrap justify-center md:justify-end gap-6">
-              <a href="#" className="hover:text-black">
+              <a href="/privacy" className="hover:text-black">
                 Privacy policy
               </a>
-              <a href="#" className="hover:text-black">
+              <a href="/terms" className="hover:text-black">
                 Terms of service
               </a>
-              <a href="#" className="hover:text-black">
+              <span className="text-gray-400 cursor-not-allowed">
                 Cookie settings
-              </a>
+              </span>
             </div>
           </div>
 
