@@ -4,6 +4,7 @@ import NavbarLandingPage from "@/components/NavbarLandingPage";
 import Testimonial from "../component/testimonial";
 import Contact from "../component/contactUs";
 import Footer from "@/components/Footer";
+import { motion } from "framer-motion";
 import {
   Users,
   TrendingUp,
@@ -23,30 +24,50 @@ export default function AboutPage() {
       <section className="py-12 md:py-16 lg:py-20 bg-[url('/images/AboutHeaderImg.jpg')] bg-cover bg-center bg-no-repeat">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center py-12">
           {/* Label */}
-          <p className="text-sm text-gray-300 uppercase tracking-wider mb-6">
+          <motion.p
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="text-sm text-gray-300 uppercase tracking-wider mb-6"
+          >
             Transform
-          </p>
+          </motion.p>
 
           {/* Main Heading */}
-          <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-8 leading-tight"
+          >
             Your path to meaningful change
-          </h1>
+          </motion.h1>
 
           {/* Subheading */}
-          <p className="text-lg md:text-xl text-gray-200 mb-10 max-w-3xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="text-lg md:text-xl text-gray-200 mb-10 max-w-3xl mx-auto"
+          >
             Discover personalized coaching that helps you navigate life's
             challenges with purpose and clarity.
-          </p>
+          </motion.p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.3 }}
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+          >
             <button className="bg-white hover:bg-gray-100 text-gray-800 font-semibold px-8 py-3 rounded-lg transition-colors w-full sm:w-auto">
               Start assessment
             </button>
             <button className="bg-transparent hover:bg-white/10 text-white font-semibold px-8 py-3 rounded-lg border border-white/30 hover:border-white/50 transition-all w-full sm:w-auto">
               Learn more
             </button>
-          </div>
+          </motion.div>
         </div>
       </section>
 
@@ -54,7 +75,11 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6 leading-tight">
                 Our story of helping people find their way{" "}
               </h1>
@@ -75,17 +100,22 @@ export default function AboutPage() {
                   <ArrowRight size={18} className="ml-2" />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right Image */}
-            <div className="lg:pl-12">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="lg:pl-12"
+            >
               <img
                 src="/images/coaching-hero.png"
                 alt="Our Story"
                 className="w-full h-96 object-cover shadow-lg rounded-lg"
                 loading="lazy"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -94,7 +124,11 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             {/* Left Content */}
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               <p className="text-sm text-gray-600 uppercase tracking-wider mb-4">
                 Science
               </p>
@@ -135,17 +169,22 @@ export default function AboutPage() {
                   <ArrowRight size={18} className="ml-2" />
                 </button>
               </div>
-            </div>
+            </motion.div>
 
             {/* Right Image */}
-            <div className="lg:pl-12">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="lg:pl-12"
+            >
               <img
                 src="/images/why-coaching-1.png"
                 alt="Evidence-based Coaching"
                 className="w-full h-96 object-cover shadow-lg rounded-lg"
                 loading="lazy"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -154,7 +193,12 @@ export default function AboutPage() {
         {" "}
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
             <p className="text-sm text-gray-500 uppercase tracking-wider mb-4">
               Innovative
             </p>
@@ -164,12 +208,17 @@ export default function AboutPage() {
             <p className="text-gray-600 text-lg">
               Personalized coaching tailored to your unique needs and goals.
             </p>
-          </div>
+          </motion.div>
 
           {/* Cards Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Card 1: Matching */}
-            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="bg-gray-50 border border-gray-300 flex flex-col justify-between"
+            >
               <div className="p-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
                   Matching
@@ -198,10 +247,15 @@ export default function AboutPage() {
                   loading="lazy"
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 2: Flexible */}
-            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="bg-gray-50 border border-gray-300 flex flex-col justify-between"
+            >
               <div className="p-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
                   Flexible
@@ -229,10 +283,15 @@ export default function AboutPage() {
                   loading="lazy"
                 />
               </div>
-            </div>
+            </motion.div>
 
             {/* Card 3: Support */}
-            <div className="bg-gray-50 border border-gray-300 flex flex-col justify-between">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-gray-50 border border-gray-300 flex flex-col justify-between"
+            >
               <div className="p-4">
                 <p className="text-xs text-gray-500 uppercase tracking-wider mb-3">
                   Support
@@ -260,7 +319,7 @@ export default function AboutPage() {
                   loading="lazy"
                 />
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -268,7 +327,12 @@ export default function AboutPage() {
       <section className="py-12 md:py-16 lg:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header Section */}
-          <div className="flex flex-col md:flex-row mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row mb-16"
+          >
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
               Our impact goes beyond numbers
             </h1>
@@ -277,12 +341,17 @@ export default function AboutPage() {
               transformed. Our commitment to evidence-based coaching drives
               continuous improvement and meaningful change.
             </p>
-          </div>
+          </motion.div>
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {/* Lives Changed */}
-            <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="flex flex-col gap-4"
+            >
               <div className="bg-white border border-gray-200 px-8 py-14 hover:shadow-lg transition-shadow">
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <h2 className="text-6xl font-bold text-gray-900 mb-3">
@@ -303,9 +372,14 @@ export default function AboutPage() {
                   loading="lazy"
                 />
               </div>
-            </div>
+            </motion.div>
 
-            <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="flex flex-col gap-4"
+            >
               {/* Image Card */}
               <div className="bg-gray-100 flex items-center justify-center overflow-hidden">
                 <img
@@ -327,9 +401,14 @@ export default function AboutPage() {
                   </p>
                 </div>
               </div>
-            </div>
+            </motion.div>
             {/* Countries Served */}
-            <div className="flex flex-col gap-4">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="flex flex-col gap-4"
+            >
               <div className="bg-white border border-gray-200 px-8 py-14 hover:shadow-lg transition-shadow">
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <h2 className="text-6xl font-bold text-gray-900 mb-3">25+</h2>
@@ -348,7 +427,7 @@ export default function AboutPage() {
                   loading="lazy"
                 />
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>{" "}
       </section>

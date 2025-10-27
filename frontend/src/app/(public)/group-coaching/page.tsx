@@ -1,246 +1,72 @@
-"use client"
+"use client";
+import Footer from "@/components/Footer";
+import NavbarLandingPage from "@/components/NavbarLandingPage";
+import Contact from "../component/contactUs";
+import Testimonial from "../component/testimonial";
+import imgone from "../images/BlogImg1.jpg";
+import imgtwo from "../images/HomeImg1.png";
+import imgthree from "../images/HomeImg2.png";
+import imgfour from "../images/HomeImg4.png";
+import imgfive from "../images/HomeImg3.png";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import Logo from "@/components/Logo"
-import { ArrowLeft, Users, Clock, Calendar, ChevronRight, Heart, Target, Brain, Compass, CheckCircle, Star } from "lucide-react"
-import GradientText from "@/components/GradientText"
-import SpotlightCard from "@/components/SpotlightCard"
-import CountUp from "@/components/CountUp"
-import NavbarLandingPage from "@/components/NavbarLandingPage"
-import Footer from "@/components/Footer"
-import { getApiUrl } from "@/lib/api"
+import React from "react";
+import {
+  Share2,
+  Linkedin,
+  X,
+  Facebook,
+  Link2,
+  ArrowRight,
+  ChevronDown,
+} from "lucide-react";
 
-interface ContentData {
-  id: string
-  title: string
-  content: string
-  slug: string
-  meta_description?: string
-}
-
-// Default content - will be overridden by CMS if available
-const defaultGroupTypes = [
-  {
-    title: "Anxiety & Stress Management",
-    description: "Learn ACT techniques to manage anxiety and build resilience in a supportive group environment",
-    duration: "8 weeks",
-    size: "6-8 participants",
-    schedule: "Weekly, 90 minutes",
-    focus: ["Mindfulness practices", "Cognitive defusion", "Values clarification", "Stress reduction techniques"]
-  },
-  {
-    title: "Values-Based Living",
-    description: "Discover your core values and learn to live authentically with like-minded individuals",
-    duration: "6 weeks", 
-    size: "8-10 participants",
-    schedule: "Weekly, 75 minutes",
-    focus: ["Values exploration", "Goal setting", "Behavioral activation", "Life direction planning"]
-  },
-  {
-    title: "Workplace Wellness",
-    description: "Professional development group focused on psychological flexibility in work environments",
-    duration: "10 weeks",
-    size: "10-12 participants", 
-    schedule: "Weekly, 60 minutes",
-    focus: ["Work-life balance", "Professional boundaries", "Career satisfaction", "Team dynamics"]
-  },
-  {
-    title: "Relationship & Communication",
-    description: "Improve relationships through ACT principles and enhanced communication skills",
-    duration: "8 weeks",
-    size: "6-8 participants",
-    schedule: "Weekly, 90 minutes", 
-    focus: ["Active listening", "Conflict resolution", "Emotional regulation", "Intimacy building"]
-  }
-]
-
-const defaultBenefits = [
-  {
-    icon: Users,
-    title: "Peer Support",
-    description: "Connect with others on similar journeys and build lasting supportive relationships"
-  },
-  {
-    icon: Target,
-    title: "Shared Learning",
-    description: "Learn from diverse perspectives and experiences within the group setting"
-  },
-  {
-    icon: Heart,
-    title: "Cost Effective",
-    description: "Access high-quality ACT coaching at a more affordable rate than individual sessions"
-  },
-  {
-    icon: Brain,
-    title: "Group Dynamics",
-    description: "Benefit from group accountability and motivation to achieve your goals"
-  }
-]
-
-const defaultUpcomingGroups = [
-  {
-    title: "Anxiety & Stress Management",
-    startDate: "February 12, 2024",
-    time: "7:00 PM EST",
-    spotsLeft: 3,
-    coach: "Dr. Sarah Mitchell"
-  },
-  {
-    title: "Values-Based Living",
-    startDate: "February 19, 2024", 
-    time: "6:30 PM EST",
-    spotsLeft: 5,
-    coach: "Michael Chen"
-  },
-  {
-    title: "Workplace Wellness",
-    startDate: "February 26, 2024",
-    time: "12:00 PM EST",
-    spotsLeft: 2,
-    coach: "Dr. Emily Rodriguez"
-  },
-  {
-    title: "Relationship & Communication",
-    startDate: "March 5, 2024",
-    time: "7:30 PM EST", 
-    spotsLeft: 4,
-    coach: "James Thompson"
-  }
-]
-
-export default function GroupCoachingPage() {
-  const [groupContent, setGroupContent] = useState<ContentData | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetchGroupContent()
-  }, [])
-
-  const fetchGroupContent = async () => {
-    try {
-      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=group-coaching`)
-      console.log('Group coaching content response status:', response.status)
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Group coaching content data:', data)
-        setGroupContent(data)
-      } else {
-        console.log('Failed to fetch group coaching content, status:', response.status)
-      }
-    } catch (error) {
-      console.error('Error fetching group coaching content:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Parse content from CMS if available
-  const parseContent = () => {
-    if (!groupContent?.content) return null
-
-    try {
-      const parsed = JSON.parse(groupContent.content)
-      console.log('Parsed group coaching content:', parsed)
-      return parsed
-    } catch {
-      return null
-    }
-  }
-
-  const cmsContent = parseContent()
-
-  // Parse hero content
-  const getHeroContent = () => {
-    if (!cmsContent) return { title: null, description: null }
-    return {
-      title: cmsContent.hero?.title || null,
-      description: cmsContent.hero?.subtitle || null
-    }
-  }
-
-  const heroContent = getHeroContent()
-
-  // Smart title rendering that preserves styling
-  const renderTitle = () => {
-    if (heroContent.title) {
-      // If CMS has custom title, check if it contains "Group" or "Coaching" to apply gradient
-      const title = heroContent.title
-      if (title.toLowerCase().includes('coaching')) {
-        const parts = title.split(/coaching/i)
-        const match = title.match(/coaching/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      } else if (title.toLowerCase().includes('group')) {
-        const parts = title.split(/group/i)
-        const match = title.match(/group/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      }
-      // Return CMS title as-is if no special formatting needed
-      return title
-    }
-    // Fallback to default styled content
-    return <>Group <GradientText className="inline-block">Coaching</GradientText> Programs</>
-  }
-
-  // Get data from CMS or use defaults
-  const groupTypes = cmsContent?.programs?.types || defaultGroupTypes
-  const benefits = cmsContent?.benefits?.items || defaultBenefits
-  const upcomingGroups = cmsContent?.upcoming?.groups || defaultUpcomingGroups
-  const stats = cmsContent?.stats
-
+export default function BlogPage() {
   return (
-    <div className="flex flex-col min-h-screen bg-white ">
-      {/* Navigation */}
+    <div className="flex flex-col min-h-screen bg-white">
       <nav>
         <NavbarLandingPage />
       </nav>
-      
-
       {/* Hero Section */}
-      <section className="py-24 md:py-32 lg:py-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 md:py-32 bg-[url('/images/corporate-hero.png')] bg-cover bg-center bg-no-repeat">
+        {/* Dark overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/50"></div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             className="text-center"
           >
-
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-ink-dark mb-8 tracking-tight">
-              {renderTitle()}
-            </h1>
-            <p className="text-xl md:text-2xl text-gray-600 mb-16 max-w-4xl mx-auto leading-relaxed">
-              {heroContent.description || groupContent?.meta_description ||
-                "Experience the power of ACT coaching in a supportive group setting. Connect with others, share experiences, and grow together on your journey to psychological flexibility."}
+            <p className="text-sm text-white/80 uppercase tracking-wider mb-6">
+              Transform
             </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white px-10 py-6 text-lg font-semibold shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
-                  View Available Groups
-                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
+
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 tracking-tight">
+              Group coaching for growth
+            </h1>
+            <p className="text-lg md:text-xl text-white/90 mb-12 max-w-3xl mx-auto leading-relaxed">
+              Unlock collective potential through evidence-based ACT coaching
+              designed to help teams and individuals breakthrough personal and
+              professional barriers{" "}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
+                  Explore
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="border-2 border-brand-teal text-brand-teal hover:bg-brand-teal hover:text-white px-10 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
-                  Learn More
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-6 text-lg font-semibold transition-all duration-300">
+                  Assessment
                 </Button>
               </motion.div>
             </div>
@@ -248,303 +74,563 @@ export default function GroupCoachingPage() {
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className="py-20 md:py-28 bg-gradient-to-b from-gray-50 to-white">
+      <section className="relative py-20 md:py-32">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid md:grid-cols-4 gap-12 md:gap-16 text-center">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
-              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-teal to-brand-teal/80 bg-clip-text text-transparent mb-3">
-                <CountUp to={stats?.groupsCompleted || 200} duration={2} />+
-              </div>
-              <div className="text-lg text-gray-600 font-medium">{stats?.groupsCompletedLabel || "Groups Completed"}</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-orange to-brand-orange/80 bg-clip-text text-transparent mb-3">
-                <CountUp to={stats?.participants || 1800} duration={2.5} separator="," />+
-              </div>
-              <div className="text-lg text-gray-600 font-medium">{stats?.participantsLabel || "Participants"}</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.2 }}
-            >
-              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-leaf to-brand-leaf/80 bg-clip-text text-transparent mb-3">
-                <CountUp to={stats?.completionRate || 92} duration={2.2} />%
-              </div>
-              <div className="text-lg text-gray-600 font-medium">{stats?.completionRateLabel || "Completion Rate"}</div>
-            </motion.div>
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: 0.3 }}
-            >
-              <div className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-brand-coral to-brand-coral/80 bg-clip-text text-transparent mb-3">
-                <CountUp to={stats?.averageRating || 4.9} duration={2} />/<CountUp to={5} duration={1.5} />
-              </div>
-              <div className="text-lg text-gray-600 font-medium">{stats?.averageRatingLabel || "Average Rating"}</div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Benefits Section */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              {cmsContent?.benefits?.title || "Why Choose Group Coaching?"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {cmsContent?.benefits?.subtitle || "Discover the unique advantages of learning and growing with others"}
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {benefits.map((benefit, index) => {
-              const IconComponent = benefit.icon
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  whileHover={{ y: -8, transition: { duration: 0.3 } }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="text-center group cursor-pointer p-6 rounded-xl hover:bg-gradient-to-br hover:from-brand-teal/5 hover:to-transparent transition-colors duration-300"
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
-                  >
-                    <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4 group-hover:text-brand-orange transition-colors duration-300" />
-                  </motion.div>
-                  <h3 className="text-lg font-semibold text-ink-dark mb-3">{benefit.title}</h3>
-                  <p className="text-gray-600 text-sm">{benefit.description}</p>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Group Types Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              {cmsContent?.programs?.title || "Our Group Programs"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {cmsContent?.programs?.subtitle || "Specialized groups designed for different needs and goals"}
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 gap-8">
-            {groupTypes.map((group, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                whileHover={{ y: -8, scale: 1.02 }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="h-full p-8 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50 group">
-                  <h3 className="text-xl font-semibold text-ink-dark mb-3">{group.title}</h3>
-                  <p className="text-gray-600 mb-4">{group.description}</p>
-                  
-                  <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                    <div>
-                      <span className="flex items-center text-gray-500">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {group.duration}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="flex items-center text-gray-500">
-                        <Users className="w-4 h-4 mr-1" />
-                        {group.size}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="flex items-center text-gray-500">
-                        <Calendar className="w-4 h-4 mr-1" />
-                        {group.schedule}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="mb-4">
-                    <h4 className="font-semibold text-ink-dark mb-2">Focus Areas:</h4>
-                    <ul className="space-y-1">
-                      {group.focus.map((item, idx) => (
-                        <li key={idx} className="flex items-center text-sm text-gray-600">
-                          <CheckCircle className="w-4 h-4 text-brand-teal mr-2" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Upcoming Groups */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-ink-dark mb-6">
-              {cmsContent?.upcoming?.title || "Upcoming Groups"}
-            </h2>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {cmsContent?.upcoming?.subtitle || "Join one of our upcoming group coaching sessions"}
-            </p>
-          </motion.div>
-
-          <div className="space-y-6 max-w-4xl mx-auto">
-            {upcomingGroups.map((group, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                whileHover={{ x: 8, transition: { duration: 0.3 } }}
-                transition={{ duration: 0.6, delay: index * 0.1 }}
-              >
-                <SpotlightCard className="p-6 shadow-xl hover:shadow-2xl transition-all duration-500 border border-gray-100 hover:border-brand-teal/30 bg-gradient-to-br from-white to-gray-50/50">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-                    <div className="mb-4 md:mb-0">
-                      <h3 className="text-xl font-semibold text-ink-dark mb-2">{group.title}</h3>
-                      <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                        <span className="flex items-center">
-                          <Calendar className="w-4 h-4 mr-1" />
-                          {group.startDate}
-                        </span>
-                        <span className="flex items-center">
-                          <Clock className="w-4 h-4 mr-1" />
-                          {group.time}
-                        </span>
-                        <span className="flex items-center">
-                          <Users className="w-4 h-4 mr-1" />
-                          Coach: {group.coach}
-                        </span>
-                      </div>
-                      <div className="mt-2">
-                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
-                          group.spotsLeft <= 2 
-                            ? 'bg-red-100 text-red-800' 
-                            : group.spotsLeft <= 5 
-                            ? 'bg-yellow-100 text-yellow-800' 
-                            : 'bg-green-100 text-green-800'
-                        }`}>
-                          {group.spotsLeft} spots left
-                        </span>
-                      </div>
-                    </div>
-                    <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                      <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white shadow-lg shadow-brand-teal/30 hover:shadow-xl transition-all duration-300 group">
-                        Join Group
-                        <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-300" />
-                      </Button>
-                    </motion.div>
-                  </div>
-                </SpotlightCard>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonial */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
+            className="text-center mb-16"
           >
-            <SpotlightCard className="p-8 text-center">
-              <div className="flex justify-center mb-4">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} className="w-6 h-6 text-yellow-400 fill-current" />
-                ))}
-              </div>
-              <blockquote className="text-xl text-gray-700 mb-6 italic">
-                "The group coaching experience was transformative. Not only did I learn valuable ACT techniques, 
-                but I also formed meaningful connections with others who understood my journey. The support and 
-                accountability from the group made all the difference."
-              </blockquote>
-              <div className="flex items-center justify-center">
-                <img 
-                  src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face&auto=format&q=80"
-                  alt="Jennifer W."
-                  className="w-12 h-12 rounded-full mr-4"
-                />
-                <div className="text-left">
-                  <div className="font-semibold text-ink-dark">Jennifer W.</div>
-                  <div className="text-sm text-gray-600">Anxiety & Stress Management Group</div>
+            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+              Resilience
+            </p>
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Anxiety and stress
+              <br />
+              management coaching
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Evidence-based strategies to transform workplace stress and
+              emotional challenges
+            </p>
+          </motion.div>
+
+          {/* Main Content Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-white border border-gray-300 shadow-sm overflow-hidden"
+          >
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Left Column - Text Content */}
+              <div className="p-12">
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Focused
+                </p>
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  Comprehensive approach to mental wellness
+                </h2>
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Our targeted program helps teams develop practical coping
+                  mechanisms and emotional intelligence. We focus on sustainable
+                  strategies that create lasting personal and professional
+                  growth.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-3 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
+                    Enroll now
+                  </button>
+                  <button className="px-6 py-3 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn more
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
                 </div>
               </div>
-            </SpotlightCard>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* CTA */}
-      <section className="py-20 bg-brand-teal">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              {cmsContent?.cta?.title || "Ready to Join a Supportive Community?"}
-            </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              {cmsContent?.cta?.subtitle || "Experience the power of group learning and support. Find your group and start your journey today."}
-            </p>
-            <div className="flex flex-col sm:flex-row gap-6 justify-center">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-white text-brand-teal hover:bg-gray-50 px-10 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 group">
-                  View Available Groups
-                  <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-                </Button>
-              </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-brand-teal px-10 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
-                  Ask a Question
-                </Button>
-              </motion.div>
+              {/* Right Column - Image */}
+              <div className="min-h-[400px] overflow-hidden">
+                <img
+                  src={imgtwo.src}
+                  alt="Mental wellness coaching"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
             </div>
           </motion.div>
         </div>
       </section>
+
+      <section className="relative py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Main Content Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-white overflow-hidden"
+          >
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Left Column - Text Content */}
+              <div className="p-12">
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Purpose
+                </p>
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  Values-based living through mindful coaching
+                </h2>
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Discover your core values and align your life with meaningful
+                  action. Our program helps you break through personal barriers
+                  and create authentic, purpose-driven experiences.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-3 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
+                    Enroll
+                  </button>
+                  <button className="px-6 py-3 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn more
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Image */}
+              <div className="min-h-[400px] overflow-hidden">
+                <img
+                  src={imgthree.src}
+                  alt="Values-based living coaching"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-white rounded-lg overflow-hidden"
+          >
+            <div className="grid md:grid-cols-5 gap-0">
+              {/* Left Column - Image */}
+              <div className="md:col-span-2 min-h-[300px] overflow-hidden">
+                <img
+                  src={imgfive.src}
+                  alt="Workplace wellness coaching"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+
+              {/* Right Column - Content */}
+              <div className="md:col-span-3 p-8">
+                <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide mb-3">
+                  Performance
+                </p>
+
+                <h2 className="text-3xl font-bold text-gray-900 mb-4 leading-tight">
+                  Workplace wellness for high-performing teams
+                </h2>
+
+                <p className="text-sm text-gray-600 leading-relaxed mb-6">
+                  Transform workplace dynamics through evidence-based
+                  psychological strategies. Our coaching builds resilient,
+                  collaborative environments that drive organizational success.
+                </p>
+
+                {/* Bullet Points */}
+                <ul className="space-y-2 mb-8">
+                  <li className="flex items-start text-sm text-gray-700">
+                    <span className="text-gray-400 mr-2">•</span>
+                    <span>
+                      Enhance team cohesion through emotional intelligence
+                    </span>
+                  </li>
+                  <li className="flex items-start text-sm text-gray-700">
+                    <span className="text-gray-400 mr-2">•</span>
+                    <span>Develop leadership potential</span>
+                  </li>
+                  <li className="flex items-start text-sm text-gray-700">
+                    <span className="text-gray-400 mr-2">•</span>
+                    <span>Reduce workplace stress effectively</span>
+                  </li>
+                </ul>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-800 transition-colors">
+                    Enroll
+                  </button>
+                  <button className="px-5 py-2 text-gray-900 text-sm font-medium rounded hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-3">
+              Connect
+            </p>
+            <h1 className="text-5xl font-bold text-gray-900 mb-4">
+              Relationship skills coaching
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Strengthen personal and professional connections
+            </p>
+          </motion.div>
+
+          {/* Main Content Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-white border border-gray-300 shadow-sm overflow-hidden"
+          >
+            <div className="grid md:grid-cols-2 gap-0">
+              {/* Left Column - Text Content */}
+              <div className="p-12">
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Focused
+                </p>
+                <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                  Effective communication strategies
+                </h2>
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Learn practical techniques to improve listening, empathy, and
+                  meaningful dialogue. Build stronger, more authentic
+                  relationships in all areas of life.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-3 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
+                    Enroll now
+                  </button>
+                  <button className="px-6 py-3 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn more
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Image */}
+              <div className="min-h-[400px] overflow-hidden">
+                <img
+                  src={imgone.src}
+                  alt="Relationship skills coaching"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <section className="relative py-20 md:py-32">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="bg-white rounded-lg p-12"
+          >
+            {/* Number Label */}
+            <div className="flex items-center gap-3 mb-12">
+              <span className="text-lg font-bold text-gray-900">01</span>
+              <span className="text-sm font-medium text-gray-600">
+                Community support
+              </span>
+            </div>
+
+            {/* Two Column Layout */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left Column - Content */}
+              <div>
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Shared
+                </p>
+
+                <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  Power of collective learning
+                </h2>
+
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Group coaching creates a supportive environment where
+                  participants learn from each other's experiences and
+                  challenges. Gain insights through diverse perspectives.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-2 bg-white text-gray-900 text-sm font-medium rounded border border-gray-300 hover:bg-gray-50 transition-colors">
+                    Join
+                  </button>
+                  <button className="px-6 py-2 text-gray-900 text-sm font-medium rounded hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Image */}
+              <div className="min-h-[280px] overflow-hidden">
+                <img
+                  src={imgtwo.src}
+                  alt="Community support"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="bg-white rounded-lg p-12"
+          >
+            {/* Number Label */}
+            <div className="flex items-center gap-3 mb-12">
+              <span className="text-lg font-bold text-gray-900">02</span>
+              <span className="text-sm font-medium text-gray-600">
+                Cost effective
+              </span>
+            </div>
+
+            {/* Two Column Layout */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left Column - Content */}
+              <div>
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Efficient
+                </p>
+
+                <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  Affordable path to personal growth
+                </h2>
+
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Access high-quality coaching at a fraction of individual
+                  session costs. Maximize your investment with structured,
+                  comprehensive group programs.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-2 bg-white text-gray-900 text-sm font-medium rounded border border-gray-300 hover:bg-gray-50 transition-colors">
+                    Explore
+                  </button>
+                  <button className="px-6 py-2 text-gray-900 text-sm font-medium rounded hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Discover
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Image */}
+              <div className="min-h-[280px] overflow-hidden">
+                <img
+                  src={imgthree.src}
+                  alt="Cost effective coaching"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-lg p-12"
+          >
+            {/* Number Label */}
+            <div className="flex items-center gap-3 mb-12">
+              <span className="text-lg font-bold text-gray-900">03</span>
+              <span className="text-sm font-medium text-gray-600">
+                Accelerated progress
+              </span>
+            </div>
+
+            {/* Two Column Layout */}
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              {/* Left Column - Content */}
+              <div>
+                <p className="text-sm font-semibold text-gray-600 uppercase tracking-wide mb-4">
+                  Momentum
+                </p>
+
+                <h2 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                  Rapid personal and professional development
+                </h2>
+
+                <p className="text-gray-600 leading-relaxed mb-8">
+                  Leverage group dynamics to fast-track your growth. Receive
+                  immediate feedback, accountability, and support from coaches
+                  and peers.
+                </p>
+
+                {/* CTA Buttons */}
+                <div className="flex gap-4">
+                  <button className="px-6 py-2 bg-white text-gray-900 text-sm font-medium rounded border border-gray-300 hover:bg-gray-50 transition-colors">
+                    Start
+                  </button>
+                  <button className="px-6 py-2 text-gray-900 text-sm font-medium rounded hover:bg-gray-50 transition-colors flex items-center gap-2">
+                    Learn
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 5l7 7-7 7"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Right Column - Image */}
+              <div className="min-h-[280px] overflow-hidden">
+                <img
+                  src={imgfive.src}
+                  alt="Accelerated progress"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      <Testimonial />
+      <section className="bg-white min-h-screen flex flex-col items-center justify-center px-4 py-16">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row justify-center gap-4"
+          >
+            <div className="flex flex-col gap-4 text-center mb-16">
+              <h1 className="text-4xl">Get insights that transform</h1>
+              <p>
+                Stay updated with the latest ACT strategies and personal growth
+                resources
+              </p>
+              <div className="flex justify-center gap-2">
+                <button className="bg-[#25a7b8] text-white rounded-md p-2">
+                  Subscribe{" "}
+                </button>
+                <button className="border border-gray-400 rounded-md p-2">
+                  Explore{" "}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+          <motion.img
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            src={imgfour.src}
+            alt=""
+            className="w-full h-auto object-cover"
+            loading="lazy"
+          />
+        </div>
+      </section>
+      <Contact />
       <Footer />
     </div>
-  )
+  );
 }

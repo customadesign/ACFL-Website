@@ -5,6 +5,7 @@ import Contact from "../component/contactUs";
 import Testimonial from "../component/testimonial";
 import imgone from "../images/BlogImg1.jpg";
 import imgfour from "../images/HomeImg4.png";
+import { motion } from "framer-motion";
 
 import React from 'react';
 import { Share2, Linkedin, X, Facebook, Link2 } from 'lucide-react';
@@ -20,22 +21,37 @@ export default function BlogPage() {
       <section className="py-12 md:py-16 lg:py-20 bg-gray-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <nav className="flex items-center gap-2 text-sm text-gray-600 mb-8">
+        <motion.nav
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex items-center gap-2 text-sm text-gray-600 mb-8"
+        >
           <a href="#" className="hover:text-gray-900">Blog</a>
           <span>›</span>
           <a href="#" className="hover:text-gray-900">ACT Insights</a>
-        </nav>
+        </motion.nav>
 
         {/* Article Header */}
         <article>
-          <h1 className="text-5xl font-bold text-gray-900 mb-8 leading-tight">
+          <motion.h1
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="text-5xl font-bold text-gray-900 mb-8 leading-tight"
+          >
             Understanding acceptance<br />
             and commitment in<br />
             personal growth
-          </h1>
+          </motion.h1>
 
           {/* Author and Meta Info */}
-          <div className="flex items-center justify-between mb-12">
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="flex items-center justify-between mb-12"
+          >
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full overflow-hidden">
                 <img
@@ -68,24 +84,34 @@ export default function BlogPage() {
                 </svg>
               </button>
             </div>
-          </div>
+          </motion.div>
 
           {/* Featured Image Placeholder */}
-          <div className="w-full aspect-video bg-gray-200 rounded-lg flex items-center justify-center mb-12">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.3 }}
+            className="w-full aspect-video bg-gray-200 rounded-lg flex items-center justify-center mb-12"
+          >
              <img
             src={imgone.src}
             alt=""
             className="w-full h-auto object-cover"
             loading="lazy"
           />
-          </div>
+          </motion.div>
 
           {/* Article Content would go here */}
         </article>
       </div>
       </section>
 
-      <article className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8 md:p-12">
+      <motion.article
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8 md:p-12"
+      >
         {/* Main Content */}
         <div className="prose prose-gray max-w-none">
           <p className="text-gray-700 leading-relaxed mb-6">
@@ -198,11 +224,16 @@ export default function BlogPage() {
             </div>
           </div>
         </div>
-      </article>
+      </motion.article>
       <Testimonial />
       <section className="bg-white min-h-screen flex flex-col items-center justify-center px-4 py-16">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row justify-center gap-4"
+          >
             <div className="flex flex-col gap-4 text-center mb-16">
               <h1 className="text-4xl">Ready to start your journey?</h1>
               <p>
@@ -218,8 +249,11 @@ export default function BlogPage() {
                 </button>
               </div>
             </div>
-          </div>
-          <img
+          </motion.div>
+          <motion.img
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
             src={imgfour.src}
             alt=""
             className="w-full h-auto object-cover"

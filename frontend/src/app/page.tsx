@@ -207,7 +207,12 @@ export default function HomePage() {
           <div className=" overflow-hidden">
             <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 p-6 md:p-10 lg:p-16">
               {/* Left Content Section */}
-              <div className="space-y-8 lg:space-y-10 flex flex-col justify-center">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6 }}
+                className="space-y-8 lg:space-y-10 flex flex-col justify-center"
+              >
                 {/* Personal Growth */}
                 <div className="flex gap-4 md:gap-5">
                   <div className="flex-shrink-0">
@@ -277,10 +282,15 @@ export default function HomePage() {
                     </button>
                   </a>
                 </div>
-              </div>
+              </motion.div>
 
               {/* Right Image Section */}
-              <div className="relative order-first lg:order-last">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="relative order-first lg:order-last"
+              >
                 <div className="relative overflow-hidden shadow-2xl aspect-[4/3] lg:aspect-auto lg:h-full">
                   <img
                     src={imgtwo.src}
@@ -290,7 +300,7 @@ export default function HomePage() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent" />
                 </div>
-              </div>
+              </motion.div>
             </div>
           </div>
         </div>
@@ -300,7 +310,12 @@ export default function HomePage() {
       <section id="services" className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
             <p className="text-sm uppercase tracking-wider text-gray-600 mb-4">
               Services
             </p>
@@ -311,7 +326,7 @@ export default function HomePage() {
               Personalized support across individual, group, and corporate
               programs
             </p>
-          </div>
+          </motion.div>
 
           {/* Cards Grid */}
           <div className="flex flex-col lg:flex-row gap-6">
@@ -406,7 +421,12 @@ export default function HomePage() {
       <section id="services" className="py-12 md:py-16 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
-          <div className="text-center mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
             <p className="text-sm font-semibold text-gray-600 uppercase tracking-wider mb-3">
               Impact
             </p>
@@ -416,12 +436,17 @@ export default function HomePage() {
             <p className="text-gray-600 text-lg">
               Transformative results across personal and professional domains
             </p>
-          </div>
+          </motion.div>
 
           {/* Content Grid */}
           <div className="grid md:grid-cols-6 gap-8 items-center">
             {/* Statistics Cards */}
-            <div className="md:col-span-2 space-y-5">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              className="md:col-span-2 space-y-5"
+            >
               <div className="bg-white shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow text-center">
                 <div className="text-5xl md:text-6xl font-bold text-gray-900 mb-2">
                   3,000+
@@ -448,17 +473,22 @@ export default function HomePage() {
                   Countries served
                 </p>
               </div>
-            </div>
+            </motion.div>
 
             {/* Image */}
-            <div className="md:col-span-4 shadow-lg">
+            <motion.div
+              initial={{ opacity: 0, x: 20 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              className="md:col-span-4 shadow-lg"
+            >
               <img
                 src={imgthree.src}
                 alt="Professional coaching session"
                 className="w-full h-full object-cover"
                 loading="lazy"
               />
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -468,7 +498,12 @@ export default function HomePage() {
       {/* Start Your Transformation Today Section */}
       <section className="bg-white min-h-screen flex flex-col items-center justify-center px-4 py-16">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="flex flex-col md:flex-row justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="flex flex-col md:flex-row justify-center gap-4"
+          >
             <div className="flex flex-col gap-4 text-center mb-16">
               <h1 className="text-4xl">Start your transformation today</h1>
               <p>
@@ -484,8 +519,11 @@ export default function HomePage() {
                 </button>
               </div>
             </div>
-          </div>
-          <img
+          </motion.div>
+          <motion.img
+            initial={{ opacity: 0, scale: 0.95 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.7, delay: 0.2 }}
             src={imgfour.src}
             alt=""
             className="w-full h-auto object-cover"
