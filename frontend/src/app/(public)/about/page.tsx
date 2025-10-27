@@ -282,17 +282,26 @@ export default function AboutPage() {
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
             {/* Lives Changed */}
-            <div className="bg-white border border-gray-200 p-8 hover:shadow-lg transition-shadow">
-              <div className="flex flex-col items-center justify-center h-full text-center">
-                <div className="mb-4 text-gray-300">
-                  <Users size={48} />
+            <div className="flex flex-col gap-4">
+              <div className="bg-white border border-gray-200 px-8 py-14 hover:shadow-lg transition-shadow">
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                  <h2 className="text-6xl font-bold text-gray-900 mb-3">
+                    3,000+
+                  </h2>
+                  <p className="text-lg text-gray-700 font-medium">
+                    Lives changed
+                  </p>
                 </div>
-                <h2 className="text-6xl font-bold text-gray-900 mb-3">
-                  3,000+
-                </h2>
-                <p className="text-lg text-gray-700 font-medium">
-                  Lives changed
-                </p>
+              </div>
+
+              {/* Lives Changed Image */}
+              <div className="bg-white border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden">
+                <img
+                  src="/images/lives-changed.png"
+                  alt="Lives Changed Impact"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
               </div>
             </div>
 

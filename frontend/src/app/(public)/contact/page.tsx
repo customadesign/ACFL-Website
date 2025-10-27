@@ -7,12 +7,13 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Phone, MapPin, Clock, MessageCircle } from 'lucide-react'
+import { Mail, Phone, MapPin, Clock, MessageCircle, ChevronDown } from 'lucide-react'
 import NavbarLandingPage from '@/components/NavbarLandingPage'
 import Footer from '@/components/Footer'
 import GradientText from '@/components/GradientText'
 import SpotlightCard from '@/components/SpotlightCard'
 import { getApiUrl } from '@/lib/api'
+import Contact from '../component/contactUs'
 
 interface ContentData {
   id: string
@@ -31,6 +32,7 @@ export default function ContactPage() {
     subject: '',
     message: ''
   })
+  const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
 
   useEffect(() => {
     fetchContactContent()
@@ -158,266 +160,371 @@ export default function ContactPage() {
       </nav>
 
       {/* Hero Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="relative py-20 bg-[url('/images/contact-hero.png')] bg-cover bg-center bg-no-repeat">
+        {/* Overlay for better text readability */}
+        <div className="absolute inset-0 bg-black/40"></div>
+
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="text-center mb-12"
+            className="text-center"
           >
-            <h1 className="text-4xl lg:text-6xl font-bold text-ink-dark mb-6">
-              {renderTitle()}
+            <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+              Get In Touch
             </h1>
-            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              {heroContent.description || contactContent?.meta_description ||
-                "We'd love to hear from you. Send us a message and we'll respond as soon as possible."}
+            <p className="text-lg md:text-xl text-white/90 max-w-3xl mx-auto">
+              We're here to support your journey towards personal and professional growth. Our coaches are ready to help you navigate life's challenges with compassion and expertise.
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* Contact Methods */}
-      <section className="py-12 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="text-3xl font-bold text-ink-dark mb-4">
-              {cmsContent?.contactMethodsSection?.title || "How to Reach Us"}
-            </h2>
-            <p className="text-xl text-gray-600">
-              {cmsContent?.contactMethodsSection?.subtitle || "Choose the method that works best for you"}
-            </p>
-          </motion.div>
+      {/* Contact Us Section */}
+      <Contact />
 
-          <div className="grid md:grid-cols-3 gap-6 mb-16">
-            {contactMethods.map((method, index) => {
-              const IconComponent = method.iconName ?
-                { Mail, Phone, MessageCircle, MapPin, Clock }[method.iconName] || Mail
-                : method.icon
-
-              return (
-                <motion.div
-                  key={index}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                >
-                  <SpotlightCard className="p-6 text-center h-full hover:shadow-lg transition-shadow">
-                    <IconComponent className="w-12 h-12 text-brand-teal mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-ink-dark mb-2">{method.title}</h3>
-                    <p className="text-brand-teal font-medium mb-2">{method.value}</p>
-                    <p className="text-gray-600 text-sm">{method.description}</p>
-                  </SpotlightCard>
-                </motion.div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Form & Info */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-            <div className="lg:col-span-2">
-              <motion.div
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <Card className="shadow-lg">
-                  <CardHeader>
-                    <CardTitle className="text-2xl">
-                      {cmsContent?.contactForm?.title || "Send us a message"}
-                    </CardTitle>
-                    <CardDescription className="text-lg">
-                      {cmsContent?.contactForm?.description ||
-                        "Fill out the form below and we'll get back to you as soon as possible."}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <Label htmlFor="name" className="text-base font-medium">Name</Label>
-                          <Input
-                            id="name"
-                            name="name"
-                            type="text"
-                            required
-                            value={formData.name}
-                            onChange={handleChange}
-                            placeholder="Your name"
-                            className="mt-1 h-12"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="email" className="text-base font-medium">Email</Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            required
-                            value={formData.email}
-                            onChange={handleChange}
-                            placeholder="your@email.com"
-                            className="mt-1 h-12"
-                          />
-                        </div>
-                      </div>
-
-                      <div>
-                        <Label htmlFor="subject" className="text-base font-medium">Subject</Label>
-                        <Input
-                          id="subject"
-                          name="subject"
-                          type="text"
-                          required
-                          value={formData.subject}
-                          onChange={handleChange}
-                          placeholder="What is this about?"
-                          className="mt-1 h-12"
-                        />
-                      </div>
-
-                      <div>
-                        <Label htmlFor="message" className="text-base font-medium">Message</Label>
-                        <Textarea
-                          id="message"
-                          name="message"
-                          rows={6}
-                          required
-                          value={formData.message}
-                          onChange={handleChange}
-                          placeholder="Your message..."
-                          className="mt-1"
-                        />
-                      </div>
-
-                      <Button type="submit" className="w-full h-12 text-lg bg-brand-teal hover:bg-brand-teal/90">
-                        Send Message
-                      </Button>
-                    </form>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            </div>
-
-            <div className="space-y-6">
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6 }}
-              >
-                <SpotlightCard className="p-6">
-                  <h3 className="text-xl font-semibold text-ink-dark mb-4">
-                    {cmsContent?.officeInfo?.title || "Our Office"}
-                  </h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start space-x-3">
-                      <MapPin className="w-5 h-5 text-brand-teal mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-ink-dark">Address</p>
-                        <p className="text-gray-600 text-sm">
-                          {cmsContent?.officeInfo?.address || (
-                            <>
-                              123 Coaching Lane<br />
-                              Suite 100<br />
-                              San Francisco, CA 94105
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-start space-x-3">
-                      <Clock className="w-5 h-5 text-brand-teal mt-1 flex-shrink-0" />
-                      <div>
-                        <p className="font-medium text-ink-dark">Business Hours</p>
-                        <p className="text-gray-600 text-sm">
-                          {cmsContent?.officeInfo?.hours || (
-                            <>
-                              Monday - Friday: 9:00 AM - 6:00 PM<br />
-                              Saturday: 10:00 AM - 4:00 PM<br />
-                              Sunday: Closed
-                            </>
-                          )}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </SpotlightCard>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.6, delay: 0.1 }}
-              >
-                <SpotlightCard className="p-6">
-                  <h3 className="text-xl font-semibold text-ink-dark mb-4">
-                    {cmsContent?.faq?.title || "Frequently Asked Questions"}
-                  </h3>
-                  <div className="space-y-3">
-                    {(cmsContent?.faq?.items || [
-                      "How quickly will you respond to my message?",
-                      "Do you offer phone consultations?",
-                      "Can I schedule a session directly?",
-                      "What information should I include in my message?"
-                    ]).map((faq, index) => (
-                      <div key={index} className="text-sm">
-                        <p className="text-brand-teal hover:text-brand-teal/80 cursor-pointer">
-                          • {faq}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                  <Button variant="outline" className="mt-4 w-full">
-                    View All FAQs
-                  </Button>
-                </SpotlightCard>
-              </motion.div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-brand-teal to-brand-orange">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Send an Email Form Section */}
+      <section className="py-16 bg-[#e9f6f7]">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-center"
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
           >
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              {cmsContent?.cta?.title || "Ready to Start Your Journey?"}
+            <p className="text-sm text-gray-500 uppercase tracking-wider mb-4">Connect</p>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Send an Email
             </h2>
-            <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-              {cmsContent?.cta?.subtitle ||
-                "Don't wait to begin your transformation. Find your perfect ACT coach today."}
+            <p className="text-gray-600">
+              Start your journey towards meaningful personal transformation
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button
-                size="lg"
-                className="bg-white text-brand-teal hover:bg-gray-50 text-lg px-8"
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card className="shadow-lg border-0">
+              <CardContent className="p-8">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* First Name and Last Name */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+                        First name
+                      </Label>
+                      <Input
+                        id="firstName"
+                        name="firstName"
+                        type="text"
+                        placeholder=""
+                        className="mt-2 h-12 border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+                        Last name
+                      </Label>
+                      <Input
+                        id="lastName"
+                        name="lastName"
+                        type="text"
+                        placeholder=""
+                        className="mt-2 h-12 border-gray-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Email and Phone Number */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <Label htmlFor="emailForm" className="text-sm font-medium text-gray-700">
+                        Email
+                      </Label>
+                      <Input
+                        id="emailForm"
+                        name="emailForm"
+                        type="email"
+                        placeholder=""
+                        className="mt-2 h-12 border-gray-300"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="phone" className="text-sm font-medium text-gray-700">
+                        Phone number
+                      </Label>
+                      <Input
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder=""
+                        className="mt-2 h-12 border-gray-300"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Primary Coaching Interest Checkboxes */}
+                  <div>
+                    <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                      Your primary coaching interest
+                    </Label>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="personal-growth"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Personal growth</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="professional-development"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Professional development</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="relationship-coaching"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Relationship coaching</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="stress-management"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Stress management</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="leadership-skills"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Leadership skills</span>
+                      </label>
+                      <label className="flex items-center space-x-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          name="interest"
+                          value="other"
+                          className="w-4 h-4 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                        />
+                        <span className="text-gray-700">Other</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Message Textarea */}
+                  <div>
+                    <Label htmlFor="messageForm" className="text-sm font-medium text-gray-700">
+                      Message
+                    </Label>
+                    <Textarea
+                      id="messageForm"
+                      name="messageForm"
+                      rows={6}
+                      placeholder="Share your coaching goals briefly"
+                      className="mt-2 border-gray-300"
+                    />
+                  </div>
+
+                  {/* Terms Agreement */}
+                  <div className="flex items-start space-x-2">
+                    <input
+                      type="checkbox"
+                      id="terms"
+                      name="terms"
+                      required
+                      className="w-4 h-4 mt-1 text-brand-teal border-gray-300 rounded focus:ring-brand-teal"
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-600">
+                      I agree to the terms
+                    </label>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="text-center">
+                    <Button
+                      type="submit"
+                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-12 py-3 text-base"
+                    >
+                      Send
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* FAQs Section */}
+      <section className="py-16 bg-white">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              FAQs
+            </h2>
+            <p className="text-gray-600">
+              Find answers to common questions about our ACT coaching services
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="space-y-4"
+          >
+            {/* FAQ 1 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === 0 ? null : 0)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
               >
-                Find a Coach
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-white text-white hover:bg-white/10 text-lg px-8"
-              >
-                Browse Resources
-              </Button>
+                <span className="font-semibold text-gray-900">
+                  How quickly will you respond to my message?
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    openFaqIndex === 0 ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaqIndex === 0 && (
+                <div className="px-6 pb-6 text-gray-600">
+                  We typically reply within 6 few minutes during business hours. If you reach out after hours, our team will get back to you the next business day.
+                </div>
+              )}
             </div>
+
+            {/* FAQ 2 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === 1 ? null : 1)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-semibold text-gray-900">
+                  Do you offer phone consultations?
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    openFaqIndex === 1 ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaqIndex === 1 && (
+                <div className="px-6 pb-6 text-gray-600">
+                  Yes! We offer phone consultations as one of our coaching formats. You can choose between phone, video call, or text-based coaching—whatever helps you feel most comfortable.
+                </div>
+              )}
+            </div>
+
+            {/* FAQ 3 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === 2 ? null : 2)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-semibold text-gray-900">
+                  Can I schedule a session directly?
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    openFaqIndex === 2 ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaqIndex === 2 && (
+                <div className="px-6 pb-6 text-gray-600">
+                  Absolutely! You can schedule a session directly through our booking page. Simply choose your preferred coach, session type, and time that works best for you. You'll receive a confirmation email right after booking.
+                </div>
+              )}
+            </div>
+
+            {/* FAQ 4 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === 3 ? null : 3)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-semibold text-gray-900">
+                  What information should I include in my message?
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    openFaqIndex === 3 ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaqIndex === 3 && (
+                <div className="px-6 pb-6 text-gray-600">
+                  To help us assist you better, please share your name, preferred contact method (email or phone), and a brief description of what you'd like support with. If you're interested in coaching, you can also mention your goals or areas you'd like to focus on.
+                </div>
+              )}
+            </div>
+
+            {/* FAQ 5 */}
+            <div className="border border-gray-200 rounded-lg overflow-hidden">
+              <button
+                onClick={() => setOpenFaqIndex(openFaqIndex === 4 ? null : 4)}
+                className="w-full flex items-center justify-between p-6 text-left hover:bg-gray-50 transition-colors"
+              >
+                <span className="font-semibold text-gray-900">
+                  What if I'm not satisfied?
+                </span>
+                <ChevronDown
+                  className={`w-5 h-5 text-gray-500 transition-transform ${
+                    openFaqIndex === 4 ? 'rotate-180' : ''
+                  }`}
+                />
+              </button>
+              {openFaqIndex === 4 && (
+                <div className="px-6 pb-6 text-gray-600">
+                  We offer a satisfaction guarantee. If you're not completely satisfied with your initial coaching experience, we'll help you find a different coach or a different format at no additional cost.
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* Need more information */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.4 }}
+            className="text-center mt-16"
+          >
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">
+              Need more information?
+            </h3>
+            <p className="text-gray-600 mb-6">
+              Our support team is ready to answer any additional questions
+            </p>
+            <Button
+              className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3"
+            >
+              Contact
+            </Button>
           </motion.div>
         </div>
       </section>

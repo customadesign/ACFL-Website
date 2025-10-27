@@ -11,7 +11,7 @@ const Contact = () => {
             <p className="text-sm font-semibold text-gray-500 mb-2">Connect</p>
             <h1 className="text-4xl font-bold text-gray-900 mb-3">Contact us</h1>
             <p className="text-gray-600">
-                We’re here to support your journey towards personal and professional
+                We're here to support your journey towards personal and professional
                 growth
             </p>
             </div>
