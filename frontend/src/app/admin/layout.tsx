@@ -30,6 +30,7 @@ import {
   Bell,
   MoreHorizontal,
   DollarSign,
+  CreditCard,
   Type,
   ScrollText,
   ChevronDown,
