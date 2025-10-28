@@ -37,6 +37,25 @@ const MONTHS = [
   'July', 'August', 'September', 'October', 'November', 'December'
 ];
 
+// Test Coach IDs - coaches that show instant booking for free consultations
+const TEST_COACH_IDS = [
+  'a235efaa-df3a-4583-ae72-b4590497386fe', // Test Coach
+]
+
+// Test Coach identifiers (email and name as fallback)
+const TEST_COACH_IDENTIFIERS = {
+  emails: ['coach@acfl.com'],
+  names: ['Test Coach']
+}
+
+// Helper function to check if a coach is a test coach
+const isTestCoach = (coach: Coach) => {
+  const fullName = coach.name || `${coach.first_name || ''} ${coach.last_name || ''}`.trim();
+  return TEST_COACH_IDS.includes(coach.id) ||
+         (coach.email && TEST_COACH_IDENTIFIERS.emails.includes(coach.email)) ||
+         (fullName && TEST_COACH_IDENTIFIERS.names.includes(fullName));
+}
+
 export default function GHLBookingCalendar({ coach, onBookingComplete, requirePayment = false, sessionType = 'consultation' }: GHLBookingCalendarProps) {
   const { user } = useAuth();
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
@@ -256,6 +275,61 @@ export default function GHLBookingCalendar({ coach, onBookingComplete, requirePa
           
           {/* Calendar Section */}
           <div className="lg:col-span-3 p-6 border-r border-gray-200 dark:border-gray-700">
+            {/* Instant Booking for Test Coach Only */}
+            {sessionType === 'consultation' && isTestCoach(coach) && (
+              <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h3 className="font-medium text-blue-800 mb-2">⚡ Book Instant Consultation</h3>
+                <p className="text-sm text-blue-700 mb-3">
+                  Start a free 15-minute consultation right now!
+                </p>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    setBooking(true);
+                    try {
+                      const API_BASE_URL = getApiUrl();
+                      const token = localStorage.getItem('token');
+                      const now = new Date();
+                      const endTime = new Date(now.getTime() + 15 * 60 * 1000);
+
+                      const response = await fetch(`${API_BASE_URL}/api/client/book-appointment`, {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          Authorization: `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                          coachId: coach.id,
+                          scheduledAt: now.toISOString(),
+                          endsAt: endTime.toISOString(),
+                          sessionType: 'consultation',
+                          notes: 'Instant free consultation session',
+                          areaOfFocus: 'Free Consultation',
+                          createVideoMeeting: true
+                        })
+                      });
+
+                      if (response.ok) {
+                        setBookingComplete(true);
+                        if (onBookingComplete) onBookingComplete();
+                      } else {
+                        const data = await response.json();
+                        alert(data.message || 'Failed to book instant consultation');
+                      }
+                    } catch (error: any) {
+                      alert('Failed to book instant consultation');
+                    } finally {
+                      setBooking(false);
+                    }
+                  }}
+                  disabled={booking}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {booking ? 'Booking...' : '📹 Book Instant Session (Now)'}
+                </button>
+              </div>
+            )}
+
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                 Select a Date
