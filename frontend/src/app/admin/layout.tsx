@@ -30,6 +30,7 @@ import {
   Bell,
   MoreHorizontal,
   DollarSign,
+  CreditCard,
   Type,
   ScrollText,
   ChevronDown,
@@ -324,6 +325,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, notificationCount: displayNewAppointmentsCount, permission: PERMISSIONS.APPOINTMENTS_VIEW },
         { name: 'Messages', href: '/admin/messages', icon: MessageSquare, notificationCount: displayNewMessagesCount, permission: PERMISSIONS.MESSAGES_VIEW },
         { name: 'Financials', href: '/admin/financials', icon: DollarSign, permission: PERMISSIONS.FINANCIAL_VIEW },
+        { name: 'Payouts', href: '/admin/payouts', icon: CreditCard, permission: PERMISSIONS.FINANCIAL_VIEW },
       ]
     },
     {

@@ -66,6 +66,12 @@ const NavbarLandingPage = () => {
                       Group Coaching
                     </Link>
                     <Link
+                      href="/individual-coaching"
+                      className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-brand-teal dark:hover:text-brand-teal"
+                    >
+                      Individual Coaching
+                    </Link>
+                    <Link
                       href="/pricing"
                       className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-brand-teal dark:hover:text-brand-teal"
                     >
@@ -193,6 +199,7 @@ const NavbarLandingPage = () => {
                   <div className="ml-4 mt-2">
                     <Link href="/corporate" className="block py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal">Corporate Coaching</Link>
                     <Link href="/group-coaching" className="block py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal">Group Coaching</Link>
+                    <Link href="/individual-coaching" className="block py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal">Individual Coaching</Link>
                     <Link href="/pricing" className="block py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal">Pricing</Link>
                   </div>
                 )}

@@ -532,15 +532,16 @@ export class BillingService {
     return updatedPayout;
   }
 
-  // Coach requests payout (auto-selects all pending payments)
-  async requestCoachPayout(coachId: string, bankAccountId?: string, notes?: string): Promise<Payout> {
-    // Get all completed and partially refunded payments that haven't been paid out yet
+  // Coach requests payout (can specify custom amount or request full balance)
+  async requestCoachPayout(coachId: string, bankAccountId?: string, notes?: string, requestedAmountCents?: number): Promise<Payout> {
+    // Get all completed, partially refunded, and succeeded payments that haven't been paid out yet
     const { data: pendingPayments, error: paymentsError } = await supabase
       .from('payments')
-      .select('id, coach_earnings_cents')
+      .select('id, coach_earnings_cents, created_at')
       .eq('coach_id', coachId)
-      .in('status', ['completed', 'partially_refunded'])
-      .is('payout_id', null); // Not yet linked to a payout
+      .in('status', ['completed', 'partially_refunded', 'succeeded'])
+      .is('payout_id', null) // Not yet linked to a payout
+      .order('created_at', { ascending: true }); // Oldest first
 
     if (paymentsError) throw paymentsError;
 
@@ -564,6 +565,31 @@ export class BillingService {
     if (totalEarnings <= 0) {
       throw new Error('No earnings available for payout');
     }
+
+    // Determine payout amount and select payments
+    let payoutAmount = requestedAmountCents || totalEarnings;
+
+    // Validate requested amount
+    if (requestedAmountCents) {
+      if (requestedAmountCents <= 0) {
+        throw new Error('Payout amount must be greater than zero');
+      }
+      if (requestedAmountCents > totalEarnings) {
+        throw new Error(`Requested amount ($${(requestedAmountCents / 100).toFixed(2)}) exceeds available earnings ($${(totalEarnings / 100).toFixed(2)})`);
+      }
+    }
+
+    // Select payments to include in this payout (oldest first, until we reach the requested amount)
+    const paymentsToInclude: Array<{ id: string; coach_earnings_cents: number }> = [];
+    let accumulatedAmount = 0;
+
+    for (const payment of pendingPayments) {
+      if (accumulatedAmount >= payoutAmount) break;
+      paymentsToInclude.push(payment);
+      accumulatedAmount += payment.coach_earnings_cents || 0;
+    }
+
+    const actualPayoutAmount = paymentsToInclude.reduce((sum, p) => sum + (p.coach_earnings_cents || 0), 0);
 
     // Get coach's default bank account if not specified
     let finalBankAccountId = bankAccountId;
@@ -596,7 +622,7 @@ export class BillingService {
     }
 
     const fees = 0; // No fees for coach payouts
-    const netAmount = totalEarnings - fees;
+    const netAmount = actualPayoutAmount - fees;
 
     // Create payout record
     const { data: payout, error } = await supabase
@@ -604,7 +630,7 @@ export class BillingService {
       .insert({
         coach_id: coachId,
         bank_account_id: finalBankAccountId,
-        amount_cents: totalEarnings,
+        amount_cents: actualPayoutAmount,
         currency: 'USD',
         status: 'pending',
         payout_method: 'bank_transfer',
@@ -612,7 +638,9 @@ export class BillingService {
         net_amount_cents: netAmount,
         metadata: {
           notes: notes,
-          payment_ids: pendingPayments.map(p => p.id),
+          payment_ids: paymentsToInclude.map(p => p.id),
+          payment_count: paymentsToInclude.length,
+          requested_amount_cents: requestedAmountCents,
           requested_by_coach: true
         }
       })
@@ -621,24 +649,24 @@ export class BillingService {
 
     if (error) throw error;
 
-    // Link all payments to this payout
+    // Link selected payments to this payout
     await supabase
       .from('payments')
       .update({ payout_id: payout.id })
-      .in('id', pendingPayments.map(p => p.id));
+      .in('id', paymentsToInclude.map(p => p.id));
 
     // Create billing transaction
     await this.createBillingTransaction({
       user_id: coachId,
       user_type: 'coach',
       transaction_type: 'payout',
-      amount_cents: totalEarnings,
+      amount_cents: actualPayoutAmount,
       currency: 'USD',
       status: 'pending',
-      description: `Payout request for ${pendingPayments.length} payment(s)`,
+      description: `Payout request for ${paymentsToInclude.length} payment(s)`,
       reference_id: payout.id,
       reference_type: 'payout',
-      metadata: { payment_count: pendingPayments.length }
+      metadata: { payment_count: paymentsToInclude.length }
     });
 
     return payout;
@@ -667,7 +695,7 @@ export class BillingService {
       .from('payments')
       .select('id, coach_earnings_cents')
       .eq('coach_id', coachId)
-      .in('status', ['completed', 'partially_refunded'])
+      .in('status', ['completed', 'partially_refunded', 'succeeded'])
       .is('payout_id', null);
 
     if (error) throw error;
