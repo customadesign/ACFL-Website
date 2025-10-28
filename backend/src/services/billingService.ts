@@ -667,7 +667,7 @@ export class BillingService {
       .from('payments')
       .select('id, coach_earnings_cents')
       .eq('coach_id', coachId)
-      .in('status', ['completed', 'partially_refunded'])
+      .in('status', ['completed', 'partially_refunded', 'succeeded'])
       .is('payout_id', null);
 
     if (error) throw error;
