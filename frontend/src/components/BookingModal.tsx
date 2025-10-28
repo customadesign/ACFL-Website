@@ -348,7 +348,17 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType, enab
               </div>
 
               {/* Instant Consultation for Test Coach Only */}
-              {sessionType === 'consultation' && isTestCoach(coach.id, coach.name) && (
+              {(() => {
+                const showInstant = sessionType === 'consultation' && isTestCoach(coach.id, coach.name);
+                console.log('Instant booking check:', {
+                  sessionType,
+                  coachId: coach.id,
+                  coachName: coach.name,
+                  isTestCoach: isTestCoach(coach.id, coach.name),
+                  showInstant
+                });
+                return showInstant;
+              })() && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <h3 className="font-medium text-blue-800 mb-2">⚡ Book Instant Consultation</h3>
                   <p className="text-sm text-blue-700 mb-3">
