@@ -51,6 +51,8 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [notes, setNotes] = useState('');
+  const [customAmount, setCustomAmount] = useState('');
+  const [useCustomAmount, setUseCustomAmount] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -101,6 +103,22 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
       return;
     }
 
+    // Validate custom amount if enabled
+    let amountCents: number | undefined = undefined;
+    if (useCustomAmount) {
+      const amount = parseFloat(customAmount);
+      if (isNaN(amount) || amount <= 0) {
+        setError('Please enter a valid amount greater than zero');
+        return;
+      }
+      amountCents = Math.round(amount * 100);
+
+      if (amountCents > pendingEarnings.totalEarnings) {
+        setError(`Amount cannot exceed available earnings: ${formatCurrency(pendingEarnings.totalEarnings)}`);
+        return;
+      }
+    }
+
     try {
       setSubmitting(true);
       setError(null);
@@ -116,7 +134,8 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          notes: notes || undefined
+          notes: notes || undefined,
+          amount_cents: amountCents
         })
       });
 
@@ -130,6 +149,8 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
 
       // Reset form
       setNotes('');
+      setCustomAmount('');
+      setUseCustomAmount(false);
 
       // Refresh data
       await fetchData();
@@ -232,14 +253,58 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
           <form onSubmit={handleSubmitPayout} className="space-y-4">
             <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
               <p className="text-sm font-medium text-blue-900">
-                You will request a payout for your full pending balance:
+                {useCustomAmount ? 'You will request a custom payout amount:' : 'You will request a payout for your full pending balance:'}
               </p>
               <p className="text-2xl font-bold text-blue-900 mt-2">
-                {formatCurrency(pendingEarnings.totalEarnings)}
+                {useCustomAmount && customAmount ? formatCurrency(Math.round(parseFloat(customAmount) * 100)) : formatCurrency(pendingEarnings.totalEarnings)}
               </p>
               <p className="text-xs text-blue-700 mt-1">
-                {pendingEarnings.paymentCount} payment{pendingEarnings.paymentCount !== 1 ? 's' : ''} will be included
+                {useCustomAmount ? `From available balance: ${formatCurrency(pendingEarnings.totalEarnings)}` : `${pendingEarnings.paymentCount} payment${pendingEarnings.paymentCount !== 1 ? 's' : ''} will be included`}
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="useCustomAmount"
+                  checked={useCustomAmount}
+                  onChange={(e) => {
+                    setUseCustomAmount(e.target.checked);
+                    if (!e.target.checked) {
+                      setCustomAmount('');
+                    }
+                  }}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <Label htmlFor="useCustomAmount" className="font-normal cursor-pointer">
+                  Request a custom amount (partial payout)
+                </Label>
+              </div>
+
+              {useCustomAmount && (
+                <div className="space-y-2 pl-6">
+                  <Label htmlFor="customAmount">Amount (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">$</span>
+                    <input
+                      type="number"
+                      id="customAmount"
+                      step="0.01"
+                      min="0.01"
+                      max={(pendingEarnings.totalEarnings / 100).toFixed(2)}
+                      value={customAmount}
+                      onChange={(e) => setCustomAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="w-full pl-7 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      required={useCustomAmount}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Maximum: {formatCurrency(pendingEarnings.totalEarnings)}
+                  </p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

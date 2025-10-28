@@ -307,9 +307,9 @@ export class BillingController {
         return res.status(401).json({ error: 'Unauthorized' });
       }
 
-      const { bank_account_id, notes } = req.body;
+      const { bank_account_id, notes, amount_cents } = req.body;
 
-      const payout = await billingService.requestCoachPayout(coach_id, bank_account_id, notes);
+      const payout = await billingService.requestCoachPayout(coach_id, bank_account_id, notes, amount_cents);
       res.status(201).json(payout);
     } catch (error) {
       console.error('Error requesting payout:', error);
