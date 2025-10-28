@@ -24,6 +24,23 @@ interface BookingModalProps {
   enablePayments?: boolean
 }
 
+// Test Coach IDs - coaches that show instant booking for free consultations
+const TEST_COACH_IDS = [
+  'a235efaa-df3a-4583-ae72-b4590497386fe', // Test Coach
+]
+
+// Test Coach identifiers (email and name as fallback)
+const TEST_COACH_IDENTIFIERS = {
+  emails: ['coach@acfl.com'],
+  names: ['Test Coach']
+}
+
+// Helper function to check if a coach is a test coach
+const isTestCoach = (coachId: string, coachName?: string) => {
+  return TEST_COACH_IDS.includes(coachId) ||
+         (coachName && TEST_COACH_IDENTIFIERS.names.includes(coachName))
+}
+
 export default function BookingModal({ isOpen, onClose, coach, sessionType, enablePayments = sessionType === 'session' }: BookingModalProps) {
   const router = useRouter()
   const [selectedDate, setSelectedDate] = useState('')
@@ -72,6 +89,49 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType, enab
     return dates
   }
 
+  const handleInstantConsultation = async () => {
+    setIsLoading(true)
+    setError(null)
+
+    try {
+      const now = new Date()
+      const endTime = new Date(now.getTime() + 15 * 60 * 1000) // 15 minutes from now
+
+      const response = await fetch(`${API_URL}/api/client/book-appointment`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          coachId: coach.id,
+          scheduledAt: now.toISOString(),
+          endsAt: endTime.toISOString(),
+          sessionType: 'consultation',
+          notes: 'Instant free consultation session',
+          areaOfFocus: 'Free Consultation',
+          createVideoMeeting: true // Flag to create VideoSDK meeting
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(true)
+        setTimeout(() => {
+          onClose()
+          router.push('/clients/appointments')
+        }, 2000)
+      } else {
+        throw new Error(data.message || 'Failed to book instant consultation')
+      }
+    } catch (error: any) {
+      setError(error.message || 'Failed to book instant consultation')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleQuickTest = async () => {
     setIsLoading(true)
     setError(null)
@@ -79,7 +139,7 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType, enab
     try {
       const now = new Date()
       const endTime = new Date(now.getTime() + 60 * 60 * 1000) // 1 hour later
-      
+
       const response = await fetch(`${API_URL}/api/client/book-appointment`, {
         method: 'POST',
         headers: {
@@ -286,6 +346,24 @@ export default function BookingModal({ isOpen, onClose, coach, sessionType, enab
                   </div>
                 </div>
               </div>
+
+              {/* Instant Consultation for Test Coach Only */}
+              {sessionType === 'consultation' && isTestCoach(coach.id, coach.name) && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="font-medium text-blue-800 mb-2">⚡ Book Instant Consultation</h3>
+                  <p className="text-sm text-blue-700 mb-3">
+                    Start a free 15-minute consultation right now!
+                  </p>
+                  <Button
+                    type="button"
+                    onClick={handleInstantConsultation}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    disabled={isLoading}
+                  >
+                    📹 Book Instant Session (Now)
+                  </Button>
+                </div>
+              )}
 
               {/* Quick Test Option for Sessions */}
               {sessionType === 'session' && (
