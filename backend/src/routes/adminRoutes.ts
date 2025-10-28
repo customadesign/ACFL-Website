@@ -257,6 +257,116 @@ router.get('/dashboard', async (req, res) => {
   }
 });
 
+// Chart data endpoint for dashboard graphs
+router.get('/chart-data', async (req, res) => {
+  try {
+    // Get appointments/sessions data
+    let appointments: any[] = [];
+    let dataSource = '';
+
+    // First try appointments table
+    const appointmentsResult = await supabase
+      .from('appointments')
+      .select('id, status, created_at, scheduled_at, price');
+
+    if (!appointmentsResult.error && appointmentsResult.data && appointmentsResult.data.length > 0) {
+      appointments = appointmentsResult.data;
+      dataSource = 'appointments';
+      console.log(`Found ${appointments.length} appointments for chart data`);
+    } else {
+      // If appointments table doesn't work, try sessions table
+      const sessionsResult = await supabase
+        .from('sessions')
+        .select('id, status, created_at, scheduled_at, starts_at, duration_minutes');
+
+      if (!sessionsResult.error && sessionsResult.data && sessionsResult.data.length > 0) {
+        // Map sessions to appointments format
+        appointments = sessionsResult.data.map((s: any) => ({
+          id: s.id,
+          status: s.status,
+          created_at: s.created_at,
+          scheduled_at: s.scheduled_at || s.starts_at,
+          price: 75 // Default price per session
+        }));
+        dataSource = 'sessions';
+        console.log(`Found ${appointments.length} sessions for chart data`);
+      } else {
+        console.log('No appointments or sessions found for chart data');
+      }
+    }
+
+    // Initialize monthly data structure for the current year
+    const currentYear = new Date().getFullYear();
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    // Initialize monthlySales with zeros
+    const monthlySalesData = months.map(month => ({
+      name: month,
+      sales: 0
+    }));
+
+    // Initialize statistics with zeros (upper will be total bookings, lower will be completed bookings)
+    const statisticsData = months.map(month => ({
+      month: month,
+      upper: 0,
+      lower: 0
+    }));
+
+    // Aggregate data by month
+    let processedCount = 0;
+    appointments.forEach(appointment => {
+      const date = new Date(appointment.scheduled_at || appointment.created_at);
+
+      // Only count data from current year
+      if (date.getFullYear() === currentYear) {
+        const monthIndex = date.getMonth();
+        const price = appointment.price || 75;
+
+        // Add to monthly sales
+        monthlySalesData[monthIndex].sales += price;
+
+        // Count all appointments in upper
+        statisticsData[monthIndex].upper += 1;
+
+        // Count completed appointments in lower
+        if (appointment.status === 'completed') {
+          statisticsData[monthIndex].lower += 1;
+        }
+
+        processedCount++;
+      }
+    });
+
+    console.log(`Processed ${processedCount} appointments/sessions from ${currentYear} for chart data`);
+    console.log('Sample monthly sales:', monthlySalesData.filter(m => m.sales > 0).slice(0, 3));
+
+    // Convert statistics counts to revenue estimates
+    // Upper = total potential revenue (all bookings * avg price)
+    // Lower = actual revenue (completed bookings * avg price)
+    const avgPrice = 75;
+    statisticsData.forEach(stat => {
+      const upperRevenue = stat.upper * avgPrice;
+      const lowerRevenue = stat.lower * avgPrice;
+      stat.upper = upperRevenue;
+      stat.lower = lowerRevenue;
+    });
+
+    res.json({
+      monthlySales: monthlySalesData,
+      statistics: statisticsData,
+      debug: {
+        dataSource,
+        totalRecords: appointments.length,
+        processedRecords: processedCount,
+        currentYear
+      }
+    });
+  } catch (error) {
+    console.error('Chart data error:', error);
+    res.status(500).json({ error: 'Failed to fetch chart data' });
+  }
+});
+
 // System health endpoint
 router.get('/system-health', async (req, res) => {
   console.log('System health endpoint called');
