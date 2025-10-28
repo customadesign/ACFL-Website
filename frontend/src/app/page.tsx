@@ -351,12 +351,16 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
-                    View plans
-                  </button>
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
-                    Book consultation →
-                  </button>
+                  <a href="/pricing">
+                    <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                      View plans
+                    </button>
+                  </a>
+                  <a href="/assessment">
+                    <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                      Book consultation →
+                    </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -381,9 +385,11 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
-                    Explore groups →
-                  </button>
+                  <a href="/group-coaching">
+                    <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                      Explore groups →
+                    </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -408,9 +414,11 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
-                    Contact sales →
-                  </button>
+                  <a href="/corporate">
+                    <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                      Contact sales →
+                    </button>
+                  </a>
                 </div>
               </div>
             </div>
@@ -511,12 +519,16 @@ export default function HomePage() {
                 unique journey
               </p>
               <div className="flex justify-center gap-2">
-                <button className="bg-[#25a7b8] text-white rounded-md p-2">
-                  Take Assessment
-                </button>
-                <button className="border border-gray-400 rounded-md p-2">
-                  Learn More
-                </button>
+                <a href="/assessment">
+                  <button className="bg-[#25a7b8] text-white rounded-md p-2">
+                    Take Assessment
+                  </button>
+                </a>
+                <a href="/blog">
+                  <button className="border border-gray-400 rounded-md p-2">
+                    Learn More
+                  </button>
+                </a>
               </div>
             </div>
           </motion.div>

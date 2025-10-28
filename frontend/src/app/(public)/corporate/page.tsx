@@ -1,29 +1,15 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
-import Logo from "@/components/Logo"
-import { ArrowLeft, Building, Users, TrendingUp, Award, CheckCircle, ChevronRight, Mail, Phone, Calendar } from "lucide-react"
-import GradientText from "@/components/GradientText"
-import SpotlightCard from "@/components/SpotlightCard"
-import CountUp from "@/components/CountUp"
+import { Building, Users, TrendingUp, Award, CheckCircle, ChevronRight } from "lucide-react"
 import NavbarLandingPage from "@/components/NavbarLandingPage"
 import Footer from "@/components/Footer"
 import Testimonial from "../component/testimonial"
 import Contact from "../component/contactUs"
-import { getApiUrl } from "@/lib/api"
-import { CorporatePageSkeleton } from "@/components/skeletons/CorporatePageSkeleton"
 
-interface ContentData {
-  id: string
-  title: string
-  content: string
-  slug: string
-  meta_description?: string
-}
-// Default content - will be overridden by CMS if available
+// Static benefits data
 const defaultBenefits = [
   {
     icon: TrendingUp,
@@ -75,8 +61,6 @@ const defaultPrograms = [
 ]
 
 export default function CorporateProgramsPage() {
-  const [corporateContent, setCorporateContent] = useState<ContentData | null>(null)
-  const [loading, setLoading] = useState(true)
   const [currentSlide, setCurrentSlide] = useState(0)
   const [currentOrgSlide, setCurrentOrgSlide] = useState(0)
   const slides = [
@@ -91,10 +75,6 @@ export default function CorporateProgramsPage() {
     '/images/corp-org3.png',
     '/images/corp-org4.png'
   ]
-
-  useEffect(() => {
-    fetchCorporateContent()
-  }, [])
 
   // Auto-slide effect for group coaching
   useEffect(() => {
@@ -113,105 +93,6 @@ export default function CorporateProgramsPage() {
 
     return () => clearInterval(interval)
   }, [orgSlides.length])
-
-  const fetchCorporateContent = async () => {
-    try {
-      const response = await fetch(`${getApiUrl()}/api/content/public/content?slug=corporate-coaching`)
-      console.log('Corporate coaching content response status:', response.status)
-      if (response.ok) {
-        const data = await response.json()
-        console.log('Corporate coaching content data:', data)
-        setCorporateContent(data)
-      } else {
-        console.log('Failed to fetch corporate coaching content, status:', response.status)
-      }
-    } catch (error) {
-      console.error('Error fetching corporate coaching content:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Parse content from CMS if available
-  const parseContent = () => {
-    if (!corporateContent?.content) return null
-
-    try {
-      const parsed = JSON.parse(corporateContent.content)
-      console.log('Parsed corporate coaching content:', parsed)
-      return parsed
-    } catch {
-      return null
-    }
-  }
-
-  const cmsContent = parseContent()
-
-  // Parse hero content
-  const getHeroContent = () => {
-    if (!cmsContent) return { title: null, description: null }
-    return {
-      title: cmsContent.hero?.title || null,
-      description: cmsContent.hero?.subtitle || null
-    }
-  }
-
-  const heroContent = getHeroContent()
-
-  // Smart title rendering that preserves styling
-  const renderTitle = () => {
-    if (heroContent.title) {
-      // If CMS has custom title, check if it contains "Corporate" or "Wellness" to apply gradient
-      const title = heroContent.title
-      if (title.toLowerCase().includes('corporate')) {
-        const parts = title.split(/corporate/i)
-        const match = title.match(/corporate/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      } else if (title.toLowerCase().includes('wellness')) {
-        const parts = title.split(/wellness/i)
-        const match = title.match(/wellness/i)
-        if (parts.length === 2 && match) {
-          return (
-            <>
-              {parts[0]}
-              <GradientText className="inline-block">{match[0]}</GradientText>
-              {parts[1]}
-            </>
-          )
-        }
-      }
-      // Return CMS title as-is if no special formatting needed
-      return title
-    }
-    // Fallback to default styled content
-    return <>Corporate <GradientText className="inline-block">Wellness</GradientText> Programs</>
-  }
-
-  // Get data from CMS or use defaults
-  const benefits = cmsContent?.benefits?.items || defaultBenefits
-  const programs = cmsContent?.programs?.types || defaultPrograms
-  const stats = cmsContent?.stats
-
-  // Show skeleton while loading
-  if (loading) {
-    return (
-      <>
-        <nav>
-          <NavbarLandingPage />
-        </nav>
-        <CorporatePageSkeleton />
-        <Footer />
-      </>
-    )
-  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white ">
@@ -244,14 +125,18 @@ export default function CorporateProgramsPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
-                  Explore
-                </Button>
+                <a href="#personalized-coaching">
+                  <Button className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
+                    Explore
+                  </Button>
+                </a>
               </motion.div>
               <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                <Button className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-6 text-lg font-semibold transition-all duration-300">
-                  Assessment
-                </Button>
+                <a href="/assessment">
+                  <Button className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-6 text-lg font-semibold transition-all duration-300">
+                    Assessment
+                  </Button>
+                </a>
               </motion.div>
             </div>
           </motion.div>
@@ -259,7 +144,7 @@ export default function CorporateProgramsPage() {
       </section>
 
       {/* Personalized Coaching Section */}
-      <section className="py-20 bg-white">
+      <section id="personalized-coaching" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -485,13 +370,17 @@ export default function CorporateProgramsPage() {
                   Collaborative learning environments that foster personal growth and collective understanding.
                 </p>
                 <div className="flex flex-wrap gap-4 mt-6">
-                  <Button className="bg-gray-900 text-white hover:bg-gray-800 px-6 py-3">
-                    Join program
-                  </Button>
-                  <button className="text-gray-900 font-medium text-sm flex items-center group">
-                    Learn more
-                    <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
-                  </button>
+                  <a href="/assessment">
+                    <Button className="bg-gray-900 text-white hover:bg-gray-800 px-6 py-3">
+                      Join program
+                    </Button>
+                  </a>
+                  <a href="/group-coaching">
+                    <button className="text-gray-900 font-medium text-sm flex items-center group">
+                      Learn more
+                      <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </a>
                 </div>
               </div>
 

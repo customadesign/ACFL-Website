@@ -2,17 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { getApiUrl } from '@/lib/api';
 import NavbarLandingPage from '@/components/NavbarLandingPage';
 import Footer from '@/components/Footer';
-import { 
-  Search, 
-  ChevronDown, 
-  ChevronUp, 
-  ThumbsUp, 
-  ThumbsDown,
+import {
+  Search,
+  ChevronDown,
+  ChevronUp,
   HelpCircle,
-  MessageCircle
 } from 'lucide-react';
 
 interface FAQCategory {
@@ -20,7 +16,6 @@ interface FAQCategory {
   name: string;
   slug: string;
   description: string;
-  display_order: number;
 }
 
 interface FAQItem {
@@ -28,54 +23,76 @@ interface FAQItem {
   category_id: string;
   question: string;
   answer: string;
-  display_order: number;
-  views: number;
-  helpful_count: number;
-  not_helpful_count: number;
   category: {
     name: string;
     slug: string;
   };
 }
 
+// Static FAQ data
+const staticCategories: FAQCategory[] = [
+  { id: '1', name: 'Getting Started', slug: 'getting-started', description: 'Learn the basics' },
+  { id: '2', name: 'Coaching Sessions', slug: 'coaching-sessions', description: 'About sessions' },
+  { id: '3', name: 'Pricing & Plans', slug: 'pricing-plans', description: 'Pricing information' },
+  { id: '4', name: 'Technical Support', slug: 'technical-support', description: 'Technical help' },
+];
+
+const staticFaqs: FAQItem[] = [
+  {
+    id: '1',
+    category_id: '1',
+    question: 'What is ACT coaching?',
+    answer: 'ACT (Acceptance and Commitment Therapy) coaching helps you develop psychological flexibility and live a more meaningful life aligned with your values.',
+    category: { name: 'Getting Started', slug: 'getting-started' }
+  },
+  {
+    id: '2',
+    category_id: '1',
+    question: 'How do I get started?',
+    answer: 'Take our quick assessment to get matched with a coach that fits your needs and goals.',
+    category: { name: 'Getting Started', slug: 'getting-started' }
+  },
+  {
+    id: '3',
+    category_id: '2',
+    question: 'How long are coaching sessions?',
+    answer: 'Standard coaching sessions are 50 minutes long.',
+    category: { name: 'Coaching Sessions', slug: 'coaching-sessions' }
+  },
+  {
+    id: '4',
+    category_id: '2',
+    question: 'Can I message my coach between sessions?',
+    answer: 'Yes! All plans include unlimited messaging support with your coach.',
+    category: { name: 'Coaching Sessions', slug: 'coaching-sessions' }
+  },
+  {
+    id: '5',
+    category_id: '3',
+    question: 'What plans are available?',
+    answer: 'We offer Monthly (2 sessions) and Weekly (4 sessions) plans. Both include coach matching, messaging support, and flexible scheduling.',
+    category: { name: 'Pricing & Plans', slug: 'pricing-plans' }
+  },
+  {
+    id: '6',
+    category_id: '3',
+    question: 'Can I cancel anytime?',
+    answer: 'Yes, you can cancel your subscription at any time with no penalties.',
+    category: { name: 'Pricing & Plans', slug: 'pricing-plans' }
+  },
+];
+
 export default function FAQPage() {
-  const [categories, setCategories] = useState<FAQCategory[]>([]);
-  const [faqs, setFaqs] = useState<FAQItem[]>([]);
-  const [filteredFaqs, setFilteredFaqs] = useState<FAQItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [categories] = useState<FAQCategory[]>(staticCategories);
+  const [faqs] = useState<FAQItem[]>(staticFaqs);
+  const [filteredFaqs, setFilteredFaqs] = useState<FAQItem[]>(staticFaqs);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     filterFAQs();
-  }, [faqs, searchTerm, selectedCategory]);
-
-  const fetchData = async () => {
-    try {
-      // Fetch categories
-      const categoriesResponse = await fetch(`${getApiUrl()}/api/content/public/faq/categories`);
-      if (categoriesResponse.ok) {
-        const categoriesData = await categoriesResponse.json();
-        setCategories(categoriesData);
-      }
-
-      // Fetch FAQ items
-      const faqsResponse = await fetch(`${getApiUrl()}/api/content/public/faq/items`);
-      if (faqsResponse.ok) {
-        const faqsData = await faqsResponse.json();
-        setFaqs(faqsData);
-      }
-    } catch (error) {
-      console.error('Error fetching FAQ data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [searchTerm, selectedCategory]);
 
   const filterFAQs = () => {
     let filtered = faqs;
@@ -88,7 +105,7 @@ export default function FAQPage() {
     // Filter by search term
     if (searchTerm) {
       const searchLower = searchTerm.toLowerCase();
-      filtered = filtered.filter(faq => 
+      filtered = filtered.filter(faq =>
         faq.question.toLowerCase().includes(searchLower) ||
         faq.answer.toLowerCase().includes(searchLower)
       );
