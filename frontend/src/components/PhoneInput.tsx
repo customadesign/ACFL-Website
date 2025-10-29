@@ -253,7 +253,7 @@ export function PhoneInput({ value, onChange, error, placeholder, className }: P
             type="button"
             variant="outline"
             onClick={() => setIsOpen(!isOpen)}
-            className="rounded-r-none border-r-0 h-10 px-3 flex items-center gap-2 min-w-[120px]"
+            className="rounded-r-none border-r-0 h-[50px] px-3 flex items-center gap-2 min-w-[120px] focus:ring-2 focus:ring-teal-500"
           >
             <span className="text-lg">{selectedCountry.flag}</span>
             <span className="text-sm font-medium">{selectedCountry.dialCode}</span>
@@ -304,7 +304,7 @@ export function PhoneInput({ value, onChange, error, placeholder, className }: P
           value={value.startsWith(selectedCountry.dialCode) ? value.slice(selectedCountry.dialCode.length) : ''}
           onChange={(e) => handlePhoneChange(selectedCountry.dialCode + e.target.value)}
           placeholder={placeholder || "Enter phone number"}
-          className="rounded-l-none h-10 flex-1"
+          className="rounded-l-none h-[50px] flex-1 focus:ring-2 focus:ring-teal-500"
         />
       </div>
 

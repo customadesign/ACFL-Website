@@ -127,157 +127,151 @@ function LoginForm() {
       <nav>
         <NavbarLandingPage />
       </nav>
-      <div className="w-full max-w-md mx-auto my-28">
-        <Card className="bg-white">
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png" 
-                alt="ACT Coaching For Life Logo" 
-                className="h-12 w-auto"
-              />
+      <div className="w-full max-w-md mx-auto py-12 px-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img
+            src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+            alt="ACT Coaching For Life Logo"
+            className="h-16 w-auto"
+          />
+        </div>
+
+        {/* Welcome Title */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Welcome Back!</h1>
+          <p className="text-gray-600 text-base">
+            {fromAssessment || hasAssessmentData
+              ? 'Sign in to see your personalized coach matches'
+              : 'Sign in to your ACT Coaching For Life account'
+            }
+          </p>
+        </div>
+
+        {/* Login Form */}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {resendSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+              ✅ Verification email sent! Please check your inbox and click the verification link.
             </div>
-            <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-            <CardDescription>
-              {fromAssessment || hasAssessmentData
-                ? 'Sign in to see your personalized coach matches'
-                : 'Sign in to your ACT Coaching For Life account'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {resendSuccess && (
-                <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
-                  ✅ Verification email sent! Please check your inbox and click the verification link.
-                </div>
-              )}
+          )}
 
-              {error && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                  {error}
-                  {emailNotVerified && (
-                    <div className="mt-3 pt-3 border-t border-red-300">
-                      <p className="mb-2 font-medium">Didn't receive the verification email?</p>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleResendVerification}
-                        disabled={resendingEmail}
-                        className="w-full"
-                      >
-                        {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password
-                </label>
-                <input
-                  type="password"
-                  id="password"
-                  name="password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900"
-                  placeholder="Enter your password"
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                  />
-                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                    Remember me
-                  </label>
-                </div>
-
-                <div className="text-sm">
-                  <Link
-                    href="/forgot-password"
-                    className="font-medium text-blue-600 hover:text-blue-500"
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+              {error}
+              {emailNotVerified && (
+                <div className="mt-3 pt-3 border-t border-red-300">
+                  <p className="mb-2 font-medium">Didn't receive the verification email?</p>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleResendVerification}
+                    disabled={resendingEmail}
+                    className="w-full"
                   >
-                    Forgot your password?
-                  </Link>
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Don't have an account?</span>
-                </div>
-              </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
-                <Link href="/register/client">
-                  <Button variant="outline" className="w-full">
-                    Register as Client
+                    {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
                   </Button>
-                </Link>
-                <Link href="/register/coach">
-                  <Button variant="outline" className="w-full">
-                    Register as Coach
-                  </Button>
-                </Link>
-              </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+              Email*
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              required
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900"
+              placeholder="Enter your email"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+              Password*
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              value={formData.password}
+              onChange={handleChange}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900"
+              placeholder="Enter your password"
+            />
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex items-center">
+              <input
+                id="remember-me"
+                name="remember-me"
+                type="checkbox"
+                className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+              />
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                Remember me
+              </label>
             </div>
 
-            {/* Test Credentials */}
-            <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Test Credentials:</h4>
-              <div className="text-xs text-gray-600 space-y-1">
-                <p><strong>Admin:</strong> admin@acfl.com / admin123</p>
-                <p><strong>Coach:</strong> coach@acfl.com / coach123</p>
-                <p><strong>Client:</strong> client@acfl.com / client123</p>
-              </div>
+            <div className="text-sm">
+              <Link
+                href="/forgot-password"
+                className="font-medium text-teal-600 hover:text-teal-500"
+              >
+                Forgot password?
+              </Link>
             </div>
+          </div>
 
-            <div className="mt-6 text-center text-xs text-gray-500">
-              <p>
-                This platform is HIPAA-compliant and your data is secure.
-              </p>
-              <p className="mt-2">
-                For mental health emergencies, call 988 or 911 immediately.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          <div className="pt-2">
+            <Button
+              type="submit"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-4 rounded-lg font-medium transition-colors text-base"
+              disabled={loading}
+            >
+              {loading ? 'Signing in...' : 'Log In'}
+            </Button>
+          </div>
+        </form>
+
+        {/* Registration Link */}
+        <div className="mt-8 text-center">
+          <p className="text-base text-gray-600">
+            New to ACT?{' '}
+            <Link href="/register/client" className="font-medium text-teal-600 hover:text-teal-500">
+              Register Here
+            </Link>
+          </p>
+        </div>
+
+        {/* Test Credentials */}
+        <div className="mt-10 p-5 bg-gray-50 rounded-lg border border-gray-200">
+          <h4 className="text-sm font-semibold text-gray-900 mb-3">Test Credentials:</h4>
+          <div className="text-xs text-gray-700 space-y-1.5">
+            <p><strong>Admin:</strong> admin@acfl.com / admin123</p>
+            <p><strong>Coach:</strong> coach@acfl.com / coach123</p>
+            <p><strong>Client:</strong> client@acfl.com / client123</p>
+          </div>
+        </div>
+
+        {/* Security Notice */}
+        <div className="mt-8 text-center text-xs text-gray-600 space-y-2 leading-relaxed">
+          <p className="font-medium">
+            This platform is HIPAA-compliant and your data is secure.
+          </p>
+          <p>
+            For mental health emergencies, call 988 or 911 immediately.
+          </p>
+        </div>
       </div>
       <Footer />
     </div>
@@ -291,13 +285,11 @@ export default function Login() {
         <nav>
           <NavbarLandingPage />
         </nav>
-        <div className="w-full max-w-md mx-auto my-28">
-          <Card>
-            <CardContent className="text-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading...</p>
-            </CardContent>
-          </Card>
+        <div className="w-full max-w-md mx-auto my-20 px-4">
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         </div>
         <Footer />
       </div>

@@ -4,7 +4,6 @@ import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
 import { useAuth } from '@/contexts/AuthContext';
@@ -166,25 +165,29 @@ function ClientRegisterForm() {
   };
 
   return (
-       <Card>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png" 
-                alt="ACT Coaching For Life Logo" 
-                className="h-12 w-auto"
-              />
-            </div>
-            <CardTitle className="text-2xl font-bold">Create Client Account</CardTitle>
-            <CardDescription>
-              {fromAssessment && hasAssessmentData
-                ? 'Create your account to see your personalized coach matches'
-                : 'Join ACT Coaching For Life as a client and find your perfect coach'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+    <>
+      {/* Logo */}
+      <div className="flex justify-center mb-8">
+        <img
+          src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+          alt="ACT Coaching For Life Logo"
+          className="h-16 w-auto"
+        />
+      </div>
+
+      {/* Title */}
+      <div className="text-center mb-10">
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">Create Client Account</h1>
+        <p className="text-gray-600 text-base">
+          {fromAssessment && hasAssessmentData
+            ? 'Create your account to see your personalized coach matches'
+            : 'Join ACT Coaching For Life as a client and find your perfect coach'
+          }
+        </p>
+      </div>
+
+      {/* Registration Form */}
+      <form onSubmit={handleSubmit} className="space-y-5">
               {errors.submit && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                   {errors.submit}
@@ -193,8 +196,8 @@ function ClientRegisterForm() {
               
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name *
+                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                    First Name*
                   </label>
                   <input
                     type="text"
@@ -202,17 +205,18 @@ function ClientRegisterForm() {
                     name="firstName"
                     value={formData.firstName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                       errors.firstName ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    placeholder="First name"
                   />
                   {errors.firstName && (
                     <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
                   )}
                 </div>
                 <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name *
+                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                    Last Name*
                   </label>
                   <input
                     type="text"
@@ -220,9 +224,10 @@ function ClientRegisterForm() {
                     name="lastName"
                     value={formData.lastName}
                     onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                       errors.lastName ? 'border-red-300' : 'border-gray-300'
                     }`}
+                    placeholder="Last name"
                   />
                   {errors.lastName && (
                     <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
@@ -231,8 +236,8 @@ function ClientRegisterForm() {
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                  Email Address *
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                  Email*
                 </label>
                 <input
                   type="email"
@@ -240,9 +245,10 @@ function ClientRegisterForm() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Enter your email"
                 />
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1">{errors.email}</p>
@@ -250,8 +256,8 @@ function ClientRegisterForm() {
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number *
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone Number*
                 </label>
                 <PhoneInput
                   value={formData.phone}
@@ -267,7 +273,7 @@ function ClientRegisterForm() {
               </div>
 
               <div>
-                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
                   Date of Birth
                 </label>
                 <input
@@ -276,7 +282,7 @@ function ClientRegisterForm() {
                   name="dateOfBirth"
                   value={formData.dateOfBirth}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.dateOfBirth ? 'border-red-300' : 'border-gray-300'
                   }`}
                 />
@@ -286,8 +292,8 @@ function ClientRegisterForm() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-                  Password *
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                  Password*
                 </label>
                 <input
                   type="password"
@@ -295,9 +301,10 @@ function ClientRegisterForm() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Enter your password"
                 />
                 {errors.password && (
                   <p className="text-red-500 text-xs mt-1">{errors.password}</p>
@@ -308,8 +315,8 @@ function ClientRegisterForm() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-                  Confirm Password *
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
+                  Confirm Password*
                 </label>
                 <input
                   type="password"
@@ -317,9 +324,10 @@ function ClientRegisterForm() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Confirm your password"
                 />
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
@@ -334,17 +342,17 @@ function ClientRegisterForm() {
                       name="terms"
                       type="checkbox"
                       required
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                   </div>
                   <div className="ml-3 text-sm">
                     <label htmlFor="terms" className="text-gray-700">
                       I agree to the{' '}
-                      <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/terms" className="font-medium text-teal-600 hover:text-teal-500">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/privacy" className="font-medium text-teal-600 hover:text-teal-500">
                         Privacy Policy
                       </Link>
                     </label>
@@ -358,7 +366,7 @@ function ClientRegisterForm() {
                       name="hipaa"
                       type="checkbox"
                       required
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                   </div>
                   <div className="ml-3 text-sm">
@@ -369,36 +377,37 @@ function ClientRegisterForm() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Button>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-5 rounded-lg font-medium transition-colors text-base"
+                  disabled={loading}
+                >
+                  {loading ? 'Creating Account...' : 'Create Account'}
+                </Button>
+              </div>
             </form>
 
-            <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+            {/* Login Link */}
+            <div className="mt-8 text-center">
+              <p className="text-base text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-                  Sign in
-                </Link>
-              </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Want to become a coach?{' '}
-                <Link href="/register/coach" className="text-green-600 hover:text-green-500 font-medium">
-                  Register as Coach
+                <Link href="/login" className="text-teal-600 hover:text-teal-500 font-medium">
+                  Login
                 </Link>
               </p>
             </div>
 
-            <div className="mt-6 text-center text-xs text-gray-500">
-              <p>
+            {/* Security Notice */}
+            <div className="mt-8 text-center text-xs text-gray-600 space-y-2 leading-relaxed">
+              <p className="font-medium">
                 This platform is HIPAA-compliant and your data is secure.
               </p>
-              <p className="mt-2">
+              <p>
                 For mental health emergencies, call 988 or 911 immediately.
               </p>
             </div>
-          </CardContent>
-        </Card>
+    </>
   );
 }
 
@@ -408,13 +417,20 @@ export default function ClientRegister() {
       <nav>
         <NavbarLandingPage />
       </nav>
-      <div className="w-full max-w-md mx-auto my-28">
+
+      {/* Register as Coach Button - Top Right */}
+      <div className="absolute top-24 right-6 z-10">
+        <Link href="/register/coach" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+          Want to become a coach? Register as Coach
+        </Link>
+      </div>
+
+      <div className="w-full max-w-xl mx-auto py-12 px-6">
         <Suspense fallback={
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center">Loading...</div>
-            </CardContent>
-          </Card>
+          <div className="text-center py-12">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading...</p>
+          </div>
         }>
           <ClientRegisterForm />
         </Suspense>

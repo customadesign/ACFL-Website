@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
 import Footer from "@/components/Footer";
@@ -381,39 +380,58 @@ export default function CoachVerificationForm() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
       <nav>
         <NavbarLandingPage />
       </nav>
-      
-      <div className="flex-1 py-8">
-        <div className="max-w-4xl mx-auto px-4">
+
+      <div className="flex-1 py-12">
+        <div className="w-full max-w-4xl mx-auto px-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <img
+              src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+              alt="ACT Coaching For Life Logo"
+              className="h-16 w-auto"
+            />
+          </div>
+
+          {/* Title */}
+          <div className="text-center mb-10">
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">Coach Application</h1>
+            <p className="text-gray-600 text-base">
+              Complete the verification process to join our coaching platform
+            </p>
+          </div>
+
           {/* Progress Bar */}
           <div className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h1 className="text-2xl font-bold">Coach Application</h1>
-              <span className="text-sm text-gray-500">
+              <span className="text-sm font-medium text-gray-700">
                 Step {currentStep} of {STEPS.length}
               </span>
+              <span className="text-sm text-gray-600">
+                {STEPS[currentStep - 1]?.title}
+              </span>
             </div>
-            
+
             <div className="w-full bg-gray-200 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+              <div
+                className="bg-teal-600 h-2 rounded-full transition-all duration-300"
                 style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
               />
             </div>
-            
+
             <div className="flex justify-between mt-2">
               {STEPS.map((step) => (
-                <div 
+                <div
                   key={step.id}
                   className={`text-xs text-center ${
-                    step.id <= currentStep ? 'text-blue-600' : 'text-gray-400'
+                    step.id <= currentStep ? 'text-teal-600' : 'text-gray-400'
                   }`}
                 >
                   <div className={`w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center ${
-                    step.id <= currentStep ? 'bg-blue-600 text-white' : 'bg-gray-200'
+                    step.id <= currentStep ? 'bg-teal-600 text-white' : 'bg-gray-200'
                   }`}>
                     {step.id}
                   </div>
@@ -424,20 +442,21 @@ export default function CoachVerificationForm() {
           </div>
 
           {/* Form Content */}
-          <Card>
-            <CardHeader>
-              <CardTitle>{STEPS[currentStep - 1]?.title}</CardTitle>
-              <CardDescription>{STEPS[currentStep - 1]?.description}</CardDescription>
-            </CardHeader>
-            <CardContent>
+          <div className="mb-8">
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">{STEPS[currentStep - 1]?.title}</h2>
+              <p className="text-gray-600 text-sm">{STEPS[currentStep - 1]?.description}</p>
+            </div>
+
+            <div>
               {errors.submit && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm mb-6">
                   {errors.submit}
                 </div>
               )}
-              
+
               {renderStepContent()}
-              
+
               {/* Navigation Buttons */}
               <div className="flex justify-between mt-8">
                 <Button
@@ -445,31 +464,33 @@ export default function CoachVerificationForm() {
                   variant="outline"
                   onClick={prevStep}
                   disabled={currentStep === 1}
+                  className="px-6 py-3 rounded-lg"
                 >
                   Previous
                 </Button>
-                
+
                 {currentStep === STEPS.length ? (
                   <Button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     {loading ? 'Submitting...' : 'Submit Application'}
                   </Button>
                 ) : (
                   <Button
                     onClick={nextStep}
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
                   >
                     Next
                   </Button>
                 )}
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
         </div>
       </div>
-      
+
       <Footer />
     </div>
   );

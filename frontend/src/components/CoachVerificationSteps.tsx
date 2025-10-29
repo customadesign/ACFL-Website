@@ -108,7 +108,7 @@ export const BasicInformationStep = ({ formData, onChange, errors }: any) => (
 export const ProfessionalBackgroundStep = ({ formData, onChange, onArrayChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 1: Educational Background */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         1. What is your educational background? *
       </label>
@@ -149,7 +149,7 @@ export const ProfessionalBackgroundStep = ({ formData, onChange, onArrayChange, 
     </div>
 
     {/* Question 2: Coaching Experience */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         2. How many years of coaching or counseling experience do you have? *
       </label>
@@ -178,7 +178,7 @@ export const ProfessionalBackgroundStep = ({ formData, onChange, onArrayChange, 
     </div>
 
     {/* Question 3: Professional Certifications */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         3. Do you hold any professional certifications? (Select all that apply)
       </label>
@@ -209,7 +209,7 @@ export const ProfessionalBackgroundStep = ({ formData, onChange, onArrayChange, 
 export const SpecializationStep = ({ formData, onChange, onArrayChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 4: Areas of Expertise */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         4. What are your primary areas of coaching expertise? (Select up to 5) *
       </label>
@@ -250,7 +250,7 @@ export const SpecializationStep = ({ formData, onChange, onArrayChange, errors }
     </div>
 
     {/* Question 5: Age Groups */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         5. Which age groups are you comfortable working with? (Select all that apply) *
       </label>
@@ -277,7 +277,7 @@ export const SpecializationStep = ({ formData, onChange, onArrayChange, errors }
     </div>
 
     {/* Question 6: ACT Training */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         6. Have you received specific training in ACT (Acceptance and Commitment Therapy)? *
       </label>
@@ -310,7 +310,7 @@ export const SpecializationStep = ({ formData, onChange, onArrayChange, errors }
 export const ApproachMethodsStep = ({ formData, onChange, onArrayChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 7: Coaching Philosophy */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         7. Describe your coaching philosophy in 100 words or less: *
       </label>
@@ -331,7 +331,7 @@ export const ApproachMethodsStep = ({ formData, onChange, onArrayChange, errors 
     </div>
 
     {/* Question 8: Coaching Techniques */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         8. Which coaching techniques do you regularly use? (Select all that apply) *
       </label>
@@ -363,7 +363,7 @@ export const ApproachMethodsStep = ({ formData, onChange, onArrayChange, errors 
     </div>
 
     {/* Question 9: Session Structure */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         9. How do you typically structure your coaching sessions? *
       </label>
@@ -395,7 +395,7 @@ export const ApproachMethodsStep = ({ formData, onChange, onArrayChange, errors 
 export const EthicsBoundariesStep = ({ formData, onChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 10: Scope Handling */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         10. How do you handle situations where a client's needs exceed your scope of practice? (200 words max) *
       </label>
@@ -416,7 +416,7 @@ export const EthicsBoundariesStep = ({ formData, onChange, errors }: any) => (
     </div>
 
     {/* Question 11: Professional Discipline */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         11. Have you ever had any professional licenses suspended, revoked, or disciplined? *
       </label>
@@ -444,7 +444,7 @@ export const EthicsBoundariesStep = ({ formData, onChange, errors }: any) => (
           Yes (please explain)
         </label>
       </div>
-      
+
       {formData.professionalDisciplineHistory && (
         <div className="mt-3">
           <textarea
@@ -462,7 +462,7 @@ export const EthicsBoundariesStep = ({ formData, onChange, errors }: any) => (
     </div>
 
     {/* Question 12: Boundary Maintenance */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         12. How do you maintain professional boundaries with clients? *
       </label>
@@ -506,7 +506,7 @@ export const EthicsBoundariesStep = ({ formData, onChange, errors }: any) => (
 export const CrisisManagementStep = ({ formData, onChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 13: Suicidal Thoughts Comfort */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         13. Are you comfortable working with clients who may have suicidal thoughts? *
       </label>
@@ -534,7 +534,7 @@ export const CrisisManagementStep = ({ formData, onChange, errors }: any) => (
     </div>
 
     {/* Question 14: Self-Harm Protocol */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         14. What is your protocol when a client expresses thoughts of self-harm? (200 words max) *
       </label>
@@ -559,7 +559,7 @@ export const CrisisManagementStep = ({ formData, onChange, errors }: any) => (
 export const AvailabilityStep = ({ formData, onChange, onArrayChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 15: Weekly Hours */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         15. How many hours per week can you dedicate to coaching on this platform? *
       </label>
@@ -588,7 +588,7 @@ export const AvailabilityStep = ({ formData, onChange, onArrayChange, errors }: 
     </div>
 
     {/* Question 16: Session Length */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         16. What is your preferred session length? *
       </label>
@@ -617,7 +617,7 @@ export const AvailabilityStep = ({ formData, onChange, onArrayChange, errors }: 
     </div>
 
     {/* Question 17: Availability Times */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         17. What times are you generally available? (Select all that apply) *
       </label>
@@ -650,7 +650,7 @@ export const AvailabilityStep = ({ formData, onChange, onArrayChange, errors }: 
 export const TechnologyStep = ({ formData, onChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 18: Video Conferencing Comfort */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         18. Rate your comfort level with video conferencing technology: *
       </label>
@@ -678,7 +678,7 @@ export const TechnologyStep = ({ formData, onChange, errors }: any) => (
     </div>
 
     {/* Question 19: Internet Connection */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         19. What is your internet connection quality? *
       </label>
@@ -710,7 +710,7 @@ export const TechnologyStep = ({ formData, onChange, errors }: any) => (
 export const LanguagesStep = ({ formData, onArrayChange, errors }: any) => (
   <div className="space-y-6">
     {/* Question 20: Languages */}
-    <div>
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
       <label className="block text-sm font-medium text-gray-700 mb-3">
         20. What languages can you provide coaching in fluently? (Select all that apply) *
       </label>
@@ -880,64 +880,66 @@ export const AgreementsStep = ({ formData, onChange, errors }: any) => (
       </p>
     </div>
 
-    <div className="space-y-4">
-      {[
-        {
-          key: 'termsOfService',
-          text: 'I understand that ACT Coaching For Life is a coaching platform and not a substitute for mental health treatment'
-        },
-        {
-          key: 'confidentiality',
-          text: 'I agree to maintain client confidentiality except in cases of mandated reporting'
-        },
-        {
-          key: 'scopeOfPractice',
-          text: 'I will not provide services outside my scope of training and competence'
-        },
-        {
-          key: 'platformTerms',
-          text: 'I agree to platform terms of service and code of conduct'
-        },
-        {
-          key: 'discretionaryApproval',
-          text: 'I understand that approval is at the discretion of ACT Coaching For Life'
-        },
-        {
-          key: 'professionalInsurance',
-          text: 'I agree to maintain appropriate professional liability insurance (recommended)'
-        },
-        {
-          key: 'responseTime',
-          text: 'I will respond to client inquiries within 24-48 hours'
-        },
-        {
-          key: 'refundPolicy',
-          text: 'I understand that clients can request refunds under certain circumstances'
-        }
-      ].map((agreement) => (
-        <div key={agreement.key} className="flex items-start">
-          <div className="flex items-center h-5">
-            <input
-              id={agreement.key}
-              type="checkbox"
-              checked={formData.agreementsAccepted[agreement.key]}
-              onChange={(e) => onChange(agreement.key, e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-            />
+    <div className="bg-gray-50 border border-gray-200 rounded-lg p-5">
+      <div className="space-y-4">
+        {[
+          {
+            key: 'termsOfService',
+            text: 'I understand that ACT Coaching For Life is a coaching platform and not a substitute for mental health treatment'
+          },
+          {
+            key: 'confidentiality',
+            text: 'I agree to maintain client confidentiality except in cases of mandated reporting'
+          },
+          {
+            key: 'scopeOfPractice',
+            text: 'I will not provide services outside my scope of training and competence'
+          },
+          {
+            key: 'platformTerms',
+            text: 'I agree to platform terms of service and code of conduct'
+          },
+          {
+            key: 'discretionaryApproval',
+            text: 'I understand that approval is at the discretion of ACT Coaching For Life'
+          },
+          {
+            key: 'professionalInsurance',
+            text: 'I agree to maintain appropriate professional liability insurance (recommended)'
+          },
+          {
+            key: 'responseTime',
+            text: 'I will respond to client inquiries within 24-48 hours'
+          },
+          {
+            key: 'refundPolicy',
+            text: 'I understand that clients can request refunds under certain circumstances'
+          }
+        ].map((agreement) => (
+          <div key={agreement.key} className="flex items-start">
+            <div className="flex items-center h-5">
+              <input
+                id={agreement.key}
+                type="checkbox"
+                checked={formData.agreementsAccepted[agreement.key]}
+                onChange={(e) => onChange(agreement.key, e.target.checked)}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              />
+            </div>
+            <div className="ml-3 text-sm">
+              <label htmlFor={agreement.key} className="text-gray-700">
+                {agreement.text}
+              </label>
+            </div>
           </div>
-          <div className="ml-3 text-sm">
-            <label htmlFor={agreement.key} className="text-gray-700">
-              {agreement.text}
-            </label>
-          </div>
-        </div>
-      ))}
+        ))}
+      </div>
+
+      {errors.agreements && (
+        <p className="text-red-500 text-sm mt-2">{errors.agreements}</p>
+      )}
     </div>
-    
-    {errors.agreements && (
-      <p className="text-red-500 text-sm mt-2">{errors.agreements}</p>
-    )}
-    
+
     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mt-6">
       <p className="text-xs text-gray-600">
         By submitting this application, you acknowledge that you have read and agree to the{' '}

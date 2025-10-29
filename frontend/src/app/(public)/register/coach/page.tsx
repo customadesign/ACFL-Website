@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getApiUrl } from '@/lib/api';
 import { PhoneInput } from '@/components/PhoneInput';
 import { useAuth } from '@/contexts/AuthContext';
@@ -167,117 +166,129 @@ export default function CoachRegister() {
       <nav>
         <NavbarLandingPage />
       </nav>
-      <div className="w-full max-w-md mx-auto my-28">
-       
-        
-        <Card>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <img 
-                src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png" 
-                alt="ACT Coaching For Life Logo" 
-                className="h-12 w-auto"
-              />
+
+      {/* Register as Client Link - Top Right */}
+      <div className="absolute top-24 right-6 z-10">
+        <Link href="/register/client" className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+          Want to find a coach? Register as Client
+        </Link>
+      </div>
+
+      <div className="w-full max-w-xl mx-auto py-12 px-6">
+        {/* Logo */}
+        <div className="flex justify-center mb-8">
+          <img
+            src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+            alt="ACT Coaching For Life Logo"
+            className="h-16 w-auto"
+          />
+        </div>
+
+        {/* Title */}
+        <div className="text-center mb-10">
+          <h1 className="text-3xl font-bold text-gray-900 mb-3">Become a Coach</h1>
+          <p className="text-gray-600 text-base">
+            Join our professional coaching platform and start making a difference
+          </p>
+        </div>
+
+        {/* New Coach Application Process */}
+        <div className="bg-teal-50 border border-teal-200 rounded-lg p-5 mb-6">
+          <h3 className="font-semibold text-teal-900 mb-2">New Coach Application Process</h3>
+          <p className="text-sm text-teal-800 mb-3">
+            We've enhanced our coach onboarding with a comprehensive verification process to ensure the highest quality coaching experience.
+          </p>
+          <ul className="text-sm text-teal-800 space-y-1">
+            <li>• Complete 20-question professional assessment</li>
+            <li>• Provide professional references</li>
+            <li>• Undergo thorough review process</li>
+            <li>• Receive approval notification within 3-5 business days</li>
+          </ul>
+        </div>
+
+        {/* Register as Coach Button */}
+        <div className="mb-6">
+          <Button asChild className="w-full bg-teal-600 hover:bg-teal-700 text-white py-5 rounded-lg font-medium transition-colors text-base">
+            <Link href="/register/coach/verification">
+              Register as Coach
+            </Link>
+          </Button>
+        </div>
+
+        {/* What You'll Need */}
+        <div className="bg-gray-50 border border-gray-200 rounded-lg p-5 mb-6">
+          <h4 className="font-medium text-gray-800 mb-2">What You'll Need:</h4>
+          <ul className="text-sm text-gray-600 space-y-1">
+            <li>• Professional background information</li>
+            <li>• Details about your coaching experience and training</li>
+            <li>• Contact information for 2 professional references</li>
+            <li>• Information about your specialties and approach</li>
+          </ul>
+        </div>
+
+        {/* Legacy Registration */}
+        <details className="mb-6">
+          <summary className="cursor-pointer text-sm text-gray-600 hover:text-gray-900 transition-colors py-2">
+            Use Legacy Registration (Not Recommended)
+          </summary>
+          <div className="mt-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+              <p className="text-sm text-yellow-800">
+                <strong>Note:</strong> This legacy registration creates an unverified coach account.
+                We recommend using the new verification process above for faster approval.
+              </p>
             </div>
-            <CardTitle className="text-2xl font-bold">Become a Coach</CardTitle>
-            <CardDescription>
-              Join our professional coaching platform with comprehensive verification
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="font-semibold text-blue-800 mb-2">New Coach Application Process</h3>
-                <p className="text-sm text-blue-700 mb-3">
-                  We've enhanced our coach onboarding with a comprehensive verification process to ensure the highest quality coaching experience.
-                </p>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• Complete 20-question professional assessment</li>
-                  <li>• Provide professional references</li>
-                  <li>• Undergo thorough review process</li>
-                  <li>• Receive approval notification within 3-5 business days</li>
-                </ul>
-              </div>
 
-              <div className="text-center">
-                <Button asChild className="w-full bg-blue-600 hover:bg-blue-700">
-                  <Link href="/register/coach/verification">
-                    Start Coach Application
-                  </Link>
-                </Button>
-              </div>
-
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <h4 className="font-medium text-gray-800 mb-2">What You'll Need:</h4>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>• Professional background information</li>
-                  <li>• Details about your coaching experience and training</li>
-                  <li>• Contact information for 2 professional references</li>
-                  <li>• Information about your specialties and approach</li>
-                </ul>
-              </div>
-
-              {/* Legacy form for existing process - hidden by default */}
-              <details className="border border-gray-200 rounded-lg">
-                <summary className="p-4 cursor-pointer text-sm text-gray-600 hover:bg-gray-50">
-                  Use Legacy Registration (Not Recommended)
-                </summary>
-                <div className="p-4 border-t border-gray-200">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-yellow-700">
-                      <strong>Note:</strong> This legacy registration creates an unverified coach account.
-                      We recommend using the new verification process above for faster approval.
-                    </p>
-                  </div>
-                  
-                  <form onSubmit={handleSubmit} className="space-y-4">
-                    {errors.submit && (
-                      <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
-                        {errors.submit}
-                      </div>
-                    )}
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
-                    First Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="firstName"
-                    name="firstName"
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.firstName ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.firstName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
-                  )}
+            {/* Registration Form */}
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {errors.submit && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
+                  {errors.submit}
                 </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
-                    Last Name *
-                  </label>
-                  <input
-                    type="text"
-                    id="lastName"
-                    name="lastName"
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
-                      errors.lastName ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.lastName && (
-                    <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
-                  )}
-                </div>
+              )}
+
+              <div>
+                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
+                  First Name *
+                </label>
+                <input
+                  type="text"
+                  id="firstName"
+                  name="firstName"
+                  value={formData.firstName}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
+                    errors.firstName ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="First name"
+                />
+                {errors.firstName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                )}
               </div>
 
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
+                  Last Name *
+                </label>
+                <input
+                  type="text"
+                  id="lastName"
+                  name="lastName"
+                  value={formData.lastName}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
+                    errors.lastName ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Last name"
+                />
+                {errors.lastName && (
+                  <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address *
                 </label>
                 <input
@@ -286,9 +297,10 @@ export default function CoachRegister() {
                   name="email"
                   value={formData.email}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Enter your email"
                 />
                 {errors.email && (
                   <p className="text-red-500 text-xs mt-1">{errors.email}</p>
@@ -296,7 +308,7 @@ export default function CoachRegister() {
               </div>
 
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number (Optional)
                 </label>
                 <PhoneInput
@@ -308,7 +320,7 @@ export default function CoachRegister() {
               </div>
 
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password *
                 </label>
                 <input
@@ -317,9 +329,10 @@ export default function CoachRegister() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.password ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Enter your password"
                 />
                 {errors.password && (
                   <p className="text-red-500 text-xs mt-1">{errors.password}</p>
@@ -328,17 +341,17 @@ export default function CoachRegister() {
                   <div className="mt-2">
                     <div className="flex items-center space-x-2">
                       <div className="flex-1 bg-gray-200 rounded-full h-2">
-                        <div 
+                        <div
                           className={`h-2 rounded-full transition-all duration-300 ${
-                            passwordStrength === 'Weak' ? 'w-1/3 bg-red-500' : 
-                            passwordStrength === 'Medium' ? 'w-2/3 bg-yellow-500' : 
+                            passwordStrength === 'Weak' ? 'w-1/3 bg-red-500' :
+                            passwordStrength === 'Medium' ? 'w-2/3 bg-yellow-500' :
                             'w-full bg-green-500'
                           }`}
                         />
                       </div>
                       <span className={`text-xs font-medium ${
-                        passwordStrength === 'Weak' ? 'text-red-500' : 
-                        passwordStrength === 'Medium' ? 'text-yellow-500' : 
+                        passwordStrength === 'Weak' ? 'text-red-500' :
+                        passwordStrength === 'Medium' ? 'text-yellow-500' :
                         'text-green-500'
                       }`}>
                         {passwordStrength}
@@ -352,7 +365,7 @@ export default function CoachRegister() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password *
                 </label>
                 <input
@@ -361,9 +374,10 @@ export default function CoachRegister() {
                   name="confirmPassword"
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ${
+                  className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white text-gray-900 ${
                     errors.confirmPassword ? 'border-red-300' : 'border-gray-300'
                   }`}
+                  placeholder="Confirm your password"
                 />
                 {errors.confirmPassword && (
                   <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>
@@ -378,17 +392,17 @@ export default function CoachRegister() {
                       name="terms"
                       type="checkbox"
                       required
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                   </div>
                   <div className="ml-3 text-sm">
                     <label htmlFor="terms" className="text-gray-700">
                       I agree to the{' '}
-                      <Link href="/terms" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/terms" className="font-medium text-teal-600 hover:text-teal-500">
                         Terms of Service
                       </Link>{' '}
                       and{' '}
-                      <Link href="/privacy" className="font-medium text-blue-600 hover:text-blue-500">
+                      <Link href="/privacy" className="font-medium text-teal-600 hover:text-teal-500">
                         Privacy Policy
                       </Link>
                     </label>
@@ -402,7 +416,7 @@ export default function CoachRegister() {
                       name="professional"
                       type="checkbox"
                       required
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      className="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
                     />
                   </div>
                   <div className="ml-3 text-sm">
@@ -413,30 +427,38 @@ export default function CoachRegister() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? 'Creating Account...' : 'Create Coach Account'}
-              </Button>
-                  </form>
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg font-medium transition-colors text-base"
+                  disabled={loading}
+                >
+                  {loading ? 'Creating Account...' : 'Create Coach Account'}
+                </Button>
+              </div>
+            </form>
 
-                  <div className="mt-6 text-center">
-              <p className="text-sm text-gray-600">
+            {/* Login Link */}
+            <div className="mt-8 text-center">
+              <p className="text-base text-gray-600">
                 Already have an account?{' '}
-                <Link href="/login" className="text-blue-600 hover:text-blue-500 font-medium">
-                  Sign in
+                <Link href="/login" className="text-teal-600 hover:text-teal-500 font-medium">
+                  Login
                 </Link>
               </p>
-              <p className="text-sm text-gray-600 mt-2">
-                Looking for coaching?{' '}
-                <Link href="/register/client" className="text-green-600 hover:text-green-500 font-medium">
-                  Register as Client
-                </Link>
-                    </p>
-                  </div>
-                </div>
-              </details>
             </div>
-          </CardContent>
-        </Card>
+
+            {/* Security Notice */}
+            <div className="mt-8 text-center text-xs text-gray-600 space-y-2 leading-relaxed">
+              <p className="font-medium">
+                This platform is HIPAA-compliant and your data is secure.
+              </p>
+              <p>
+                For mental health emergencies, call 988 or 911 immediately.
+              </p>
+            </div>
+          </div>
+        </details>
       </div>
       <Footer />
     </div>
