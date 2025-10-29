@@ -401,19 +401,37 @@ export class BillingService {
   async getAllPayouts(status?: string): Promise<Payout[]> {
     let query = supabase
       .from('payouts')
-      .select(`
-        *,
-        coach:coaches(first_name, last_name, email)
-      `);
+      .select('*');
 
     if (status) {
       query = query.eq('status', status);
     }
 
-    const { data, error } = await query.order('created_at', { ascending: false });
+    const { data: payouts, error } = await query.order('created_at', { ascending: false });
 
     if (error) throw error;
-    return data || [];
+
+    if (!payouts || payouts.length === 0) {
+      return [];
+    }
+
+    // Fetch coach information separately for each payout
+    const payoutsWithCoaches = await Promise.all(
+      payouts.map(async (payout) => {
+        const { data: coach, error: coachError } = await supabase
+          .from('coaches')
+          .select('first_name, last_name, email')
+          .eq('id', payout.coach_id)
+          .single();
+
+        return {
+          ...payout,
+          coach: coachError ? null : coach
+        };
+      })
+    );
+
+    return payoutsWithCoaches;
   }
 
   // Approve payout

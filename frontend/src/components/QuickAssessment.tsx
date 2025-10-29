@@ -54,24 +54,29 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
       id: "concern",
       title: "What brings you to coaching?",
       subtitle: "Select all that apply",
-      type: "multiple"
+      label: "Concerns",
+      type: "multiple",
+      empathyNote: "We know opening up can be tough — take your time 💛"
     },
     {
-      id: "location", 
+      id: "location",
       title: "Where are you located?",
       subtitle: "Choose your state",
+      label: "Location",
       type: "single"
     },
     {
       id: "availability",
       title: "When would you prefer sessions?",
       subtitle: "Select your preferred times",
+      label: "Availability",
       type: "multiple"
     },
     {
       id: "priceRange",
       title: "What's your budget for coaching sessions?",
       subtitle: "Choose your preferred price range",
+      label: "Budget",
       type: "single"
     }
   ]
@@ -167,39 +172,74 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
   const progress = ((currentStep + 1) / steps.length) * 100
 
   return (
-    <div className="min-h-[420px] flex flex-col">
+    <div className="min-h-[500px] flex flex-col relative">
+      {/* Subtle Background Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-teal-50/30 via-transparent to-blue-50/30 -z-10 rounded-2xl"></div>
+
       {/* Progress Bar */}
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-3">
-          <span className="text-sm text-gray-600">Step {currentStep + 1} of {steps.length}</span>
-          <span className="text-sm text-teal-600 font-medium">~ 2 min</span>
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-700">Step {currentStep + 1} of {steps.length}</span>
+          <span className="text-xs text-gray-400 italic">~ 2 min</span>
         </div>
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+
+        {/* Progress bar with gradient */}
+        <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
           <motion.div
-            className="h-full bg-teal-600"
+            className="h-full bg-gradient-to-r from-teal-500 to-teal-600"
             initial={{ width: "25%" }}
             animate={{ width: `${progress}%` }}
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
           />
+        </div>
+
+        {/* Step Labels */}
+        <div className="flex justify-between mt-3 px-1">
+          {steps.map((step, index) => (
+            <div key={step.id} className="flex flex-col items-center flex-1">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
+                index < currentStep
+                  ? 'bg-teal-600 text-white'
+                  : index === currentStep
+                  ? 'bg-teal-600 text-white ring-4 ring-teal-100'
+                  : 'bg-gray-200 text-gray-500'
+              }`}>
+                {index < currentStep ? <Check className="w-4 h-4" /> : index + 1}
+              </div>
+              <span className={`text-xs mt-1.5 font-medium transition-colors ${
+                index <= currentStep ? 'text-teal-700' : 'text-gray-400'
+              }`}>
+                {step.label}
+              </span>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="flex-1 flex flex-col">
 
-        {/* Question */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex-1"
-          >
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              {steps[currentStep].title}
-            </h2>
-            <p className="text-base text-gray-600 mb-6">{steps[currentStep].subtitle}</p>
+        {/* Question Card */}
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 sm:p-8 flex-1 flex flex-col">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentStep}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="flex-1 flex flex-col"
+            >
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">
+                {steps[currentStep].title}
+              </h2>
+              <p className="text-sm text-gray-500 mb-4">{steps[currentStep].subtitle}</p>
+
+              {/* Empathy Note (only on first step) */}
+              {steps[currentStep].empathyNote && (
+                <div className="mb-5 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                  <p className="text-sm text-amber-800">{steps[currentStep].empathyNote}</p>
+                </div>
+              )}
 
               {/* Options */}
               {steps[currentStep].id === "location" ? (
@@ -265,74 +305,82 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
                   )}
                 </div>
               ) : (
-                <div className="space-y-3 mb-6">
+                <div className="space-y-3 sm:space-y-4 mb-6 flex-1 overflow-y-auto">
                   {getOptions().map((option, index) => (
-                    <motion.div
+                    <motion.button
                       key={option.value}
+                      type="button"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                       onClick={() => handleAnswer(steps[currentStep].id, option.value)}
-                      className={`w-full px-4 py-4 text-left rounded-lg border transition-all cursor-pointer ${
+                      className={`w-full px-5 py-4 text-left rounded-xl border-2 transition-all duration-200 ${
                         isSelected(option.value)
-                          ? 'border-teal-600 bg-teal-50 text-teal-900'
-                          : 'border-gray-300 hover:border-gray-400 text-gray-700 hover:bg-gray-50'
+                          ? 'border-teal-600 bg-teal-50 text-teal-900 shadow-md'
+                          : 'border-gray-200 hover:border-teal-300 text-gray-700 hover:bg-gray-50 hover:shadow-sm'
                       }`}
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3">
                         <span className="font-medium text-base">{option.label}</span>
-                        {isSelected(option.value) && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center"
-                          >
-                            <Check className="w-4 h-4 text-white" />
-                          </motion.div>
-                        )}
+                        <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center transition-all ${
+                          isSelected(option.value)
+                            ? 'bg-teal-600'
+                            : 'border-2 border-gray-300'
+                        }`}>
+                          {isSelected(option.value) && (
+                            <motion.div
+                              initial={{ scale: 0 }}
+                              animate={{ scale: 1 }}
+                              transition={{ type: "spring", stiffness: 500, damping: 30 }}
+                            >
+                              <Check className="w-4 h-4 text-white" />
+                            </motion.div>
+                          )}
+                        </div>
                       </div>
-                    </motion.div>
+                    </motion.button>
                   ))}
                 </div>
               )}
             </motion.div>
           </AnimatePresence>
 
-        {/* Navigation */}
-        <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium"
-          >
-            <ChevronLeft className="w-5 h-5 mr-1" />
-            Back
-          </Button>
+          {/* Navigation */}
+          <div className="flex items-center justify-between pt-6 mt-6 border-t border-gray-200">
+            <Button
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 0}
+              className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <ChevronLeft className="w-5 h-5 mr-1" />
+              Back
+            </Button>
 
-          <div className="flex space-x-2">
-            {steps.map((_, index) => (
-              <div
-                key={index}
-                className={`w-2 h-2 rounded-full transition-colors ${
-                  index <= currentStep ? 'bg-teal-600' : 'bg-gray-300'
-                }`}
-              />
-            ))}
+            <div className="flex space-x-2">
+              {steps.map((_, index) => (
+                <div
+                  key={index}
+                  className={`w-2 h-2 rounded-full transition-colors ${
+                    index <= currentStep ? 'bg-teal-600' : 'bg-gray-300'
+                  }`}
+                />
+              ))}
+            </div>
+
+            <Button
+              onClick={nextStep}
+              disabled={!canProceed()}
+              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+                canProceed()
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transform hover:scale-[1.02]'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              {currentStep === steps.length - 1 ? 'Get Matches' : 'Next'}
+              <ChevronRight className="w-5 h-5 ml-1" />
+            </Button>
           </div>
-
-          <Button
-            onClick={nextStep}
-            disabled={!canProceed()}
-            className={`px-6 py-3 rounded-lg font-medium transition-all ${
-              canProceed()
-                ? 'bg-teal-600 hover:bg-teal-700 text-white cursor-pointer'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            {currentStep === steps.length - 1 ? 'Get Matches' : 'Next'}
-            <ChevronRight className="w-5 h-5 ml-1" />
-          </Button>
         </div>
       </div>
     </div>

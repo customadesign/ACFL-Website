@@ -4,6 +4,8 @@ import { Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { CheckCircle, Clock, Mail, ArrowRight, Home, HelpCircle } from 'lucide-react';
+import NavbarLandingPage from '@/components/NavbarLandingPage';
+import Footer from '@/components/Footer';
 
 function PendingApprovalContent() {
   const searchParams = useSearchParams();
@@ -11,8 +13,21 @@ function PendingApprovalContent() {
   const email = searchParams.get('email') || '';
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 px-4 py-12">
-      <div className="max-w-2xl w-full bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-8 md:p-12">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+      <nav>
+        <NavbarLandingPage />
+      </nav>
+
+      <div className="flex-1 py-12">
+        <div className="w-full max-w-2xl mx-auto px-6">
+          {/* Logo */}
+          <div className="flex justify-center mb-8">
+            <img
+              src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+              alt="ACT Coaching For Life Logo"
+              className="h-16 w-auto"
+            />
+          </div>
         {/* Header with Icon */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-20 h-20 bg-yellow-100 dark:bg-yellow-900 rounded-full mb-4">
