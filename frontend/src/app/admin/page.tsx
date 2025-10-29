@@ -412,7 +412,7 @@ export default function AdminDashboard() {
         {/* Column 1 & 2: Stats and Chart */}
         <div className="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-5 md:gap-6">
           {/* Total Users Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
                 <Users className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
@@ -432,7 +432,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Revenue Card */}
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200">
             <div className="flex items-center justify-between mb-3 sm:mb-4">
               <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-emerald-100 dark:group-hover:bg-emerald-900/30">
                 <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-emerald-600 dark:group-hover:text-emerald-400" />
@@ -452,7 +452,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Monthly Sales Chart - Spanning 2 columns below the cards */}
-          <div className="sm:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+          <div className="sm:col-span-2 bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group border border-gray-200">
             <div className="flex items-center justify-between mb-4 sm:mb-5 md:mb-6">
               <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
                 Monthly Sales
@@ -554,7 +554,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Column 3: Monthly Target Card */}
-        <div className="bg-gradient-to-br from-white to-indigo-50/30 dark:from-gray-800 dark:to-indigo-900/10 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden">
+        <div className="z-0 bg-gradient-to-br from-white to-indigo-50/30 dark:from-gray-800 dark:to-indigo-900/10 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group relative overflow-hidden border border-gray-200">
           {/* Background decoration */}
           <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-100 dark:bg-indigo-900/20 rounded-full blur-3xl opacity-50 -mr-16 -mt-16"></div>
 
@@ -684,7 +684,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Statistics Chart */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group">
+      <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 group border border-gray-200">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 sm:mb-5 md:mb-6 gap-3 sm:gap-4">
           <div>
             <div className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white transition-colors duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
@@ -857,7 +857,7 @@ export default function AdminDashboard() {
       {/* Main Dashboard Sections Layout with Consistent Spacing */}
       <div className="space-y-4 sm:space-y-5 md:space-y-6 mt-4 sm:mt-5 md:mt-6">
         {/* Recent Activity - Collapsible */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200">
           <div className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
             <button
               onClick={() => toggleSection("activity")}
@@ -980,7 +980,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions - Collapsible */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 ">
           <button
             onClick={() => toggleSection("actions")}
             className="w-full p-3 sm:p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors touch-manipulation min-h-[60px]"
@@ -1084,7 +1084,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* System Status & Health - Compact Horizontal Cards */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 ">
           <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               System Status
@@ -1162,7 +1162,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Platform Health - Responsive Grid Layout */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 ">
           <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-700">
             <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 dark:text-white">
               Platform Health
