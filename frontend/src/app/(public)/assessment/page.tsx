@@ -4,14 +4,29 @@ import { useRouter } from 'next/navigation'
 import NavbarLandingPage from '@/components/NavbarLandingPage'
 import Footer from '@/components/Footer'
 import QuickAssessment from '@/components/QuickAssessment'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AssessmentPage() {
   const router = useRouter()
+  const { isAuthenticated } = useAuth()
 
   const handleAssessmentComplete = (data: any) => {
     console.log('Assessment completed:', data)
-    // Navigate to search coaches page with the assessment data
-    router.push('/clients/search-coaches')
+
+    // Store assessment data in localStorage for the search page to use
+    localStorage.setItem('assessmentData', JSON.stringify(data))
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      // Store pending assessment flag
+      sessionStorage.setItem('pendingAssessment', 'true')
+
+      // Redirect to client registration instead of login (better for user acquisition)
+      router.push('/register/client?redirect=/clients/search-coaches&from=assessment')
+    } else {
+      // Navigate directly to search coaches page
+      router.push('/clients/search-coaches?from=assessment')
+    }
   }
 
   return (

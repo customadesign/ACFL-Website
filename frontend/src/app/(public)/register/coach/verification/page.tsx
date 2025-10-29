@@ -380,7 +380,7 @@ export default function CoachVerificationForm() {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 via-white to-blue-50">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-teal-50 via-white to-blue-50">
       <nav>
         <NavbarLandingPage />
       </nav>
@@ -406,46 +406,47 @@ export default function CoachVerificationForm() {
 
           {/* Progress Bar */}
           <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-sm font-medium text-gray-700">
-                Step {currentStep} of {STEPS.length}
-              </span>
-              <span className="text-sm text-gray-600">
-                {STEPS[currentStep - 1]?.title}
-              </span>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-sm font-medium text-gray-700">Step {currentStep} of {STEPS.length}</span>
+              <span className="text-xs text-gray-400 italic">Complete all steps</span>
             </div>
 
-            <div className="w-full bg-gray-200 rounded-full h-2">
+            {/* Enhanced Progress bar with gradient */}
+            <div className="h-2.5 bg-gray-200 rounded-full overflow-hidden shadow-inner">
               <div
-                className="bg-teal-600 h-2 rounded-full transition-all duration-300"
+                className="h-full bg-gradient-to-r from-teal-500 to-teal-600 transition-all duration-300"
                 style={{ width: `${(currentStep / STEPS.length) * 100}%` }}
               />
             </div>
 
-            <div className="flex justify-between mt-2">
-              {STEPS.map((step) => (
-                <div
-                  key={step.id}
-                  className={`text-xs text-center ${
-                    step.id <= currentStep ? 'text-teal-600' : 'text-gray-400'
-                  }`}
-                >
-                  <div className={`w-8 h-8 rounded-full mx-auto mb-1 flex items-center justify-center ${
-                    step.id <= currentStep ? 'bg-teal-600 text-white' : 'bg-gray-200'
+            {/* Step Labels */}
+            <div className="flex justify-between mt-3 px-1">
+              {STEPS.map((step, index) => (
+                <div key={step.id} className="flex flex-col items-center flex-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold transition-all ${
+                    index < currentStep - 1
+                      ? 'bg-teal-600 text-white'
+                      : index === currentStep - 1
+                      ? 'bg-teal-600 text-white ring-4 ring-teal-100'
+                      : 'bg-gray-200 text-gray-500'
                   }`}>
                     {step.id}
                   </div>
-                  <div className="hidden sm:block">{step.title}</div>
+                  <span className={`text-xs mt-1.5 font-medium transition-colors hidden sm:block ${
+                    index < currentStep ? 'text-teal-700' : 'text-gray-400'
+                  }`}>
+                    {step.title}
+                  </span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Form Content */}
-          <div className="mb-8">
+          {/* Form Content Card */}
+          <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-6 sm:p-8 mb-8 transition-all duration-300 hover:shadow-2xl">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">{STEPS[currentStep - 1]?.title}</h2>
-              <p className="text-gray-600 text-sm">{STEPS[currentStep - 1]?.description}</p>
+              <h2 className="text-xl font-semibold text-gray-800 mb-1">{STEPS[currentStep - 1]?.title}</h2>
+              <p className="text-sm text-gray-500">{STEPS[currentStep - 1]?.description}</p>
             </div>
 
             <div>
@@ -458,31 +459,46 @@ export default function CoachVerificationForm() {
               {renderStepContent()}
 
               {/* Navigation Buttons */}
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-between mt-8 gap-4">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={prevStep}
                   disabled={currentStep === 1}
-                  className="px-6 py-3 rounded-lg"
+                  className="px-8 py-3 rounded-xl border-2 border-gray-300 hover:border-teal-500 hover:bg-teal-50 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Previous
+                  <span className="flex items-center gap-2">
+                    Previous
+                  </span>
                 </Button>
 
                 {currentStep === STEPS.length ? (
                   <Button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {loading ? 'Submitting...' : 'Submit Application'}
+                    {loading ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Submitting...
+                      </span>
+                    ) : 'Submit Application'}
                   </Button>
                 ) : (
                   <Button
                     onClick={nextStep}
-                    className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                    className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
                   >
-                    Next
+                    <span className="flex items-center gap-2">
+                      Next
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
                   </Button>
                 )}
               </div>
