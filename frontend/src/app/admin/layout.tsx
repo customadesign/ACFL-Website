@@ -235,7 +235,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     // Show user-friendly notification with a small delay to ensure theme has been applied
     setTimeout(() => {
       const toast = document.createElement('div');
-      toast.className = 'fixed top-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm';
+      toast.className = 'fixed bottom-4 right-4 bg-blue-100 border border-blue-400 text-blue-700 px-4 py-3 rounded-lg shadow-lg z-[10000] max-w-sm';
       toast.innerHTML = `
         <div class="flex items-center gap-2">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -613,227 +613,204 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             })}
             </nav>
           </div>
-
-          {/* Notification section - Fixed at bottom */}
-          <div className="shrink-0 p-1 border-t border-gray-200 dark:border-gray-700">
-            <div className="relative" ref={notificationRef}>
-              <button
-                onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
-                className={`w-full group flex items-center px-2 py-1 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  sidebarCollapsed ? 'justify-center' : 'justify-between'
-                }`}
-                aria-label="Notifications"
-              >
-                <div className="flex items-center min-h-[40px]">
-                  <Bell className={`w-5 h-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} flex-shrink-0 text-gray-500 dark:text-gray-400`} />
-                  {!sidebarCollapsed && (
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900 dark:text-white">Notifications</p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400">Updates & Alerts</p>
-                    </div>
-                  )}
-                </div>
-                {!sidebarCollapsed && (displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && (
-                  <NotificationBadge
-                    count={displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount}
-                    size="sm"
-                    variant="red"
-                  />
-                )}
-                {sidebarCollapsed && (displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && (
-                  <NotificationBadge
-                    count={displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount}
-                    size="sm"
-                    variant="red"
-                    className="absolute -top-1 -right-1"
-                  />
-                )}
-                {sidebarCollapsed && (
-                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto whitespace-nowrap z-[10002]">
-                    Notifications
-                    {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && ` (${displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount})`}
-                  </div>
-                )}
-              </button>
-
-              {/* Desktop Notification Dropdown */}
-              {showNotificationDropdown && (
-                <div className={`absolute ${sidebarCollapsed ? 'left-full ml-1' : 'left-full ml-1'} bottom-full mb-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-2 z-[10002] border border-gray-200 dark:border-gray-600 max-h-96 overflow-y-auto`}>
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
-                  </div>
-
-                  {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) === 0 ? (
-                    <div className="text-center py-8">
-                      <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
-                      <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
-                    </div>
-                  ) : (
-                    <div className="p-2 space-y-2">
-                      {displayNewUsersCount > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">New Users</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewUsersCount} new registrations</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              router.push('/admin/users');
-                              setShowNotificationDropdown(false);
-                            }}
-                            className="text-blue-600 dark:text-blue-400 hover:text-blue-700 text-sm font-medium px-3 py-1 rounded"
-                          >
-                            View
-                          </button>
-                        </div>
-                      )}
-
-                      {displayNewCoachApplicationsCount > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">Coach Applications</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewCoachApplicationsCount} new applications</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              router.push('/admin/coach-applications');
-                              setShowNotificationDropdown(false);
-                            }}
-                            className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm font-medium px-3 py-1 rounded"
-                          >
-                            View
-                          </button>
-                        </div>
-                      )}
-
-                      {displayNewAppointmentsCount > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">New Appointments</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewAppointmentsCount} new bookings</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              router.push('/admin/appointments');
-                              setShowNotificationDropdown(false);
-                            }}
-                            className="text-green-600 dark:text-green-400 hover:text-green-700 text-sm font-medium px-3 py-1 rounded"
-                          >
-                            View
-                          </button>
-                        </div>
-                      )}
-
-                      {displayNewMessagesCount > 0 && (
-                        <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                          <div className="flex items-center space-x-3">
-                            <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                            <div>
-                              <p className="font-medium text-gray-900 dark:text-white">System Messages</p>
-                              <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewMessagesCount} new messages</p>
-                            </div>
-                          </div>
-                          <button
-                            onClick={() => {
-                              router.push('/admin/messages');
-                              setShowNotificationDropdown(false);
-                            }}
-                            className="text-orange-600 dark:text-orange-400 hover:text-orange-700 text-sm font-medium px-3 py-1 rounded"
-                          >
-                            View
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* User section - Fixed at bottom */}
-          <div className="shrink-0 p-1 border-t border-gray-200 dark:border-gray-700">
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdown(!showDropdown)}
-                className={`w-full group flex items-center px-2 py-1 text-sm rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  sidebarCollapsed ? 'justify-center' : 'justify-between'
-                }`}
-              >
-                <div className="flex items-center min-h-[40px]">
-                  <CircleUserRound className={`w-5 h-5 ${sidebarCollapsed ? 'mx-auto' : 'mr-3'} flex-shrink-0 text-gray-500 dark:text-gray-400`} />
-                  {!sidebarCollapsed && (
-                    <div className="text-left">
-                      <p className="font-medium text-gray-900 dark:text-white truncate">
-                        {user?.first_name || 'Admin'} {user?.last_name || ''}
-                      </p>
-                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                        {user?.role === 'staff' ? 'Staff Member' : 'Administrator'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-                {sidebarCollapsed && (
-                  <div className="absolute left-full ml-1 px-2 py-1 bg-gray-900 dark:bg-gray-700 text-white text-xs rounded-md opacity-0 group-hover:opacity-100 transition-opacity pointer-events-auto whitespace-nowrap z-[10002]">
-                    {user?.first_name || 'Admin'} {user?.last_name || ''}
-                  </div>
-                )}
-              </button>
-
-              {/* User Dropdown */}
-              {showDropdown && (
-                <div className={`absolute ${sidebarCollapsed ? 'left-full ml-1' : 'left-full ml-1'} bottom-full mb-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-[10002] border border-gray-200 dark:border-gray-600`}>
-                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {user?.first_name || 'Admin'} {user?.last_name || ''}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {user?.role === 'staff' ? 'Staff Member' : 'Administrator'}
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => handleThemeToggle(e)}
-                    type="button"
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    {theme === 'light' ? (
-                      <>
-                        <Moon className="w-4 h-4" />
-                        <span>Dark Mode</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sun className="w-4 h-4" />
-                        <span>Light Mode</span>
-                      </>
-                    )}
-                  </button>
-                  <hr className="my-1 border-gray-200 dark:border-gray-600" />
-                  <button
-                    onClick={handleLogout}
-                    className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-                  >
-                    <LogOut className="w-4 h-4" />
-                    <span>Logout</span>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
         </div>
       </div>
 
       {/* Main Content Area */}
       <div className={`flex-1 ${sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72'} transition-all duration-300 ease-in-out relative z-[1]`}>
+        {/* Desktop Header - Hidden on mobile */}
+        <div className="hidden lg:block bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-end items-center py-3">
+              {/* Header Actions */}
+              <div className="flex items-center space-x-3">
+                {/* Theme Toggle Button */}
+                <button
+                  onClick={(e) => handleThemeToggle(e)}
+                  type="button"
+                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  aria-label="Toggle theme"
+                >
+                  {theme === 'light' ? (
+                    <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  ) : (
+                    <Sun className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                  )}
+                </button>
+
+                {/* Notification Bell */}
+                <div className="relative" ref={notificationRef}>
+                  <button
+                    onClick={() => setShowNotificationDropdown(!showNotificationDropdown)}
+                    className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Notifications"
+                  >
+                    <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) > 0 && (
+                      <NotificationBadge
+                        count={displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount}
+                        size="sm"
+                        variant="red"
+                        className="absolute -top-1 -right-1"
+                      />
+                    )}
+                  </button>
+
+                  {/* Desktop Notification Dropdown */}
+                  {showNotificationDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl py-2 z-[10002] border border-gray-200 dark:border-gray-600 max-h-96 overflow-y-auto">
+                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h3>
+                      </div>
+
+                      {(displayNewUsersCount + displayNewCoachApplicationsCount + displayNewAppointmentsCount + displayNewMessagesCount) === 0 ? (
+                        <div className="text-center py-8">
+                          <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                          <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
+                        </div>
+                      ) : (
+                        <div className="p-2 space-y-2">
+                          {displayNewUsersCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <Users className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">New Users</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewUsersCount} new registrations</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/users');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-blue-600 dark:text-blue-400 hover:text-blue-700 text-sm font-medium px-3 py-1 rounded"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+
+                          {displayNewCoachApplicationsCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <FileText className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">Coach Applications</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewCoachApplicationsCount} new applications</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/coach-applications');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-purple-600 dark:text-purple-400 hover:text-purple-700 text-sm font-medium px-3 py-1 rounded"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+
+                          {displayNewAppointmentsCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <Calendar className="w-5 h-5 text-green-600 dark:text-green-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">New Appointments</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewAppointmentsCount} new bookings</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/appointments');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-green-600 dark:text-green-400 hover:text-green-700 text-sm font-medium px-3 py-1 rounded"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+
+                          {displayNewMessagesCount > 0 && (
+                            <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <MessageSquare className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                                <div>
+                                  <p className="font-medium text-gray-900 dark:text-white">System Messages</p>
+                                  <p className="text-sm text-gray-600 dark:text-gray-300">{displayNewMessagesCount} new messages</p>
+                                </div>
+                              </div>
+                              <button
+                                onClick={() => {
+                                  router.push('/admin/messages');
+                                  setShowNotificationDropdown(false);
+                                }}
+                                className="text-orange-600 dark:text-orange-400 hover:text-orange-700 text-sm font-medium px-3 py-1 rounded"
+                              >
+                                View
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* User Menu */}
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setShowDropdown(!showDropdown)}
+                    className="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="User menu"
+                  >
+                    <CircleUserRound className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <div className="text-left hidden xl:block">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate max-w-[120px]">
+                        {user?.first_name || 'Admin'} {user?.last_name || ''}
+                      </p>
+                    </div>
+                  </button>
+
+                  {/* User Dropdown */}
+                  {showDropdown && (
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-md shadow-lg py-1 z-[10002] border border-gray-200 dark:border-gray-600">
+                      <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-600">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          {user?.first_name || 'Admin'} {user?.last_name || ''}
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {user?.role === 'staff' ? 'Staff Member' : 'Administrator'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          router.push('/admin/settings');
+                          setShowDropdown(false);
+                        }}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      >
+                        <Settings className="w-4 h-4" />
+                        <span>Settings</span>
+                      </button>
+                      <hr className="my-1 border-gray-200 dark:border-gray-600" />
+                      <button
+                        onClick={handleLogout}
+                        className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        <span>Logout</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Mobile Header */}
         <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
           <div className="px-4 sm:px-6">
