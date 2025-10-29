@@ -5,7 +5,6 @@ import { usePermissions } from '@/hooks/usePermissions';
 import {
   Search,
   Filter,
-  RefreshCw,
   Calendar,
   User,
   AlertCircle,
@@ -14,10 +13,9 @@ import {
   Clock,
   Download,
   Eye,
-  ChevronLeft,
-  ChevronRight,
   X
 } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 import { getApiUrl } from '@/lib/api';
 
 interface SystemLog {
@@ -70,6 +68,7 @@ export default function SystemLogs() {
   const [levelFilter, setLevelFilter] = useState('all');
   const [userTypeFilter, setUserTypeFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(50);
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
@@ -93,12 +92,12 @@ export default function SystemLogs() {
     }
   }, [isAdmin]);
 
-  const fetchSystemLogs = async (page = 1, filters = {}) => {
+  const fetchSystemLogs = async (page = 1, filters = {}, limit = itemsPerPage) => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: '50',
+        limit: limit.toString(),
         ...filters
       });
 
@@ -151,7 +150,7 @@ export default function SystemLogs() {
     }
 
     setCurrentPage(1);
-    fetchSystemLogs(1, filters);
+    fetchSystemLogs(1, filters, itemsPerPage);
   };
 
   const handlePageChange = (page: number) => {
@@ -168,11 +167,25 @@ export default function SystemLogs() {
       filters.user_type = userTypeFilter;
     }
 
-    fetchSystemLogs(page, filters);
+    fetchSystemLogs(page, filters, itemsPerPage);
   };
 
-  const handleRefresh = () => {
-    fetchSystemLogs(currentPage);
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1);
+
+    const filters: Record<string, string> = {};
+    if (searchTerm.trim()) {
+      filters.action = searchTerm.trim();
+    }
+    if (levelFilter !== 'all') {
+      filters.level = levelFilter;
+    }
+    if (userTypeFilter !== 'all') {
+      filters.user_type = userTypeFilter;
+    }
+
+    fetchSystemLogs(1, filters, newItemsPerPage);
   };
 
   const getLevelIcon = (level: string) => {
@@ -274,128 +287,234 @@ export default function SystemLogs() {
             Monitor system activity and audit trails
           </p>
         </div>
+        <button
+          onClick={exportLogs}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-sm hover:shadow-md"
+        >
+          <Download className="w-4 h-4" />
+          Export Logs
+        </button>
       </div>
-      <div className="flex gap-3">
-          <button
-            onClick={handleRefresh}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2 bg-white dark:text-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''} dark:text-white`} />
-            Refresh
-          </button>
-          <button
-            onClick={exportLogs}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            <Download className="w-4 h-4" />
-            Export
-          </button>
-      </div>
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Logs</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total.toLocaleString()}</p>
+        {/* Total Logs Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             </div>
-            <Clock className="w-8 h-8 text-blue-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total Logs
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.total.toLocaleString()
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Info</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.levels.INFO}</p>
+        {/* Info Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <Info className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             </div>
-            <Info className="w-8 h-8 text-blue-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Info
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.levels.INFO
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Warnings</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.levels.WARN}</p>
+        {/* Warnings Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/30">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-yellow-600 dark:group-hover:text-yellow-400" />
             </div>
-            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Warnings
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-yellow-600 dark:text-yellow-400 transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.levels.WARN
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Errors</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.levels.ERROR}</p>
+        {/* Errors Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-red-100 dark:group-hover:bg-red-900/30">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-red-600 dark:group-hover:text-red-400" />
             </div>
-            <AlertCircle className="w-8 h-8 text-red-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Errors
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-red-600 dark:text-red-400 transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.levels.ERROR
+              )}
+            </div>
           </div>
         </div>
       </div>
 
       {/* Filters - Mobile Responsive */}
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="space-y-4">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {/* Gradient Header */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-6 py-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            Search & Filters
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+            Filter system logs by action, level, or user type
+          </p>
+        </div>
+
+        <div className="p-6 space-y-4">
           {/* Search Input - Full Width */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Search Actions
+          <div className="relative group">
+            <label htmlFor="search-logs" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <div className="flex items-center gap-2">
+                <Search className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                <span>Search Actions</span>
+              </div>
             </label>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4 pointer-events-none" />
               <input
+                id="search-logs"
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
                 placeholder="Search by action, user, or details..."
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01]"
               />
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
             </div>
           </div>
 
           {/* Filter Selects - Responsive Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Level
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Level Filter */}
+            <div className="relative group">
+              <label htmlFor="level-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Level</span>
+                </div>
               </label>
-              <select
-                value={levelFilter}
-                onChange={(e) => setLevelFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Levels</option>
-                <option value="INFO">Info</option>
-                <option value="WARN">Warning</option>
-                <option value="ERROR">Error</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="level-filter"
+                  value={levelFilter}
+                  onChange={(e) => setLevelFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="all">All Levels</option>
+                  <option value="INFO">Info</option>
+                  <option value="WARN">Warning</option>
+                  <option value="ERROR">Error</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                User Type
+            {/* User Type Filter */}
+            <div className="relative group">
+              <label htmlFor="user-type-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>User Type</span>
+                </div>
               </label>
-              <select
-                value={userTypeFilter}
-                onChange={(e) => setUserTypeFilter(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:text-white"
-              >
-                <option value="all">All Users</option>
-                <option value="admin">Admin</option>
-                <option value="staff">Staff</option>
-                <option value="coach">Coach</option>
-                <option value="client">Client</option>
-              </select>
+              <div className="relative">
+                <select
+                  id="user-type-filter"
+                  value={userTypeFilter}
+                  onChange={(e) => setUserTypeFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="all">All Users</option>
+                  <option value="admin">Admin</option>
+                  <option value="staff">Staff</option>
+                  <option value="coach">Coach</option>
+                  <option value="client">Client</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Items Per Page Filter */}
+            <div className="relative group">
+              <label htmlFor="items-per-page" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Items Per Page</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
             </div>
 
             {/* Apply Button - Full Width on Mobile */}
             <div className="sm:col-span-2 lg:col-span-1 flex items-end">
               <button
                 onClick={handleSearch}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98] shadow-sm hover:shadow-md"
               >
                 <Filter className="w-4 h-4" />
                 Apply Filters
@@ -409,7 +528,7 @@ export default function SystemLogs() {
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {isLoading ? (
           <div className="p-8 text-center">
-            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-gray-400" />
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Loading system logs...</p>
           </div>
         ) : logs.length === 0 ? (
@@ -562,83 +681,15 @@ export default function SystemLogs() {
 
             {/* Pagination */}
             {pagination.totalPages > 1 && (
-              <div className="bg-white dark:bg-gray-800 px-6 py-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-                <div className="flex-1 flex justify-between sm:hidden">
-                  <button
-                    onClick={() => handlePageChange(currentPage - 1)}
-                    disabled={currentPage <= 1}
-                    className="relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Previous
-                  </button>
-                  <button
-                    onClick={() => handlePageChange(currentPage + 1)}
-                    disabled={currentPage >= pagination.totalPages}
-                    className="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Next
-                  </button>
-                </div>
-                <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm text-gray-700 dark:text-gray-300">
-                      Showing{' '}
-                      <span className="font-medium">
-                        {Math.min((currentPage - 1) * pagination.limit + 1, pagination.total)}
-                      </span>{' '}
-                      to{' '}
-                      <span className="font-medium">
-                        {Math.min(currentPage * pagination.limit, pagination.total)}
-                      </span>{' '}
-                      of{' '}
-                      <span className="font-medium">{pagination.total}</span>{' '}
-                      results
-                    </p>
-                  </div>
-                  <div>
-                    <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                      <button
-                        onClick={() => handlePageChange(currentPage - 1)}
-                        disabled={currentPage <= 1}
-                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronLeft className="h-5 w-5" />
-                      </button>
-
-                      {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                        const pageNumber = Math.max(1, Math.min(
-                          pagination.totalPages - 4,
-                          Math.max(1, currentPage - 2)
-                        )) + i;
-
-                        if (pageNumber <= pagination.totalPages) {
-                          return (
-                            <button
-                              key={pageNumber}
-                              onClick={() => handlePageChange(pageNumber)}
-                              className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                pageNumber === currentPage
-                                  ? 'z-10 bg-blue-50 dark:bg-blue-900/50 border-blue-500 text-blue-600 dark:text-blue-400'
-                                  : 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700'
-                              }`}
-                            >
-                              {pageNumber}
-                            </button>
-                          );
-                        }
-                        return null;
-                      })}
-
-                      <button
-                        onClick={() => handlePageChange(currentPage + 1)}
-                        disabled={currentPage >= pagination.totalPages}
-                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <ChevronRight className="h-5 w-5" />
-                      </button>
-                    </nav>
-                  </div>
-                </div>
+              <div className="bg-white dark:bg-gray-800 px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={pagination.totalPages}
+                  totalItems={pagination.total}
+                  itemsPerPage={pagination.limit}
+                  onPageChange={handlePageChange}
+                  showItemsRange={true}
+                />
               </div>
             )}
           </>

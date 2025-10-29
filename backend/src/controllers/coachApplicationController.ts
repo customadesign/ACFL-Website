@@ -402,26 +402,28 @@ export const getCoachApplications = async (req: Request, res: Response) => {
       throw error;
     }
 
-    // For each application, try to find the corresponding coach user ID
+    // For each application, try to find the corresponding coach user ID and profile photo
     const applicationsWithCoachId = await Promise.all(
       (applications || []).map(async (app) => {
-        // If application is approved, try to find the coach user ID
+        // If application is approved, try to find the coach user ID and profile photo
         if (app.status === 'approved') {
           const { data: coach } = await supabase
             .from('coaches')
-            .select('id')
+            .select('id, profile_photo')
             .ilike('email', app.email)
             .single();
-          
+
           return {
             ...app,
-            coach_id: coach?.id || null
+            coach_id: coach?.id || null,
+            profile_photo: coach?.profile_photo || null
           };
         }
-        
+
         return {
           ...app,
-          coach_id: null
+          coach_id: null,
+          profile_photo: null
         };
       })
     );
@@ -505,6 +507,22 @@ export const getCoachApplication = async (req: Request, res: Response) => {
       throw error;
     }
 
+    // If application is approved, try to find the coach profile photo
+    let profilePhoto = null;
+    let coachId = null;
+    if (application.status === 'approved') {
+      const { data: coach } = await supabase
+        .from('coaches')
+        .select('id, profile_photo')
+        .ilike('email', application.email)
+        .single();
+
+      if (coach) {
+        profilePhoto = coach.profile_photo;
+        coachId = coach.id;
+      }
+    }
+
     // Get review history
     const { data: reviews, error: reviewsError } = await supabase
       .from('coach_application_reviews')
@@ -518,7 +536,11 @@ export const getCoachApplication = async (req: Request, res: Response) => {
 
     res.json({
       success: true,
-      application,
+      application: {
+        ...application,
+        profile_photo: profilePhoto,
+        coach_id: coachId
+      },
       reviewHistory: reviews || []
     });
 

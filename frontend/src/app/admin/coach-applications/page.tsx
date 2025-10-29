@@ -48,6 +48,7 @@ interface CoachApplication {
   act_training_level: string;
   languages_fluent?: string[] | null;
   coach_id?: string; // The actual coach user ID if application is approved
+  profile_photo?: string; // Profile photo URL from database
 }
 
 interface ApplicationDetails extends CoachApplication {
@@ -308,10 +309,6 @@ export default function CoachApplicationsPage() {
     });
   };
 
-  if (loading) {
-    return <CoachApplicationSkeleton count={5} />;
-  }
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -325,44 +322,88 @@ export default function CoachApplicationsPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Applications</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalItems}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Total Applications Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             </div>
-            <FileCheck className="w-8 h-8 text-blue-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total Applications
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                totalItems
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{applications.filter(app => app.status === 'pending').length}</p>
+        {/* Pending Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/30">
+              <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-yellow-600 dark:group-hover:text-yellow-400" />
             </div>
-            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Pending
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                applications.filter(app => app.status === 'pending').length
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{applications.filter(app => app.status === 'approved').length}</p>
+        {/* Approved Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-green-100 dark:group-hover:bg-green-900/30">
+              <Check className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-green-400" />
             </div>
-            <Check className="w-8 h-8 text-green-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Approved
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                applications.filter(app => app.status === 'approved').length
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Under Review</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{applications.filter(app => app.status === 'under_review').length}</p>
+        {/* Under Review Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-900/30">
+              <User className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400" />
             </div>
-            <User className="w-8 h-8 text-blue-500" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Under Review
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                applications.filter(app => app.status === 'under_review').length
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -506,47 +547,53 @@ export default function CoachApplicationsPage() {
               </div>
 
               {/* Submitted After Date */}
-              <div>
+              <div className="relative group">
                 <label htmlFor="submitted-after" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span>Submitted After</span>
                   </div>
                 </label>
-                <input
-                  id="submitted-after"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 [color-scheme:light] dark:[color-scheme:dark]"
-                />
+                <div className="relative">
+                  <input
+                    id="submitted-after"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+                </div>
               </div>
 
               {/* Submitted Before Date */}
-              <div>
+              <div className="relative group">
                 <label htmlFor="submitted-before" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <div className="flex items-center gap-2">
-                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <span>Submitted Before</span>
                   </div>
                 </label>
-                <input
-                  id="submitted-before"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 [color-scheme:light] dark:[color-scheme:dark]"
-                />
+                <div className="relative">
+                  <input
+                    id="submitted-before"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+                </div>
               </div>
             </div>
 
@@ -629,11 +676,19 @@ export default function CoachApplicationsPage() {
             <div className="flex items-center justify-between pt-4 border-t border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-2 text-sm">
                 <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                  <FileCheck className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  {loading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  ) : (
+                    <FileCheck className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                  )}
                 </div>
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">
-                    Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}
+                    {loading ? (
+                      'Loading...'
+                    ) : (
+                      <>Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}</>
+                    )}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400">
                     {searchTerm ? 'Filtered applications' : 'Total applications'}
@@ -645,115 +700,340 @@ export default function CoachApplicationsPage() {
         </div>
       </div>
 
-      {/* Applications List */}
-      <div className="grid gap-3 sm:gap-4">
+      {/* Applications Table */}
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
         {loading ? (
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <CardContent className="text-center py-8">
-              <div className="flex items-center justify-center space-x-2">
-                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                <p className="text-gray-600 dark:text-gray-400">Loading applications...</p>
-              </div>
-            </CardContent>
-          </Card>
+          <>
+            {/* Desktop Table Skeleton */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Applicant
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Experience
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Languages
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Submitted
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {[...Array(5)].map((_, index) => (
+                    <tr key={index} className="animate-pulse">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                          <div className="ml-4 space-y-2">
+                            <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                            <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="space-y-2">
+                          <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-28 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end space-x-2">
+                          <div className="h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                          <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards Skeleton */}
+            <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {[...Array(5)].map((_, index) => (
+                <div key={index} className="p-4 animate-pulse">
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div className="flex-shrink-0 h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                      <div className="h-3 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    </div>
+                    <div className="h-6 w-20 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 mb-3">
+                    <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                  <div className="flex gap-2">
+                    <div className="h-10 flex-1 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                    <div className="h-10 w-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         ) : applications.length === 0 ? (
-          <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-            <CardContent className="text-center py-8">
-              <div className="space-y-2">
-                <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto" />
-                <p className="text-gray-600 dark:text-gray-400 font-medium">No applications found</p>
-                {(searchTerm || statusFilter !== 'all' || startDate || endDate) ? (
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    Try adjusting your filters or search terms
-                  </p>
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-500">
-                    No coach applications have been submitted yet
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+          <div className="text-center py-8">
+            <div className="space-y-2">
+              <AlertTriangle className="h-12 w-12 text-gray-400 mx-auto" />
+              <p className="text-gray-600 dark:text-gray-400 font-medium">No applications found</p>
+              {(searchTerm || statusFilter !== 'all' || startDate || endDate) ? (
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Try adjusting your filters or search terms
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  No coach applications have been submitted yet
+                </p>
+              )}
+            </div>
+          </div>
         ) : (
-          applications.map((application) => (
-            <Card key={application.id} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-start lg:space-y-0">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-3 mb-3">
-                      <h3 className="text-lg font-semibold truncate text-gray-900 dark:text-white">
-                        {application.first_name} {application.last_name}
-                      </h3>
-                      <div className="flex-shrink-0">
+          <>
+            {/* Desktop Table */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-gray-50 dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Applicant
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Experience
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Languages
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Submitted
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                  {applications.map((application, index) => (
+                    <tr
+                      key={application.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+                      style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
+                    >
+                      <td className="px-6 py-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-10 w-10">
+                            {application.profile_photo ? (
+                              <img
+                                src={application.profile_photo}
+                                alt={`${application.first_name} ${application.last_name} profile`}
+                                className="h-10 w-10 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                                <span className="text-white text-sm font-medium">
+                                  {application.first_name[0]}{application.last_name[0]}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900 dark:text-white">
+                              {application.first_name} {application.last_name}
+                            </div>
+                            <div className="text-sm text-gray-500 dark:text-gray-400 truncate max-w-xs">
+                              {application.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
                         {getStatusBadge(application.status)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {application.coaching_experience_years}
+                        </div>
+                        <div className="text-sm text-gray-500 dark:text-gray-400">
+                          {application.act_training_level}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-gray-900 dark:text-white">
+                          {application.languages_fluent?.slice(0, 2).join(', ') || 'Not specified'}
+                          {application.languages_fluent && application.languages_fluent.length > 2 && ` +${application.languages_fluent.length - 2}`}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                        {new Date(application.submitted_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric'
+                        })}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <div className="flex items-center justify-end space-x-2">
+                          <Button
+                            onClick={() => fetchApplicationDetails(application.id)}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs dark:text-white"
+                          >
+                            Review
+                          </Button>
+                          <Button
+                            onClick={() => handleMessageApplicant(application)}
+                            variant="outline"
+                            size="sm"
+                            className="text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
+                          >
+                            <MessageSquare className="h-3 w-3" />
+                          </Button>
+                          {application.status === 'pending' && (
+                            <>
+                              <Button
+                                onClick={() => updateApplicationStatus(application.id, 'approved')}
+                                size="sm"
+                                className="bg-green-600 hover:bg-green-700 text-xs"
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                onClick={() => updateApplicationStatus(application.id, 'rejected', 'Application did not meet requirements')}
+                                size="sm"
+                                variant="destructive"
+                                className="text-xs"
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Cards */}
+            <div className="lg:hidden divide-y divide-gray-200 dark:divide-gray-700">
+              {applications.map((application, index) => (
+                <div
+                  key={application.id}
+                  className="p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 animate-in fade-in slide-in-from-bottom-2"
+                  style={{ animationDelay: `${index * 50}ms`, animationFillMode: 'backwards' }}
+                >
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div className="flex-shrink-0 h-10 w-10">
+                      {application.profile_photo ? (
+                        <img
+                          src={application.profile_photo}
+                          alt={`${application.first_name} ${application.last_name} profile`}
+                          className="h-10 w-10 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                          <span className="text-white text-sm font-medium">
+                            {application.first_name[0]}{application.last_name[0]}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        {application.first_name} {application.last_name}
+                      </div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                        {application.email}
                       </div>
                     </div>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm text-gray-600 dark:text-gray-400">
-                      <div className="space-y-1">
-                        <p className="break-all"><strong>Email:</strong> {application.email}</p>
-                        <p><strong>Phone:</strong> {application.phone || 'Not provided'}</p>
-                        <p><strong>Experience:</strong> {application.coaching_experience_years}</p>
-                      </div>
-                      <div className="space-y-1">
-                        <p className="break-words"><strong>ACT Training:</strong> {application.act_training_level}</p>
-                        <p className="break-words"><strong>Languages:</strong> {application.languages_fluent?.join(', ') || 'Not specified'}</p>
-                        <p className="break-words"><strong>Submitted:</strong> {formatDate(application.submitted_at)}</p>
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3">
-                      <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
-                        <strong>Expertise:</strong> {application.coaching_expertise?.slice(0, 3).join(', ') || 'Not specified'}
-                        {application.coaching_expertise && application.coaching_expertise.length > 3 && ` +${application.coaching_expertise.length - 3} more`}
-                      </p>
+                    <div className="flex-shrink-0">
+                      {getStatusBadge(application.status)}
                     </div>
                   </div>
-                  
-                  <div className="flex flex-row space-x-2 lg:flex-col lg:space-x-0 lg:space-y-2 lg:ml-4 flex-shrink-0 coach-app-buttons">
+
+                  <div className="grid grid-cols-2 gap-2 mb-3 text-sm">
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Experience:</span>
+                      <div className="text-gray-900 dark:text-white font-medium">
+                        {application.coaching_experience_years}
+                      </div>
+                    </div>
+                    <div>
+                      <span className="text-gray-500 dark:text-gray-400">Submitted:</span>
+                      <div className="text-gray-900 dark:text-white font-medium">
+                        {new Date(application.submitted_at).toLocaleDateString('en-US', {
+                          month: 'short',
+                          day: 'numeric'
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       onClick={() => fetchApplicationDetails(application.id)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring"
+                      className="flex-1 min-h-[44px] text-xs"
                     >
                       Review
                     </Button>
-                    
                     <Button
                       onClick={() => handleMessageApplicant(application)}
                       variant="outline"
                       size="sm"
-                      className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring text-blue-600 border-blue-300 hover:bg-blue-50"
+                      className="min-h-[44px] text-xs text-blue-600 border-blue-300 hover:bg-blue-50"
                     >
-                      <MessageSquare className="h-3 w-3 mr-1" />
-                      <span className="hidden sm:inline">Message</span>
+                      <MessageSquare className="h-3 w-3" />
                     </Button>
-                    
                     {application.status === 'pending' && (
                       <>
                         <Button
                           onClick={() => updateApplicationStatus(application.id, 'approved')}
                           size="sm"
-                          className="flex-1 lg:flex-none bg-green-600 hover:bg-green-700 min-h-[44px] text-xs sm:text-sm focus-ring"
+                          className="flex-1 bg-green-600 hover:bg-green-700 min-h-[44px] text-xs"
                         >
-                          <span className="hidden sm:inline">Quick </span>Approve
+                          Approve
                         </Button>
                         <Button
                           onClick={() => updateApplicationStatus(application.id, 'rejected', 'Application did not meet requirements')}
                           size="sm"
                           variant="destructive"
-                          className="flex-1 lg:flex-none min-h-[44px] text-xs sm:text-sm focus-ring"
+                          className="flex-1 min-h-[44px] text-xs"
                         >
-                          <span className="hidden sm:inline">Quick </span>Reject
+                          Reject
                         </Button>
                       </>
                     )}
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          ))
+              ))}
+            </div>
+          </>
         )}
       </div>
 
@@ -919,8 +1199,18 @@ const ApplicationDetailsModal = ({
         <div className="sticky top-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 backdrop-blur-sm bg-opacity-95 dark:bg-opacity-95 p-4 sm:p-6 z-10">
           <div className="flex justify-between items-start">
             <div className="flex items-start space-x-3 sm:space-x-4 flex-1 min-w-0">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-lg flex-shrink-0">
-                {application.first_name[0]}{application.last_name[0]}
+              <div className="w-10 h-10 sm:w-12 sm:h-12 flex-shrink-0">
+                {application.profile_photo ? (
+                  <img
+                    src={application.profile_photo}
+                    alt={`${application.first_name} ${application.last_name} profile`}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm sm:text-lg">
+                    {application.first_name[0]}{application.last_name[0]}
+                  </div>
+                )}
               </div>
               <div className="min-w-0 flex-1">
                 <h2 id="application-modal-title" className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white truncate">

@@ -13,9 +13,9 @@ import {
   FileText,
   AlertCircle,
   Filter,
-  Search,
-  RefreshCw
+  Search
 } from 'lucide-react';
+import { Pagination } from '@/components/ui/pagination';
 
 interface PayoutRequest {
   id: string;
@@ -61,6 +61,8 @@ export default function AdminPayoutsPage() {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [processing, setProcessing] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   const fetchPayouts = async () => {
     try {
@@ -212,6 +214,21 @@ export default function AdminPayoutsPage() {
     return matchesStatus && matchesSearch;
   });
 
+  // Pagination
+  const totalPages = Math.ceil(filteredPayouts.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPayouts = filteredPayouts.slice(startIndex, endIndex);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page
+  };
+
   const stats = {
     pending: payouts.filter(p => p.status === 'pending').length,
     approved: payouts.filter(p => p.status === 'approved' || p.status === 'processing').length,
@@ -225,113 +242,228 @@ export default function AdminPayoutsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
-        <RefreshCw className="h-8 w-8 animate-spin text-gray-600" />
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
       </div>
     );
   }
 
   return (
-    <div className="p-6">
+    <div className="w-full">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Payout Requests</h1>
-        <p className="text-gray-600 dark:text-gray-400 mt-2">Manage coach payout requests and approvals</p>
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Payout Requests</h1>
+        <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">Manage coach payout requests and approvals</p>
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-        <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-yellow-600 dark:text-yellow-400">PENDING</p>
-              <p className="text-2xl font-bold text-yellow-900 dark:text-yellow-100">{stats.pending}</p>
-              <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">{formatCurrency(stats.totalPending)}</p>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 mb-4 sm:mb-6">
+        {/* Pending Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 sm:hover:scale-[1.02] cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/30">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-yellow-600 dark:group-hover:text-yellow-400" />
             </div>
-            <Clock className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Pending
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.pending
+              )}
+            </div>
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">{formatCurrency(stats.totalPending)}</p>
+        </div>
+
+        {/* Approved Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 sm:hover:scale-[1.02] cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+            </div>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Approved
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.approved
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-blue-600 dark:text-blue-400">APPROVED</p>
-              <p className="text-2xl font-bold text-blue-900 dark:text-blue-100">{stats.approved}</p>
+        {/* Completed Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 sm:hover:scale-[1.02] cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-green-100 dark:group-hover:bg-green-900/30">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-green-400" />
             </div>
-            <CheckCircle className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Completed
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.completed
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-green-600 dark:text-green-400">COMPLETED</p>
-              <p className="text-2xl font-bold text-green-900 dark:text-green-100">{stats.completed}</p>
+        {/* Rejected Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 sm:hover:scale-[1.02] cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-red-100 dark:group-hover:bg-red-900/30">
+              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-red-600 dark:group-hover:text-red-400" />
             </div>
-            <DollarSign className="h-8 w-8 text-green-600 dark:text-green-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Rejected
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.rejected
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-red-600 dark:text-red-400">REJECTED</p>
-              <p className="text-2xl font-bold text-red-900 dark:text-red-100">{stats.rejected}</p>
+        {/* Total Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 sm:hover:scale-[1.02] cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-gray-200 dark:group-hover:bg-gray-600">
+              <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-gray-700 dark:group-hover:text-gray-300" />
             </div>
-            <XCircle className="h-8 w-8 text-red-600 dark:text-red-400" />
           </div>
-        </div>
-
-        <div className="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium text-gray-600 dark:text-gray-400">TOTAL</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">{payouts.length}</p>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {loading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                payouts.length
+              )}
             </div>
-            <FileText className="h-8 w-8 text-gray-600 dark:text-gray-400" />
           </div>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4 mb-6">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search by coach name, email, or payout ID..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-              />
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-4 sm:mb-6 overflow-hidden">
+        {/* Filter Header */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-4 sm:px-6 py-3 sm:py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Filter Payouts</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Search and filter payout requests</p>
             </div>
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <Filter className="h-5 w-5 text-gray-400" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
-            >
-              <option value="all">All Status</option>
-              <option value="pending">Pending</option>
-              <option value="approved">Approved</option>
-              <option value="processing">Processing</option>
-              <option value="completed">Completed</option>
-              <option value="rejected">Rejected</option>
-              <option value="failed">Failed</option>
-            </select>
+        {/* Filter Controls */}
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+            {/* Search Input */}
+            <div className="lg:col-span-1">
+              <label htmlFor="payout-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <span>Search Payouts</span>
+                </div>
+              </label>
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                <input
+                  id="payout-search"
+                  type="text"
+                  placeholder="Search by coach name, email, or ID..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01]"
+                />
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative group">
+              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Status</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="status-filter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="all">All Status</option>
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="processing">Processing</option>
+                  <option value="completed">Completed</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="failed">Failed</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Items Per Page Filter */}
+            <div className="relative group">
+              <label htmlFor="items-per-page-payouts" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Items Per Page</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="items-per-page-payouts"
+                  value={itemsPerPage}
+                  onChange={(e) => handleItemsPerPageChange(Number(e.target.value))}
+                  className="w-full px-4 py-2.5 pr-10 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="10">10</option>
+                  <option value="20">20</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
+            </div>
           </div>
-
-          <button
-            onClick={fetchPayouts}
-            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 flex items-center gap-2"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Refresh
-          </button>
         </div>
       </div>
 
@@ -344,65 +476,93 @@ export default function AdminPayoutsPage() {
       )}
 
       {/* Payouts Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Coach
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Amount
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Payments
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Created
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Notes
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredPayouts.length === 0 ? (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+        {loading ? (
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {/* Table Skeleton */}
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="p-6 animate-pulse">
+                <div className="flex items-center space-x-4">
+                  <div className="h-10 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+                  </div>
+                  <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gradient-to-r from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-900">
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
-                    No payout requests found
-                  </td>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Coach
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Amount
+                  </th>
+                  <th className="hidden lg:table-cell px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Payments
+                  </th>
+                  <th className="hidden md:table-cell px-4 lg:px-6 py-3 sm:py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Created
+                  </th>
+                  <th className="hidden xl:table-cell px-6 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Notes
+                  </th>
+                  <th className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 text-right text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Actions
+                  </th>
                 </tr>
-              ) : (
-                filteredPayouts.map((payout) => (
-                  <tr key={payout.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-2">
-                        {getStatusIcon(payout.status)}
+              </thead>
+              <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                {paginatedPayouts.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <DollarSign className="h-12 w-12 text-gray-300 dark:text-gray-600 mb-3" />
+                        <p className="text-gray-500 dark:text-gray-400 font-medium">No payout requests found</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Try adjusting your filters</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedPayouts.map((payout, index) => (
+                    <tr
+                      key={payout.id}
+                      className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-all duration-200 animate-in fade-in slide-in-from-bottom-1"
+                      style={{
+                        animationDelay: `${index * 50}ms`,
+                        animationFillMode: 'backwards'
+                      }}
+                    >
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1 sm:gap-2">
+                        <div className="hidden sm:block">{getStatusIcon(payout.status)}</div>
                         {getStatusBadge(payout.status)}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
                       <div className="flex items-center">
-                        <User className="h-5 w-5 text-gray-400 mr-2" />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <User className="hidden sm:block h-5 w-5 text-gray-400 mr-2 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs sm:text-sm font-medium text-gray-900 dark:text-white truncate">
                             {payout.coach ? `${payout.coach.first_name} ${payout.coach.last_name}` : 'Unknown Coach'}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                             {payout.coach?.email || payout.coach_id}
                           </div>
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-bold text-gray-900 dark:text-white">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap">
+                      <div className="text-xs sm:text-sm font-bold text-gray-900 dark:text-white">
                         {formatCurrency(payout.amount_cents)}
                       </div>
                       {payout.fees_cents > 0 && (
@@ -414,7 +574,7 @@ export default function AdminPayoutsPage() {
                         Net: {formatCurrency(payout.net_amount_cents)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="hidden lg:table-cell px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 dark:text-white">
                         {payout.metadata?.payment_count || 0} payments
                       </div>
@@ -424,7 +584,7 @@ export default function AdminPayoutsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="hidden md:table-cell px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap">
                       <div className="flex items-center text-sm text-gray-900 dark:text-white">
                         <Calendar className="h-4 w-4 text-gray-400 mr-1" />
                         {new Date(payout.created_at).toLocaleDateString()}
@@ -433,7 +593,7 @@ export default function AdminPayoutsPage() {
                         {new Date(payout.created_at).toLocaleTimeString()}
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="hidden xl:table-cell px-6 py-4">
                       <div className="text-sm text-gray-900 dark:text-white max-w-xs truncate">
                         {payout.metadata?.notes || '-'}
                       </div>
@@ -443,20 +603,21 @@ export default function AdminPayoutsPage() {
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="px-3 sm:px-4 lg:px-6 py-3 sm:py-4 whitespace-nowrap text-right text-sm font-medium">
                       {payout.status === 'pending' && (
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1 sm:gap-2">
                           <button
                             onClick={() => handleApprove(payout.id)}
                             disabled={processing === payout.id}
-                            className="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 bg-green-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+                            title="Approve payout"
                           >
                             {processing === payout.id ? (
-                              <RefreshCw className="h-4 w-4 animate-spin" />
+                              <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
                             ) : (
-                              <CheckCircle className="h-4 w-4" />
+                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                             )}
-                            Approve
+                            <span className="hidden sm:inline">Approve</span>
                           </button>
                           <button
                             onClick={() => {
@@ -464,28 +625,64 @@ export default function AdminPayoutsPage() {
                               setShowRejectModal(true);
                             }}
                             disabled={processing === payout.id}
-                            className="px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 bg-red-600 text-white text-xs sm:text-sm font-medium rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-sm hover:shadow-md transform hover:scale-105 active:scale-95"
+                            title="Reject payout"
                           >
-                            <XCircle className="h-4 w-4" />
-                            Reject
+                            <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="hidden sm:inline">Reject</span>
                           </button>
                         </div>
                       )}
                       {payout.status !== 'pending' && (
-                        <span className="text-gray-400 dark:text-gray-500">
-                          {payout.status === 'completed' ? 'Paid' :
-                           payout.status === 'rejected' ? 'Rejected' :
-                           payout.status === 'approved' ? 'Approved' :
-                           'Processing'}
-                        </span>
+                        <>
+                          {payout.status === 'completed' && (
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-300">
+                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Paid</span>
+                            </div>
+                          )}
+                          {payout.status === 'rejected' && (
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300">
+                              <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Rejected</span>
+                            </div>
+                          )}
+                          {payout.status === 'approved' && (
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300">
+                              <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Approved</span>
+                            </div>
+                          )}
+                          {payout.status === 'processing' && (
+                            <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium border bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800 text-yellow-700 dark:text-yellow-300">
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="hidden sm:inline">Processing</span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+              </tbody>
+            </table>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="border-t border-gray-200 dark:border-gray-700 px-3 sm:px-4 lg:px-6 py-3 sm:py-4">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalItems={filteredPayouts.length}
+                  itemsPerPage={itemsPerPage}
+                  onPageChange={handlePageChange}
+                  showItemsRange={true}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Reject Modal */}
@@ -537,7 +734,7 @@ export default function AdminPayoutsPage() {
               >
                 {processing === selectedPayout.id ? (
                   <>
-                    <RefreshCw className="h-4 w-4 animate-spin" />
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     Rejecting...
                   </>
                 ) : (
