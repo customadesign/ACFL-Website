@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { Poppins } from 'next/font/google';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNotifications } from '@/contexts/NotificationContext';
@@ -19,6 +20,12 @@ import {
   ChevronDown, ChevronRight, Search, PanelLeft, MoreHorizontal,
   Phone, Receipt, Zap
 } from 'lucide-react';
+
+const poppins = Poppins({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 interface NavigationItem {
   name: string;
@@ -57,7 +64,8 @@ export default function ClientLayout({
   const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
   const [showBottomNavOverflow, setShowBottomNavOverflow] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarManuallyToggled, setSidebarManuallyToggled] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['dashboard', 'coaching']));
   const [hoveredGroup, setHoveredGroup] = useState<string | null>(null);
@@ -311,7 +319,16 @@ export default function ClientLayout({
   ];
 
   // Helper functions for sidebar
-  const toggleSidebar = () => setSidebarCollapsed(!sidebarCollapsed);
+  const toggleSidebar = () => {
+    const newCollapsedState = !sidebarCollapsed;
+    setSidebarCollapsed(newCollapsedState);
+    setSidebarManuallyToggled(true);
+
+    // Reset manual toggle flag after 2 seconds to re-enable hover behavior
+    setTimeout(() => {
+      setSidebarManuallyToggled(false);
+    }, 2000);
+  };
 
   const toggleGroup = (groupId: string) => {
     const newExpanded = new Set(expandedGroups);
@@ -382,41 +399,40 @@ export default function ClientLayout({
 
   return (
     <ProtectedRoute allowedRoles={['client']}>
-      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex overflow-x-hidden">
+      <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 flex overflow-x-hidden ${poppins.className}`}>
         {/* Admin Impersonation Float */}
         <AdminImpersonationFloat />
 
         {/* Collapsible Sidebar - Desktop */}
         {!isInMeeting && (
-          <div className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-[10001] ${
-            sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
-          } transition-all duration-300 ease-in-out`}>
+          <div
+            className={`hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 lg:z-[10001] ${
+              sidebarCollapsed ? 'lg:w-16' : 'lg:w-72'
+            } transition-all duration-500 ease-out will-change-[width]`}
+            onMouseEnter={() => {
+              if (!sidebarManuallyToggled) {
+                setSidebarCollapsed(false);
+              }
+            }}
+            onMouseLeave={() => {
+              if (!sidebarManuallyToggled) {
+                setSidebarCollapsed(true);
+              }
+            }}
+          >
           <div className="flex h-full flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
-            {/* Logo and collapse button */}
-            <div className="flex h-16 shrink-0 items-center px-4 border-b border-gray-200 dark:border-gray-700">
-              {!sidebarCollapsed && (
-                <img
-                  src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
-                  alt="ACFL Logo"
-                  className="h-8 w-auto mr-3"
-                />
-              )}
+            {/* Logo */}
+            <div className="flex h-16 shrink-0 items-center justify-center px-4 border-b border-gray-200 dark:border-gray-700">
+              <img
+                src="https://storage.googleapis.com/msgsndr/12p9V9PdtvnTPGSU0BBw/media/672420528abc730356eeaad5.png"
+                alt="ACFL Logo"
+                className={`h-8 w-auto ${sidebarCollapsed ? '' : 'mr-3'}`}
+              />
               {!sidebarCollapsed && (
                 <h1 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
                   ACT Coaching
                 </h1>
               )}
-              <button
-                onClick={toggleSidebar}
-                className={`p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ${
-                  sidebarCollapsed ? 'mx-auto' : 'ml-auto'
-                }`}
-                aria-label="Toggle sidebar"
-              >
-                <PanelLeft className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${
-                  sidebarCollapsed ? 'rotate-180' : ''
-                }`} />
-              </button>
             </div>
 
             {/* Search bar */}
@@ -557,13 +573,22 @@ export default function ClientLayout({
         </div>
         )}
 
-        {/* Main Content Area */}
-        <div className={`flex-1 w-full lg:w-auto ${isInMeeting ? '' : (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72')} transition-all duration-300 ease-in-out relative z-[1]`}>
-          {/* Desktop Header - Hidden on mobile */}
-          {!isInMeeting && (
-            <div className="hidden lg:block bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
-              <div className="px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-end items-center py-3">
+        {/* Desktop Header - Fixed at top */}
+        {!isInMeeting && (
+          <div className={`hidden lg:block bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 fixed top-0 right-0 z-[9999] ${sidebarCollapsed ? 'left-16' : 'left-72'} transition-all duration-500 ease-out`}>
+            <div className="px-4 sm:px-6 lg:px-8">
+                <div className="flex justify-between items-center py-3">
+                  {/* Sidebar Toggle Button */}
+                  <button
+                    onClick={toggleSidebar}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    aria-label="Toggle sidebar"
+                  >
+                    <PanelLeft className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${
+                      sidebarCollapsed ? 'rotate-180' : ''
+                    }`} />
+                  </button>
+
                   {/* Header Actions */}
                   <div className="flex items-center space-x-3">
                     {/* Theme Toggle Button */}
@@ -712,6 +737,8 @@ export default function ClientLayout({
             </div>
           )}
 
+        {/* Main Content Area */}
+        <div className={`flex-1 w-full lg:w-auto ${isInMeeting ? '' : (sidebarCollapsed ? 'lg:ml-16' : 'lg:ml-72')} transition-all duration-500 ease-out relative z-[1] ${!isInMeeting ? 'lg:pt-16' : ''}`}>
           {/* Mobile Header */}
           {!isInMeeting && (
             <div className="lg:hidden bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
