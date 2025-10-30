@@ -96,11 +96,11 @@ export default function PricingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/assessment">
-                <Button className="bg-white text-gray-900 hover:bg-gray-100 px-10 py-4 text-lg font-medium">
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-10 py-4 text-lg font-medium transition-all shadow-md hover:shadow-lg">
                   Start assessment
                 </Button>
               </a>
-              <Button className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-10 py-4 text-lg font-medium">
+              <Button className="border-2 border-white bg-transparent hover:bg-white/10 text-white rounded-lg px-10 py-4 text-lg font-medium transition-all shadow-sm">
                 Learn more
               </Button>
             </div>
@@ -127,12 +127,12 @@ export default function PricingPage() {
             </p>
 
             {/* Toggle Tabs */}
-            <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-md overflow-hidden mb-12">
+            <div className="inline-flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden mb-12">
               <motion.button
                 onClick={() => setIsYearly(false)}
                 className={`px-6 py-2 text-sm font-medium transition-colors duration-200 ${
                   !isYearly
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    ? 'bg-teal-600 dark:bg-teal-500 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
                 whileHover={{ scale: isYearly ? 1.02 : 1 }}
@@ -144,7 +144,7 @@ export default function PricingPage() {
                 onClick={() => setIsYearly(true)}
                 className={`px-6 py-2 text-sm font-medium transition-colors duration-200 border-l border-gray-300 dark:border-gray-600 ${
                   isYearly
-                    ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900'
+                    ? 'bg-teal-600 dark:bg-teal-500 text-white'
                     : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
                 }`}
                 whileHover={{ scale: !isYearly ? 1.02 : 1 }}
@@ -193,7 +193,7 @@ export default function PricingPage() {
               </ul>
 
               <a href="/assessment" className="block mt-auto">
-                <Button className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 py-4 text-sm font-medium rounded-none">
+                <Button className="w-full bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                   Start monthly plan
                 </Button>
               </a>
@@ -243,7 +243,7 @@ export default function PricingPage() {
               </ul>
 
               <a href="/assessment" className="block mt-auto">
-                <Button className="w-full bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 py-4 text-sm font-medium rounded-none">
+                <Button className="w-full bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                   Start weekly plan
                 </Button>
               </a>
@@ -274,13 +274,13 @@ export default function PricingPage() {
             <div className="flex flex-wrap justify-center gap-4 mb-8">
               <Button
                 onClick={() => setActiveTab('qualified')}
-                className={`${activeTab === 'qualified' || activeTab === 'messaging' || activeTab === 'scheduling' ? 'bg-gray-900 dark:bg-white text-white dark:text-gray-900' : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600'} px-8 py-3 text-base font-medium hover:bg-gray-800 dark:hover:bg-gray-100`}
+                className={`${activeTab === 'qualified' || activeTab === 'messaging' || activeTab === 'scheduling' ? 'bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white' : 'border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300'} rounded-lg px-6 py-3 font-medium transition-all shadow-md`}
               >
                 Learn more
               </Button>
               <Button
                 onClick={() => setActiveTab('explore')}
-                className="bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 px-8 py-3 text-base font-medium hover:bg-gray-50 dark:hover:bg-gray-600 flex items-center gap-2"
+                className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2"
               >
                 Explore
                 <ChevronRight className="w-4 h-4" />
@@ -331,10 +331,10 @@ export default function PricingPage() {
                       Each coach undergoes rigorous certification and continuous professional development to ensure highest quality support.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Details
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Discover
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -351,10 +351,10 @@ export default function PricingPage() {
                       Connect with your coach anytime through our secure messaging platform for continuous support between sessions.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Details
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Discover
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -371,10 +371,10 @@ export default function PricingPage() {
                       Book and reschedule sessions at times that work for you with our easy-to-use scheduling system.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Details
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Discover
                         <ChevronRight className="w-4 h-4" />
                       </button>

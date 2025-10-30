@@ -538,57 +538,57 @@ function ProfileContent() {
             <ProfileCardSkeleton type="stats" />
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 mb-8">
             <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <div className="p-3 lg:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
                     <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Total Sessions</p>
+                  <div className="ml-4 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Sessions</p>
                     <p className="text-2xl font-bold text-foreground">{stats.totalSessions}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <div className="p-3 lg:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
                     <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Upcoming Sessions</p>
+                  <div className="ml-4 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Upcoming Sessions</p>
                     <p className="text-2xl font-bold text-foreground">{stats.upcomingSessions}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
+                  <div className="p-3 lg:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
                     <Heart className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Saved Coaches</p>
+                  <div className="ml-4 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Saved Coaches</p>
                     <p className="text-2xl font-bold text-foreground">{stats.savedCoaches}</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-card border-border">
-              <CardContent className="p-4 sm:p-6">
+              <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
-                  <div className="p-2 sm:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg">
+                  <div className="p-3 lg:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
                     <User className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                   </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300">Member Since</p>
+                  <div className="ml-4 min-w-0 flex-1">
+                    <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Member Since</p>
                     <p className="text-xl font-bold text-foreground">{stats.memberSince}</p>
                   </div>
                 </div>
@@ -610,21 +610,21 @@ function ProfileContent() {
               <CardDescription>Upload a professional photo for your profile</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-6">
+              <div className="flex flex-col sm:flex-row items-center space-y-6 sm:space-y-0 sm:space-x-8">
                 <div className="relative flex-shrink-0">
                   {form.watch('profilePhoto') ? (
                     <img
                       src={form.watch('profilePhoto')}
                       alt="Profile"
-                      className="w-20 h-20 sm:w-24 sm:h-24 rounded-full object-cover border-4 border-gray-200"
+                      className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-4 border-gray-200"
                     />
                   ) : (
-                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-400" />
+                    <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-200 flex items-center justify-center">
+                      <User className="w-12 h-12 sm:w-14 sm:h-14 text-gray-400" />
                     </div>
                   )}
-                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-2 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation">
-                    <Upload className="w-4 h-4" />
+                  <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-3 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center">
+                    <Upload className="w-5 h-5" />
                     <input
                       type="file"
                       accept="image/*"
@@ -633,10 +633,10 @@ function ProfileContent() {
                     />
                   </label>
                 </div>
-                <div className="text-center sm:text-left">
-                  <h3 className="text-lg font-semibold">{form.watch('firstName')} {form.watch('lastName')}</h3>
-                  <p className="text-gray-600 break-words">{form.watch('email')}</p>
-                  <p className="text-sm text-gray-500 mt-2">
+                <div className="text-center sm:text-left flex-1">
+                  <h3 className="text-xl font-semibold">{form.watch('firstName')} {form.watch('lastName')}</h3>
+                  <p className="text-gray-600 break-words text-base mt-1">{form.watch('email')}</p>
+                  <p className="text-sm text-gray-500 mt-3">
                     Click the upload button to change your profile photo
                   </p>
                 </div>
@@ -651,28 +651,44 @@ function ProfileContent() {
         ) : (
         <Card className="bg-card border-border">
           <CardHeader>
-            <div className="flex justify-between items-center">
-              <div>
-                <CardTitle>Profile Information</CardTitle>
-                <CardDescription className="dark:text-gray-300">Update your personal details and preferences</CardDescription>
+            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+              <div className="flex-1">
+                <CardTitle className="text-lg sm:text-xl">Profile Information</CardTitle>
+                <CardDescription className="text-sm sm:text-base mt-1">Update your personal details and preferences</CardDescription>
               </div>
               {!isEditing ? (
-                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
+                <Button onClick={() => setIsEditing(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white min-h-[44px] touch-manipulation w-full lg:w-auto px-6 text-base">
                   Edit Profile
                 </Button>
               ) : (
-                <div className="flex space-x-2">
+                <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
                   <Button
                     onClick={form.handleSubmit(handleSubmit)}
                     disabled={isLoading}
-                    className="bg-green-600 hover:bg-green-700 dark:text-white"
+                    className="bg-green-600 hover:bg-green-700 flex items-center dark:text-white min-h-[44px] touch-manipulation px-6 text-base justify-center"
                   >
-                    {isLoading ? 'Saving...' : 'Save Changes'}
+                    {isLoading ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Save Changes
+                      </>
+                    )}
                   </Button>
                   <Button
                     onClick={handleCancel}
                     variant="outline"
                     disabled={isLoading}
+                    className="min-h-[44px] touch-manipulation px-6 text-base"
                   >
                     Cancel
                   </Button>
@@ -698,8 +714,6 @@ function ProfileContent() {
               <form className="space-y-6">
                 {/* Personal Information */}
                 <div className="space-y-4">
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Personal Information</h3>
-                      
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-white mb-1">First Name <span className="text-red-500">*</span></label>
@@ -984,34 +998,50 @@ function ProfileContent() {
         ) : (
           <Card className="bg-card border-border mt-6">
             <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+                <div className="flex-1">
+                  <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                     <Bell className="w-5 h-5" />
                     Notification Preferences
                   </CardTitle>
-                  <CardDescription className="dark:text-gray-300">
+                  <CardDescription className="text-sm sm:text-base mt-1">
                     Choose how and when you want to receive notifications
                   </CardDescription>
                 </div>
                 {!isEditingNotifications ? (
-                  <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white">
-                    <Settings className="w-4 h-4 mr-2" />
+                  <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white min-h-[44px] touch-manipulation w-full lg:w-auto px-6 text-base flex items-center gap-2">
+                    <Settings className="w-4 h-4" />
                     Edit Settings
                   </Button>
                 ) : (
-                  <div className="flex space-x-2">
+                  <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2 w-full lg:w-auto">
                     <Button
                       onClick={handleNotificationSubmit}
                       disabled={isLoadingNotifications}
-                      className="bg-green-600 hover:bg-green-700 dark:text-white"
+                      className="bg-green-600 hover:bg-green-700 flex items-center dark:text-white min-h-[44px] touch-manipulation px-6 text-base justify-center"
                     >
-                      {isLoadingNotifications ? 'Saving...' : 'Save Changes'}
+                      {isLoadingNotifications ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Save Changes
+                        </>
+                      )}
                     </Button>
                     <Button
                       onClick={handleNotificationCancel}
                       variant="outline"
                       disabled={isLoadingNotifications}
+                      className="min-h-[44px] touch-manipulation px-6 text-base"
                     >
                       Cancel
                     </Button>
@@ -1140,7 +1170,7 @@ function ProfileContent() {
 
                   <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
                     <h4 className="font-medium text-gray-900 dark:text-white mb-3">Notification Methods</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                    <div className="space-y-3 text-sm">
                       <div className="flex items-center justify-between">
                         <span className="text-gray-700 dark:text-gray-300">Push Notifications</span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${form.watch('pushNotifications') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300'}`}>
@@ -1276,35 +1306,37 @@ function ProfileContent() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="p-6 text-center flex flex-col h-full">
                     <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
                     <h3 className="font-semibold mb-2">CSV Export</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download your data in CSV format, suitable for spreadsheet applications.
                     </p>
                     <Button
                       onClick={() => handleExportData('csv')}
                       disabled={isExporting}
-                      className="w-full"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4"
                     >
+                      <Download className="w-4 h-4" />
                       {isExporting ? 'Generating...' : 'Download CSV'}
                     </Button>
                   </CardContent>
                 </Card>
 
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="p-6 text-center flex flex-col h-full">
                     <FileImage className="w-12 h-12 mx-auto mb-4 text-red-600" />
                     <h3 className="font-semibold mb-2">PDF Export</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download a comprehensive PDF report of your data.
                     </p>
                     <Button
                       onClick={() => handleExportData('pdf')}
                       disabled={isExporting}
                       variant="outline"
-                      className="w-full"
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4"
                     >
+                      <Download className="w-4 h-4" />
                       {isExporting ? 'Generating...' : 'Download PDF'}
                     </Button>
                   </CardContent>

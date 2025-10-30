@@ -57,7 +57,7 @@ export default function BlogPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button className="bg-white text-gray-900 hover:bg-gray-100 px-8 py-6 text-lg font-semibold shadow-lg transition-all duration-300">
+                <Button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-8 py-6 text-lg font-semibold transition-all shadow-sm">
                   Explore
                 </Button>
               </motion.div>
@@ -65,7 +65,7 @@ export default function BlogPage() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button className="bg-gray-900 text-white hover:bg-gray-800 px-8 py-6 text-lg font-semibold transition-all duration-300">
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-8 py-6 text-lg font-semibold transition-all shadow-md hover:shadow-lg">
                   Assessment
                 </Button>
               </motion.div>
@@ -122,10 +122,10 @@ export default function BlogPage() {
 
                 {/* CTA Buttons */}
                 <div className="flex gap-4">
-                  <button className="px-6 py-3 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
+                  <button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                     Enroll now
                   </button>
-                  <button className="px-6 py-3 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                  <button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                     Learn more
                     <svg
                       className="w-4 h-4"
@@ -276,10 +276,10 @@ export default function BlogPage() {
 
                 {/* CTA Buttons */}
                 <div className="flex gap-4">
-                  <button className="px-5 py-2 bg-gray-900 text-white text-sm font-medium rounded hover:bg-gray-800 transition-colors">
+                  <button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                     Enroll
                   </button>
-                  <button className="px-5 py-2 text-gray-900 text-sm font-medium rounded hover:bg-gray-50 transition-colors flex items-center gap-2">
+                  <button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                     Learn
                     <svg
                       className="w-3 h-3"
@@ -346,10 +346,10 @@ export default function BlogPage() {
 
                 {/* CTA Buttons */}
                 <div className="flex gap-4">
-                  <button className="px-6 py-3 bg-gray-900 text-white font-medium rounded-md hover:bg-gray-800 transition-colors">
+                  <button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                     Enroll now
                   </button>
-                  <button className="px-6 py-3 text-gray-900 font-medium rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2">
+                  <button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                     Learn more
                     <svg
                       className="w-4 h-4"

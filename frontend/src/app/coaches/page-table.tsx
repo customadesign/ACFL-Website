@@ -248,13 +248,13 @@ export default function CoachDashboardPage() {
                         <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Client
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Time
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Status
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-right py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Action
                         </th>
                       </tr>
@@ -267,17 +267,17 @@ export default function CoachDashboardPage() {
                             index === todayAppointments.slice(0, 5).length - 1 ? 'border-b-0' : ''
                           }`}
                         >
-                          <td className="py-4 px-2 text-left">
+                          <td className="py-4 px-2">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                               {appointment.clients ? `${appointment.clients.first_name} ${appointment.clients.last_name}` : 'Client'}
                             </div>
                           </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2">
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                               {new Date(appointment.scheduled_at || appointment.starts_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </div>
                           </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2">
                             <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
                               appointment.status === 'confirmed'
                                 ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
@@ -288,7 +288,7 @@ export default function CoachDashboardPage() {
                               {appointment.status}
                             </span>
                           </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2 text-right">
                             <button
                               onClick={() => handleAppointmentClick(appointment.id, appointment.status)}
                               className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"
@@ -342,19 +342,16 @@ export default function CoachDashboardPage() {
                   <table className="w-full">
                     <thead>
                       <tr className="border-b border-gray-100 dark:border-gray-700">
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Client
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Email
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-left py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Last Session
                         </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Status
-                        </th>
-                        <th className="text-center py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        <th className="text-right py-3 px-2 text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           Action
                         </th>
                       </tr>
@@ -367,35 +364,22 @@ export default function CoachDashboardPage() {
                             index === recentClients.slice(0, 5).length - 1 ? 'border-b-0' : ''
                           }`}
                         >
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2">
                             <div className="text-sm font-medium text-gray-900 dark:text-white">
                               {session.clients ? `${session.clients.first_name} ${session.clients.last_name}` : 'Client'}
                             </div>
                           </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2">
                             <div className="text-sm text-gray-600 dark:text-gray-400">
-                              {session.clients?.email || 'N/A'}
+                              {session.clients?.users?.email || 'N/A'}
                             </div>
                           </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2">
                             <div className="text-sm text-gray-600 dark:text-gray-400">
                               {new Date(session.scheduled_at || session.starts_at).toLocaleDateString()}
                             </div>
                           </td>
-                          <td className="py-4 px-2 text-center">
-                            <span className={`inline-flex px-2 py-1 text-xs font-medium rounded ${
-                              session.status === 'completed'
-                                ? 'bg-green-50 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-                                : session.status === 'pending'
-                                ? 'bg-yellow-50 text-yellow-700 dark:bg-yellow-900/20 dark:text-yellow-400'
-                                : session.status === 'cancelled'
-                                ? 'bg-red-50 text-red-700 dark:bg-red-900/20 dark:text-red-400'
-                                : 'bg-gray-50 text-gray-700 dark:bg-gray-700/50 dark:text-gray-400'
-                            }`}>
-                              {session.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-2 text-center">
+                          <td className="py-4 px-2 text-right">
                             <button
                               onClick={() => router.push(`/coaches/clients`)}
                               className="text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium transition-colors"

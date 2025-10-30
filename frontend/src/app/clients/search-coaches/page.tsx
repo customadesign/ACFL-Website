@@ -800,7 +800,7 @@ function SearchCoachesContent() {
                   <button
                     onClick={handleQuickSearch}
                     disabled={isLoading}
-                    className="bg-brand-teal hover:bg-brand-teal/90 text-white px-3 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center flex-shrink-0 min-w-fit"
+                    className="bg-teal-500 hover:bg-teal-600 text-white px-3 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center flex-shrink-0 min-w-fit"
                     aria-label="Search"
                   >
                     {isLoading ? (
@@ -828,9 +828,9 @@ function SearchCoachesContent() {
                 setFilteredCoaches(allCoaches);
                 setHasSearched(false);
               }}
-              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base ${
+              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
                 activeTab === 'search'
-                  ? 'bg-brand-teal text-white shadow-md'
+                  ? 'bg-teal-500 text-white shadow-lg hover:bg-teal-600'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -843,9 +843,9 @@ function SearchCoachesContent() {
                 setFilteredCoaches(savedCoaches);
                 setHasSearched(false);
               }}
-              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-xl font-semibold transition-all duration-200 text-sm sm:text-base ${
+              className={`flex items-center justify-center flex-1 sm:flex-none px-3 sm:px-6 py-3 rounded-lg font-medium transition-all duration-200 text-sm sm:text-base ${
                 activeTab === 'saved'
-                  ? 'bg-brand-teal text-white shadow-md'
+                  ? 'bg-teal-500 text-white shadow-lg hover:bg-teal-600'
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
@@ -1145,7 +1145,7 @@ function SearchCoachesContent() {
                       <button
                         type="submit"
                         disabled={isLoading}
-                        className="flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-brand-teal hover:bg-brand-teal/90 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base order-1 sm:order-2"
+                        className="flex items-center justify-center px-6 sm:px-8 py-3 sm:py-4 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-xl shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base order-1 sm:order-2"
                       >
                         {isLoading ? (
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2 sm:mr-3 flex-shrink-0"></div>

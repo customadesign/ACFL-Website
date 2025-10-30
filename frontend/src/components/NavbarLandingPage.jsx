@@ -34,11 +34,11 @@ const NavbarLandingPage = () => {
               <Logo size={32} />
               <span className="text-xl font-bold text-ink-dark dark:text-white hidden lg:block ">ACT Coaching For Life</span>
             </div>
-            <div className="hidden md:flex items-center space-x-6">
+            <div className="hidden md:flex items-center space-x-8">
               <a href="/" className="text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal transition-colors cursor-pointer">
                 Home
               </a>
-              
+
               {/* Services Dropdown */}
               <div className="relative group">
                 <button
@@ -157,17 +157,19 @@ const NavbarLandingPage = () => {
                 Help
               </Link>
 
-              <Link href="/login">
-                <Button variant="outline" className="border-brand-teal dark:border-brand-teal bg-white dark:bg-transparent text-brand-teal dark:text-brand-teal hover:bg-brand-teal hover:text-white dark:hover:bg-brand-teal dark:hover:text-white">
-                  Login
-                </Button>
-              </Link>
-              
-              <a href="/register/client">
-                <Button className="bg-brand-teal hover:bg-brand-teal/90 text-white">
-                  Register
-                </Button>
-              </a>
+              <div className="flex items-center gap-3 ml-4">
+                <Link href="/login">
+                  <Button variant="outline" className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-lg px-5 py-2.5 font-medium transition-all shadow-sm">
+                    Login
+                  </Button>
+                </Link>
+
+                <a href="/register/client">
+                  <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-5 py-2.5 font-medium transition-all shadow-md hover:shadow-lg">
+                    Register
+                  </Button>
+                </a>
+              </div>
             </div>
 
             {/* Mobile menu button */}

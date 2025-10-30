@@ -351,7 +351,7 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 0}
-              className="border-2 border-gray-300 text-gray-600 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 px-6 py-3 rounded-lg font-medium transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <ChevronLeft className="w-5 h-5 mr-1" />
               Back
@@ -371,9 +371,9 @@ export default function QuickAssessment({ onComplete }: QuickAssessmentProps) {
             <Button
               onClick={nextStep}
               disabled={!canProceed()}
-              className={`px-6 py-3 rounded-lg font-semibold transition-all duration-200 ${
+              className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 ${
                 canProceed()
-                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg transform hover:scale-[1.02]'
+                  ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-md hover:shadow-lg'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
               }`}
             >

@@ -240,12 +240,12 @@ export default function BlogPage() {
                 Discover personalized coaching that helps you live with purpose
                 and clarity
               </p>
-              <div className="flex justify-center gap-2">
-                <button className="bg-[#25a7b8] text-white rounded-md p-2">
-                  Start assessment{" "}
+              <div className="flex justify-center gap-4">
+                <button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
+                  Start assessment
                 </button>
-                <button className="border border-gray-400 rounded-md p-2">
-                  Browse resources{" "}
+                <button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-6 py-3 font-medium transition-all shadow-sm">
+                  Browse resources
                 </button>
               </div>
             </div>

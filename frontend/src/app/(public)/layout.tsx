@@ -1,7 +1,14 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Poppins } from 'next/font/google';
 import PublicRoute from '@/components/PublicRoute';
+
+const poppins = Poppins({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+});
 
 export default function PublicLayout({
   children,
@@ -11,7 +18,7 @@ export default function PublicLayout({
   useEffect(() => {
     // Force remove dark class from html element for public pages
     document.documentElement.classList.remove('dark');
-    
+
     // Override CSS variables to light mode values
     const root = document.documentElement;
     root.style.setProperty('--background', '0 0% 100%');
@@ -31,7 +38,7 @@ export default function PublicLayout({
     root.style.setProperty('--border', '214.3 31.8% 91.4%');
     root.style.setProperty('--input', '214.3 31.8% 91.4%');
     root.style.setProperty('--ring', '222.2 84% 4.9%');
-    
+
     return () => {
       // Clean up inline styles when leaving public pages
       root.style.removeProperty('--background');
@@ -53,10 +60,10 @@ export default function PublicLayout({
       root.style.removeProperty('--ring');
     };
   }, []);
-  
+
   return (
     <PublicRoute>
-      <div className="min-h-screen bg-white">
+      <div className={`min-h-screen bg-white ${poppins.className}`}>
         {children}
       </div>
     </PublicRoute>

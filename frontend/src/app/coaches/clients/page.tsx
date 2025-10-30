@@ -302,22 +302,20 @@ export default function MyClientsPage() {
                   </div>
                 )}
 
-                <div className="flex space-x-2 mb-2">
+                <div className="flex gap-2 mb-2">
                   <Button
                     onClick={() => handleViewDetails(client)}
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 dark:text-white"
-                    size="sm"
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 dark:text-white flex items-center justify-center gap-2 py-2.5 px-4"
                   >
-                    <User className="w-4 h-4 mr-1" />
+                    <User className="w-4 h-4" />
                     View Details
                   </Button>
                   <Button
                     onClick={() => handleSendMessage(client)}
                     variant="outline"
-                    size="sm"
-                    className="flex-1"
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 px-4"
                   >
-                    <MessageCircle className="w-4 h-4 mr-1" />
+                    <MessageCircle className="w-4 h-4" />
                     Send Message
                   </Button>
                 </div>

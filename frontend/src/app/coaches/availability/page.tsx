@@ -574,26 +574,15 @@ export default function CoachAvailabilityPage() {
 
   if (loading) {
     return (
-      <CoachPageWrapper title="Availability" description="Manage your coaching schedule and availability">
+      <CoachPageWrapper title="Availability" description="">
         <CalendarSkeleton />
       </CoachPageWrapper>
     );
   }
 
   return (
-    <CoachPageWrapper title="Availability" description="Manage your coaching schedule and availability">
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-            Availability Management
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 mt-1">
-            Set your weekly schedule and manage blocked time periods
-          </p>
-        </div>
-      </div>
+    <CoachPageWrapper title="Availability" description="">
+      <div className="space-y-6">
 
       {/* Unified Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -622,8 +611,8 @@ export default function CoachAvailabilityPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              <Button onClick={() => setActiveTab('settings')} variant="outline" size="sm" className='text-white'>
-                <Settings className="w-4 h-4 mr-2 dark:text-white" />
+              <Button onClick={() => setActiveTab('settings')} className='bg-teal-500 hover:bg-teal-600 text-white flex items-center gap-2'>
+                <Settings className="w-4 h-4" />
                 Quick Setup
               </Button>
             </div>

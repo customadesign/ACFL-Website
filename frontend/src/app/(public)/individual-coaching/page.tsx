@@ -50,12 +50,12 @@ export default function IndividualCoachingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <a href="/assessment">
-                <Button className="bg-white text-gray-900 hover:bg-gray-100 px-10 py-4 text-lg font-medium">
+                <Button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-10 py-4 text-lg font-medium transition-all shadow-md hover:shadow-lg">
                   Start assessment
                 </Button>
               </a>
               <a href="/pricing">
-                <Button className="bg-transparent border-2 border-white text-white hover:bg-white/10 px-10 py-4 text-lg font-medium">
+                <Button className="border-2 border-white bg-transparent hover:bg-white/10 text-white rounded-lg px-10 py-4 text-lg font-medium transition-all shadow-sm">
                   View plans
                 </Button>
               </a>
@@ -126,10 +126,10 @@ export default function IndividualCoachingPage() {
                       Engage with your coach through high-quality video platforms that feel personal and effective.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Explore video
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Learn more
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -146,10 +146,10 @@ export default function IndividualCoachingPage() {
                       Connect with your coach via phone for flexible, on-the-go coaching that fits your busy lifestyle.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Explore phone
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Learn more
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -166,10 +166,10 @@ export default function IndividualCoachingPage() {
                       Stay connected with your coach between sessions through secure messaging for continuous guidance.
                     </p>
                     <div className="flex flex-wrap gap-4 pt-2">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Explore text
                       </Button>
-                      <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                      <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                         Learn more
                         <ChevronRight className="w-4 h-4" />
                       </button>
@@ -256,11 +256,11 @@ export default function IndividualCoachingPage() {
                   </p>
                   <div className="flex flex-wrap gap-4">
                     <a href="/pricing">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Select
                       </Button>
                     </a>
-                    <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                    <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                       Details
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -298,11 +298,11 @@ export default function IndividualCoachingPage() {
                   </p>
                   <div className="flex flex-wrap gap-4">
                     <a href="/pricing">
-                      <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                      <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                         Choose
                       </Button>
                     </a>
-                    <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                    <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                       Learn
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -395,13 +395,13 @@ export default function IndividualCoachingPage() {
           {/* CTA Buttons */}
           <div className="flex justify-center gap-4">
             <a href="/assessment">
-              <Button className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-8 py-3 text-base font-medium">
+              <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                 Start
               </Button>
             </a>
-            <Button className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white hover:bg-gray-50 dark:hover:bg-gray-700 px-8 py-3 text-base font-medium">
+            <Button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
               Learn
-              <ChevronRight className="w-4 h-4 ml-2" />
+              <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
         </div>
@@ -455,10 +455,10 @@ export default function IndividualCoachingPage() {
                     Psychological techniques validated by decades of clinical research and practice
                   </p>
                   <div className="flex flex-wrap gap-4">
-                    <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                    <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                       Explore
                     </Button>
-                    <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                    <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                       Learn
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -495,10 +495,10 @@ export default function IndividualCoachingPage() {
                     Secure messaging platform provides support and quick check-ins
                   </p>
                   <div className="flex flex-wrap gap-4">
-                    <Button className="bg-white dark:bg-gray-700 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white px-6 py-2.5 text-xs font-semibold hover:bg-gray-900 hover:text-white dark:hover:bg-white dark:hover:text-gray-900 transition-all rounded-none">
+                    <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                       Connect
                     </Button>
-                    <button className="text-gray-900 dark:text-white font-semibold text-xs flex items-center gap-2 hover:gap-4 transition-all px-2">
+                    <button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm flex items-center gap-2">
                       Discover
                       <ChevronRight className="w-4 h-4" />
                     </button>
@@ -528,12 +528,12 @@ export default function IndividualCoachingPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
               <a href="/assessment">
-                <Button className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-10 py-4 text-lg font-medium">
+                <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                   Start assessment
                 </Button>
               </a>
               <a href="/pricing">
-                <Button className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white border-2 border-gray-900 dark:border-white hover:bg-gray-50 dark:hover:bg-gray-700 px-10 py-4 text-lg font-medium">
+                <Button className="border-2 border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg px-6 py-3 font-medium transition-all shadow-sm">
                   View plans
                 </Button>
               </a>
@@ -708,7 +708,7 @@ export default function IndividualCoachingPage() {
               Our support team is ready to answer any additional questions
             </p>
             <a href="/contact">
-              <Button className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-100 px-8 py-3">
+              <Button className="bg-teal-600 hover:bg-teal-700 dark:bg-teal-500 dark:hover:bg-teal-600 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                 Contact
               </Button>
             </a>

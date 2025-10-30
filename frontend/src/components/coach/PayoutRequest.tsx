@@ -321,11 +321,11 @@ export default function CoachPayoutRequest({ coachId }: CoachPayoutRequestProps)
             <Button
               type="submit"
               disabled={submitting || pendingEarnings.totalEarnings <= 0}
-              className="w-full"
+              className="w-full flex items-center justify-center gap-2 py-3.5 px-5 text-base"
             >
               {submitting ? (
                 <>
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  <RefreshCw className="h-4 w-4 animate-spin" />
                   Submitting...
                 </>
               ) : (

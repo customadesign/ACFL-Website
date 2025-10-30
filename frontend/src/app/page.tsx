@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Poppins } from 'next/font/google';
 import { Button } from "@/components/ui/button";
 import ShinyText from "@/components/ShinyText";
 import Footer from "@/components/Footer";
@@ -23,11 +24,17 @@ import imgtwo from "./(public)/images/HomeImg2.png";
 import imgthree from "./(public)/images/HomeImg3.png";
 import imgfour from "./(public)/images/HomeImg4.png";
 
+const poppins = Poppins({
+  weight: ['300', '400', '500', '600', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+});
+
 export default function HomePage() {
   const [showAssessmentModal, setShowAssessmentModal] = useState(false);
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className={`flex flex-col min-h-screen bg-white ${poppins.className}`}>
       <nav>
         <NavbarLandingPage />
       </nav>
@@ -54,13 +61,13 @@ export default function HomePage() {
               {/* CTA Buttons */}
               <div className="flex flex-col  sm:flex-row gap-4 mb-8 items-center">
                 <a href="/assessment">
-                  <button className="flex items-center border-2 border-gray-300 rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                  <button className="flex items-center bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-8 py-4 text-lg font-medium transition-all shadow-md hover:shadow-lg w-full sm:w-auto">
                     Get Started Today
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </button>
                 </a>
                 <a href="/assessment">
-                  <button className="flex items-center rounded-md text-black px-6 py-3 w-full sm:w-auto">
+                  <button className="flex items-center border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-8 py-4 text-lg font-medium transition-all shadow-sm w-full sm:w-auto">
                     Watch Video
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </button>
@@ -126,10 +133,10 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm">
                     Learn more
                   </button>
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm flex items-center gap-2">
                     How it works
                     <span>→</span>
                   </button>
@@ -157,10 +164,10 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm">
                     Learn more
                   </button>
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm flex items-center gap-2">
                     How it works
                     <span>→</span>
                   </button>
@@ -188,10 +195,10 @@ export default function HomePage() {
                   </p>
                 </div>
                 <div className="flex gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm">
                     Learn more
                   </button>
-                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded transition-colors flex items-center gap-2">
+                  <button className="text-sm px-4 py-2 bg-white/20 hover:bg-white/30 rounded-lg transition-all shadow-sm flex items-center gap-2">
                     How it works
                     <span>→</span>
                   </button>
@@ -512,20 +519,20 @@ export default function HomePage() {
             transition={{ duration: 0.6 }}
             className="flex flex-col md:flex-row justify-center gap-4"
           >
-            <div className="flex flex-col gap-4 text-center mb-16">
-              <h1 className="text-4xl">Start your transformation today</h1>
-              <p>
+            <div className="flex flex-col text-center mb-16">
+              <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Start your transformation today</h1>
+              <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
                 Unlock your potential with personalized coaching matched to your
                 unique journey
               </p>
-              <div className="flex justify-center gap-2">
+              <div className="flex justify-center gap-4">
                 <a href="/assessment">
-                  <button className="bg-[#25a7b8] text-white rounded-md p-2">
+                  <button className="bg-teal-600 hover:bg-teal-700 text-white rounded-lg px-6 py-3 font-medium transition-all shadow-md hover:shadow-lg">
                     Take Assessment
                   </button>
                 </a>
                 <a href="/blog">
-                  <button className="border border-gray-400 rounded-md p-2">
+                  <button className="border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg px-6 py-3 font-medium transition-all shadow-sm">
                     Learn More
                   </button>
                 </a>

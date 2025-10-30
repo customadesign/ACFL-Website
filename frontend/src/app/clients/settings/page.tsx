@@ -302,10 +302,10 @@ function SettingsContent() {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="p-6 text-center flex flex-col h-full">
                     <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
                     <h3 className="font-semibold mb-2">CSV Export</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download your data in CSV format, suitable for spreadsheet applications.
                     </p>
                     <Button
@@ -319,10 +319,10 @@ function SettingsContent() {
                 </Card>
 
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
-                  <CardContent className="p-6 text-center">
+                  <CardContent className="p-6 text-center flex flex-col h-full">
                     <FileImage className="w-12 h-12 mx-auto mb-4 text-red-600" />
                     <h3 className="font-semibold mb-2">PDF Export</h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download a comprehensive PDF report of your data.
                     </p>
                     <Button

@@ -1540,8 +1540,8 @@ export default function UserManagement() {
                     className={`
                       flex-shrink-0 lg:flex-shrink lg:w-auto
                       min-w-[140px] sm:min-w-[160px] lg:min-w-0
-                      flex items-center justify-center space-x-2
-                      py-2.5 px-3 lg:px-4
+                      flex items-center justify-center gap-2
+                      py-3 px-4
                       rounded-lg font-medium text-sm
                       transition-all duration-200
                       focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2
@@ -1606,8 +1606,8 @@ export default function UserManagement() {
                       aria-selected={isActive}
                       aria-controls={`tabpanel-${tab.key}`}
                       className={`
-                        flex items-center justify-center space-x-1.5
-                        py-2 px-2
+                        flex items-center justify-center gap-1.5
+                        py-2.5 px-3
                         rounded-lg font-medium text-xs
                         transition-all duration-200
                         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1

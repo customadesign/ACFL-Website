@@ -363,20 +363,20 @@ export default function CorporateProgramsPage() {
               <p className="text-xs text-gray-500 uppercase tracking-wider mb-4">Programs</p>
 
               <div className="mb-8">
-                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
                   Transformative group coaching experiences
                 </h2>
-                <p className="text-gray-600 text-base leading-relaxed">
+                <p className="text-gray-600 text-base leading-relaxed mb-8">
                   Collaborative learning environments that foster personal growth and collective understanding.
                 </p>
-                <div className="flex flex-wrap gap-4 mt-6">
+                <div className="flex flex-wrap gap-4 items-center">
                   <a href="/assessment">
                     <Button className="bg-gray-900 text-white hover:bg-gray-800 px-6 py-3">
                       Join program
                     </Button>
                   </a>
                   <a href="/group-coaching">
-                    <button className="text-gray-900 font-medium text-sm flex items-center group">
+                    <button className="text-gray-900 font-medium text-sm flex items-center group px-6 py-3">
                       Learn more
                       <ChevronRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform" />
                     </button>

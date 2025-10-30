@@ -465,7 +465,7 @@ export default function CoachVerificationForm() {
                   variant="outline"
                   onClick={prevStep}
                   disabled={currentStep === 1}
-                  className="px-8 py-3 rounded-xl border-2 border-gray-300 hover:border-teal-500 hover:bg-teal-50 transition-all duration-300 font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-8 py-3 rounded-lg border-2 border-gray-300 hover:bg-gray-50 transition-all duration-200 font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <span className="flex items-center gap-2">
                     Previous
@@ -476,7 +476,7 @@ export default function CoachVerificationForm() {
                   <Button
                     onClick={handleSubmit}
                     disabled={loading}
-                    className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? (
                       <span className="flex items-center gap-2">
@@ -491,7 +491,7 @@ export default function CoachVerificationForm() {
                 ) : (
                   <Button
                     onClick={nextStep}
-                    className="bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white px-8 py-3 rounded-xl font-bold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl"
+                    className="bg-teal-600 hover:bg-teal-700 text-white px-8 py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg"
                   >
                     <span className="flex items-center gap-2">
                       Next

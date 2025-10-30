@@ -237,7 +237,7 @@ function ClientRegisterForm() {
               <h3 className="text-gray-800 font-bold text-2xl mb-2">Are you a coach?</h3>
               <p className="text-gray-600 text-sm mb-4">Join our network of certified wellness professionals</p>
               <Link href="/register/coach">
-                <Button className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white font-bold text-base py-4 rounded-xl transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg">
+                <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium text-base py-3 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg">
                   Register as a Coach
                 </Button>
               </Link>
@@ -472,7 +472,7 @@ function ClientRegisterForm() {
               <div className="pt-6 hidden md:block">
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-5 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-[1.03] hover:-translate-y-0.5 shadow-lg hover:shadow-2xl hover:shadow-teal-500/30 focus:ring-4 focus:ring-teal-400/50"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium text-base transition-all duration-200 shadow-md hover:shadow-lg"
                   disabled={loading}
                 >
                   {loading ? (
@@ -491,7 +491,7 @@ function ClientRegisterForm() {
               <div className="md:hidden fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-2xl z-50">
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-4 rounded-xl font-bold text-base transition-all duration-300 shadow-lg active:scale-95"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium text-base transition-all duration-200 shadow-md hover:shadow-lg"
                   disabled={loading}
                 >
                   {loading ? (

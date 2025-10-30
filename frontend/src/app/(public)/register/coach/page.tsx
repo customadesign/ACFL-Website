@@ -208,7 +208,7 @@ export default function CoachRegister() {
 
         {/* Register as Coach Button */}
         <div className="mb-6">
-          <Button asChild className="w-full bg-teal-600 hover:bg-teal-700 text-white py-5 rounded-lg font-medium transition-colors text-base">
+          <Button asChild className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-base">
             <Link href="/register/coach/verification">
               Register as Coach
             </Link>
@@ -430,7 +430,7 @@ export default function CoachRegister() {
               <div className="pt-2">
                 <Button
                   type="submit"
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-2 rounded-lg font-medium transition-colors text-base"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium transition-all shadow-md hover:shadow-lg text-base"
                   disabled={loading}
                 >
                   {loading ? 'Creating Account...' : 'Create Coach Account'}

@@ -210,7 +210,7 @@ function LoginForm() {
                     size="sm"
                     onClick={handleResendVerification}
                     disabled={resendingEmail}
-                    className="w-full"
+                    className="w-full border-2 border-gray-300 bg-white hover:bg-gray-50 text-gray-700 rounded-lg"
                   >
                     {resendingEmail ? 'Sending...' : 'Resend Verification Email'}
                   </Button>
@@ -279,7 +279,7 @@ function LoginForm() {
           <div className="pt-4">
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-teal-600 to-teal-700 hover:from-teal-700 hover:to-teal-800 text-white py-4 rounded-xl font-semibold transition-all duration-200 transform hover:scale-[1.02] shadow-md hover:shadow-lg text-base"
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 rounded-lg font-medium transition-all duration-200 shadow-md hover:shadow-lg text-base"
               disabled={loading}
             >
               {loading ? 'Signing in...' : 'Log In'}
