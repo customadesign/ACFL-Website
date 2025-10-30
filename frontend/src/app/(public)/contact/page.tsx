@@ -6,9 +6,49 @@ import { ChevronDown } from 'lucide-react'
 import NavbarLandingPage from '@/components/NavbarLandingPage'
 import Footer from '@/components/Footer'
 import Contact from '../component/contactUs'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 
 export default function ContactPage() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    setIsSubmitting(true)
+
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      firstName: formData.get('firstName'),
+      lastName: formData.get('lastName'),
+      email: formData.get('emailForm'),
+      phone: formData.get('phone'),
+      interests: formData.getAll('interest'),
+      message: formData.get('messageForm')
+    }
+
+    try {
+      // TODO: Add your contact form submission logic here
+      console.log('Form submitted:', data)
+      alert('Thank you for contacting us! We will get back to you soon.')
+      e.currentTarget.reset()
+    } catch (error) {
+      console.error('Form submission error:', error)
+      alert('There was an error sending your message. Please try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const scrollToForm = () => {
+    const formSection = document.querySelector('#contact-form')
+    if (formSection) {
+      formSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -42,7 +82,7 @@ export default function ContactPage() {
       <Contact />
 
       {/* Send an Email Form Section */}
-      <section className="py-16 bg-[#e9f6f7]">
+      <section id="contact-form" className="py-16 bg-[#e9f6f7]">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -218,9 +258,10 @@ export default function ContactPage() {
                   <div className="text-center">
                     <Button
                       type="submit"
-                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-12 py-3 text-base"
+                      disabled={isSubmitting}
+                      className="bg-brand-teal hover:bg-brand-teal/90 text-white px-12 py-3 text-base disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      Send
+                      {isSubmitting ? 'Sending...' : 'Send'}
                     </Button>
                   </div>
                 </form>
@@ -270,7 +311,7 @@ export default function ContactPage() {
               </button>
               {openFaqIndex === 0 && (
                 <div className="px-6 pb-6 text-gray-600">
-                  We typically reply within 6 few minutes during business hours. If you reach out after hours, our team will get back to you the next business day.
+                  We typically reply within a few minutes during business hours. If you reach out after hours, our team will get back to you the next business day.
                 </div>
               )}
             </div>
@@ -378,6 +419,7 @@ export default function ContactPage() {
               Our support team is ready to answer any additional questions
             </p>
             <Button
+              onClick={scrollToForm}
               className="bg-gray-900 hover:bg-gray-800 text-white px-8 py-3"
             >
               Contact
