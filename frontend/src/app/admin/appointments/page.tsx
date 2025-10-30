@@ -483,53 +483,108 @@ export default function AppointmentManagement() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{stats.total}</p>
+        {/* Total Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <Calendar className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             </div>
-            <Calendar className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.total
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Confirmed</p>
-              <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.scheduled}</p>
+        {/* Confirmed Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
             </div>
-            <CheckCircle className="w-8 h-8 text-blue-500 dark:text-blue-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Confirmed
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.scheduled
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Completed</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.completed}</p>
+        {/* Completed Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-green-100 dark:group-hover:bg-green-900/30">
+              <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-green-400" />
             </div>
-            <CheckCircle className="w-8 h-8 text-green-500 dark:text-green-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Completed
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.completed
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Cancelled</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">{stats.cancelled}</p>
+        {/* Cancelled Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-red-100 dark:group-hover:bg-red-900/30">
+              <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-red-600 dark:group-hover:text-red-400" />
             </div>
-            <XCircle className="w-8 h-8 text-red-500 dark:text-red-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Cancelled
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.cancelled
+              )}
+            </div>
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">No Shows</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.noShow}</p>
+        {/* No Shows Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '200ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-yellow-100 dark:group-hover:bg-yellow-900/30">
+              <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-yellow-600 dark:group-hover:text-yellow-400" />
             </div>
-            <AlertCircle className="w-8 h-8 text-yellow-500 dark:text-yellow-400" />
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            No Shows
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.noShow
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -680,43 +735,49 @@ export default function AppointmentManagement() {
               </div>
 
               {/* Start Date */}
-              <div>
+              <div className="relative group">
                 <label htmlFor="start-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
                     <span>Start Date</span>
                   </div>
                 </label>
-                <input
-                  id="start-date"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 [color-scheme:light] dark:[color-scheme:dark]"
-                />
+                <div className="relative">
+                  <input
+                    id="start-date"
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => {
+                      setStartDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+                </div>
               </div>
 
               {/* End Date */}
-              <div>
+              <div className="relative group">
                 <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   <div className="flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                    <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
                     <span>End Date</span>
                   </div>
                 </label>
-                <input
-                  id="end-date"
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => {
-                    setEndDate(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-gray-400 dark:hover:border-gray-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 [color-scheme:light] dark:[color-scheme:dark]"
-                />
+                <div className="relative">
+                  <input
+                    id="end-date"
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => {
+                      setEndDate(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] [color-scheme:light] dark:[color-scheme:dark]"
+                  />
+                  <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+                </div>
               </div>
             </div>
 

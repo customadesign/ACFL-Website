@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
+import Pagination from '@/components/ui/pagination';
 import {
   DollarSign,
   TrendingUp,
@@ -273,6 +274,8 @@ export default function FinancialManagement() {
   const [dateFilter, setDateFilter] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [refundModal, setRefundModal] = useState<{
     isOpen: boolean;
     transaction: Transaction | null;
@@ -295,13 +298,13 @@ export default function FinancialManagement() {
   useEffect(() => {
     fetchTransactions();
     fetchStats();
-  }, [currentPage, statusFilter, dateFilter]);
+  }, [currentPage, itemsPerPage, statusFilter, dateFilter]);
 
   const fetchTransactions = async () => {
     try {
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: '20'
+        limit: itemsPerPage.toString()
       });
 
       if (statusFilter !== 'all') {
@@ -339,8 +342,21 @@ export default function FinancialManagement() {
 
       if (response.ok) {
         const data = await response.json();
-        setTransactions(data.transactions);
-        setTotalPages(data.totalPages);
+        console.log('Financial transactions response:', data);
+
+        // Handle both response structures
+        const transactionsArray = data.transactions || [];
+        const pagination = data.pagination || data;
+
+        setTransactions(transactionsArray);
+        setTotalPages(pagination.totalPages || Math.ceil((pagination.total || pagination.totalItems || transactionsArray.length) / itemsPerPage));
+        setTotalItems(pagination.total || pagination.totalItems || transactionsArray.length);
+
+        console.log('Pagination info:', {
+          totalPages: pagination.totalPages || Math.ceil((pagination.total || pagination.totalItems || transactionsArray.length) / itemsPerPage),
+          totalItems: pagination.total || pagination.totalItems || transactionsArray.length,
+          itemsPerPage
+        });
       }
     } catch (error) {
       console.error('Error fetching transactions:', error);
@@ -470,103 +486,302 @@ export default function FinancialManagement() {
       </div>
 
       {/* Statistics Cards */}
-      {stats && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-                <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.totalRevenue)}</p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-6 h-6 text-green-600" />
-              </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {/* Total Revenue Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '0ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-green-100 dark:group-hover:bg-green-900/30">
+              <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-green-400" />
             </div>
           </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Transactions</p>
-                <p className="text-2xl font-bold text-blue-600">{stats.totalTransactions}</p>
-              </div>
-              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center">
-                <CreditCard className="w-6 h-6 text-blue-600" />
-              </div>
-            </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total Revenue
           </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Success Rate</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {stats.totalTransactions > 0 
-                    ? Math.round((stats.successfulTransactions / stats.totalTransactions) * 100)
-                    : 0}%
-                </p>
-              </div>
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-green-600" />
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Avg. Transaction</p>
-                <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.averageTransactionValue)}</p>
-              </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-6 h-6 text-purple-600" />
-              </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {statsLoading || !stats ? (
+                <div className="animate-pulse h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                formatCurrency(stats.totalRevenue)
+              )}
             </div>
           </div>
         </div>
-      )}
+
+        {/* Total Transactions Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '50ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30">
+              <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-blue-600 dark:group-hover:text-blue-400" />
+            </div>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Total Transactions
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {statsLoading || !stats ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                stats.totalTransactions
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Success Rate Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '100ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-green-100 dark:group-hover:bg-green-900/30">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-green-600 dark:group-hover:text-green-400" />
+            </div>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Success Rate
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {statsLoading || !stats ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                `${stats.totalTransactions > 0 ? Math.round((stats.successfulTransactions / stats.totalTransactions) * 100) : 0}%`
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Average Transaction Card */}
+        <div className="bg-white dark:bg-gray-800 rounded-xl p-4 sm:p-5 md:p-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-105 cursor-pointer group border border-gray-200 animate-in fade-in slide-in-from-bottom-2" style={{ animationDelay: '150ms', animationFillMode: 'backwards' }}>
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center transition-colors duration-300 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30">
+              <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600 dark:text-gray-400 transition-colors duration-300 group-hover:text-purple-600 dark:group-hover:text-purple-400" />
+            </div>
+          </div>
+          <div className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Avg. Transaction
+          </div>
+          <div className="flex items-end justify-between">
+            <div className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white transition-transform duration-300 group-hover:translate-x-1">
+              {statsLoading || !stats ? (
+                <div className="animate-pulse h-8 w-24 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              ) : (
+                formatCurrency(stats.averageTransactionValue)
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
-        <div className="flex flex-col lg:flex-row gap-4">
-          <div className="flex-1 lg:max-w-md">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search transactions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-700 mb-6 overflow-hidden">
+        {/* Filter Header */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-6 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Filter className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-gray-900 dark:text-white">Filter Transactions</h3>
+              <p className="text-sm text-gray-500 dark:text-gray-400">Search and filter financial records</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Filter Controls */}
+        <div className="p-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+            {/* Search Input */}
+            <div className="lg:col-span-1">
+              <label htmlFor="transaction-search" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Search className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                  <span>Search Transactions</span>
+                </div>
+              </label>
+              <div className="relative group">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                <input
+                  id="transaction-search"
+                  type="text"
+                  placeholder="Search by client, coach, or ID..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01]"
+                />
+              </div>
+            </div>
+
+            {/* Items Per Page */}
+            <div className="relative group">
+              <label htmlFor="items-per-page" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Per Page</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="items-per-page"
+                  value={itemsPerPage}
+                  onChange={(e) => {
+                    setItemsPerPage(Number(e.target.value));
+                    setCurrentPage(1);
+                  }}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value={10}>10 items</option>
+                  <option value={20}>20 items</option>
+                  <option value={50}>50 items</option>
+                  <option value={100}>100 items</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Status Filter */}
+            <div className="relative group">
+              <label htmlFor="status-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Filter className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Status</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="status-filter"
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="all">All Statuses</option>
+                  <option value="succeeded">Completed</option>
+                  <option value="authorized">Authorized</option>
+                  <option value="pending">Pending</option>
+                  <option value="failed">Failed</option>
+                  <option value="canceled">Canceled</option>
+                  <option value="refunded">Refunded</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
+            </div>
+
+            {/* Date Filter */}
+            <div className="relative group">
+              <label htmlFor="date-filter" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" />
+                  <span>Date Range</span>
+                </div>
+              </label>
+              <div className="relative">
+                <select
+                  id="date-filter"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white shadow-sm hover:border-blue-400 dark:hover:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 transform hover:scale-[1.01] focus:scale-[1.01] appearance-none cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7days">Last 7 Days</option>
+                  <option value="30days">Last 30 Days</option>
+                  <option value="90days">Last 90 Days</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-4 h-4 text-gray-500 dark:text-gray-400 transition-transform duration-200 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-blue-400 to-indigo-400 opacity-0 group-hover:opacity-10 transition-opacity duration-200 pointer-events-none"></div>
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4">
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
-            >
-              <option value="all">All Statuses</option>
-              <option value="succeeded">Completed</option>
-              <option value="authorized">Authorized</option>
-              <option value="pending">Pending</option>
-              <option value="failed">Failed</option>
-              <option value="canceled">Canceled</option>
-              <option value="refunded">Refunded</option>
-            </select>
+          {/* Active Filter Tags */}
+          {(statusFilter !== 'all' || dateFilter !== 'all' || searchTerm) && (
+            <div className="flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700">
+              <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Active filters:</span>
+              {searchTerm && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-full text-sm border border-blue-200 dark:border-blue-800">
+                  <Search className="w-3.5 h-3.5" />
+                  Search: {searchTerm.substring(0, 20)}{searchTerm.length > 20 ? '...' : ''}
+                  <button
+                    onClick={() => setSearchTerm('')}
+                    className="ml-1 hover:bg-blue-100 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {statusFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 rounded-full text-sm border border-green-200 dark:border-green-800">
+                  <Filter className="w-3.5 h-3.5" />
+                  Status: {statusFilter}
+                  <button
+                    onClick={() => setStatusFilter('all')}
+                    className="ml-1 hover:bg-green-100 dark:hover:bg-green-800 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              {dateFilter !== 'all' && (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-300 rounded-full text-sm border border-purple-200 dark:border-purple-800">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Date: {dateFilter === '7days' ? 'Last 7 Days' : dateFilter === '30days' ? 'Last 30 Days' : 'Last 90 Days'}
+                  <button
+                    onClick={() => setDateFilter('all')}
+                    className="ml-1 hover:bg-purple-100 dark:hover:bg-purple-800 rounded-full p-0.5 transition-colors"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              )}
+              <button
+                onClick={() => {
+                  setSearchTerm('');
+                  setStatusFilter('all');
+                  setDateFilter('all');
+                }}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200"
+              >
+                <RotateCcw className="w-4 h-4 mr-1.5" />
+                Clear All
+              </button>
+            </div>
+          )}
 
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent min-w-[140px]"
-            >
-              <option value="all">All Time</option>
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-              <option value="90days">Last 90 Days</option>
-            </select>
+          {/* Results Summary */}
+          <div className="flex items-center justify-between pt-4 ">
+            <div className="flex items-center gap-2 text-sm">
+              <div className="flex items-center justify-center w-8 h-8 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                {loading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                ) : (
+                  <CreditCard className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                )}
+              </div>
+              <div>
+                <p className="font-medium text-gray-900 dark:text-white">
+                  {loading ? (
+                    'Loading...'
+                  ) : (
+                    <>Showing {((currentPage - 1) * itemsPerPage) + 1}-{Math.min(currentPage * itemsPerPage, totalItems)} of {totalItems}</>
+                  )}
+                </p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {searchTerm || statusFilter !== 'all' || dateFilter !== 'all' ? 'Filtered transactions' : 'Total transactions'}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -769,30 +984,17 @@ export default function FinancialManagement() {
           )}
         </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Page {currentPage} of {totalPages}
-            </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                disabled={currentPage === 1}
-                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                Previous
-              </button>
-              <button
-                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                disabled={currentPage === totalPages}
-                className="px-3 py-1 text-sm border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-        )}
+        {/* Enhanced Pagination */}
+        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700">
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={setCurrentPage}
+            showItemsRange={true}
+          />
+        </div>
       </div>
 
       {/* Refund Modal */}

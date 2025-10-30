@@ -158,6 +158,8 @@ function PendingApprovalContent() {
         </div>
       </div>
     </div>
+      <Footer />
+    </div>
   );
 }
 
