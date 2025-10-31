@@ -179,6 +179,7 @@ export default function CoachProfilePage() {
       if (response.data.success) {
         const data = response.data.data;
         console.log('Profile data received:', data);
+        console.log('Hourly rate from API:', data.hourly_rate_usd);
         
         // Try to get application data if available
         let applicationData = null;
@@ -578,20 +579,11 @@ export default function CoachProfilePage() {
       <div className="mb-8">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
           <h2 className="text-lg sm:text-xl font-semibold text-foreground">Profile Overview</h2>
-          <Button
-            variant="outline"
-            size="default"
-            onClick={refreshData}
-            disabled={loading}
-            className="min-h-[44px] px-4 dark:text-white touch-manipulation w-full sm:w-auto"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 dark:text-white ${loading ? 'animate-spin' : ''}`} />
-            Refresh
-          </Button>
+         
         </div>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-          <Card className="bg-card border-border">
+          <Card>
             <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="p-3 lg:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
@@ -606,8 +598,8 @@ export default function CoachProfilePage() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="bg-card border-border">
+
+          <Card>
             <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="p-3 lg:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
@@ -622,8 +614,8 @@ export default function CoachProfilePage() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="bg-card border-border">
+
+          <Card>
             <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="p-3 lg:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
@@ -638,8 +630,8 @@ export default function CoachProfilePage() {
               </div>
             </CardContent>
           </Card>
-          
-          <Card className="bg-card border-border">
+
+          <Card>
             <CardContent className="p-4 lg:p-6">
               <div className="flex items-center">
                 <div className="p-3 lg:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg">
@@ -664,7 +656,7 @@ export default function CoachProfilePage() {
       ) : (
         <div className="space-y-6">
           {/* Profile Photo Section */}
-          <Card className="bg-card border-border">
+          <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Camera className="w-5 h-5" />
@@ -708,7 +700,7 @@ export default function CoachProfilePage() {
           </Card>
 
           {/* Tabbed Profile Sections */}
-          <Card className="bg-card border-border">
+          <Card>
             <CardHeader>
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex-1">

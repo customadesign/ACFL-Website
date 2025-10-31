@@ -399,7 +399,7 @@ export default function StaffCapabilities() {
       <div className="lg:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
         <div className="px-4 py-3">
           <div className="flex items-center justify-between">
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white">Staff Capabilities</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Staff Capabilities</h1>
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
               className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
@@ -477,7 +477,7 @@ export default function StaffCapabilities() {
       <div className="hidden lg:block w-full">
         <div className="mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">Staff Capabilities</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Staff Capabilities</h1>
             <p className="text-gray-600 dark:text-gray-400">
               {isReadOnly
                 ? 'View staff permissions - Staff have read access to all pages by default'

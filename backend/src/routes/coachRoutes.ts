@@ -47,9 +47,13 @@ router.get('/coach/profile', authenticate, requireActiveUser, async (req: Reques
       .eq('coach_id', coachId)
       .single();
 
+    // Get coach primary rate from coach_rates table (already in USD, not cents)
+    const hourlyRateUsd = await coachService.getCoachPrimaryRate(coachId);
+
     // Combine profile with demographics
     const combinedData = {
       ...coachProfile,
+      hourly_rate_usd: hourlyRateUsd, // Add hourly rate from coach_rates table
       demographics: demographics || {},
       // Extract availability fields for easier access (stored in meta jsonb field)
       videoAvailable: demographics?.meta?.video_available || false,

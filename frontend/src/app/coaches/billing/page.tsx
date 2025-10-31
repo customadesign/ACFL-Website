@@ -30,7 +30,7 @@ export default function CoachBillingPage() {
   return (
 
     
-    <div id='coach-billing-page' className="min-h-screen bg-white dark:bg-gray-900 transition-colors">
+    <div id='coach-billing-page' className="min-h-screen  dark:bg-gray-900 transition-colors">
     <CoachPageWrapper title="Billing & Earnings" description="Manage your earnings, payouts, and financial history" >
       <CoachBillingManagement coachId={coachId} />
     </CoachPageWrapper>

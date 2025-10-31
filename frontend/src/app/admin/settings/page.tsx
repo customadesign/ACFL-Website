@@ -249,8 +249,7 @@ export default function AdminSettings() {
           <div className="flex flex-col space-y-4 sm:flex-row sm:justify-between sm:items-start sm:space-y-0">
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-3 mb-2">
-                <Settings className="w-8 h-8 text-blue-600 dark:text-blue-400" />
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white truncate">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                   System Settings
                 </h1>
               </div>

@@ -1394,7 +1394,7 @@ export default function UserManagement() {
         <div className="mb-6 lg:mb-8">
           <div className="flex flex-col space-y-4 lg:flex-col">
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white leading-tight">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                 User Management
               </h1>
               <p className="mt-2 text-sm sm:text-base text-gray-600 dark:text-gray-400 max-w-2xl">

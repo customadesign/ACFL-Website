@@ -337,12 +337,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       ]
     },
     {
-      id: 'content-analytics',
-      name: 'Content & Analytics',
-      icon: TrendingUp,
+      id: 'analytics',
+      name: 'Analytics',
+      icon: BarChart3,
       items: [
-        { name: 'Content Management', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
-        { name: 'Static Pages', href: '/admin/pages', icon: FileText, permission: PERMISSIONS.CONTENT_VIEW },
+        // { name: 'Content Management', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
+        // { name: 'Static Pages', href: '/admin/pages', icon: FileText, permission: PERMISSIONS.CONTENT_VIEW },
         { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
       ]
     },

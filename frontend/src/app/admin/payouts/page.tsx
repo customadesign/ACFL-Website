@@ -251,7 +251,7 @@ export default function AdminPayoutsPage() {
     <div className="w-full">
       {/* Header */}
       <div className="mb-4 sm:mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Payout Requests</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Payout Requests</h1>
         <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400 mt-1 sm:mt-2">Manage coach payout requests and approvals</p>
       </div>
 

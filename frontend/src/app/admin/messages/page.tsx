@@ -8,7 +8,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send, Search, Filter, Users, MessageCircle } from 'lucide-react'
+import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send, Search, Filter, Users, MessageCircle, Smile } from 'lucide-react'
 import { io } from 'socket.io-client'
 
 type Conversation = {
@@ -40,6 +40,16 @@ type Message = {
 	recipient_role?: 'client' | 'coach' | 'admin'
 }
 
+// Helper functions for avatar display
+const getInitials = (name: string) => {
+	return name.split(' ').map(n => n[0]).join('').toUpperCase()
+}
+
+const getAvatarColor = (index: number) => {
+	const colors = ['bg-pink-400', 'bg-blue-500', 'bg-purple-400', 'bg-orange-400', 'bg-green-400', 'bg-red-500', 'bg-gray-600', 'bg-indigo-400', 'bg-teal-400']
+	return colors[index % colors.length]
+}
+
 function AdminMessagesContent() {
 	const API_URL = getApiUrl()
 	const { user, logout } = useAuth()
@@ -58,8 +68,12 @@ function AdminMessagesContent() {
 	const [searchTerm, setSearchTerm] = useState('')
 	const [roleFilter, setRoleFilter] = useState<'all' | 'client' | 'coach'>('all')
 	const [showUnreadOnly, setShowUnreadOnly] = useState(false)
+	const [openDropdownId, setOpenDropdownId] = useState<string | null>(null)
+	const [openConversationDropdown, setOpenConversationDropdown] = useState<string | null>(null)
 	const fileInputRef = useRef<HTMLInputElement>(null)
 	const scrollerRef = useRef<HTMLDivElement>(null)
+	const dropdownRef = useRef<HTMLDivElement>(null)
+	const conversationDropdownRef = useRef<HTMLDivElement>(null)
 
 	const loadConversations = async (preserveManualConversations = false) => {
 		try {
@@ -104,10 +118,10 @@ function AdminMessagesContent() {
 					// Show message if it's not hidden for this admin
 					return !adminId || !m.hidden_for_users || !m.hidden_for_users.includes(adminId)
 				})
-				
+
 				setMessages(filteredMessages)
 				console.log('Loaded messages:', filteredMessages.length, 'Total from backend:', data.data.length)
-				
+
 				// Mark any unread incoming messages as read
 				const unread = filteredMessages.filter(m => m.recipient_id === adminId && !m.read_at)
 				if (unread.length > 0) {
@@ -130,7 +144,7 @@ function AdminMessagesContent() {
 	const initiateConversationWith = async (userId: string, userName?: string, userRole?: 'client' | 'coach') => {
 		try {
 			console.log('Initiating conversation with:', { userId, userName, userRole })
-			
+
 			// First, check if conversation already exists in current state
 			const existingConversation = conversations.find(c => c.partnerId === userId)
 			if (existingConversation) {
@@ -191,7 +205,7 @@ function AdminMessagesContent() {
 					createConversationInState(userId, userName, userRole)
 				}
 			}
-			
+
 		} catch (error) {
 			console.error('Error initiating conversation:', error)
 		}
@@ -209,9 +223,9 @@ function AdminMessagesContent() {
 			unreadCount: 0,
 			totalMessages: 0
 		}
-		
+
 		console.log('Adding new conversation to state:', newConversation)
-		
+
 		// Add to conversations list immediately and persistently
 		setConversations(prev => {
 			const exists = prev.find(c => c.partnerId === userId)
@@ -230,7 +244,7 @@ function AdminMessagesContent() {
 
 		// Apply search filter
 		if (searchTerm) {
-			filtered = filtered.filter(c => 
+			filtered = filtered.filter(c =>
 				c.partnerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
 				c.lastBody.toLowerCase().includes(searchTerm.toLowerCase())
 			)
@@ -252,12 +266,12 @@ function AdminMessagesContent() {
 	useEffect(() => {
 		;(async () => {
 			setLoading(true)
-			
+
 			// Check if we have URL parameters for conversation initiation
 			const conversationWith = searchParams.get('conversation_with')
 			const partnerName = searchParams.get('partner_name')
 			const partnerRole = searchParams.get('partner_role') as 'client' | 'coach'
-			
+
 			if (conversationWith && partnerName && partnerRole) {
 				// If we have URL parameters, create the conversation first
 				console.log('Creating conversation from URL params:', { conversationWith, partnerName, partnerRole })
@@ -268,7 +282,7 @@ function AdminMessagesContent() {
 				)
 				// Then load conversations with preservation
 				await loadConversations(true)
-				
+
 				// Activate the conversation and show mobile chat
 				setActivePartnerId(conversationWith)
 				setShowMobileChat(true)
@@ -277,7 +291,7 @@ function AdminMessagesContent() {
 				// Normal load without URL parameters
 				await loadConversations()
 			}
-			
+
 			setLoading(false)
 		})()
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -318,7 +332,7 @@ function AdminMessagesContent() {
 		socket.on('message:new', async (msg: Message) => {
 			const partnerId = activePartnerId
 			const involvesActive = partnerId && (msg.sender_id === partnerId || msg.recipient_id === partnerId)
-			
+
 			if (involvesActive) {
 				setMessages(prev => [...prev, msg])
 				if (msg.recipient_id === (user?.id || '') && !msg.read_at) {
@@ -337,8 +351,8 @@ function AdminMessagesContent() {
 
 		socket.on('message:deleted_everyone', ({ messageId, deletedBy }: { messageId: string; deletedBy: string }) => {
 			// Update the message to show it was deleted
-			setMessages(prev => prev.map(m => 
-				m.id === messageId 
+			setMessages(prev => prev.map(m =>
+				m.id === messageId
 					? { ...m, body: 'This message was deleted', deleted_for_everyone: true, deleted_at: new Date().toISOString() }
 					: m
 			))
@@ -355,11 +369,37 @@ function AdminMessagesContent() {
 		scrollerRef.current?.scrollTo({ top: scrollerRef.current.scrollHeight, behavior: 'smooth' })
 	}, [messages])
 
+	// Click outside to close dropdown and keyboard support
+	useEffect(() => {
+		const handleClickOutside = (event: MouseEvent) => {
+			if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+				setOpenDropdownId(null)
+			}
+			if (conversationDropdownRef.current && !conversationDropdownRef.current.contains(event.target as Node)) {
+				setOpenConversationDropdown(null)
+			}
+		}
+
+		const handleKeyDown = (event: KeyboardEvent) => {
+			if (event.key === 'Escape') {
+				setOpenDropdownId(null)
+				setOpenConversationDropdown(null)
+			}
+		}
+
+		document.addEventListener('mousedown', handleClickOutside)
+		document.addEventListener('keydown', handleKeyDown)
+		return () => {
+			document.removeEventListener('mousedown', handleClickOutside)
+			document.removeEventListener('keydown', handleKeyDown)
+		}
+	}, [])
+
 	const activePartner = useMemo(() => {
 		if (!activePartnerId) return null
 		const found = conversations.find(c => c.partnerId === activePartnerId)
 		if (found) return found
-		
+
 		// If no conversation found but we have activePartnerId, create a temporary display name
 		return {
 			partnerId: activePartnerId,
@@ -461,7 +501,7 @@ function AdminMessagesContent() {
 	const hideMessageForMe = async (messageId: string) => {
 		try {
 			console.log('Hiding message:', messageId)
-			
+
 			const response = await fetch(`${API_URL}/api/admin/messages/${messageId}/hide`, {
 				method: 'PUT',
 				headers: {
@@ -471,7 +511,7 @@ function AdminMessagesContent() {
 			})
 
 			console.log('Hide message response status:', response.status)
-			
+
 			if (!response.ok) {
 				const errorText = await response.text()
 				console.error('Hide message HTTP error:', response.status, errorText)
@@ -481,7 +521,7 @@ function AdminMessagesContent() {
 
 			const result = await response.json()
 			console.log('Hide message result:', result)
-			
+
 			if (result.success) {
 				// Remove message from local state immediately
 				setMessages(prev => {
@@ -503,7 +543,7 @@ function AdminMessagesContent() {
 
 	const handleSend = async () => {
 		if (!activePartnerId || (!text.trim() && !selectedFile)) return
-		
+
 		try {
 			setSending(true)
 			let attachment = null
@@ -522,12 +562,12 @@ function AdminMessagesContent() {
 			}
 
 			// Send message with or without attachment
-			socketRef.current?.emit('message:send', { 
-				recipientId: activePartnerId, 
+			socketRef.current?.emit('message:send', {
+				recipientId: activePartnerId,
 				body: text.trim() || '',
 				attachment
 			})
-			
+
 			setText('')
 			setSelectedFile(null)
 			if (fileInputRef.current) {
@@ -544,124 +584,179 @@ function AdminMessagesContent() {
 	}
 
 	return (
-		<div className="flex flex-col h-screen sm:h-auto w-full">
-			{/* Page Header - Hidden on mobile when in chat view */}
-			<div className={`mb-4 sm:mb-8 px-4 pt-4 sm:px-0 sm:pt-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
-				<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-1 sm:mb-2">Admin Messages</h1>
-				<p className="text-sm sm:text-lg text-gray-600 dark:text-gray-400">Monitor and manage all platform communications</p>
-			</div>
-
-			{/* Filters and Search */}
-			<div className={`mb-4 px-4 sm:px-0 ${showMobileChat ? 'hidden sm:block' : ''}`}>
-				<div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-					{/* Search */}
-					<div className="relative flex-1">
-						<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-						<Input
-							placeholder="Search conversations..."
-							value={searchTerm}
-							onChange={(e) => setSearchTerm(e.target.value)}
-							className="pl-10 dark:text-white"
-						/>
-					</div>
-					
-					{/* Role Filter */}
-					<select
-						value={roleFilter}
-						onChange={(e) => setRoleFilter(e.target.value as 'all' | 'client' | 'coach')}
-						className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
-					>
-						<option value="all">All Users</option>
-						<option value="client">Clients</option>
-						<option value="coach">Coaches</option>
-					</select>
-
-					{/* Unread Filter */}
-					<Button
-						variant={showUnreadOnly ? "default" : "outline"}
-						onClick={() => setShowUnreadOnly(!showUnreadOnly)}
-						className={`flex items-center gap-2 ${
-							showUnreadOnly 
-								? 'dark:bg-blue-600 dark:text-white dark:hover:bg-blue-700' 
-								: 'dark:text-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:hover:bg-gray-600'
-						}`}
-					>
-						<MessageCircle className="w-4 h-4" />
-						Unread Only
-					</Button>
-				</div>
-			</div>
-
-			{/* Main Content */}
+		<div className="flex flex-col h-full max-h-screen bg-gray-50 dark:bg-gray-900">
 			{initialLoad ? (
 				<MessagesSkeleton />
 			) : (
-			<div className="flex-1 flex flex-col sm:grid sm:grid-cols-1 md:grid-cols-3 sm:gap-4 overflow-hidden">
-					{/* Conversations List - Mobile: Full screen, Desktop: 1/3 width */}
-					<div className={`${showMobileChat ? 'hidden sm:block' : 'flex-1 sm:flex-none'} sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 overflow-hidden flex flex-col sm:h-[500px]`}>
-						<div className="p-3 sm:border-b sm:dark:border-gray-700 font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
-							<span>Conversations ({filteredConversations.length})</span>
-							<Users className="w-4 h-4 text-gray-500" />
+				<div className="flex flex-1 min-h-0 overflow-hidden gap-4">
+					{/* Sidebar */}
+					<div className={`${showMobileChat ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-[600px] sm:h-[650px] md:h-[700px] lg:h-[750px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col rounded-lg`}>
+						{/* Header */}
+						<div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
+							<h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Chats</h1>
 						</div>
-						<div className="flex-1 overflow-y-auto">
-							{filteredConversations.map(c => (
-								<div key={c.partnerId} className="relative group">
-									<button
-										onClick={() => {
-											setActivePartnerId(c.partnerId)
-											setShowMobileChat(true)
-										}}
-										className={`w-full text-left px-4 py-4 sm:py-3 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center gap-3 touch-manipulation ${activePartnerId === c.partnerId ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}
+
+						{/* Search */}
+						<div className="p-4 flex-shrink-0">
+							<div className="relative">
+								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+								<input
+									type="text"
+									placeholder="Search..."
+									value={searchTerm}
+									onChange={(e) => setSearchTerm(e.target.value)}
+									className="w-full pl-10 pr-4 py-2 border border-gray-200 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+								/>
+							</div>
+						</div>
+
+						{/* Role Filter */}
+						<div className="px-4 pb-2 flex-shrink-0">
+							<div className="relative">
+								<select
+									value={roleFilter}
+									onChange={(e) => setRoleFilter(e.target.value as 'all' | 'client' | 'coach')}
+									className="w-full h-12 sm:h-14 px-4 sm:px-5 pr-10 sm:pr-12 border-2 border-gray-300 dark:border-gray-600 rounded-2xl bg-white dark:bg-gray-700 text-base sm:text-lg font-medium text-gray-900 dark:text-white shadow-md hover:border-blue-400 dark:hover:border-blue-500 hover:shadow-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 appearance-none cursor-pointer"
+									size={1}
+								>
+									<option value="all">All Users</option>
+									<option value="client">Clients Only</option>
+									<option value="coach">Coaches Only</option>
+								</select>
+								<div className="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4 pointer-events-none">
+									<svg className="w-5 h-5 sm:w-6 sm:h-6 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+									</svg>
+								</div>
+							</div>
+						</div>
+
+						{/* Contacts List */}
+						<div className="flex-1 overflow-y-auto p-2 space-y-1 min-h-0">
+							{filteredConversations.map((c, index) => {
+								const initials = getInitials(c.partnerName)
+								const avatarColor = getAvatarColor(index)
+
+								return (
+									<div
+										key={c.partnerId}
+										className={`flex items-center p-3 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 relative group rounded-md transition-all duration-200 ${
+											activePartnerId === c.partnerId ? 'bg-gray-100 dark:bg-gray-700' : ''
+										}`}
 									>
-										{/* Profile Photo */}
-										<div className="flex-shrink-0">
-											{c.partnerPhoto ? (
-												<img
-													src={c.partnerPhoto}
-													alt={c.partnerName}
-													className="w-10 h-10 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 dark:border-gray-600"
-												/>
-											) : (
-												<div className="w-10 h-10 sm:w-8 sm:h-8 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-													<User className="w-5 h-5 sm:w-4 sm:h-4 text-gray-500 dark:text-gray-400" />
+										<div
+											onClick={() => {
+												setActivePartnerId(c.partnerId)
+												setShowMobileChat(true)
+											}}
+											className="flex items-center flex-1 min-w-0"
+										>
+											<div className="relative flex-shrink-0">
+												{c.partnerPhoto ? (
+													<img
+														src={c.partnerPhoto}
+														alt={c.partnerName}
+														className="w-12 h-12 rounded-full object-cover"
+													/>
+												) : (
+													<div className={`w-12 h-12 rounded-full ${avatarColor} flex items-center justify-center text-white font-semibold`}>
+														{initials}
+													</div>
+												)}
+												{/* Online indicator - show for all for now */}
+												<div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+											</div>
+											<div className="ml-3 flex-1 min-w-0">
+												<div className="flex items-center justify-between mb-1">
+													<h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">{c.partnerName}</h3>
+													<span className="text-xs text-gray-500 dark:text-gray-400 ml-2 flex-shrink-0">
+														{new Date(c.lastAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+													</span>
 												</div>
+												<div className="flex items-center gap-2">
+													<span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 ${
+														c.partnerRole === 'client'
+															? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+															: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+													}`}>
+														{c.partnerRole}
+													</span>
+													<p className="text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages'}</p>
+												</div>
+											</div>
+											{c.unreadCount > 0 && (
+												<span className="ml-2 flex-shrink-0 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
 											)}
 										</div>
-										
-										{/* Content */}
-										<div className="min-w-0 flex-1">
-											<div className="flex items-center gap-2 mb-1">
-												<div className="font-medium text-sm sm:text-base text-gray-900 dark:text-white">{c.partnerName}</div>
-												<span className={`text-xs px-2 py-0.5 rounded-full ${
-													c.partnerRole === 'client' 
-														? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-														: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-												}`}>
-													{c.partnerRole}
-												</span>
+
+										{/* Conversation options dropdown */}
+										<div
+											ref={openConversationDropdown === c.partnerId ? conversationDropdownRef : null}
+											className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+										>
+											<div className="relative">
+												<button
+													onClick={(e) => {
+														e.preventDefault()
+														e.stopPropagation()
+														setOpenConversationDropdown(openConversationDropdown === c.partnerId ? null : c.partnerId)
+													}}
+													className={`p-2 rounded-full transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 ${
+														openConversationDropdown === c.partnerId
+															? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
+															: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+													}`}
+												>
+													<MoreVertical size={16} />
+												</button>
+
+												{openConversationDropdown === c.partnerId && (
+													<>
+														{/* Backdrop */}
+														<div className="fixed inset-0 z-40" onClick={() => setOpenConversationDropdown(null)} />
+
+														{/* Dropdown menu */}
+														<div className="absolute right-0 top-10 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-200 dark:border-gray-700 z-50 min-w-[220px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+															{/* Header gradient */}
+															<div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-3 py-2">
+																<div className="flex items-center gap-2">
+																	<div className="flex items-center justify-center w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
+																		<Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+																	</div>
+																	<div className="min-w-0">
+																		<h3 className="text-xs font-semibold text-gray-900 dark:text-white">Conversation Actions</h3>
+																	</div>
+																</div>
+															</div>
+
+															<div className="py-1">
+																<button
+																	onClick={(e) => {
+																		e.stopPropagation()
+																		setOpenConversationDropdown(null)
+																		deleteConversation(c.partnerId)
+																	}}
+																	className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
+																>
+																	<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+																		<Trash2 size={14} />
+																	</div>
+																	<div className="flex-1 min-w-0">
+																		<div className="font-medium">Delete conversation</div>
+																		<div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Removes all messages permanently</div>
+																	</div>
+																</button>
+															</div>
+														</div>
+													</>
+												)}
 											</div>
-											<div className="text-xs sm:text-xs text-gray-500 dark:text-gray-400 truncate">{c.lastBody || 'No messages yet'}</div>
 										</div>
-										
-										{/* Unread Badge */}
-										{c.unreadCount > 0 && (
-											<span className="flex-shrink-0 inline-flex items-center justify-center text-xs bg-red-600 text-white rounded-full h-5 w-5">{c.unreadCount}</span>
-										)}
-									</button>
-									<button
-										onClick={(e) => {
-											e.stopPropagation()
-											deleteConversation(c.partnerId)
-										}}
-										className="absolute right-2 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity p-2 sm:p-1 text-red-500 hover:text-red-700 touch-manipulation"
-										title="Delete conversation"
-									>
-										<Trash2 size={18} className="sm:w-4 sm:h-4" />
-									</button>
-								</div>
-							))}
+									</div>
+								)
+							})}
 							{filteredConversations.length === 0 && (
-								<div className="p-8 text-center text-gray-500 dark:text-gray-400">
+								<div className="p-6 text-center text-gray-500 dark:text-gray-400">
 									<MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
 									<p>No conversations found</p>
 									{(searchTerm || roleFilter !== 'all' || showUnreadOnly) && (
@@ -672,32 +767,53 @@ function AdminMessagesContent() {
 						</div>
 					</div>
 
-				{/* Chat Area - Mobile: Full screen when active, Desktop: 2/3 width */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} md:col-span-2 sm:border sm:dark:border-gray-700 sm:rounded-lg bg-white dark:bg-gray-800 flex flex-col overflow-hidden`}>
-					<div className="p-3 sm:border-b sm:dark:border-gray-700 border-b border-gray-200 dark:border-gray-700 flex items-center gap-3">
-						{/* Back button for mobile */}
-						<button
-							onClick={() => setShowMobileChat(false)}
-							className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full touch-manipulation"
-						>
-							<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-						</button>
-						<div className="flex items-center gap-2">
-							<div className="font-semibold text-gray-900 dark:text-white">
-								{activePartner?.partnerName || 'Select a conversation'}
-							</div>
+				{/* Chat Area */}
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} flex-1 bg-white dark:bg-gray-800 flex flex-col min-h-0 sm:h-[650px] md:h-[700px] lg:h-[750px]`}>
+					{/* Chat Header */}
+					<div className="bg-white dark:bg-gray-800  p-4 flex items-center justify-between flex-shrink-0 rounded-lg">
+						<div className="flex items-center gap-3">
+							{/* Back button for mobile */}
+							<button
+								onClick={() => setShowMobileChat(false)}
+								className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
+							>
+								<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+							</button>
 							{activePartner && (
-								<span className={`text-xs px-2 py-0.5 rounded-full ${
-									activePartner.partnerRole === 'client' 
-										? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
-										: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-								}`}>
-									{activePartner.partnerRole}
-								</span>
+								<>
+									<div className="relative">
+										{activePartner.partnerPhoto ? (
+											<img
+												src={activePartner.partnerPhoto}
+												alt={activePartner.partnerName}
+												className="w-12 h-12 rounded-full object-cover"
+											/>
+										) : (
+											<div className={`w-12 h-12 rounded-full bg-blue-500 flex items-center justify-center text-white font-semibold`}>
+												{getInitials(activePartner.partnerName)}
+											</div>
+										)}
+										<div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
+									</div>
+									<div>
+										<h2 className="text-lg font-semibold text-gray-900 dark:text-white">{activePartner.partnerName}</h2>
+										<span className={`text-xs px-2 py-0.5 rounded-full ${
+											activePartner.partnerRole === 'client'
+												? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+												: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+										}`}>
+											{activePartner.partnerRole}
+										</span>
+									</div>
+								</>
+							)}
+							{!activePartner && (
+								<h2 className="text-lg font-semibold text-gray-900 dark:text-white">Select a conversation</h2>
 							)}
 						</div>
 					</div>
-						<div ref={scrollerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-2 bg-gray-50 dark:bg-gray-900 min-h-0">
+					{/* Messages */}
+					<div ref={scrollerRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-white dark:bg-gray-800 min-h-0">
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
 								<div className="text-center">
@@ -707,29 +823,33 @@ function AdminMessagesContent() {
 								</div>
 							</div>
 						)}
-						{activePartnerId && messages.map(m => {
-								const isMine = m.sender_id === (user?.id || '')
-								const hasAttachment = m.attachment_url && m.attachment_name && !m.deleted_for_everyone
-								const isDeleted = m.deleted_for_everyone
-								return (
-									<div key={m.id} className={`max-w-[75%] ${isMine ? 'ml-auto' : ''} group relative w-fit`}>
-										<div className={`px-3 py-2 rounded-lg text-sm shadow-sm ${
-											isDeleted 
-												? 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 italic' 
-												: isMine 
-													? 'bg-blue-600 text-white' 
-													: 'bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-										}`}>
-											{m.body && <div>{m.body}</div>}
+						{activePartnerId && messages.map((m, msgIndex) => {
+							const isMine = m.sender_id === (user?.id || '')
+							const hasAttachment = m.attachment_url && m.attachment_name && !m.deleted_for_everyone
+							const isDeleted = m.deleted_for_everyone
+							const senderName = isMine ? 'You' : activePartner?.partnerName || 'Unknown'
+
+							return (
+								<div key={m.id} className={`flex ${isMine ? 'justify-end' : 'justify-start'}`}>
+									<div className={`max-w-md ${isMine ? 'order-2' : 'order-1'} group relative`}>
+										{!isMine && (
+											<div className="flex items-center mb-1">
+												<div className={`w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold mr-2`}>
+													{getInitials(senderName)}
+												</div>
+											</div>
+										)}
+										<div className={`${isMine ? 'bg-blue-500 text-white ml-auto' : 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'} rounded-2xl px-4 py-3 ${isDeleted ? 'italic opacity-70' : ''}`}>
+											{m.body && <p className="text-sm">{m.body}</p>}
 											{hasAttachment && (
-												<div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-500' : 'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-600'}`}>
+												<div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-600' : 'border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-600'}`}>
 													<div className="flex items-center gap-2">
 														<Paperclip size={16} />
-														<span className="truncate">{m.attachment_name}</span>
+														<span className="truncate text-sm">{m.attachment_name}</span>
 														<a
 															href={m.attachment_url || '#'}
 															download={m.attachment_name || undefined}
-															className={`p-1 hover:opacity-80 ${isMine ? 'text-blue-100' : 'text-gray-600 dark:text-gray-300'}`}
+															className="p-1 hover:opacity-80"
 															title="Download"
 															target="_blank"
 															rel="noopener noreferrer"
@@ -738,121 +858,178 @@ function AdminMessagesContent() {
 														</a>
 													</div>
 													{m.attachment_size && (
-														<div className={`text-xs mt-1 ${isMine ? 'text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
+														<div className="text-xs mt-1 opacity-75">
 															{(m.attachment_size / 1024 / 1024).toFixed(2)} MB
 														</div>
 													)}
 												</div>
 											)}
 										</div>
-										
+
 										{/* Message options dropdown */}
 										{!isDeleted && (
-											<div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+											<div
+												ref={openDropdownId === m.id ? dropdownRef : null}
+												className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+											>
 												<div className="relative">
 													<button
 														onClick={(e) => {
 															e.preventDefault()
-															const dropdown = e.currentTarget.nextElementSibling as HTMLElement
-															dropdown.classList.toggle('hidden')
+															e.stopPropagation()
+															setOpenDropdownId(openDropdownId === m.id ? null : m.id)
 														}}
-														className="p-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300"
+														className={`p-2 rounded-full transition-all duration-200 ease-in-out transform hover:scale-110 active:scale-95 ${
+															openDropdownId === m.id
+																? 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 shadow-sm'
+																: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+														}`}
 													>
-														<MoreVertical size={14} />
+														<MoreVertical size={16} />
 													</button>
-													<div className="hidden absolute right-0 top-6 bg-white dark:bg-gray-800 border dark:border-gray-700 rounded-lg shadow-lg py-1 z-10 min-w-[120px]">
-														<button
-															onClick={() => deleteMessageForEveryone(m.id)}
-															className="w-full text-left px-3 py-1 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-2"
-														>
-															<Trash2 size={12} />
-															Delete for everyone
-														</button>
-														<button
-															onClick={() => hideMessageForMe(m.id)}
-															className="w-full text-left px-3 py-1 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-2"
-														>
-															<EyeOff size={12} />
-															Delete for me
-														</button>
-													</div>
+
+													{openDropdownId === m.id && (
+														<>
+															{/* Backdrop */}
+															<div className="fixed inset-0 z-40" onClick={() => setOpenDropdownId(null)} />
+
+															{/* Dropdown menu */}
+															<div className="absolute right-0 top-10 bg-white dark:bg-gray-800 rounded-lg sm:rounded-xl shadow-sm sm:shadow-md border border-gray-200 dark:border-gray-700 z-50 min-w-[220px] overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+																{/* Header gradient */}
+																<div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-3 py-2">
+																	<div className="flex items-center gap-2">
+																		<div className="flex items-center justify-center w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
+																			<Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+																		</div>
+																		<div className="min-w-0">
+																			<h3 className="text-xs font-semibold text-gray-900 dark:text-white">Message Actions</h3>
+																		</div>
+																	</div>
+																</div>
+
+																<div className="py-1">
+																	<button
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			setOpenDropdownId(null)
+																			deleteMessageForEveryone(m.id)
+																		}}
+																		className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
+																	>
+																		<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+																			<Trash2 size={14} />
+																		</div>
+																		<div className="flex-1 min-w-0">
+																			<div className="font-medium">Delete for everyone</div>
+																			<div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Removes message permanently</div>
+																		</div>
+																	</button>
+
+																	<div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-3"></div>
+
+																	<button
+																		onClick={(e) => {
+																			e.stopPropagation()
+																			setOpenDropdownId(null)
+																			hideMessageForMe(m.id)
+																		}}
+																		className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-3 transition-all duration-150"
+																	>
+																		<div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
+																			<EyeOff size={14} />
+																		</div>
+																		<div className="flex-1 min-w-0">
+																			<div className="font-medium">Delete for me</div>
+																			<div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Only hides from your view</div>
+																		</div>
+																	</button>
+																</div>
+															</div>
+														</>
+													)}
 												</div>
 											</div>
 										)}
-										
-									<div className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
-										<span>{new Date(m.created_at).toLocaleString()}</span>
-										{isMine && m.read_at && (
-											<span className="text-blue-600">Seen</span>
-										)}
+
+										<p className="text-xs text-gray-500 dark:text-gray-400 mt-1 px-2">
+											{senderName}, {new Date(m.created_at).toLocaleString()}
+											{isMine && m.read_at && <span className="text-blue-600 ml-2">• Seen</span>}
+										</p>
 									</div>
-									</div>
-								)
-							})}
-						</div>
-						<div className="p-3 sm:p-3 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex-shrink-0">
-							{selectedFile && (
-								<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
-									<div className="flex items-center gap-2">
-										<Paperclip size={16} />
-										<span className="text-sm text-gray-900 dark:text-gray-100">{selectedFile.name}</span>
-										<span className="text-xs text-gray-500 dark:text-gray-400">
-											({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
-										</span>
-									</div>
-									<button
-										onClick={() => {
-											setSelectedFile(null)
-											if (fileInputRef.current) {
-												fileInputRef.current.value = ''
-											}
-										}}
-										className="text-red-500 hover:text-red-700"
-									>
-										<X size={16} />
-									</button>
 								</div>
-							)}
-							<div className="flex gap-2 items-end">
-								<input
-									ref={fileInputRef}
-									type="file"
-									onChange={handleFileSelect}
-									className="hidden"
-									accept="image/*,application/pdf,.doc,.docx,.txt,.csv,audio/*,video/*,.zip"
-								/>
+							)
+						})}
+					</div>
+					{/* Input Area */}
+					<div className="bg-white dark:bg-gray-800 p-4 flex-shrink-0 rounded-lg">
+						{selectedFile && (
+							<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
+								<div className="flex items-center gap-2">
+									<Paperclip size={16} className="text-gray-600 dark:text-gray-400" />
+									<span className="text-sm text-gray-900 dark:text-gray-100">{selectedFile.name}</span>
+									<span className="text-xs text-gray-500 dark:text-gray-400">
+										({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
+									</span>
+								</div>
 								<button
-									onClick={() => fileInputRef.current?.click()}
-									className="p-3 sm:p-2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 border dark:border-gray-600 rounded disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-									title={activePartnerId ? "Attach file" : "Select a conversation first"}
-									disabled={!activePartnerId}
-								>
-									<Paperclip size={20} />
-								</button>
-								<Input
-									value={text}
-									onChange={e => setText(e.target.value)}
-									placeholder={activePartnerId ? "Type a message..." : "Select a conversation to start messaging"}
-									className="flex-1 dark:text-white dark:placeholder-gray-400 text-base sm:text-sm py-3 sm:py-2"
-									disabled={!activePartnerId}
-									onKeyDown={e => {
-										if (e.key === 'Enter' && !e.shiftKey) {
-											e.preventDefault()
-											handleSend()
+									onClick={() => {
+										setSelectedFile(null)
+										if (fileInputRef.current) {
+											fileInputRef.current.value = ''
 										}
 									}}
-								/>
-								<Button
-									onClick={handleSend}
-									disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)}
-									className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed dark:text-white px-6 sm:px-4 py-3 sm:py-2 touch-manipulation"
+									className="text-red-500 hover:text-red-700"
 								>
-									<Send className="w-5 h-5 sm:hidden" />
-									<span className="hidden sm:inline">{uploading ? 'Uploading...' : sending ? 'Sending...' : 'Send'}</span>
-								</Button>
+									<X size={16} />
+								</button>
 							</div>
+						)}
+						<div className="flex items-center space-x-2">
+							<button
+								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+								disabled={!activePartnerId}
+							>
+								<Smile size={24} />
+							</button>
+							<input
+								type="text"
+								placeholder={activePartnerId ? "Type a message" : "Select a conversation to start messaging"}
+								value={text}
+								onChange={(e) => setText(e.target.value)}
+								disabled={!activePartnerId}
+								className="flex-1 px-4 py-3 border border-gray-200 dark:border-gray-600 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+								onKeyDown={(e) => {
+									if (e.key === 'Enter' && !e.shiftKey) {
+										e.preventDefault()
+										handleSend()
+									}
+								}}
+							/>
+							<input
+								ref={fileInputRef}
+								type="file"
+								onChange={handleFileSelect}
+								className="hidden"
+								accept="image/*,application/pdf,.doc,.docx,.txt,.csv,audio/*,video/*,.zip"
+							/>
+							<button
+								onClick={() => fileInputRef.current?.click()}
+								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
+								disabled={!activePartnerId}
+								title={activePartnerId ? "Attach file" : "Select a conversation first"}
+							>
+								<Paperclip size={24} />
+							</button>
+							<button
+								onClick={handleSend}
+								disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)}
+								className="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<Send size={20} />
+							</button>
 						</div>
 					</div>
+				</div>
 				</div>
 			)}
 		</div>
