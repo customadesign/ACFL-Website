@@ -183,7 +183,11 @@ export default function BlogPage() {
         {/* Main Content */}
         <div className="prose prose-gray max-w-none">
           {article?.content ? (
-            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+            /<[^>]+>/.test(article.content) ? (
+              <div dangerouslySetInnerHTML={{ __html: article.content }} />
+            ) : (
+              <pre className="whitespace-pre-wrap break-words font-sans text-gray-700 leading-relaxed">{article.content}</pre>
+            )
           ) : (
             <>
               <p className="text-gray-700 leading-relaxed mb-6">Acceptance is a journey, not a destination. In the landscape of personal growth, we often struggle against our inner experiences, believing that fighting will bring peace. But what if true strength lies in embracing our thoughts and feelings, not battling them?</p>
@@ -205,16 +209,55 @@ export default function BlogPage() {
             <div className="flex items-center gap-3">
               <span className="text-gray-600 font-medium">Share this post</span>
               <div className="flex items-center gap-2">
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={async () => {
+                    try {
+                      const text = hero?.title || 'Check this out';
+                      const url = currentUrl;
+                      if (navigator.share) {
+                        await navigator.share({ title: text, url });
+                      } else {
+                        const twitter = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`;
+                        window.open(twitter, '_blank', 'noopener,noreferrer');
+                      }
+                    } catch (_) {
+                      // ignore
+                    }
+                  }}
+                  aria-label="Share"
+                >
                   <Share2 className="w-5 h-5 text-gray-600" />
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => {
+                    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  aria-label="Share on LinkedIn"
+                >
                   <Linkedin className="w-5 h-5 text-gray-600" />
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => {
+                    const text = hero?.title || 'Check this out';
+                    const url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  aria-label="Share on X"
+                >
                   <X className="w-5 h-5 text-gray-600" />
                 </button>
-                <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
+                <button
+                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  onClick={() => {
+                    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+                    window.open(url, '_blank', 'noopener,noreferrer');
+                  }}
+                  aria-label="Share on Facebook"
+                >
                   <Facebook className="w-5 h-5 text-gray-600" />
                 </button>
               </div>

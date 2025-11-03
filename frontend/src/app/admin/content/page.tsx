@@ -287,9 +287,9 @@ export default function ContentManagement() {
       case 'rich_text':
         return (
           <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <p className={`whitespace-pre-wrap ${value ? 'text-gray-900 dark:text-gray-100' : isPlaceholder ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 italic'}`}>
+            <pre className={`whitespace-pre-wrap font-sans ${value ? 'text-gray-900 dark:text-gray-100' : isPlaceholder ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 italic'}`}>
               {isPlaceholder ? displayValue : (value || <span className="text-gray-400 italic">No content</span>)}
-            </p>
+            </pre>
           </div>
         );
 
@@ -498,6 +498,7 @@ export default function ContentManagement() {
             onChange={(e) => handleSectionChange(sectionId, field.name, e.target.value)}
             placeholder={field.placeholder}
             rows={3}
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           />
         );
@@ -509,6 +510,7 @@ export default function ContentManagement() {
             onChange={(e) => handleSectionChange(sectionId, field.name, e.target.value)}
             placeholder={field.placeholder || 'Enter rich text content (HTML supported)'}
             rows={6}
+            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
           />
         );

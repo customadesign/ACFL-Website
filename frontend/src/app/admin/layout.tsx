@@ -338,7 +338,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
     {
       id: 'analytics',
-      name: 'Analytics',
+      name: 'Analytics and Content',
       icon: BarChart3,
       items: [
         { name: 'Content Management', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
