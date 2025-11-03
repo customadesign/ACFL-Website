@@ -7,11 +7,54 @@ import imgone from "../images/BlogImg1.jpg";
 import imgfour from "../images/HomeImg4.png";
 import { motion } from "framer-motion";
 
-import React from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Share2, Linkedin, X, Facebook, Link2 } from 'lucide-react';
+import { getApiUrl } from '@/lib/api';
 
 
 export default function BlogPage() {
+  const [hero, setHero] = useState<any | null>(null);
+  const [article, setArticle] = useState<any | null>(null);
+
+  const currentUrl = useMemo(() => {
+    if (typeof window === 'undefined') return '';
+    return window.location.href;
+  }, []);
+
+  useEffect(() => {
+    const loadContent = async () => {
+      try {
+        // Try local/dev API first (correct public route mount)
+        let res = await fetch(`${getApiUrl()}/api/content/public/content?slug=blog`);
+
+        // If not found or error, try legacy path then production as fallback
+        if (!res.ok) {
+          // legacy path some deployments used
+          res = await fetch(`${getApiUrl()}/api/public/content?slug=blog`);
+          if (!res.ok) {
+            res = await fetch(`https://therapist-matcher-backend.onrender.com/api/content/public/content?slug=blog`);
+          }
+        }
+
+        if (res.ok) {
+          const data = await res.json();
+          const entry = Array.isArray(data) ? data[0] : data;
+          if (entry && entry.content) {
+            try {
+              const parsed = JSON.parse(entry.content);
+              setHero(parsed?.hero || null);
+              setArticle(parsed?.article || null);
+            } catch (_) {
+              // ignore JSON errors
+            }
+          }
+        }
+      } catch (_) {
+        // ignore network errors for now
+      }
+    };
+    loadContent();
+  }, []);
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <nav>
@@ -27,9 +70,9 @@ export default function BlogPage() {
           transition={{ duration: 0.5 }}
           className="flex items-center gap-2 text-sm text-gray-600 mb-8"
         >
-          <a href="#" className="hover:text-gray-900">Blog</a>
+          <a href="#" className="hover:text-gray-900">{hero?.breadcrumbPrimary || 'Blog'}</a>
           <span>›</span>
-          <a href="#" className="hover:text-gray-900">ACT Insights</a>
+          <a href="#" className="hover:text-gray-900">{hero?.breadcrumbSecondary || 'ACT Insights'}</a>
         </motion.nav>
 
         {/* Article Header */}
@@ -40,9 +83,17 @@ export default function BlogPage() {
             transition={{ duration: 0.6, delay: 0.1 }}
             className="text-5xl font-bold text-gray-900 mb-8 leading-tight"
           >
-            Understanding acceptance<br />
-            and commitment in<br />
-            personal growth
+            {hero?.title ? (
+              <>
+                {hero.title}
+              </>
+            ) : (
+              <>
+                Understanding acceptance<br />
+                and commitment in<br />
+                personal growth
+              </>
+            )}
           </motion.h1>
 
           {/* Author and Meta Info */}
@@ -55,31 +106,48 @@ export default function BlogPage() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full overflow-hidden">
                 <img
-                  src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"
-                  alt="Sarah Thompson"
+                  src={hero?.authorAvatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"}
+                  alt={hero?.authorName || "Sarah Thompson"}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Sarah Thompson</p>
-                <p className="text-sm text-gray-600">15 Mar 2024 • 5 min read</p>
+                <p className="text-sm font-medium text-gray-900">{hero?.authorName || 'Sarah Thompson'}</p>
+                <p className="text-sm text-gray-600">{hero?.publishDate || '15 Mar 2024'} • {hero?.readTime || '5 min read'}</p>
               </div>
             </div>
 
             {/* Share Icons */}
             <div className="flex items-center gap-3">
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
-                <Link2 className="w-5 h-5 text-gray-700" />
+                <Link2 className="w-5 h-5 text-gray-700" onClick={async () => {
+                  try {
+                    await navigator.clipboard.writeText(currentUrl);
+                    alert('Link copied to clipboard');
+                  } catch (_) {
+                    // ignore
+                  }
+                }} />
               </button>
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
-                <Linkedin className="w-5 h-5 text-gray-700" />
+                <Linkedin className="w-5 h-5 text-gray-700" onClick={() => {
+                  const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }} />
               </button>
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
-                <Share2 className="w-5 h-5 text-gray-700" />
+                <Share2 className="w-5 h-5 text-gray-700" onClick={() => {
+                  const text = hero?.title || 'Check this out';
+                  const url = `https://twitter.com/intent/tweet?url=${encodeURIComponent(currentUrl)}&text=${encodeURIComponent(text)}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }} />
               </button>
               <button className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-gray-200 transition-colors">
-                <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24">
+                <svg className="w-5 h-5 text-gray-700" fill="currentColor" viewBox="0 0 24 24" onClick={() => {
+                  const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(currentUrl)}`;
+                  window.open(url, '_blank', 'noopener,noreferrer');
+                }}>
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
                 </svg>
               </button>
@@ -93,12 +161,12 @@ export default function BlogPage() {
             transition={{ duration: 0.7, delay: 0.3 }}
             className="w-full aspect-video bg-gray-200 rounded-lg flex items-center justify-center mb-12"
           >
-             <img
-            src={imgone.src}
-            alt=""
-            className="w-full h-auto object-cover"
-            loading="lazy"
-          />
+            <img
+              src={hero?.featuredImageUrl || imgone.src}
+              alt=""
+              className="w-full h-auto object-cover"
+              loading="lazy"
+            />
           </motion.div>
 
           {/* Article Content would go here */}
@@ -114,59 +182,21 @@ export default function BlogPage() {
       >
         {/* Main Content */}
         <div className="prose prose-gray max-w-none">
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Acceptance is a journey, not a destination. In the landscape of personal growth, we often struggle 
-            against our inner experiences, believing that fighting will bring peace. But what if true strength lies in 
-            embracing our thoughts and feelings, not battling them?
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Acceptance and Commitment Therapy (ACT) offers a unique approach to mental wellness. It teaches 
-            us that pain is an inevitable part of human experience. Our suffering increases when we resist what 
-            cannot be changed. Instead, ACT guides us to accept our emotions, thoughts, and circumstances 
-            while committing to actions aligned with our core values.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Imagine your mind as a vast ocean. Thoughts are waves that come and go. Traditional therapy 
-            might teach you to calm the waves. ACT teaches you to become a skilled navigator, riding those 
-            waves with purpose and resilience.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            The core of ACT revolves around six key processes: psychological flexibility, cognitive defusion, 
-            acceptance, contact with the present moment, values, and committed action. These aren't just 
-            theoretical concepts but practical skills that transform how we engage with life's challenges.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Cognitive defusion helps us see thoughts as mental events, not absolute truths. Acceptance allows 
-            us to experience emotions without being consumed by them. Connecting with the present moment 
-            grounds us in reality, not hypothetical fears or regrets.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Values become our compass. They are the deeply held principles that give meaning to our actions. 
-            When we align our behaviors with these values, we create a life of purpose and authenticity.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Committed action is where theory meets practice. It's about taking meaningful steps towards our 
-            goals, even when discomfort or fear tries to hold us back. Small, consistent actions build resilience 
-            and create lasting change.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Personal growth isn't about eliminating negative experiences. It's about developing the capacity to 
-            move forward despite them. ACT empowers individuals to live fully, embracing both joy and 
-            challenge with equal courage.
-          </p>
-
-          <p className="text-gray-700 leading-relaxed mb-6">
-            Remember, healing is not linear. Some days will feel easier than others. The practice of acceptance is 
-            itself a form of strength. By learning to be with our experiences rather than fighting them, we open 
-            the door to genuine transformation.
-          </p>
+          {article?.content ? (
+            <div dangerouslySetInnerHTML={{ __html: article.content }} />
+          ) : (
+            <>
+              <p className="text-gray-700 leading-relaxed mb-6">Acceptance is a journey, not a destination. In the landscape of personal growth, we often struggle against our inner experiences, believing that fighting will bring peace. But what if true strength lies in embracing our thoughts and feelings, not battling them?</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Acceptance and Commitment Therapy (ACT) offers a unique approach to mental wellness. It teaches us that pain is an inevitable part of human experience. Our suffering increases when we resist what cannot be changed. Instead, ACT guides us to accept our emotions, thoughts, and circumstances while committing to actions aligned with our core values.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Imagine your mind as a vast ocean. Thoughts are waves that come and go. Traditional therapy might teach you to calm the waves. ACT teaches you to become a skilled navigator, riding those waves with purpose and resilience.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">The core of ACT revolves around six key processes: psychological flexibility, cognitive defusion, acceptance, contact with the present moment, values, and committed action. These aren't just theoretical concepts but practical skills that transform how we engage with life's challenges.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Cognitive defusion helps us see thoughts as mental events, not absolute truths. Acceptance allows us to experience emotions without being consumed by them. Connecting with the present moment grounds us in reality, not hypothetical fears or regrets.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Values become our compass. They are the deeply held principles that give meaning to our actions. When we align our behaviors with these values, we create a life of purpose and authenticity.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Committed action is where theory meets practice. It's about taking meaningful steps towards our goals, even when discomfort or fear tries to hold us back. Small, consistent actions build resilience and create lasting change.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Personal growth isn't about eliminating negative experiences. It's about developing the capacity to move forward despite them. ACT empowers individuals to live fully, embracing both joy and challenge with equal courage.</p>
+              <p className="text-gray-700 leading-relaxed mb-6">Remember, healing is not linear. Some days will feel easier than others. The practice of acceptance is itself a form of strength. By learning to be with our experiences rather than fighting them, we open the door to genuine transformation.</p>
+            </>
+          )}
         </div>
 
         {/* Share Section */}
@@ -191,18 +221,18 @@ export default function BlogPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                Personal growth
-              </span>
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                Mental wellness
-              </span>
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                ACT therapy
-              </span>
-              <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
-                Psychological flexibility
-              </span>
+              {Array.isArray(article?.tags) && article?.tags.length > 0 ? (
+                article.tags.map((t: string, i: number) => (
+                  <span key={`${t}-${i}`} className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">
+                    {t}
+                  </span>
+                ))
+              ) : (
+                <>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Personal growth</span>
+                  <span className="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Mental wellness</span>
+                </>
+              )}
             </div>
           </div>
         </div>
