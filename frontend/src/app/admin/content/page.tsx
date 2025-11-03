@@ -82,7 +82,11 @@ const PAGE_TEMPLATES = {
         title: 'Article Section',
         fields: [
           { name: 'content', label: 'Article Content (HTML allowed)', type: 'rich_text', placeholder: '<p>Your article content here...</p>' },
-          { name: 'tags', label: 'Tags', type: 'array', description: 'Enter one tag per line' }
+          { name: 'tags', label: 'Tags', type: 'array', description: 'Enter one tag per line' },
+          { name: 'authorName', label: 'Author Name', type: 'text', placeholder: 'Sarah Thompson' },
+          { name: 'authorAvatarUrl', label: 'Author Avatar URL', type: 'text', placeholder: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop' },
+          { name: 'publishDate', label: 'Publish Date', type: 'text', placeholder: '15 Mar 2024' },
+          { name: 'readTime', label: 'Read Time', type: 'text', placeholder: '5 min read' }
         ]
       }
     ]
@@ -142,7 +146,11 @@ export default function ContentManagement() {
               hero: {},
               article: {
                 content: defaultArticleHtml,
-                tags: []
+                tags: [],
+                authorName: 'Sarah Thompson',
+                authorAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop',
+                publishDate: '15 Mar 2024',
+                readTime: '5 min read'
               }
             });
           } else {

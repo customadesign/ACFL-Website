@@ -106,15 +106,15 @@ export default function BlogPage() {
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white rounded-full overflow-hidden">
                 <img
-                  src={hero?.authorAvatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"}
-                  alt={hero?.authorName || "Sarah Thompson"}
+                  src={article?.authorAvatarUrl || hero?.authorAvatarUrl || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop"}
+                  alt={article?.authorName || hero?.authorName || "Sarah Thompson"}
                   className="w-full h-full object-cover"
                   loading="lazy"
                 />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">{hero?.authorName || 'Sarah Thompson'}</p>
-                <p className="text-sm text-gray-600">{hero?.publishDate || '15 Mar 2024'} • {hero?.readTime || '5 min read'}</p>
+                <p className="text-sm font-medium text-gray-900">{article?.authorName || hero?.authorName || 'Sarah Thompson'}</p>
+                <p className="text-sm text-gray-600">{article?.publishDate || hero?.publishDate || '15 Mar 2024'} • {article?.readTime || hero?.readTime || '5 min read'}</p>
               </div>
             </div>
 
