@@ -20,6 +20,9 @@ import {
   ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, Bars3BottomLeftIcon, EllipsisHorizontalIcon,
   PhoneIcon, BoltIcon
 } from '@heroicons/react/24/outline';
+import {
+  Activity, UserSearch, Calendar, CreditCard, Settings, CircleUserRound, LogOut, MoreHorizontal
+} from 'lucide-react';
 
 const poppins = Poppins({
   weight: ['300', '400', '500', '600', '700'],
