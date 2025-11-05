@@ -129,22 +129,24 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Create HTTP server and Socket.IO instance
+// ✅ Create HTTP server and Socket.IO instance (updated)
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
-    origin: (origin: string | undefined, callback: any) => {
-      const allowedOrigins = process.env.NODE_ENV === 'production'
-        ? ['https://actcoachingforlife.onrender.com', process.env.CORS_ORIGIN].filter(Boolean)
-        : ['http://localhost:3002', 'http://localhost:4000', 'http://localhost:4002', 'http://localhost:4003', 'http://localhost:3000', 'http://frontend:3000'];
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin)) return callback(null, true);
-      return callback(new Error('Not allowed by CORS'));
-    },
-    credentials: true,
+    origin: [
+      'http://localhost:3000',
+      'http://localhost:3002',
+      'http://localhost:4000',
+      'http://localhost:4002',
+      'http://localhost:4003',
+      'https://actcoachingforlife.com',
+      'https://www.actcoachingforlife.com',
+      'https://actcoachingforlife-backend.onrender.com',
+    ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-  }
+    credentials: true,
+  },
 });
 
 // Make io instance available to routes
