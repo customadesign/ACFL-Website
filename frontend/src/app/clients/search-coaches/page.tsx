@@ -741,7 +741,7 @@ function SearchCoachesContent() {
         <div className="relative bg-gradient-to-br from-gray-lite via-white to-blue-50 dark:from-gray-800 dark:via-gray-900 dark:to-gray-800 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 mb-6 sm:mb-8 lg:mb-12 overflow-hidden mx-2 sm:mx-0">
           <div className="relative z-10 text-center max-w-4xl mx-auto">
             <div className="inline-flex items-center bg-white/90 dark:bg-gray-800/90 px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm font-medium text-brand-teal dark:text-brand-teal mb-4 sm:mb-6 border border-gray-200 dark:border-gray-700">
-              <Search className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
+              <MagnifyingGlassIcon className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2 flex-shrink-0" />
               <span>Find Your Perfect Match</span>
             </div>
 
@@ -778,7 +778,7 @@ function SearchCoachesContent() {
               <div className="bg-white dark:bg-gray-800 rounded-2xl border-2 border-gray-100 dark:border-gray-700 shadow-lg hover:shadow-xl transition-shadow">
                 <div className="flex items-center p-1 sm:p-2">
                   <div className="flex items-center flex-1 min-w-0">
-                    <Search className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 dark:text-gray-500 ml-2 sm:ml-4 flex-shrink-0" />
+                    <MagnifyingGlassIcon className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400 dark:text-gray-500 ml-2 sm:ml-4 flex-shrink-0" />
                     <input
                       type="text"
                       placeholder="Search coaches..."
@@ -794,7 +794,7 @@ function SearchCoachesContent() {
                       className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors flex-shrink-0"
                       aria-label="Clear search"
                     >
-                      <X className="w-4 h-4 sm:w-5 sm:h-5" />
+                      <XMarkIcon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </button>
                   )}
                   <button
@@ -806,7 +806,7 @@ function SearchCoachesContent() {
                     {isLoading ? (
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white sm:mr-2"></div>
                     ) : (
-                      <Search className="w-5 h-5 sm:mr-2" />
+                      <MagnifyingGlassIcon className="w-5 h-5 sm:mr-2" />
                     )}
                     <span className="hidden sm:inline">Search</span>
                   </button>
@@ -834,7 +834,7 @@ function SearchCoachesContent() {
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
+              <MagnifyingGlassIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="truncate">Discover</span>
             </button>
             <button
@@ -849,7 +849,7 @@ function SearchCoachesContent() {
                   : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
               }`}
             >
-              <Heart className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
+              <HeartIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2 flex-shrink-0" />
               <span className="truncate">Favorites ({savedCoaches.length})</span>
             </button>
           </div>
@@ -886,7 +886,7 @@ function SearchCoachesContent() {
               <div className="flex items-start">
                 <div className="flex-shrink-0">
                   <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                    <X className="w-5 h-5 text-red-600" />
+                    <XMarkIcon className="w-5 h-5 text-red-600" />
                   </div>
                 </div>
                 <div className="ml-4 flex-1">
@@ -923,9 +923,9 @@ function SearchCoachesContent() {
                 onClick={() => setShowAdvancedFilters(!showAdvancedFilters)}
                 className="inline-flex items-center justify-center bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 border-2 border-gray-200 dark:border-gray-700 rounded-2xl px-4 sm:px-6 py-3 font-semibold text-gray-700 dark:text-gray-200 shadow-lg hover:shadow-xl transition-all duration-200 w-full sm:w-auto max-w-md sm:max-w-none text-sm sm:text-base"
               >
-                <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+                <Bars4Icon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
                 <span>{showAdvancedFilters ? 'Hide' : 'Show'} Advanced Filters</span>
-                {showAdvancedFilters ? <ChevronUp className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" />}
+                {showAdvancedFilters ? <ChevronUpIcon className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" /> : <ChevronDownIcon className="w-4 h-4 sm:w-5 sm:h-5 ml-2 sm:ml-3 flex-shrink-0" />}
               </button>
             </div>
 
@@ -951,7 +951,7 @@ function SearchCoachesContent() {
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-coral/10 dark:bg-brand-coral/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Award className="w-4 h-4 sm:w-5 sm:h-5 text-brand-coral" />
+                          <TrophyIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-coral" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Specialization</h4>
@@ -998,7 +998,7 @@ function SearchCoachesContent() {
                       <div className="space-y-3 sm:space-y-4">
                         <div className="flex items-center space-x-2 sm:space-x-3">
                           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-teal/10 dark:bg-brand-teal/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-brand-teal" />
+                            <ClockIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-teal" />
                           </div>
                           <div className="min-w-0">
                             <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Experience</h4>
@@ -1037,7 +1037,7 @@ function SearchCoachesContent() {
                       <div className="space-y-3 sm:space-y-4">
                         <div className="flex items-center space-x-2 sm:space-x-3">
                           <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-leaf/10 dark:bg-brand-leaf/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                            <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf" />
+                            <CurrencyDollarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-leaf" />
                           </div>
                           <div className="min-w-0">
                             <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Budget</h4>
@@ -1080,7 +1080,7 @@ function SearchCoachesContent() {
                     <div className="space-y-3 sm:space-y-4">
                       <div className="flex items-center space-x-2 sm:space-x-3">
                         <div className="w-8 h-8 sm:w-10 sm:h-10 bg-brand-orange/10 dark:bg-brand-orange/20 rounded-xl flex items-center justify-center flex-shrink-0">
-                          <Languages className="w-4 h-4 sm:w-5 sm:h-5 text-brand-orange" />
+                          <LanguageIcon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-orange" />
                         </div>
                         <div className="min-w-0">
                           <h4 className="font-semibold text-ink-dark dark:text-white text-sm sm:text-base">Languages</h4>
@@ -1138,7 +1138,7 @@ function SearchCoachesContent() {
                         }}
                         className="flex items-center justify-center px-4 sm:px-6 py-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-xl font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-sm sm:text-base order-2 sm:order-1"
                       >
-                        <RefreshCw className="w-4 h-4 mr-2 flex-shrink-0" />
+                        <ArrowPathIcon className="w-4 h-4 mr-2 flex-shrink-0" />
                         <span>Reset Filters</span>
                       </button>
 
@@ -1150,7 +1150,7 @@ function SearchCoachesContent() {
                         {isLoading ? (
                           <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2 sm:mr-3 flex-shrink-0"></div>
                         ) : (
-                          <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
+                          <MagnifyingGlassIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3 flex-shrink-0" />
                         )}
                         <span>Apply Filters & Search</span>
                       </button>
@@ -1182,7 +1182,7 @@ function SearchCoachesContent() {
                 onClick={() => setShowForm(!showForm)}
                 className="flex items-center justify-center space-x-2 w-full sm:w-auto mx-2 sm:mx-0 touch-manipulation"
               >
-                {showForm ? <X className="w-4 h-4" /> : <Filter className="w-4 h-4" />}
+                {showForm ? <XMarkIcon className="w-4 h-4" /> : <FunnelIcon className="w-4 h-4" />}
                 <span className="text-gray-900">{showForm ? 'Hide' : 'Show'} Filters</span>
               </Button>
             )}
@@ -1194,7 +1194,7 @@ function SearchCoachesContent() {
               <div className="max-w-md mx-auto">
                 {activeTab === 'saved' ? (
                   <>
-                    <Heart className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <HeartIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <h3 className="text-lg sm:text-xl font-semibold text-ink-dark dark:text-white mb-2">No Saved Coaches Yet</h3>
                     <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                       You haven't saved any coaches yet. Use the search tab to find coaches and save them to your favorites.
@@ -1214,7 +1214,7 @@ function SearchCoachesContent() {
                   </>
                 ) : (
                   <>
-                    <Search className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                    <MagnifyingGlassIcon className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                     <h3 className="text-lg sm:text-xl font-semibold text-ink-dark dark:text-white mb-2">No Coaches Found</h3>
                     <p className="text-sm sm:text-base text-gray-600 dark:text-gray-300 mb-4">
                       Try adjusting your search criteria or filters to find more matches.

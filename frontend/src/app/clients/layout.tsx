@@ -15,11 +15,11 @@ import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
 import ThemeConsentModal from '@/components/ThemeConsentModal';
 import {
-  Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Activity, Calendar,
-  Mail, UserSearch, User, CreditCard, Settings, BarChart2,
-  ChevronDown, ChevronRight, Search, PanelLeft, MoreHorizontal,
-  Phone, Receipt, Zap
-} from 'lucide-react';
+  BellIcon, UserCircleIcon, ArrowLeftOnRectangleIcon, SunIcon, MoonIcon, Bars3Icon, XMarkIcon, CalendarIcon,
+  EnvelopeIcon, UserIcon, CreditCardIcon, Cog6ToothIcon, Bars3CenterLeftIcon,
+  ChevronDownIcon, ChevronRightIcon, MagnifyingGlassIcon, Bars3BottomLeftIcon, EllipsisHorizontalIcon,
+  PhoneIcon, BoltIcon
+} from '@heroicons/react/24/outline';
 
 const poppins = Poppins({
   weight: ['300', '400', '500', '600', '700'],
@@ -291,7 +291,7 @@ export default function ClientLayout({
     {
       id: 'dashboard',
       name: 'Dashboard',
-      icon: Activity,
+      icon: BoltIcon,
       items: [
         { name: 'Overview', href: '/clients', icon: Activity },
       ]
@@ -299,17 +299,17 @@ export default function ClientLayout({
     {
       id: 'coaching',
       name: 'Coaching',
-      icon: UserSearch,
+      icon: UserIcon,
       items: [
         { name: 'Find Coaches', href: '/clients/search-coaches', icon: UserSearch },
-        { name: 'Appointments', href: '/clients/appointments', icon: Calendar, notificationCount: appointmentNotificationCount },
-        { name: 'Messages', href: '/clients/messages', icon: Mail, notificationCount: unreadMessageCount },
+        { name: 'Appointments', href: '/clients/appointments', icon: CalendarIcon, notificationCount: appointmentNotificationCount },
+        { name: 'Messages', href: '/clients/messages', icon: EnvelopeIcon, notificationCount: unreadMessageCount },
       ]
     },
     {
       id: 'account',
       name: 'Account',
-      icon: User,
+      icon: UserIcon,
       items: [
         { name: 'Profile', href: '/clients/profile', icon: User },
         { name: 'Billing & Payments', href: '/clients/billing', icon: CreditCard },
@@ -439,7 +439,7 @@ export default function ClientLayout({
             {!sidebarCollapsed && (
               <div className="shrink-0 p-4 border-b border-gray-200 dark:border-gray-700">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Search navigation..."
@@ -515,7 +515,7 @@ export default function ClientLayout({
                             {groupNotificationCount > 0 && (
                               <NotificationBadge count={groupNotificationCount} size="sm" variant="red" />
                             )}
-                            <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${
+                            <ChevronRightIcon className={`w-4 h-4 text-gray-400 transition-transform ${
                               isExpanded ? 'rotate-90' : ''
                             }`} />
                           </div>
@@ -584,7 +584,7 @@ export default function ClientLayout({
                     className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Toggle sidebar"
                   >
-                    <PanelLeft className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${
+                    <Bars3BottomLeftIcon className={`w-5 h-5 text-gray-600 dark:text-gray-400 transition-transform ${
                       sidebarCollapsed ? 'rotate-180' : ''
                     }`} />
                   </button>
@@ -599,9 +599,9 @@ export default function ClientLayout({
                       aria-label="Toggle theme"
                     >
                       {theme === 'light' ? (
-                        <Moon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <MoonIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       ) : (
-                        <Sun className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <SunIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       )}
                     </button>
 
@@ -612,7 +612,7 @@ export default function ClientLayout({
                         className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                         aria-label="Notifications"
                       >
-                        <Bell className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <BellIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                         {(unreadMessageCount + appointmentNotificationCount) > 0 && (
                           <NotificationBadge
                             count={unreadMessageCount + appointmentNotificationCount}
@@ -632,7 +632,7 @@ export default function ClientLayout({
 
                           {(unreadMessageCount + appointmentNotificationCount) === 0 ? (
                             <div className="text-center py-8">
-                              <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                              <BellIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
                               <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
                             </div>
                           ) : (
@@ -661,7 +661,7 @@ export default function ClientLayout({
                               {unreadMessageCount > 0 && (
                                 <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                   <div className="flex items-center space-x-3">
-                                    <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                    <EnvelopeIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                     <div>
                                       <p className="font-medium text-gray-900 dark:text-white">New Messages</p>
                                       <p className="text-sm text-gray-600 dark:text-gray-300">{unreadMessageCount} unread messages</p>
@@ -751,7 +751,7 @@ export default function ClientLayout({
                     className="p-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
                     aria-label="Toggle menu"
                   >
-                    {mobileMenuOpen ? <X className="w-6 h-6 text-gray-700 dark:text-gray-300" /> : <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />}
+                    {mobileMenuOpen ? <XMarkIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" /> : <Bars3Icon className="w-6 h-6 text-gray-700 dark:text-gray-300" />}
                   </button>
 
                   <img
@@ -773,7 +773,7 @@ export default function ClientLayout({
                       className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
                       aria-label="Notifications"
                     >
-                      <Bell className="w-6 h-6 text-gray-600 dark:text-gray-400" />
+                      <BellIcon className="w-6 h-6 text-gray-600 dark:text-gray-400" />
                       {(unreadMessageCount + appointmentNotificationCount) > 0 && (
                         <NotificationBadge
                           count={unreadMessageCount + appointmentNotificationCount}
@@ -797,7 +797,7 @@ export default function ClientLayout({
 
                             {(unreadMessageCount + appointmentNotificationCount) === 0 ? (
                               <div className="text-center py-8">
-                                <Bell className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
+                                <BellIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-2" />
                                 <p className="text-gray-500 dark:text-gray-400">No new notifications</p>
                               </div>
                             ) : (
@@ -826,7 +826,7 @@ export default function ClientLayout({
                                 {unreadMessageCount > 0 && (
                                   <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                                     <div className="flex items-center space-x-3">
-                                      <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                                      <EnvelopeIcon className="w-5 h-5 text-blue-600 dark:text-blue-400" />
                                       <div>
                                         <p className="font-medium text-gray-900 dark:text-white">New Messages</p>
                                         <p className="text-sm text-gray-600 dark:text-gray-300">{unreadMessageCount} unread messages</p>
@@ -885,12 +885,12 @@ export default function ClientLayout({
                           >
                             {theme === 'light' ? (
                               <>
-                                <Moon className="w-4 h-4" />
+                                <MoonIcon className="w-4 h-4" />
                                 <span>Dark Mode</span>
                               </>
                             ) : (
                               <>
-                                <Sun className="w-4 h-4" />
+                                <SunIcon className="w-4 h-4" />
                                 <span>Light Mode</span>
                               </>
                             )}
@@ -938,13 +938,13 @@ export default function ClientLayout({
                       onClick={() => setMobileMenuOpen(false)}
                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                     >
-                      <X className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <XMarkIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                     </button>
                   </div>
 
                   {/* Mobile Search */}
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
                       type="text"
                       placeholder="Search navigation..."
@@ -1001,7 +1001,7 @@ export default function ClientLayout({
                             {groupNotificationCount > 0 && (
                               <NotificationBadge count={groupNotificationCount} size="sm" variant="red" />
                             )}
-                            <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${
+                            <ChevronRightIcon className={`w-4 h-4 text-gray-400 transition-transform ${
                               isExpanded ? 'rotate-90' : ''
                             }`} />
                           </div>

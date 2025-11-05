@@ -15,7 +15,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useMeeting } from '@/contexts/MeetingContext';
 import axios from 'axios';
 import { apiGet, apiPut, API_URL as API_BASE_URL } from '@/lib/api-client';
-import { Video, ArrowUpDown, ArrowUp, ArrowDown, MessageCircle, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react';
+import { VideoIcon, ArrowUpDownIcon, ArrowUpIcon, ArrowDownIcon, ChatBubbleLeftIcon, MagnifyingGlassIcon, FunnelIcon, ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { io, Socket } from 'socket.io-client';
 
 interface Appointment {
@@ -479,7 +479,7 @@ function AppointmentsContent() {
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
             <div className="relative">
-              <Search className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <MagnifyingGlassIcon className="h-4 w-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <Input
                 placeholder="Search by coach name, notes, status, or date..."
                 value={searchQuery}
@@ -515,7 +515,7 @@ function AppointmentsContent() {
               onClick={clearFilters}
               className="text-xs"
             >
-              <Filter className="h-3 w-3 mr-1" />
+              <FunnelIcon className="h-3 w-3 mr-1" />
               Clear filters
             </Button>
           </div>
@@ -535,9 +535,9 @@ function AppointmentsContent() {
             >
               Date Added
               {sortBy === 'dateAdded' && (
-                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                sortOrder === 'asc' ? <ArrowUpIcon className="w-3 h-3" /> : <ArrowDownIcon className="w-3 h-3" />
               )}
-              {sortBy !== 'dateAdded' && <ArrowUpDown className="w-3 h-3" />}
+              {sortBy !== 'dateAdded' && <ArrowUpDownIcon className="w-3 h-3" />}
             </Button>
             <Button
               variant={sortBy === 'name' ? 'default' : 'outline'}
@@ -547,9 +547,9 @@ function AppointmentsContent() {
             >
               Coach Name
               {sortBy === 'name' && (
-                sortOrder === 'asc' ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />
+                sortOrder === 'asc' ? <ArrowUpIcon className="w-3 h-3" /> : <ArrowDownIcon className="w-3 h-3" />
               )}
-              {sortBy !== 'name' && <ArrowUpDown className="w-3 h-3" />}
+              {sortBy !== 'name' && <ArrowUpDownIcon className="w-3 h-3" />}
             </Button>
           </div>
         </div>
@@ -632,7 +632,7 @@ function AppointmentsContent() {
                               disabled={!isJoinAvailable(appointment) || (isInMeeting && currentMeetingId !== appointment.meeting_id)}
                               size="sm"
                             >
-                              <Video className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
+                              <VideoIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> 
                               {isInMeeting && currentMeetingId === appointment.meeting_id ? 'Rejoin Session' : 'Join Session'}
                             </Button>
                             {isInMeeting && currentMeetingId !== appointment.meeting_id && (
@@ -656,7 +656,7 @@ function AppointmentsContent() {
                             className="text-blue-600 hover:bg-blue-50 w-full sm:w-auto"
                             size="sm"
                           >
-                            <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message
+                            <ChatBubbleLeftIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message
                           </Button>
                         </Link>
                       </div>
@@ -671,7 +671,7 @@ function AppointmentsContent() {
                             className="text-blue-600 hover:bg-blue-50 w-full sm:w-auto"
                             size="sm"
                           >
-                            <MessageCircle className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message Coach
+                            <ChatBubbleLeftIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" /> Message Coach
                           </Button>
                         </Link>
                       </div>

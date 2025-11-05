@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import MeetingBlocker from '@/components/MeetingBlocker';
-import { Calendar, Clock, User, ChevronLeft, ChevronRight, CheckCircle, MapPin, Phone } from 'lucide-react';
+import { CalendarIcon, ClockIcon, UserIcon, ChevronLeftIcon, ChevronRightIcon, CheckCircleIcon, MapPinIcon, PhoneIcon } from '@heroicons/react/24/outline';
 import { getApiUrl } from '@/lib/api';
 
 interface Coach {
@@ -213,7 +213,7 @@ export default function BookSessionPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <div className="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
           <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-            <CheckCircle className="w-8 h-8 text-green-600 dark:text-green-400" />
+            <CheckCircleIcon className="w-8 h-8 text-green-600 dark:text-green-400" />
           </div>
           
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
@@ -303,7 +303,7 @@ export default function BookSessionPage() {
                 >
                   <div className="p-6">
                     <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <User className="w-10 h-10 text-white" />
+                      <UserIcon className="w-10 h-10 text-white" />
                     </div>
                     <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center mb-2">
                       {coach.first_name} {coach.last_name}
@@ -344,11 +344,11 @@ export default function BookSessionPage() {
               onClick={() => setSelectedCoach(null)}
               className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
             >
-              <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+              <ChevronLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
             </button>
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                <User className="w-6 h-6 text-white" />
+                <UserIcon className="w-6 h-6 text-white" />
               </div>
               <div>
                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
@@ -393,7 +393,7 @@ export default function BookSessionPage() {
                   }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <ChevronLeft className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  <ChevronLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 </button>
                 <h4 className="text-xl font-semibold text-gray-900 dark:text-white">
                   {MONTHS[currentDate.getMonth()]} {currentDate.getFullYear()}
@@ -406,7 +406,7 @@ export default function BookSessionPage() {
                   }}
                   className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                 >
-                  <ChevronRight className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                  <ChevronRightIcon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
                 </button>
               </div>
 
@@ -478,7 +478,7 @@ export default function BookSessionPage() {
                     </div>
                   ) : availableSlots.length === 0 ? (
                     <div className="text-center py-8">
-                      <Clock className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+                      <ClockIcon className="w-12 h-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
                       <p className="text-gray-500 dark:text-gray-400 text-sm">
                         No available times for this date
                       </p>
@@ -530,7 +530,7 @@ export default function BookSessionPage() {
               <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-4 space-y-3">
                 <div className="flex items-center space-x-3">
                   <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
+                    <UserIcon className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <div className="font-medium text-gray-900 dark:text-white">
@@ -606,7 +606,7 @@ export default function BookSessionPage() {
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="w-4 h-4" />
+                    <CheckCircleIcon className="w-4 h-4" />
                     <span>Book Session</span>
                   </>
                 )}

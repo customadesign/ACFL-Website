@@ -12,7 +12,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import ProtectedRoute from '@/components/ProtectedRoute'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { Download, FileText, FileImage, Trash2, AlertTriangle, ArrowLeft, Calendar, Shield, UserX, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { ArrowDownTrayIcon, DocumentTextIcon, DocumentChartBarIcon, TrashIcon, ExclamationTriangleIcon, ArrowLeftIcon, CalendarIcon, ShieldCheckIcon, UserMinusIcon, CheckCircleIcon, XCircleIcon, ClockIcon } from '@heroicons/react/24/outline'
 
 interface DeletionStatus {
   isActive: boolean
@@ -208,14 +208,14 @@ function SettingsContent() {
           {/* Alerts */}
           {error && (
             <Alert className="mb-6 border-red-200 bg-red-50 text-red-800">
-              <AlertTriangle className="h-4 w-4" />
+              <ExclamationTriangleIcon className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {success && (
             <Alert className="mb-6 border-green-200 bg-green-50 text-green-800">
-              <CheckCircle className="h-4 w-4" />
+              <CheckCircleIcon className="h-4 w-4" />
               <AlertDescription>{success}</AlertDescription>
             </Alert>
           )}
@@ -225,7 +225,7 @@ function SettingsContent() {
             <Card className="mb-6">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5" />
+                  <ShieldCheckIcon className="w-5 h-5" />
                   <span>Account Status</span>
                 </CardTitle>
               </CardHeader>
@@ -236,12 +236,12 @@ function SettingsContent() {
                     <div className="flex items-center space-x-2">
                       {deletionStatus.isActive ? (
                         <>
-                          <CheckCircle className="w-4 h-4 text-green-500" />
+                          <CheckCircleIcon className="w-4 h-4 text-green-500" />
                           <span className="text-green-600">Active</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-4 h-4 text-red-500" />
+                          <XCircleIcon className="w-4 h-4 text-red-500" />
                           <span className="text-red-600">Deactivated</span>
                         </>
                       )}
@@ -251,7 +251,7 @@ function SettingsContent() {
                   {deletionStatus.hasPendingDeletion && deletionStatus.deletion && (
                     <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                       <div className="flex items-start space-x-3">
-                        <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+                        <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mt-0.5" />
                         <div className="flex-1">
                           <h4 className="font-medium text-red-800 mb-2">Account Deletion Scheduled</h4>
                           <div className="space-y-2 text-sm text-red-700">
@@ -292,7 +292,7 @@ function SettingsContent() {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Download className="w-5 h-5" />
+                <ArrowDownTrayIcon className="w-5 h-5" />
                 <span>Export Your Data</span>
               </CardTitle>
               <CardDescription>
@@ -303,7 +303,7 @@ function SettingsContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
                   <CardContent className="p-6 text-center flex flex-col h-full">
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                    <DocumentTextIcon className="w-12 h-12 mx-auto mb-4 text-blue-600" />
                     <h3 className="font-semibold mb-2">CSV Export</h3>
                     <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download your data in CSV format, suitable for spreadsheet applications.
@@ -320,7 +320,7 @@ function SettingsContent() {
 
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
                   <CardContent className="p-6 text-center flex flex-col h-full">
-                    <FileImage className="w-12 h-12 mx-auto mb-4 text-red-600" />
+                    <DocumentChartBarIcon className="w-12 h-12 mx-auto mb-4 text-red-600" />
                     <h3 className="font-semibold mb-2">PDF Export</h3>
                     <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download a comprehensive PDF report of your data.
@@ -344,7 +344,7 @@ function SettingsContent() {
             <Card className="border-red-200">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2 text-red-600">
-                  <UserX className="w-5 h-5" />
+                  <UserMinusIcon className="w-5 h-5" />
                   <span>Delete Account</span>
                 </CardTitle>
                 <CardDescription>
@@ -367,7 +367,7 @@ function SettingsContent() {
                   <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                     <DialogTrigger asChild>
                       <Button variant="destructive" className="w-full">
-                        <Trash2 className="w-4 h-4 mr-2" />
+                        <TrashIcon className="w-4 h-4 mr-2" />
                         Delete My Account
                       </Button>
                     </DialogTrigger>

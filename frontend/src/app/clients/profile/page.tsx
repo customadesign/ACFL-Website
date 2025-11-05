@@ -18,7 +18,7 @@ import ProtectedRoute from '@/components/ProtectedRoute'
 import ProfileCardSkeleton from '@/components/ProfileCardSkeleton'
 import { useAuth } from '@/contexts/AuthContext'
 import { getApiUrl } from '@/lib/api'
-import { User, Edit, Save, X, Calendar, Clock, MapPin, Mail, Shield, Settings, Search, Heart, RefreshCw, Camera, Upload, Bell, BellOff, Volume2, VolumeX, MessageCircle, UserX, Download, FileText, FileImage, Trash2, AlertTriangle, CheckCircle, XCircle } from 'lucide-react'
+import { UserIcon, PencilIcon, SaveIcon, XMarkIcon, CalendarIcon, ClockIcon, MapPinIcon, EnvelopeIcon, ShieldCheckIcon, Cog6ToothIcon, MagnifyingGlassIcon, HeartIcon, ArrowPathIcon, PhotoIcon, DocumentArrowUpIcon, BellIcon, BellSlashIcon, SpeakerWaveIcon, SpeakerXMarkIcon, ChatBubbleLeftIcon, UserMinusIcon, ArrowDownTrayIcon, DocumentTextIcon, DocumentChartBarIcon, TrashIcon, ExclamationTriangleIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline'
 import { STATE_NAMES } from '@/constants/states'
 import { 
   concernOptions, 
@@ -543,7 +543,7 @@ function ProfileContent() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
                   <div className="p-3 lg:p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex-shrink-0">
-                    <Calendar className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                    <CalendarIcon className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
                     <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Total Sessions</p>
@@ -557,7 +557,7 @@ function ProfileContent() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
                   <div className="p-3 lg:p-2 bg-green-100 dark:bg-green-900/20 rounded-lg flex-shrink-0">
-                    <Clock className="w-6 h-6 text-green-600 dark:text-green-400" />
+                    <ClockIcon className="w-6 h-6 text-green-600 dark:text-green-400" />
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
                     <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Upcoming Sessions</p>
@@ -571,7 +571,7 @@ function ProfileContent() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
                   <div className="p-3 lg:p-2 bg-purple-100 dark:bg-purple-900/20 rounded-lg flex-shrink-0">
-                    <Heart className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                    <HeartIcon className="w-6 h-6 text-purple-600 dark:text-purple-400" />
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
                     <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Saved Coaches</p>
@@ -585,7 +585,7 @@ function ProfileContent() {
               <CardContent className="p-4 lg:p-6">
                 <div className="flex items-center">
                   <div className="p-3 lg:p-2 bg-yellow-100 dark:bg-yellow-900/20 rounded-lg flex-shrink-0">
-                    <User className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
+                    <UserIcon className="w-6 h-6 text-yellow-600 dark:text-yellow-400" />
                   </div>
                   <div className="ml-4 min-w-0 flex-1">
                     <p className="text-sm font-medium text-muted-foreground dark:text-gray-300 truncate">Member Since</p>
@@ -604,7 +604,7 @@ function ProfileContent() {
           <Card className="bg-card border-border mb-6">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Camera className="w-5 h-5" />
+                <PhotoIcon className="w-5 h-5" />
                 Profile Photo
               </CardTitle>
               <CardDescription>Upload a professional photo for your profile</CardDescription>
@@ -620,11 +620,11 @@ function ProfileContent() {
                     />
                   ) : (
                     <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="w-12 h-12 sm:w-14 sm:h-14 text-gray-400" />
+                      <UserIcon className="w-12 h-12 sm:w-14 sm:h-14 text-gray-400" />
                     </div>
                   )}
                   <label className="absolute bottom-0 right-0 bg-blue-600 text-white p-3 rounded-full cursor-pointer hover:bg-blue-700 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center">
-                    <Upload className="w-5 h-5" />
+                    <DocumentArrowUpIcon className="w-5 h-5" />
                     <input
                       type="file"
                       accept="image/*"
@@ -1001,7 +1001,7 @@ function ProfileContent() {
               <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
                 <div className="flex-1">
                   <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                    <Bell className="w-5 h-5" />
+                    <BellIcon className="w-5 h-5" />
                     Notification Preferences
                   </CardTitle>
                   <CardDescription className="text-sm sm:text-base mt-1">
@@ -1010,7 +1010,7 @@ function ProfileContent() {
                 </div>
                 {!isEditingNotifications ? (
                   <Button onClick={() => setIsEditingNotifications(true)} className="bg-blue-600 hover:bg-blue-700 dark:text-white min-h-[44px] touch-manipulation w-full lg:w-auto px-6 text-base flex items-center gap-2">
-                    <Settings className="w-4 h-4" />
+                    <Cog6ToothIcon className="w-4 h-4" />
                     Edit Settings
                   </Button>
                 ) : (
@@ -1057,7 +1057,7 @@ function ProfileContent() {
 
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
-                      <Bell className="w-5 h-5 text-purple-600" />
+                      <BellIcon className="w-5 h-5 text-purple-600" />
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">Push Notifications</label>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Receive notifications in your browser</p>
@@ -1074,9 +1074,9 @@ function ProfileContent() {
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
                       {form.watch('soundNotifications') ? (
-                        <Volume2 className="w-5 h-5 text-orange-600" />
+                        <SpeakerWaveIcon className="w-5 h-5 text-orange-600" />
                       ) : (
-                        <VolumeX className="w-5 h-5 text-gray-400" />
+                        <SpeakerXMarkIcon className="w-5 h-5 text-gray-400" />
                       )}
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">Sound Notifications</label>
@@ -1099,7 +1099,7 @@ function ProfileContent() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
-                      <MessageCircle className="w-5 h-5 text-blue-600" />
+                      <ChatBubbleLeftIcon className="w-5 h-5 text-blue-600" />
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">New Messages</label>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Get notified when you receive new messages</p>
@@ -1115,7 +1115,7 @@ function ProfileContent() {
 
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
-                      <Calendar className="w-5 h-5 text-green-600" />
+                      <CalendarIcon className="w-5 h-5 text-green-600" />
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">Appointment Updates</label>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Get notified about appointment changes, confirmations, and cancellations</p>
@@ -1131,7 +1131,7 @@ function ProfileContent() {
 
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
-                      <Clock className="w-5 h-5 text-orange-600" />
+                      <ClockIcon className="w-5 h-5 text-orange-600" />
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">Appointment Reminders</label>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Get reminder notifications before your appointments</p>
@@ -1147,7 +1147,7 @@ function ProfileContent() {
 
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-background">
                     <div className="flex items-center space-x-3">
-                      <Mail className="w-5 h-5 text-purple-600" />
+                      <EnvelopeIcon className="w-5 h-5 text-purple-600" />
                       <div>
                         <label className="text-sm font-medium text-gray-900 dark:text-white">Marketing Emails</label>
                         <p className="text-xs text-gray-500 dark:text-gray-400">Receive updates about new features and promotions</p>
@@ -1226,7 +1226,7 @@ function ProfileContent() {
           <Card className="bg-card border-border mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Shield className="w-5 h-5" />
+                <ShieldCheckIcon className="w-5 h-5" />
                 <span>Account Status</span>
               </CardTitle>
             </CardHeader>
@@ -1237,12 +1237,12 @@ function ProfileContent() {
                   <div className="flex items-center space-x-2">
                     {deletionStatus.isActive ? (
                       <>
-                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        <CheckCircleIcon className="w-4 h-4 text-green-500" />
                         <span className="text-green-600">Active</span>
                       </>
                     ) : (
                       <>
-                        <XCircle className="w-4 h-4 text-red-500" />
+                        <XCircleIcon className="w-4 h-4 text-red-500" />
                         <span className="text-red-600">Deactivated</span>
                       </>
                     )}
@@ -1252,7 +1252,7 @@ function ProfileContent() {
                 {deletionStatus.hasPendingDeletion && deletionStatus.deletion && (
                   <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                     <div className="flex items-start space-x-3">
-                      <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+                      <ExclamationTriangleIcon className="w-5 h-5 text-red-500 mt-0.5" />
                       <div className="flex-1">
                         <h4 className="font-medium text-red-800 mb-2">Account Deletion Scheduled</h4>
                         <div className="space-y-2 text-sm text-red-700">
@@ -1296,7 +1296,7 @@ function ProfileContent() {
           <Card className="bg-card border-border mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
-                <Download className="w-5 h-5" />
+                <ArrowDownTrayIcon className="w-5 h-5" />
                 <span>Export Your Data</span>
               </CardTitle>
               <CardDescription>
@@ -1307,7 +1307,7 @@ function ProfileContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
                   <CardContent className="p-6 text-center flex flex-col h-full">
-                    <FileText className="w-12 h-12 mx-auto mb-4 text-blue-600" />
+                    <DocumentTextIcon className="w-12 h-12 mx-auto mb-4 text-blue-600" />
                     <h3 className="font-semibold mb-2">CSV Export</h3>
                     <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download your data in CSV format, suitable for spreadsheet applications.
@@ -1317,7 +1317,7 @@ function ProfileContent() {
                       disabled={isExporting}
                       className="w-full flex items-center justify-center gap-2 py-3 px-4"
                     >
-                      <Download className="w-4 h-4" />
+                      <ArrowDownTrayIcon className="w-4 h-4" />
                       {isExporting ? 'Generating...' : 'Download CSV'}
                     </Button>
                   </CardContent>
@@ -1325,7 +1325,7 @@ function ProfileContent() {
 
                 <Card className="border-2 border-gray-200 hover:border-blue-300 transition-colors">
                   <CardContent className="p-6 text-center flex flex-col h-full">
-                    <FileImage className="w-12 h-12 mx-auto mb-4 text-red-600" />
+                    <DocumentChartBarIcon className="w-12 h-12 mx-auto mb-4 text-red-600" />
                     <h3 className="font-semibold mb-2">PDF Export</h3>
                     <p className="text-sm text-gray-600 mb-4 flex-grow">
                       Download a comprehensive PDF report of your data.
@@ -1336,7 +1336,7 @@ function ProfileContent() {
                       variant="outline"
                       className="w-full flex items-center justify-center gap-2 py-3 px-4"
                     >
-                      <Download className="w-4 h-4" />
+                      <ArrowDownTrayIcon className="w-4 h-4" />
                       {isExporting ? 'Generating...' : 'Download PDF'}
                     </Button>
                   </CardContent>
@@ -1351,7 +1351,7 @@ function ProfileContent() {
           <Card className="border-red-200 bg-card border-border mt-6">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-red-600">
-                <UserX className="w-5 h-5" />
+                <UserMinusIcon className="w-5 h-5" />
                 <span>Delete Account</span>
               </CardTitle>
               <CardDescription>
@@ -1374,7 +1374,7 @@ function ProfileContent() {
                 <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
                   <DialogTrigger asChild>
                     <Button variant="destructive" className="w-full">
-                      <Trash2 className="w-4 h-4 mr-2" />
+                      <TrashIcon className="w-4 h-4 mr-2" />
                       Delete My Account
                     </Button>
                   </DialogTrigger>

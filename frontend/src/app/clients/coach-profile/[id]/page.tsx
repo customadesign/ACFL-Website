@@ -566,7 +566,7 @@ function CoachProfileContent() {
           <div className="text-6xl mb-4">🔍</div>
           <div className="text-xl text-gray-600 dark:text-gray-300 mb-4">Coach not found</div>
           <Button onClick={() => router.back()} variant="outline">
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <ArrowLeftIcon className="w-4 h-4 mr-2" />
             Go Back
           </Button>
         </div>
@@ -585,7 +585,7 @@ function CoachProfileContent() {
               onClick={() => router.back()}
               className="flex items-center space-x-1 sm:space-x-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors text-sm sm:text-base"
             >
-              <ArrowLeft className="w-4 h-4" />
+              <ArrowLeftIcon className="w-4 h-4" />
               <span className="hidden xs:inline">Back to Search</span>
               <span className="xs:hidden">Back</span>
             </Button>
@@ -595,7 +595,7 @@ function CoachProfileContent() {
                 onClick={toggleSaved}
                 className={`flex items-center space-x-1 sm:space-x-2 transition-colors text-sm sm:text-base ${isSaved ? 'text-red-500 hover:text-red-600' : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white'}`}
               >
-                <Heart className={`w-4 h-4 transition-all ${isSaved ? 'fill-current scale-110' : ''}`} />
+                <HeartIcon className={`w-4 h-4 transition-all ${isSaved ? 'fill-current scale-110' : ''}`} />
                 <span>{isSaved ? 'Saved' : 'Save'}</span>
               </Button>
             </DeactivatedActionButton>
@@ -619,7 +619,7 @@ function CoachProfileContent() {
                     />
                   ) : (
                     <div className="w-full h-full bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                      <User className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
+                      <UserIcon className="w-10 h-10 sm:w-12 sm:h-12 text-white" />
                     </div>
                   )}
                 </div>
@@ -627,12 +627,12 @@ function CoachProfileContent() {
                   <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-2">{coach.name}</h1>
                   <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-2 sm:gap-4 text-blue-100 text-sm sm:text-base">
                     <div className="flex items-center justify-center sm:justify-start space-x-1">
-                      <Award className="w-4 h-4" />
+                      <TrophyIcon className="w-4 h-4" />
                       <span>{coach.experience} Experience</span>
                     </div>
                     <span className="hidden sm:inline">•</span>
                     <div className="flex items-center justify-center sm:justify-start space-x-1">
-                      <MapPin className="w-4 h-4" />
+                      <MapPinIcon className="w-4 h-4" />
                       <span>{coach.location.join(", ")}</span>
                     </div>
                   </div>
@@ -657,7 +657,7 @@ function CoachProfileContent() {
                 {coach.matchScore && (
                   <div className="bg-white/20 backdrop-blur-sm px-3 sm:px-4 py-2 rounded-full">
                     <div className="flex items-center space-x-2">
-                      <Sparkles className="w-4 h-4" />
+                      <SparklesIcon className="w-4 h-4" />
                       <span className="text-base sm:text-lg font-semibold">{coach.matchScore}% Match</span>
                     </div>
                   </div>
@@ -674,7 +674,7 @@ function CoachProfileContent() {
                       className="bg-white text-blue-700 hover:bg-blue-50 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
                       onClick={() => handleBookSession('consultation')}
                     >
-                      <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       Free Consultation
                     </Button>
                   </DeactivatedActionButton>
@@ -687,7 +687,7 @@ function CoachProfileContent() {
                     className="bg-green-600 text-white hover:bg-green-700 font-semibold transition-all hover:scale-105 w-full sm:w-auto"
                     onClick={() => handleBookSession('session')}
                   >
-                    <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                    <CurrencyDollarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                     Book Paid Session
                   </Button>
                 </DeactivatedActionButton>
@@ -720,21 +720,21 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Phone className="w-5 h-5 text-blue-600" />
+                  <PhoneIcon className="w-5 h-5 text-blue-600" />
                   <span>Contact Information</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 sm:p-6">
                 <div className="space-y-3 sm:space-y-4">
                   <div className="flex items-center space-x-3">
-                    <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <EnvelopeIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-gray-500">Email</p>
                       <p className="font-medium text-sm sm:text-base truncate">{coach.email}</p>
                     </div>
                   </div>
                   <div className="flex items-center space-x-3">
-                    <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                    <PhoneIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="text-sm text-gray-500">Phone</p>
                       <p className="font-medium text-sm sm:text-base">{coach.phone}</p>
@@ -749,7 +749,7 @@ function CoachProfileContent() {
                       className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
                       onClick={() => handleBookSession('consultation')}
                     >
-                      <Calendar className="w-4 h-4 mr-1" />
+                      <CalendarIcon className="w-4 h-4 mr-1" />
                       <span className="hidden sm:inline">Free Call</span>
                       <span className="sm:hidden">Free</span>
                     </Button>
@@ -759,7 +759,7 @@ function CoachProfileContent() {
                     className="flex-1 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg transition-all hover:scale-105 py-2.5 sm:py-3 text-sm sm:text-base"
                     onClick={() => handleBookSession('session')}
                   >
-                    <DollarSign className="w-4 h-4 mr-1" />
+                    <CurrencyDollarIcon className="w-4 h-4 mr-1" />
                     <span className="hidden sm:inline">Paid</span>
                     <span className="sm:hidden">Pay</span>
                   </Button>
@@ -771,7 +771,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <DollarSign className="w-5 h-5 text-green-600" />
+                  <CurrencyDollarIcon className="w-5 h-5 text-green-600" />
                   <span>Session Details</span>
                 </CardTitle>
               </CardHeader>
@@ -819,7 +819,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Video className="w-5 h-5 text-purple-600" />
+                  <VideoIcon className="w-5 h-5 text-purple-600" />
                   <span>Session Format</span>
                 </CardTitle>
               </CardHeader>
@@ -827,13 +827,13 @@ function CoachProfileContent() {
                 <div className="space-y-2 sm:space-y-3">
                   {coach.virtualAvailable && (
                     <div className="flex items-center space-x-3 p-2.5 sm:p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
+                      <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-green-500 flex-shrink-0" />
                       <span className="text-xs sm:text-sm font-medium">Video Sessions Available</span>
                     </div>
                   )}
                   {coach.inPersonAvailable && (
                     <div className="flex items-center space-x-3 p-2.5 sm:p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
+                      <CheckCircleIcon className="w-4 h-4 sm:w-5 sm:h-5 text-blue-500 flex-shrink-0" />
                       <span className="text-xs sm:text-sm font-medium">In-Person Sessions Available</span>
                     </div>
                   )}
@@ -846,7 +846,7 @@ function CoachProfileContent() {
               <Card className="overflow-hidden border-0 shadow-lg">
                 <CardHeader className="bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-900/20 dark:to-red-900/20">
                   <CardTitle className="flex items-center space-x-2">
-                    <Shield className="w-5 h-5 text-orange-600" />
+                    <ShieldCheckIcon className="w-5 h-5 text-orange-600" />
                     <span>Insurance Accepted</span>
                   </CardTitle>
                 </CardHeader>
@@ -854,7 +854,7 @@ function CoachProfileContent() {
                   <div className="space-y-1.5 sm:space-y-2">
                     {coach.insuranceAccepted.map((insurance, idx) => (
                       <div key={idx} className="flex items-center space-x-2 text-xs sm:text-sm py-1">
-                        <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
+                        <CheckCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-500 flex-shrink-0" />
                         <span className="break-words">{insurance}</span>
                       </div>
                     ))}
@@ -870,7 +870,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-gray-50 to-slate-50 dark:from-gray-900/20 dark:to-slate-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-gray-600" />
+                  <UserIcon className="w-5 h-5 text-gray-600" />
                   <span>About Me</span>
                 </CardTitle>
               </CardHeader>
@@ -883,7 +883,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-teal-50 to-cyan-50 dark:from-teal-900/20 dark:to-cyan-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Target className="w-5 h-5 text-teal-600" />
+                  <TargetIcon className="w-5 h-5 text-teal-600" />
                   <span>Areas of Focus</span>
                 </CardTitle>
               </CardHeader>
@@ -897,7 +897,7 @@ function CoachProfileContent() {
                     <div className="space-y-1.5 sm:space-y-2">
                       {coach.specialties.map((specialty, idx) => (
                         <div key={idx} className="flex items-center space-x-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
+                          <CheckCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-500 flex-shrink-0" />
                           <span className="text-xs sm:text-sm font-medium break-words">{specialty}</span>
                         </div>
                       ))}
@@ -911,7 +911,7 @@ function CoachProfileContent() {
                     <div className="space-y-1.5 sm:space-y-2">
                       {coach.modalities.map((modality, idx) => (
                         <div key={idx} className="flex items-center space-x-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500 flex-shrink-0" />
+                          <CheckCircleIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-500 flex-shrink-0" />
                           <span className="text-xs sm:text-sm font-medium break-words">{modality}</span>
                         </div>
                       ))}
@@ -925,7 +925,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Globe className="w-5 h-5 text-indigo-600" />
+                  <GlobeAltIcon className="w-5 h-5 text-indigo-600" />
                   <span>Languages & Demographics</span>
                 </CardTitle>
               </CardHeader>
@@ -933,7 +933,7 @@ function CoachProfileContent() {
                 <div className="grid sm:grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2 text-sm sm:text-base">
-                      <Languages className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                      <LanguageIcon className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                       <span>Languages Spoken</span>
                     </h4>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -946,7 +946,7 @@ function CoachProfileContent() {
                   </div>
                   <div className="mt-4 md:mt-0">
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2 text-sm sm:text-base">
-                      <Users className="w-4 h-4 text-blue-500 flex-shrink-0" />
+                      <UsersIcon className="w-4 h-4 text-blue-500 flex-shrink-0" />
                       <span>Demographics</span>
                     </h4>
                     <div className="space-y-2 text-xs sm:text-sm">
@@ -976,7 +976,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <GraduationCap className="w-5 h-5 text-emerald-600" />
+                  <AcademicCapIcon className="w-5 h-5 text-emerald-600" />
                   <span>Professional Background</span>
                 </CardTitle>
               </CardHeader>
@@ -984,7 +984,7 @@ function CoachProfileContent() {
                 <div className="space-y-4 sm:space-y-6">
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-2 flex items-center space-x-2 text-sm sm:text-base">
-                      <GraduationCap className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <AcademicCapIcon className="w-4 h-4 text-emerald-500 flex-shrink-0" />
                       <span>Education</span>
                     </h4>
                     <p className="text-gray-700 dark:text-gray-300 bg-emerald-50 dark:bg-emerald-900/20 p-2.5 sm:p-3 rounded-lg text-xs sm:text-sm">{coach.education}</p>
@@ -992,13 +992,13 @@ function CoachProfileContent() {
                   {coach.certifications && (
                     <div>
                       <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2 text-sm sm:text-base">
-                        <Award className="w-4 h-4 text-teal-500 flex-shrink-0" />
+                        <TrophyIcon className="w-4 h-4 text-teal-500 flex-shrink-0" />
                         <span>Certifications</span>
                       </h4>
                       <div className="grid gap-1.5 sm:gap-2">
                         {coach.certifications.map((cert, idx) => (
                           <div key={idx} className="flex items-start space-x-2 p-2.5 sm:p-3 bg-teal-50 dark:bg-teal-900/20 rounded-lg">
-                            <Award className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500 flex-shrink-0 mt-0.5" />
+                            <TrophyIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-teal-500 flex-shrink-0 mt-0.5" />
                             <span className="text-xs sm:text-sm font-medium break-words">{cert}</span>
                           </div>
                         ))}
@@ -1013,7 +1013,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-yellow-600" />
+                  <ClockIcon className="w-5 h-5 text-yellow-600" />
                   <span>Availability & Session Types</span>
                 </CardTitle>
               </CardHeader>
@@ -1021,7 +1021,7 @@ function CoachProfileContent() {
                 <div className="space-y-4">
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-3 flex items-center space-x-2 text-sm sm:text-base">
-                      <Clock className="w-4 h-4 text-yellow-500 flex-shrink-0" />
+                      <ClockIcon className="w-4 h-4 text-yellow-500 flex-shrink-0" />
                       <span>Available Times</span>
                     </h4>
                     <div className="flex flex-wrap gap-1.5 sm:gap-2">
@@ -1040,7 +1040,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <GraduationCap className="w-5 h-5 text-purple-600" />
+                  <AcademicCapIcon className="w-5 h-5 text-purple-600" />
                   <span>Section 1: Professional Background</span>
                 </CardTitle>
               </CardHeader>
@@ -1064,7 +1064,7 @@ function CoachProfileContent() {
                       <div className="space-y-2">
                         {coach.professionalCertifications.map((cert, idx) => (
                           <div key={idx} className="flex items-center space-x-2 p-2 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
-                            <Award className="w-4 h-4 text-indigo-500 flex-shrink-0" />
+                            <TrophyIcon className="w-4 h-4 text-indigo-500 flex-shrink-0" />
                             <span className="text-xs sm:text-sm font-medium">{cert}</span>
                           </div>
                         ))}
@@ -1079,7 +1079,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-rose-50 to-pink-50 dark:from-rose-900/20 dark:to-pink-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Target className="w-5 h-5 text-rose-600" />
+                  <TargetIcon className="w-5 h-5 text-rose-600" />
                   <span>Section 2: Specialization & Expertise</span>
                 </CardTitle>
               </CardHeader>
@@ -1123,7 +1123,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5 text-emerald-600" />
+                  <UserIcon className="w-5 h-5 text-emerald-600" />
                   <span>Section 3: Approach & Methodology</span>
                 </CardTitle>
               </CardHeader>
@@ -1163,7 +1163,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Shield className="w-5 h-5 text-blue-600" />
+                  <ShieldCheckIcon className="w-5 h-5 text-blue-600" />
                   <span>Section 4: Professional Boundaries & Ethics</span>
                 </CardTitle>
               </CardHeader>
@@ -1180,7 +1180,7 @@ function CoachProfileContent() {
                   <div>
                     <h4 className="font-semibold text-gray-900 dark:text-white mb-2 text-sm sm:text-base">Professional License History</h4>
                     <div className="flex items-center space-x-2 p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      <CheckCircleIcon className="w-4 h-4 text-green-500 flex-shrink-0" />
                       <span className="text-sm text-gray-700 dark:text-gray-300">No professional licenses suspended, revoked, or disciplined</span>
                     </div>
                   </div>
@@ -1198,7 +1198,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-red-50 to-rose-50 dark:from-red-900/20 dark:to-rose-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Heart className="w-5 h-5 text-red-600" />
+                  <HeartIcon className="w-5 h-5 text-red-600" />
                   <span>Section 5: Crisis Management</span>
                 </CardTitle>
               </CardHeader>
@@ -1226,7 +1226,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-amber-50 to-yellow-50 dark:from-amber-900/20 dark:to-yellow-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Clock className="w-5 h-5 text-amber-600" />
+                  <ClockIcon className="w-5 h-5 text-amber-600" />
                   <span>Section 6: Availability & Commitment</span>
                 </CardTitle>
               </CardHeader>
@@ -1264,7 +1264,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-900/20 dark:to-blue-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Video className="w-5 h-5 text-cyan-600" />
+                  <VideoIcon className="w-5 h-5 text-cyan-600" />
                   <span>Section 7: Technology & Communication</span>
                 </CardTitle>
               </CardHeader>
@@ -1290,7 +1290,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Languages className="w-5 h-5 text-green-600" />
+                  <LanguageIcon className="w-5 h-5 text-green-600" />
                   <span>Section 8: Languages & Cultural Competency</span>
                 </CardTitle>
               </CardHeader>
@@ -1316,7 +1316,7 @@ function CoachProfileContent() {
             <Card className="overflow-hidden border-0 shadow-lg">
               <CardHeader className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-900/20 dark:to-amber-900/20">
                 <CardTitle className="flex items-center space-x-2">
-                  <Star className="w-5 h-5 text-yellow-600" />
+                  <StarIcon className="w-5 h-5 text-yellow-600" />
                   <span>Ratings & Reviews</span>
                 </CardTitle>
               </CardHeader>
@@ -1401,7 +1401,7 @@ function CoachProfileContent() {
             <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-0 shadow-xl text-white overflow-hidden">
               <CardContent className="relative z-10 p-4 sm:p-6 md:p-8 text-center">
                 <div className="mb-4 sm:mb-6">
-                  <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-3 sm:mb-4 text-yellow-300" />
+                  <SparklesIcon className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 mx-auto mb-3 sm:mb-4 text-yellow-300" />
                   <h3 className="text-lg sm:text-xl md:text-2xl font-bold mb-2">Ready to start your journey?</h3>
                   <p className="text-blue-100 text-sm sm:text-base md:text-lg px-2">
                     Schedule a free 15-minute consultation to see if we're a good fit for your coaching needs.
@@ -1417,7 +1417,7 @@ function CoachProfileContent() {
                         className="flex-1 bg-white text-blue-700 hover:bg-blue-50 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
                         onClick={() => handleBookSession('consultation')}
                       >
-                        <Calendar className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                        <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                         <span className="hidden sm:inline">Free Consultation</span>
                         <span className="sm:hidden">Free</span>
                       </Button>
@@ -1428,7 +1428,7 @@ function CoachProfileContent() {
                       className="flex-1 bg-green-500 text-white hover:bg-green-600 font-semibold text-sm sm:text-base md:text-lg py-2.5 sm:py-3 transition-all hover:scale-105"
                       onClick={() => handleBookSession('session')}
                     >
-                      <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
+                      <CurrencyDollarIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2" />
                       <span className="hidden sm:inline">Paid Session</span>
                       <span className="sm:hidden">Paid</span>
                     </Button>

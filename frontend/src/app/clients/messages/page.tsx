@@ -7,7 +7,7 @@ import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { User, Paperclip, Trash2, Download, X, MoreVertical, EyeOff, ArrowLeft, Send, Search, Filter, Users, MessageCircle, Smile } from 'lucide-react'
+import { UserIcon, PaperClipIcon, TrashIcon, ArrowDownTrayIcon, XMarkIcon, EllipsisVerticalIcon, EyeSlashIcon, ArrowLeftIcon, PaperAirplaneIcon, MagnifyingGlassIcon, FunnelIcon, UsersIcon, ChatBubbleLeftIcon, FaceSmileIcon } from '@heroicons/react/24/outline'
 import { io } from 'socket.io-client'
 
 type Conversation = {
@@ -562,7 +562,7 @@ function CoachMessagesContent() {
 						{/* Search */}
 						<div className="p-4 flex-shrink-0">
 							<div className="relative">
-								<Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+								<MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
 								<input
 									type="text"
 									placeholder="Search..."
@@ -640,7 +640,7 @@ function CoachMessagesContent() {
 															: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 													}`}
 												>
-													<MoreVertical size={16} />
+													<EllipsisVerticalIcon size={16} />
 												</button>
 
 												{openConversationDropdown === c.partnerId && (
@@ -654,7 +654,7 @@ function CoachMessagesContent() {
 															<div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-3 py-2">
 																<div className="flex items-center gap-2">
 																	<div className="flex items-center justify-center w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
-																		<Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+																		<TrashIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
 																	</div>
 																	<div className="min-w-0">
 																		<h3 className="text-xs font-semibold text-gray-900 dark:text-white">Conversation Actions</h3>
@@ -672,7 +672,7 @@ function CoachMessagesContent() {
 																	className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
 																>
 																	<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
-																		<Trash2 size={14} />
+																		<TrashIcon size={14} />
 																	</div>
 																	<div className="flex-1 min-w-0">
 																		<div className="font-medium">Delete conversation</div>
@@ -690,7 +690,7 @@ function CoachMessagesContent() {
 							})}
 							{filteredConversations.length === 0 && (
 								<div className="p-6 text-center text-gray-500 dark:text-gray-400">
-									<MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
+									<ChatBubbleLeftIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
 									<p>No conversations found</p>
 									{searchTerm && (
 										<p className="text-sm mt-1">Try adjusting your search</p>
@@ -710,7 +710,7 @@ function CoachMessagesContent() {
 								onClick={() => setShowMobileChat(false)}
 								className="sm:hidden p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full"
 							>
-								<ArrowLeft className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+								<ArrowLeftIcon className="w-5 h-5 text-gray-600 dark:text-gray-400" />
 							</button>
 							{activePartner && (
 								<>
@@ -746,7 +746,7 @@ function CoachMessagesContent() {
 						{!activePartnerId && (
 							<div className="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
 								<div className="text-center">
-									<MessageCircle className="w-16 h-16 mx-auto mb-4 opacity-50" />
+									<ChatBubbleLeftIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
 									<p className="text-lg font-medium mb-2">Select a conversation</p>
 									<p className="text-sm">Choose a conversation from the list to start messaging</p>
 								</div>
@@ -773,7 +773,7 @@ function CoachMessagesContent() {
 											{hasAttachment && (
 												<div className={`mt-2 p-2 rounded border ${isMine ? 'border-blue-400 bg-blue-600' : 'border-gray-300 dark:border-gray-600 bg-gray-200 dark:bg-gray-600'}`}>
 													<div className="flex items-center gap-2">
-														<Paperclip size={16} />
+														<PaperClipIcon size={16} />
 														<span className="truncate text-sm">{m.attachment_name}</span>
 														<a
 															href={m.attachment_url || '#'}
@@ -783,7 +783,7 @@ function CoachMessagesContent() {
 															target="_blank"
 															rel="noopener noreferrer"
 														>
-															<Download size={14} />
+															<ArrowDownTrayIcon size={14} />
 														</a>
 													</div>
 													{m.attachment_size && (
@@ -814,7 +814,7 @@ function CoachMessagesContent() {
 																: 'hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
 														}`}
 													>
-														<MoreVertical size={16} />
+														<EllipsisVerticalIcon size={16} />
 													</button>
 
 													{openDropdownId === m.id && (
@@ -828,7 +828,7 @@ function CoachMessagesContent() {
 																<div className="bg-gradient-to-r from-red-50 to-pink-50 dark:from-gray-700 dark:to-gray-750 border-b border-gray-200 dark:border-gray-600 px-3 py-2">
 																	<div className="flex items-center gap-2">
 																		<div className="flex items-center justify-center w-7 h-7 bg-red-100 dark:bg-red-900/30 rounded-lg flex-shrink-0">
-																			<Trash2 className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
+																			<TrashIcon className="w-3.5 h-3.5 text-red-600 dark:text-red-400" />
 																		</div>
 																		<div className="min-w-0">
 																			<h3 className="text-xs font-semibold text-gray-900 dark:text-white">Message Actions</h3>
@@ -848,7 +848,7 @@ function CoachMessagesContent() {
 																				className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
 																			>
 																				<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
-																					<Trash2 size={14} />
+																					<TrashIcon size={14} />
 																				</div>
 																				<div className="flex-1 min-w-0">
 																					<div className="font-medium">Delete for everyone</div>
@@ -869,7 +869,7 @@ function CoachMessagesContent() {
 																		className="w-full text-left px-3 py-2.5 text-sm hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 flex items-center gap-3 transition-all duration-150"
 																	>
 																		<div className="p-1.5 rounded-lg bg-gray-100 dark:bg-gray-700 flex-shrink-0">
-																			<EyeOff size={14} />
+																			<EyeSlashIcon size={14} />
 																		</div>
 																		<div className="flex-1 min-w-0">
 																			<div className="font-medium">Delete for me</div>
@@ -898,7 +898,7 @@ function CoachMessagesContent() {
 						{selectedFile && (
 							<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
 								<div className="flex items-center gap-2">
-									<Paperclip size={16} className="text-gray-600 dark:text-gray-400" />
+									<PaperClipIcon size={16} className="text-gray-600 dark:text-gray-400" />
 									<span className="text-sm text-gray-900 dark:text-gray-100">{selectedFile.name}</span>
 									<span className="text-xs text-gray-500 dark:text-gray-400">
 										({(selectedFile.size / 1024 / 1024).toFixed(2)} MB)
@@ -913,7 +913,7 @@ function CoachMessagesContent() {
 									}}
 									className="text-red-500 hover:text-red-700"
 								>
-									<X size={16} />
+									<XMarkIcon size={16} />
 								</button>
 							</div>
 						)}
@@ -922,7 +922,7 @@ function CoachMessagesContent() {
 								className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 disabled:opacity-50"
 								disabled={!activePartnerId}
 							>
-								<Smile size={24} />
+								<FaceSmileIcon size={24} />
 							</button>
 							<input
 								type="text"
@@ -951,14 +951,14 @@ function CoachMessagesContent() {
 								disabled={!activePartnerId}
 								title={activePartnerId ? "Attach file" : "Select a conversation first"}
 							>
-								<Paperclip size={24} />
+								<PaperClipIcon size={24} />
 							</button>
 							<button
 								onClick={handleSend}
 								disabled={!activePartnerId || sending || uploading || (!text.trim() && !selectedFile)}
 								className="bg-blue-500 text-white p-3 rounded-full hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								<Send size={20} />
+								<PaperAirplaneIcon size={20} />
 							</button>
 						</div>
 					</div>
