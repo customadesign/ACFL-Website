@@ -296,7 +296,7 @@ export default function ClientLayout({
       name: 'Dashboard',
       icon: BoltIcon,
       items: [
-        { name: 'Overview', href: '/clients', icon: Activity },
+        { name: 'Overview', href: '/clients', icon: BoltIcon },
       ]
     },
     {
@@ -304,7 +304,7 @@ export default function ClientLayout({
       name: 'Coaching',
       icon: UserIcon,
       items: [
-        { name: 'Find Coaches', href: '/clients/search-coaches', icon: UserSearch },
+        { name: 'Find Coaches', href: '/clients/search-coaches', icon: UserIcon },
         { name: 'Appointments', href: '/clients/appointments', icon: CalendarIcon, notificationCount: appointmentNotificationCount },
         { name: 'Messages', href: '/clients/messages', icon: EnvelopeIcon, notificationCount: unreadMessageCount },
       ]
@@ -314,9 +314,9 @@ export default function ClientLayout({
       name: 'Account',
       icon: UserIcon,
       items: [
-        { name: 'Profile', href: '/clients/profile', icon: User },
-        { name: 'Billing & Payments', href: '/clients/billing', icon: CreditCard },
-        { name: 'Settings', href: '/clients/settings', icon: Settings },
+        { name: 'Profile', href: '/clients/profile', icon: UserIcon },
+        { name: 'Billing & Payments', href: '/clients/billing', icon: CreditCardIcon },
+        { name: 'Settings', href: '/clients/settings', icon: Cog6ToothIcon },
       ]
     },
   ];
