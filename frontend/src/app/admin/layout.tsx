@@ -16,14 +16,14 @@ import {
   UserCheck,
   User,
   Calendar,
-  MessageSquare,
+  Mail,
   Settings,
-  BarChart3,
+  BarChart2,
   Shield,
   LogOut,
   Menu,
   X,
-  Home,
+  Activity,
   CircleUserRound,
   FileText,
   Moon,
@@ -42,7 +42,8 @@ import {
   UserCog,
   Calendar as CalendarIcon,
   TrendingUp,
-  Cog
+  Cog,
+  MessageSquare
 } from 'lucide-react';
 
 const poppins = Poppins({
@@ -310,9 +311,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       id: 'dashboard',
       name: 'Dashboard',
-      icon: Home,
+      icon: Activity,
       items: [
-        { name: 'Overview', href: '/admin', icon: Home, permission: null }, // Always visible
+        { name: 'Overview', href: '/admin', icon: Activity, permission: null }, // Always visible
       ]
     },
     {
@@ -331,7 +332,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       icon: CalendarIcon,
       items: [
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, notificationCount: displayNewAppointmentsCount, permission: PERMISSIONS.APPOINTMENTS_VIEW },
-        { name: 'Messages', href: '/admin/messages', icon: MessageSquare, notificationCount: displayNewMessagesCount, permission: PERMISSIONS.MESSAGES_VIEW },
+        { name: 'Messages', href: '/admin/messages', icon: Mail, notificationCount: displayNewMessagesCount, permission: PERMISSIONS.MESSAGES_VIEW },
         { name: 'Financials', href: '/admin/financials', icon: DollarSign, permission: PERMISSIONS.FINANCIAL_VIEW },
         { name: 'Payouts', href: '/admin/payouts', icon: CreditCard, permission: PERMISSIONS.FINANCIAL_VIEW },
       ]
@@ -339,10 +340,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     {
       id: 'analytics',
       name: 'Analytics and Content',
-      icon: BarChart3,
+      icon: BarChart2,
       items: [
         { name: 'Content Management', href: '/admin/content', icon: Type, permission: PERMISSIONS.CONTENT_VIEW },
-        { name: 'Analytics', href: '/admin/analytics', icon: BarChart3, permission: PERMISSIONS.ANALYTICS_VIEW },
+        { name: 'Analytics', href: '/admin/analytics', icon: BarChart2, permission: PERMISSIONS.ANALYTICS_VIEW },
       ]
     },
     {

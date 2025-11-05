@@ -71,8 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.log(`Checking authentication with token... (attempt ${retryCount + 1})`);
           console.log('API URL:', API_URL);
           
-          // Use fetch instead of axios to avoid potential axios configuration issues
-          const response = await fetch(`${API_URL}/api/auth/profile`, {
+          // Use relative path to leverage Next.js rewrites and avoid CORS issues
+          const response = await fetch(`/api/auth/profile`, {
             method: 'GET',
             headers: {
               'Authorization': `Bearer ${token}`,

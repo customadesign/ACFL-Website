@@ -15,8 +15,8 @@ import AdminImpersonationFloat from '@/components/AdminImpersonationFloat';
 import DeactivatedAccountBanner from '@/components/DeactivatedAccountBanner';
 import ThemeConsentModal from '@/components/ThemeConsentModal';
 import {
-  Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Home, Calendar,
-  MessageSquare, UserSearch, User, CreditCard, Settings, BarChart3,
+  Bell, CircleUserRound, LogOut, Sun, Moon, Menu, X, Activity, Calendar,
+  Mail, UserSearch, User, CreditCard, Settings, BarChart2,
   ChevronDown, ChevronRight, Search, PanelLeft, MoreHorizontal,
   Phone, Receipt, Zap
 } from 'lucide-react';
@@ -291,9 +291,9 @@ export default function ClientLayout({
     {
       id: 'dashboard',
       name: 'Dashboard',
-      icon: Home,
+      icon: Activity,
       items: [
-        { name: 'Overview', href: '/clients', icon: Home },
+        { name: 'Overview', href: '/clients', icon: Activity },
       ]
     },
     {
@@ -303,7 +303,7 @@ export default function ClientLayout({
       items: [
         { name: 'Find Coaches', href: '/clients/search-coaches', icon: UserSearch },
         { name: 'Appointments', href: '/clients/appointments', icon: Calendar, notificationCount: appointmentNotificationCount },
-        { name: 'Messages', href: '/clients/messages', icon: MessageSquare, notificationCount: unreadMessageCount },
+        { name: 'Messages', href: '/clients/messages', icon: Mail, notificationCount: unreadMessageCount },
       ]
     },
     {

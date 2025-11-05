@@ -38,26 +38,26 @@ import { Server } from 'socket.io';
 import { setSocketIO } from './lib/socket';
 
 // CORS configuration
-const corsOptions = {
-  origin: function (origin, callback) {
-    // Always allow localhost for local development + production URLs
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3002',
-      'http://localhost:4000',
-      'http://localhost:4002',
-      'http://localhost:4003',
-      'http://frontend:3000',
-      'https://actcoachingforlife.onrender.com',
-      process.env.CORS_ORIGIN
-    ].filter(Boolean);
+import { CorsOptions } from 'cors';
 
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+const allowedOrigins: string[] = [
+  'http://localhost:3000',
+  'http://localhost:3002',
+  'http://localhost:4000',
+  'http://localhost:4002',
+  'http://localhost:4003',
+  'http://frontend:3000',
+  'https://actcoachingforlife.com',
+  'https://www.actcoachingforlife.com',
+  'https://actcoachingforlife.onrender.com',
+];
 
-    if (allowedOrigins.indexOf(origin) !== -1) {
+const corsOptions: CorsOptions = {
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      console.error('❌ CORS blocked for origin:', origin);
       callback(new Error('Not allowed by CORS'));
     }
   },
@@ -66,7 +66,7 @@ const corsOptions = {
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
   exposedHeaders: ['Content-Length', 'Content-Range'],
   maxAge: 86400, // 24 hours
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
 };
 
 app.use(cors(corsOptions));

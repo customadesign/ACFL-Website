@@ -3,7 +3,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 
 const NavbarLandingPage = () => {
   const [openDropdown, setOpenDropdown] = useState(null);
@@ -46,7 +46,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('services')}
                   onMouseEnter={() => handleMouseEnter('services')}
                 >
-                  Services <ChevronDown className="ml-1 h-4 w-4" />
+                  Services <ChevronDown className="ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors" />
                 </button>
                 {openDropdown === 'services' && (
                   <div
@@ -88,7 +88,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('resources')}
                   onMouseEnter={() => handleMouseEnter('resources')}
                 >
-                  Resources <ChevronDown className="ml-1 h-4 w-4" />
+                  Resources <ChevronDown className="ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors" />
                 </button>
                 {openDropdown === 'resources' && (
                   <div
@@ -124,7 +124,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('company')}
                   onMouseEnter={() => handleMouseEnter('company')}
                 >
-                  Company <ChevronDown className="ml-1 h-4 w-4" />
+                  Company <ChevronDown className="ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors" />
                 </button>
                 {openDropdown === 'company' && (
                   <div
@@ -177,10 +177,13 @@ const NavbarLandingPage = () => {
               <button
                 onClick={() => handleDropdownToggle('mobile')}
                 className="text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal focus:outline-none"
+                aria-label="Toggle mobile menu"
               >
-                <svg className="h-6 w-6" fill="none" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24" stroke="currentColor">
-                  <path d={openDropdown === 'mobile' ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}></path>
-                </svg>
+                {openDropdown === 'mobile' ? (
+                  <X className="h-6 w-6 cursor-pointer hover:text-primary transition-colors" />
+                ) : (
+                  <Menu className="h-6 w-6 cursor-pointer hover:text-primary transition-colors" />
+                )}
               </button>
             </div>
           </div>
@@ -195,7 +198,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('mobile-services')}
                   className="flex items-center w-full text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal"
                 >
-                  Services <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${openDropdown === 'mobile-services' ? 'rotate-180' : ''}`} />
+                  Services <ChevronDown className={`ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors transition-transform ${openDropdown === 'mobile-services' ? 'rotate-180' : ''}`} />
                 </button>
                 {openDropdown === 'mobile-services' && (
                   <div className="ml-4 mt-2">
@@ -212,7 +215,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('mobile-resources')}
                   className="flex items-center w-full text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal"
                 >
-                  Resources <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${openDropdown === 'mobile-resources' ? 'rotate-180' : ''}`} />
+                  Resources <ChevronDown className={`ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors transition-transform ${openDropdown === 'mobile-resources' ? 'rotate-180' : ''}`} />
                 </button>
                 {openDropdown === 'mobile-resources' && (
                   <div className="ml-4 mt-2">
@@ -228,7 +231,7 @@ const NavbarLandingPage = () => {
                   onClick={() => handleDropdownToggle('mobile-company')}
                   className="flex items-center w-full text-gray-600 dark:text-gray-300 hover:text-brand-teal dark:hover:text-brand-teal"
                 >
-                  Company <ChevronDown className={`ml-1 h-4 w-4 transition-transform ${openDropdown === 'mobile-company' ? 'rotate-180' : ''}`} />
+                  Company <ChevronDown className={`ml-1 h-4 w-4 cursor-pointer hover:text-primary transition-colors transition-transform ${openDropdown === 'mobile-company' ? 'rotate-180' : ''}`} />
                 </button>
                 {openDropdown === 'mobile-company' && (
                   <div className="ml-4 mt-2">

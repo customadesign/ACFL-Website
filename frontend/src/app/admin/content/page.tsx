@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/lib/api';
@@ -30,7 +30,6 @@ import {
   StatisticsBuilder
 } from '@/components/cms/VisualFormComponents';
 import { getDefaultContent } from '@/lib/cms/defaultContent';
-import { toast } from 'react-toastify';
 
 interface StaticContent {
   id: string;
@@ -58,6 +57,256 @@ interface PageSection {
 }
 
 const PAGE_TEMPLATES = {
+  help: {
+    icon: HelpCircle,
+    name: 'Help Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'How Can We Help You?' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Find answers to your questions...' }
+        ]
+      },
+      {
+        id: 'categories',
+        title: 'Help Categories',
+        fields: [
+          {
+            name: 'categories',
+            label: 'Help Categories',
+            type: 'list_builder',
+            description: 'Array of category objects with title, description, icon, and articles'
+          }
+        ]
+      },
+      {
+        id: 'contact',
+        title: 'Contact Support Section',
+        fields: [
+          { name: 'title', label: 'Section Title', type: 'text', placeholder: 'Still Need Help?' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Our support team is here to assist you with any questions or concerns.' },
+          { name: 'email', label: 'Support Email', type: 'text', placeholder: 'support@actcoachingforlife.com' },
+          { name: 'phone', label: 'Support Phone', type: 'text', placeholder: '1-800-ACT-HELP' }
+        ]
+      }
+    ]
+  },
+  about: {
+    icon: Users,
+    name: 'About Us Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'About ACT Coaching for Life' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'We\'re transforming lives through evidence-based Acceptance and Commitment Therapy coaching, helping people create meaningful change and live authentically.' }
+        ]
+      },
+      {
+        id: 'mission',
+        title: 'Mission Section',
+        fields: [
+          { name: 'title', label: 'Mission Title', type: 'text', placeholder: 'Our Mission' },
+          { name: 'content', label: 'Mission Content', type: 'rich_text', placeholder: 'At ACT Coaching for Life, we believe everyone deserves to live a life aligned with their values. Our mission is to make professional, evidence-based coaching accessible to anyone seeking meaningful change.' },
+          { name: 'tagline', label: 'Tagline', type: 'text', placeholder: 'Compassionate, evidence-based care' }
+        ]
+      },
+      {
+        id: 'stats',
+        title: 'Statistics',
+        fields: [
+          { name: 'stats', label: 'Page Statistics', type: 'stats_builder' }
+        ]
+      },
+      {
+        id: 'values',
+        title: 'Core Values',
+        fields: [
+          { name: 'title', label: 'Values Title', type: 'text', placeholder: 'Our Core Values' },
+          { name: 'subtitle', label: 'Values Subtitle', type: 'text', placeholder: 'These principles guide everything we do' },
+          { name: 'items', label: 'Core Values', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'story',
+        title: 'Our Story',
+        fields: [
+          { name: 'title', label: 'Story Title', type: 'text', placeholder: 'Our Story' },
+          { name: 'content', label: 'Story Content', type: 'rich_text', placeholder: 'ACT Coaching for Life was founded with a simple yet powerful vision: to bridge the gap between those seeking personal growth and qualified ACT practitioners who could guide them.' }
+        ]
+      },
+      {
+        id: 'team',
+        title: 'Leadership Team',
+        fields: [
+          { name: 'title', label: 'Team Title', type: 'text', placeholder: 'Meet Our Leadership' },
+          { name: 'subtitle', label: 'Team Subtitle', type: 'text', placeholder: 'Dedicated professionals committed to your growth' },
+          { name: 'members', label: 'Leadership Team', type: 'list_builder' }
+        ]
+      }
+    ]
+  },
+  careers: {
+    icon: Briefcase,
+    name: 'Careers Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Join Our Mission' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Be part of a team that\'s transforming mental health care through evidence-based ACT coaching.' }
+        ]
+      },
+      {
+        id: 'whyJoinUs',
+        title: 'Why Join Us Section',
+        fields: [
+          { name: 'title', label: 'Section Title', type: 'text', placeholder: 'Why Join ACT Coaching For Life?' },
+          { name: 'subtitle', label: 'Section Subtitle', type: 'text', placeholder: 'Join a mission-driven team making real impact in mental health' },
+          { name: 'benefits', label: 'Why Join Us Benefits', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'openPositions',
+        title: 'Open Positions',
+        fields: [
+          { name: 'title', label: 'Positions Title', type: 'text', placeholder: 'Open Positions' },
+          { name: 'subtitle', label: 'Positions Subtitle', type: 'text', placeholder: 'Explore opportunities to grow your career while helping others' },
+          { name: 'positions', label: 'Open Positions', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'benefitsSection',
+        title: 'Benefits & Perks',
+        fields: [
+          { name: 'title', label: 'Benefits Title', type: 'text', placeholder: 'Benefits & Perks' },
+          { name: 'subtitle', label: 'Benefits Subtitle', type: 'text', placeholder: 'We take care of our team so they can take care of our clients' },
+          { name: 'items', label: 'Benefits List', type: 'array', description: 'Array of benefit strings' }
+        ]
+      }
+    ]
+  },
+  contact: {
+    icon: Mail,
+    name: 'Contact Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Get In Touch' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'We\'re here to help you on your journey to better mental health. Reach out to us anytime.' }
+        ]
+      },
+      {
+        id: 'contactMethods',
+        title: 'Contact Methods',
+        fields: [
+          { name: 'title', label: 'Section Title', type: 'text', placeholder: 'How to Reach Us' },
+          { name: 'subtitle', label: 'Section Subtitle', type: 'text', placeholder: 'Choose the method that works best for you' },
+          { name: 'methods', label: 'Contact Methods', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'contactForm',
+        title: 'Contact Form',
+        fields: [
+          { name: 'title', label: 'Form Title', type: 'text', placeholder: 'Send us a message' },
+          { name: 'description', label: 'Form Description', type: 'text', placeholder: 'Fill out the form below and we\'ll get back to you within 24 hours' }
+        ]
+      },
+      {
+        id: 'officeInfo',
+        title: 'Office Information',
+        fields: [
+          { name: 'title', label: 'Office Title', type: 'text', placeholder: 'Our Office' },
+          { name: 'address', label: 'Office Address', type: 'textarea', placeholder: '123 Wellness Drive\nSuite 100\nMindful City, MC 12345' },
+          { name: 'hours', label: 'Business Hours', type: 'textarea', placeholder: 'Monday - Friday: 9:00 AM - 6:00 PM\nSaturday: 10:00 AM - 4:00 PM\nSunday: Closed' }
+        ]
+      }
+    ]
+  },
+  press: {
+    icon: Newspaper,
+    name: 'Press Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Press Center' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Latest news and updates from ACT Coaching for Life' }
+        ]
+      },
+      {
+        id: 'pressReleases',
+        title: 'Press Releases',
+        fields: [
+          { name: 'title', label: 'Section Title', type: 'text', placeholder: 'Latest News' },
+          { name: 'releases', label: 'Press Releases', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'mediaKit',
+        title: 'Media Kit',
+        fields: [
+          { name: 'title', label: 'Media Kit Title', type: 'text', placeholder: 'Media Kit' },
+          { name: 'description', label: 'Media Kit Description', type: 'textarea', placeholder: 'Download our media assets, logos, and company information for your coverage.' },
+          { name: 'items', label: 'Media Kit Items', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'awards',
+        title: 'Awards & Recognition',
+        fields: [
+          { name: 'title', label: 'Awards Title', type: 'text', placeholder: 'Awards & Recognition' },
+          { name: 'items', label: 'Awards & Recognition', type: 'list_builder' }
+        ]
+      }
+    ]
+  },
+  resources: {
+    icon: BookOpen,
+    name: 'Resources Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Resources' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Tools and resources to support your journey' }
+        ]
+      },
+      {
+        id: 'categories',
+        title: 'Resource Categories',
+        fields: [
+          { name: 'title', label: 'Categories Title', type: 'text', placeholder: 'Browse Resources' },
+          { name: 'categories', label: 'Resource Categories', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'featured',
+        title: 'Featured Resources',
+        fields: [
+          { name: 'title', label: 'Featured Title', type: 'text', placeholder: 'Featured Resources' },
+          { name: 'resources', label: 'Featured Resources', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'newsletter',
+        title: 'Newsletter Signup',
+        fields: [
+          { name: 'title', label: 'Newsletter Title', type: 'text', placeholder: 'Stay Updated' },
+          { name: 'description', label: 'Newsletter Description', type: 'textarea', placeholder: 'Get the latest resources, tips, and insights delivered directly to your inbox.' }
+        ]
+      }
+    ]
+  },
   blog: {
     icon: PenTool,
     name: 'Blog Page',
@@ -66,37 +315,191 @@ const PAGE_TEMPLATES = {
         id: 'hero',
         title: 'Hero Section',
         fields: [
-          { name: 'title', label: 'Article Title', type: 'text', placeholder: 'Understanding acceptance and commitment in personal growth' },
-          { name: 'breadcrumbPrimary', label: 'Breadcrumb Primary', type: 'text', placeholder: 'Blog' },
-          { name: 'breadcrumbSecondary', label: 'Breadcrumb Secondary', type: 'text', placeholder: 'ACT Insights' },
-          { name: 'authorName', label: 'Author Name', type: 'text', placeholder: 'Sarah Thompson' },
-          { name: 'authorAvatarUrl', label: 'Author Avatar URL', type: 'text', placeholder: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop' },
-          { name: 'publishDate', label: 'Publish Date', type: 'text', placeholder: '15 Mar 2024' },
-          { name: 'readTime', label: 'Read Time', type: 'text', placeholder: '5 min read' },
-          { name: 'featuredImageUrl', label: 'Featured Image URL', type: 'text', placeholder: 'https://example.com/featured.jpg' },
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Blog' },
           { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Insights, tips, and stories from our coaching community' }
         ]
       },
       {
-        id: 'article',
-        title: 'Article Section',
+        id: 'featured',
+        title: 'Featured Posts',
         fields: [
-          { name: 'content', label: 'Article Content (HTML allowed)', type: 'rich_text', placeholder: '<p>Your article content here...</p>' },
-          { name: 'tags', label: 'Tags', type: 'array', description: 'Enter one tag per line' },
-          { name: 'authorName', label: 'Author Name', type: 'text', placeholder: 'Sarah Thompson' },
-          { name: 'authorAvatarUrl', label: 'Author Avatar URL', type: 'text', placeholder: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop' },
-          { name: 'publishDate', label: 'Publish Date', type: 'text', placeholder: '15 Mar 2024' },
-          { name: 'readTime', label: 'Read Time', type: 'text', placeholder: '5 min read' }
+          { name: 'title', label: 'Featured Title', type: 'text', placeholder: 'Featured Articles' },
+          { name: 'posts', label: 'Featured Blog Posts', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'categories',
+        title: 'Blog Categories',
+        fields: [
+          { name: 'title', label: 'Categories Title', type: 'text', placeholder: 'Categories' },
+          { name: 'categories', label: 'Blog Categories', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'recentPosts',
+        title: 'Recent Posts',
+        fields: [
+          { name: 'title', label: 'Recent Posts Title', type: 'text', placeholder: 'Latest Posts' },
+          { name: 'posts', label: 'Recent Blog Posts', type: 'list_builder' }
         ]
       }
     ]
   },
-} as const;
-
-type PageKey = keyof typeof PAGE_TEMPLATES;
+  pricing: {
+    icon: DollarSign,
+    name: 'Pricing Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Pricing Plans' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Choose the perfect plan for your coaching journey' }
+        ]
+      },
+      {
+        id: 'plans',
+        title: 'Pricing Plans',
+        fields: [
+          { name: 'title', label: 'Plans Title', type: 'text', placeholder: 'Choose Your Plan' },
+          { name: 'subtitle', label: 'Plans Subtitle', type: 'text', placeholder: 'Flexible options to fit your needs' },
+          { name: 'plans', label: 'Pricing Plans', type: 'pricing_plans' }
+        ]
+      },
+      {
+        id: 'features',
+        title: 'Features Comparison',
+        fields: [
+          { name: 'title', label: 'Features Title', type: 'text', placeholder: 'What\'s Included' },
+          { name: 'features', label: 'Feature Comparison', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'faq',
+        title: 'Pricing FAQ',
+        fields: [
+          { name: 'title', label: 'FAQ Title', type: 'text', placeholder: 'Frequently Asked Questions' },
+          { name: 'items', label: 'FAQ Items', type: 'faq_builder' }
+        ]
+      },
+      {
+        id: 'guarantee',
+        title: 'Money-Back Guarantee',
+        fields: [
+          { name: 'title', label: 'Guarantee Title', type: 'text', placeholder: 'Risk-Free Guarantee' },
+          { name: 'description', label: 'Guarantee Description', type: 'textarea', placeholder: 'If you\'re not completely satisfied with your coaching experience, we\'ll refund your money.' },
+          { name: 'period', label: 'Guarantee Period', type: 'text', placeholder: '30 days' }
+        ]
+      }
+    ]
+  },
+  'group-coaching': {
+    icon: Users2,
+    name: 'Group Coaching Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Group Coaching' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Connect, learn, and grow with others on a similar journey' }
+        ]
+      },
+      {
+        id: 'benefits',
+        title: 'Benefits of Group Coaching',
+        fields: [
+          { name: 'title', label: 'Benefits Title', type: 'text', placeholder: 'Why Choose Group Coaching?' },
+          { name: 'subtitle', label: 'Benefits Subtitle', type: 'text', placeholder: 'Experience the power of shared growth and mutual support' },
+          { name: 'benefits', label: 'Group Benefits', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'howItWorks',
+        title: 'How It Works',
+        fields: [
+          { name: 'title', label: 'Process Title', type: 'text', placeholder: 'How Group Coaching Works' },
+          { name: 'steps', label: 'Process Steps', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'programs',
+        title: 'Available Programs',
+        fields: [
+          { name: 'title', label: 'Programs Title', type: 'text', placeholder: 'Current Group Programs' },
+          { name: 'programs', label: 'Group Programs', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'testimonials',
+        title: 'Group Testimonials',
+        fields: [
+          { name: 'title', label: 'Testimonials Title', type: 'text', placeholder: 'What Participants Say' },
+          { name: 'testimonials', label: 'Client Testimonials', type: 'list_builder' }
+        ]
+      }
+    ]
+  },
+  corporate: {
+    icon: Building2,
+    name: 'Corporate Coaching Page',
+    sections: [
+      {
+        id: 'hero',
+        title: 'Hero Section',
+        fields: [
+          { name: 'title', label: 'Page Title', type: 'text', placeholder: 'Corporate Coaching Solutions' },
+          { name: 'subtitle', label: 'Subtitle', type: 'textarea', placeholder: 'Transform your organization with evidence-based coaching programs' }
+        ]
+      },
+      {
+        id: 'services',
+        title: 'Corporate Services',
+        fields: [
+          { name: 'title', label: 'Services Title', type: 'text', placeholder: 'Our Corporate Services' },
+          { name: 'services', label: 'Service Offerings', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'benefits',
+        title: 'Business Benefits',
+        fields: [
+          { name: 'title', label: 'Benefits Title', type: 'text', placeholder: 'Why Invest in Employee Coaching?' },
+          { name: 'benefits', label: 'Business Benefits', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'process',
+        title: 'Implementation Process',
+        fields: [
+          { name: 'title', label: 'Process Title', type: 'text', placeholder: 'Our Implementation Process' },
+          { name: 'steps', label: 'Implementation Steps', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'caseStudies',
+        title: 'Case Studies',
+        fields: [
+          { name: 'title', label: 'Case Studies Title', type: 'text', placeholder: 'Success Stories' },
+          { name: 'studies', label: 'Case Studies', type: 'list_builder' }
+        ]
+      },
+      {
+        id: 'contact',
+        title: 'Contact Sales',
+        fields: [
+          { name: 'title', label: 'Contact Title', type: 'text', placeholder: 'Ready to Get Started?' },
+          { name: 'description', label: 'Contact Description', type: 'textarea', placeholder: 'Contact our corporate team to discuss how we can help transform your organization.' },
+          { name: 'email', label: 'Sales Email', type: 'text', placeholder: 'corporate@actcoachingforlife.com' },
+          { name: 'phone', label: 'Sales Phone', type: 'text', placeholder: '1-800-ACT-CORP' }
+        ]
+      }
+    ]
+  }
+};
 
 export default function ContentManagement() {
-  const [selectedPage, setSelectedPage] = useState<PageKey>('blog');
+  const [selectedPage, setSelectedPage] = useState<string>('help');
   const [pageContent, setPageContent] = useState<StaticContent | null>(null);
   const [formData, setFormData] = useState<any>({});
   const [loading, setLoading] = useState(false);
@@ -129,33 +532,7 @@ export default function ContentManagement() {
             setFormData({});
           }
         } else {
-          // Default seed for blog article content
-          if (selectedPage === 'blog') {
-            const defaultArticleHtml = (
-              `<p>Acceptance is a journey, not a destination. In the landscape of personal growth, we often struggle against our inner experiences, believing that fighting will bring peace. But what if true strength lies in embracing our thoughts and feelings, not battling them?</p>
-<p>Acceptance and Commitment Therapy (ACT) offers a unique approach to mental wellness. It teaches us that pain is an inevitable part of human experience. Our suffering increases when we resist what cannot be changed. Instead, ACT guides us to accept our emotions, thoughts, and circumstances while committing to actions aligned with our core values.</p>
-<p>Imagine your mind as a vast ocean. Thoughts are waves that come and go. Traditional therapy might teach you to calm the waves. ACT teaches you to become a skilled navigator, riding those waves with purpose and resilience.</p>
-<p>The core of ACT revolves around six key processes: psychological flexibility, cognitive defusion, acceptance, contact with the present moment, values, and committed action. These aren't just theoretical concepts but practical skills that transform how we engage with life's challenges.</p>
-<p>Cognitive defusion helps us see thoughts as mental events, not absolute truths. Acceptance allows us to experience emotions without being consumed by them. Connecting with the present moment grounds us in reality, not hypothetical fears or regrets.</p>
-<p>Values become our compass. They are the deeply held principles that give meaning to our actions. When we align our behaviors with these values, we create a life of purpose and authenticity.</p>
-<p>Committed action is where theory meets practice. It's about taking meaningful steps towards our goals, even when discomfort or fear tries to hold us back. Small, consistent actions build resilience and create lasting change.</p>
-<p>Personal growth isn't about eliminating negative experiences. It's about developing the capacity to move forward despite them. ACT empowers individuals to live fully, embracing both joy and challenge with equal courage.</p>
-<p>Remember, healing is not linear. Some days will feel easier than others. The practice of acceptance is itself a form of strength. By learning to be with our experiences rather than fighting them, we open the door to genuine transformation.</p>`
-            );
-            setFormData({
-              hero: {},
-              article: {
-                content: defaultArticleHtml,
-                tags: [],
-                authorName: 'Sarah Thompson',
-                authorAvatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=128&h=128&fit=crop',
-                publishDate: '15 Mar 2024',
-                readTime: '5 min read'
-              }
-            });
-          } else {
-            setFormData({});
-          }
+          setFormData({});
         }
       }
     } catch (error) {
@@ -166,7 +543,7 @@ export default function ContentManagement() {
   };
 
   const handleSectionChange = (sectionId: string, fieldName: string, value: any) => {
-    setFormData((prev: any) => ({
+    setFormData(prev => ({
       ...prev,
       [sectionId]: {
         ...prev[sectionId],
@@ -176,7 +553,7 @@ export default function ContentManagement() {
   };
 
   const toggleEditSection = (sectionId: string) => {
-    setEditingSections((prev: Set<string>) => {
+    setEditingSections(prev => {
       const newSet = new Set(prev);
       if (newSet.has(sectionId)) {
         newSet.delete(sectionId);
@@ -192,7 +569,7 @@ export default function ContentManagement() {
     if (pageContent && pageContent.content) {
       try {
         const originalData = JSON.parse(pageContent.content);
-        setFormData((prev: any) => ({
+        setFormData(prev => ({
           ...prev,
           [sectionId]: originalData[sectionId] || {}
         }));
@@ -239,13 +616,13 @@ export default function ContentManagement() {
       if (response.ok) {
         const savedContent = await response.json();
         setPageContent(savedContent);
-        toast.success('Content updated successfully');
+        alert('Content saved successfully!');
       } else {
         throw new Error('Failed to save content');
       }
     } catch (error) {
       console.error('Error saving content:', error);
-      toast.error('Error saving content. Please try again.');
+      alert('Error saving content. Please try again.');
     } finally {
       setSaving(false);
     }
@@ -268,7 +645,6 @@ export default function ContentManagement() {
 
       if (response.ok) {
         setPageContent(prev => prev ? { ...prev, is_published: !prev.is_published } : null);
-        toast.success(`Page ${pageContent?.is_published ? 'unpublished' : 'published'}`);
       }
     } catch (error) {
       console.error('Error toggling publish status:', error);
@@ -295,9 +671,9 @@ export default function ContentManagement() {
       case 'rich_text':
         return (
           <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <pre className={`whitespace-pre-wrap font-sans ${value ? 'text-gray-900 dark:text-gray-100' : isPlaceholder ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 italic'}`}>
+            <p className={`whitespace-pre-wrap ${value ? 'text-gray-900 dark:text-gray-100' : isPlaceholder ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 italic'}`}>
               {isPlaceholder ? displayValue : (value || <span className="text-gray-400 italic">No content</span>)}
-            </pre>
+            </p>
           </div>
         );
 
@@ -414,12 +790,36 @@ export default function ContentManagement() {
         );
 
       case 'stats_builder':
-        const statFields = [
-          {key: 'livesChanged', label: 'Lives Changed', suffix: '+'},
-          {key: 'certifiedCoaches', label: 'Certified Coaches', suffix: '+'},
-          {key: 'satisfaction', label: 'Satisfaction Rate', suffix: '%'},
-          {key: 'countries', label: 'Countries', suffix: ''}
-        ];
+        let statFields = [];
+        if (selectedPage === 'pricing') {
+          statFields = [
+            {key: 'clientsServed', label: 'Clients Served', suffix: '+'},
+            {key: 'successRate', label: 'Success Rate', suffix: '%'},
+            {key: 'avgImprovement', label: 'Average Improvement', suffix: '%'},
+            {key: 'satisfaction', label: 'Satisfaction Rate', suffix: '%'}
+          ];
+        } else if (selectedPage === 'group-coaching') {
+          statFields = [
+            {key: 'groupsCompleted', label: 'Groups Completed', suffix: '+'},
+            {key: 'participants', label: 'Participants', suffix: '+'},
+            {key: 'completionRate', label: 'Completion Rate', suffix: '%'},
+            {key: 'averageRating', label: 'Average Rating', suffix: '/5'}
+          ];
+        } else if (selectedPage === 'corporate-coaching') {
+          statFields = [
+            {key: 'companiesServed', label: 'Companies Served', suffix: '+'},
+            {key: 'employeesImpacted', label: 'Employees Impacted', suffix: '+'},
+            {key: 'satisfactionRate', label: 'Satisfaction Rate', suffix: '%'},
+            {key: 'reducedTurnover', label: 'Reduced Turnover', suffix: '%'}
+          ];
+        } else {
+          statFields = [
+            {key: 'livesChanged', label: 'Lives Changed', suffix: '+'},
+            {key: 'certifiedCoaches', label: 'Certified Coaches', suffix: '+'},
+            {key: 'satisfaction', label: 'Satisfaction Rate', suffix: '%'},
+            {key: 'countries', label: 'Countries', suffix: ''}
+          ];
+        }
 
         return (
           <StatisticsBuilder
@@ -506,7 +906,6 @@ export default function ContentManagement() {
             onChange={(e) => handleSectionChange(sectionId, field.name, e.target.value)}
             placeholder={field.placeholder}
             rows={3}
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white"
           />
         );
@@ -518,7 +917,6 @@ export default function ContentManagement() {
             onChange={(e) => handleSectionChange(sectionId, field.name, e.target.value)}
             placeholder={field.placeholder || 'Enter rich text content (HTML supported)'}
             rows={6}
-            style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
             className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 dark:bg-gray-700 dark:text-white font-mono text-sm"
           />
         );
@@ -556,7 +954,6 @@ export default function ContentManagement() {
   };
 
   const currentTemplate = PAGE_TEMPLATES[selectedPage];
-  const templateEntries = Object.entries(PAGE_TEMPLATES) as [PageKey, (typeof PAGE_TEMPLATES)[PageKey]][];
 
   return (
     <div className="w-full">
@@ -591,7 +988,7 @@ export default function ContentManagement() {
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Select Page to Edit</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-5 gap-4 mb-4">
-          {templateEntries.map(([key, template]) => {
+          {Object.entries(PAGE_TEMPLATES).map(([key, template]) => {
             const IconComponent = template.icon;
             return (
               <button
@@ -624,7 +1021,7 @@ export default function ContentManagement() {
         </div>
       ) : (
         <div className="space-y-6 mb-6">
-          {(currentTemplate.sections as unknown as PageSection[]).map((section: PageSection) => {
+          {currentTemplate.sections.map((section) => {
             const isEditing = editingSections.has(section.id);
 
             return (
@@ -682,7 +1079,7 @@ export default function ContentManagement() {
 
                   {isEditing ? (
                     <div className="space-y-6">
-                      {section.fields.map((field: any) => (
+                      {section.fields.map((field) => (
                         <div key={field.name} className="pb-2">
                           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 mt-1">
                             {field.label}
@@ -705,7 +1102,7 @@ export default function ContentManagement() {
                         </div>
                       )}
                       <div className="space-y-6">
-                        {section.fields.map((field: any) => (
+                        {section.fields.map((field) => (
                           <div key={field.name} className="pb-2">
                             <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1 mt-1">
                               {field.label}

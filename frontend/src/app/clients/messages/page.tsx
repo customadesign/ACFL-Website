@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import ProtectedRoute from '@/components/ProtectedRoute'
 import MessagesSkeleton from '@/components/MessagesSkeleton'
 import { getApiUrl } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -35,8 +34,6 @@ type Message = {
 	deleted_for_everyone?: boolean
 	deleted_at?: string | null
 	hidden_for_users?: string[]
-	sender_role?: 'client' | 'coach' | 'admin'
-	recipient_role?: 'client' | 'coach' | 'admin'
 }
 
 // Helper functions for avatar display
@@ -49,7 +46,7 @@ const getAvatarColor = (index: number) => {
 	return colors[index % colors.length]
 }
 
-function ClientMessagesContent() {
+function CoachMessagesContent() {
 	const API_URL = getApiUrl()
 	const { user, logout } = useAuth()
 	const searchParams = useSearchParams()
@@ -75,7 +72,7 @@ function ClientMessagesContent() {
 
 	const loadConversations = async (preserveManualConversations = false) => {
 		try {
-			const res = await fetch(`${API_URL}/api/client/conversations`, {
+			const res = await fetch(`${API_URL}/api/coach/conversations`, {
 				headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
 			})
 			const data = await res.json()
@@ -105,26 +102,25 @@ function ClientMessagesContent() {
 	const loadMessages = async (partnerId: string) => {
 		try {
 			const params = new URLSearchParams({ conversation_with: partnerId })
-			const res = await fetch(`${API_URL}/api/client/messages?${params.toString()}`, {
+			const res = await fetch(`${API_URL}/api/coach/messages?${params.toString()}`, {
 				headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
 			})
 			const data = await res.json()
 			if (data.success) {
-				// Filter out messages that are hidden for this client user
-				const clientId = user?.id
+				// Filter out messages that are hidden for this coach user
+				const coachId = user?.id
 				const filteredMessages = (data.data as Message[]).filter(m => {
-					// Show message if it's not hidden for this client
-					return !clientId || !m.hidden_for_users || !m.hidden_for_users.includes(clientId)
+					// Show message if it's not hidden for this coach
+					return !coachId || !m.hidden_for_users || !m.hidden_for_users.includes(coachId)
 				})
 
 				setMessages(filteredMessages)
-				console.log('Loaded messages:', filteredMessages.length, 'Total from backend:', data.data.length)
 
 				// Mark any unread incoming messages as read
-				const unread = filteredMessages.filter(m => m.recipient_id === clientId && !m.read_at)
+				const unread = filteredMessages.filter(m => m.recipient_id === coachId && !m.read_at)
 				if (unread.length > 0) {
 					await Promise.all(
-						unread.map(m => fetch(`${API_URL}/api/client/messages/${m.id}/read`, {
+						unread.map(m => fetch(`${API_URL}/api/coach/messages/${m.id}/read`, {
 							method: 'PUT',
 							headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
 						}))
@@ -138,15 +134,12 @@ function ClientMessagesContent() {
 		}
 	}
 
-	// Function to initiate conversation with a specific user
+	// Function to initiate conversation with a specific client
 	const initiateConversationWith = async (userId: string, userName?: string) => {
 		try {
-			console.log('Initiating conversation with:', { userId, userName })
-
 			// First, check if conversation already exists in current state
 			const existingConversation = conversations.find(c => c.partnerId === userId)
 			if (existingConversation) {
-				console.log('Conversation already exists in state, activating it')
 				setActivePartnerId(userId)
 				setShowMobileChat(true) // Show the chat on mobile
 				return
@@ -160,8 +153,7 @@ function ClientMessagesContent() {
 			// Check backend first to see if conversation already exists
 			if (userName) {
 				try {
-					console.log('Checking if conversation exists in backend...')
-					const response = await fetch(`${API_URL}/api/client/conversations`, {
+					const response = await fetch(`${API_URL}/api/coach/conversations`, {
 						method: 'POST',
 						headers: {
 							'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -178,27 +170,21 @@ function ClientMessagesContent() {
 					}
 
 					const result = await response.json()
-					console.log('Backend conversation result:', result)
 
 					if (result.success) {
 						// If conversation exists in backend, reload conversations to get it
 						if (result.conversationExists) {
-							console.log('Conversation exists in backend, reloading conversations...')
 							await loadConversations(true) // Preserve manual conversations
-							// After reloading, the conversation should be in the list
-							console.log('Conversation exists in backend, should be loaded now')
 							setActivePartnerId(userId)
 							setShowMobileChat(true)
 						} else {
 							// Conversation doesn't exist, create it in state
-							console.log('Conversation does not exist in backend, creating in state')
 							createConversationInState(userId, userName)
 						}
 					}
 				} catch (error) {
 					console.error('Error checking conversation in backend:', error)
 					// If backend check fails, create conversation in state anyway
-					console.log('Backend check failed, creating conversation in state')
 					createConversationInState(userId, userName)
 				}
 			}
@@ -220,21 +206,17 @@ function ClientMessagesContent() {
 			totalMessages: 0
 		}
 
-		console.log('Adding new conversation to state:', newConversation)
-
 		// Add to conversations list immediately and persistently
 		setConversations(prev => {
 			const exists = prev.find(c => c.partnerId === userId)
 			if (!exists) {
-				console.log('Adding conversation to list')
 				return [newConversation, ...prev]
 			}
-			console.log('Conversation already exists in state')
 			return prev
 		})
 	}
 
-	// Filter conversations based on search and filters
+	// Filter conversations based on search
 	useEffect(() => {
 		let filtered = conversations
 
@@ -264,7 +246,6 @@ function ClientMessagesContent() {
 
 			if (conversationWith && partnerName) {
 				// If we have URL parameters, create the conversation first
-				console.log('Creating conversation from URL params:', { conversationWith, partnerName })
 				await initiateConversationWith(
 					conversationWith,
 					decodeURIComponent(partnerName)
@@ -275,7 +256,6 @@ function ClientMessagesContent() {
 				// Activate the conversation and show mobile chat
 				setActivePartnerId(conversationWith)
 				setShowMobileChat(true)
-				console.log('Activated conversation for:', conversationWith)
 			} else {
 				// Normal load without URL parameters
 				await loadConversations()
@@ -417,7 +397,7 @@ function ClientMessagesContent() {
 		const formData = new FormData()
 		formData.append('attachment', file)
 
-		const response = await fetch(`${API_URL}/api/client/upload-attachment`, {
+		const response = await fetch(`${API_URL}/api/coach/upload-attachment`, {
 			method: 'POST',
 			headers: {
 				'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -439,7 +419,7 @@ function ClientMessagesContent() {
 		}
 
 		try {
-			const response = await fetch(`${API_URL}/api/client/conversations/${partnerId}`, {
+			const response = await fetch(`${API_URL}/api/coach/conversations/${partnerId}`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -469,7 +449,7 @@ function ClientMessagesContent() {
 		}
 
 		try {
-			const response = await fetch(`${API_URL}/api/client/messages/${messageId}/everyone`, {
+			const response = await fetch(`${API_URL}/api/coach/messages/${messageId}/everyone`, {
 				method: 'DELETE',
 				headers: {
 					'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -488,17 +468,13 @@ function ClientMessagesContent() {
 
 	const hideMessageForMe = async (messageId: string) => {
 		try {
-			console.log('Hiding message:', messageId)
-
-			const response = await fetch(`${API_URL}/api/client/messages/${messageId}/hide`, {
+			const response = await fetch(`${API_URL}/api/coach/messages/${messageId}/hide`, {
 				method: 'PUT',
 				headers: {
 					'Authorization': `Bearer ${localStorage.getItem('token')}`,
 					'Content-Type': 'application/json'
 				}
 			})
-
-			console.log('Hide message response status:', response.status)
 
 			if (!response.ok) {
 				const errorText = await response.text()
@@ -508,19 +484,13 @@ function ClientMessagesContent() {
 			}
 
 			const result = await response.json()
-			console.log('Hide message result:', result)
 
 			if (result.success) {
 				// Remove message from local state immediately
-				setMessages(prev => {
-					const filtered = prev.filter(m => m.id !== messageId)
-					console.log('Messages after hiding:', filtered.length)
-					return filtered
-				})
+				setMessages(prev => prev.filter(m => m.id !== messageId))
 				// Also refresh conversations to update last message if needed
 				loadConversations(true)
 			} else {
-				console.error('Hide message failed:', result)
 				alert(result.error || result.message || 'Failed to hide message')
 			}
 		} catch (error) {
@@ -572,13 +542,18 @@ function ClientMessagesContent() {
 	}
 
 	return (
-		<div className="flex flex-col h-full max-h-screen bg-gray-50 dark:bg-gray-900">
-			{initialLoad ? (
+		<div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+				{initialLoad ? (
 				<MessagesSkeleton />
-			) : (
-				<div className="flex flex-1 min-h-0 overflow-hidden gap-4">
+				) : (
+					<>
+						{/* Page Title */}
+						<div className="px-4 py-3">
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
+						</div>
+						<div className="flex flex-1 min-h-0 overflow-hidden gap-4">
 					{/* Sidebar */}
-					<div className={`${showMobileChat ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-[600px] sm:h-[650px] md:h-[700px] lg:h-[750px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col rounded-lg`}>
+					<div className={`${showMobileChat ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-full min-h-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col rounded-lg`}>
 						{/* Header */}
 						<div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
 							<h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Chats</h1>
@@ -630,7 +605,7 @@ function ClientMessagesContent() {
 														{initials}
 													</div>
 												)}
-												{/* Online indicator - show for all for now */}
+												{/* Online indicator */}
 												<div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white dark:border-gray-800 rounded-full"></div>
 											</div>
 											<div className="ml-3 flex-1 min-w-0">
@@ -717,8 +692,8 @@ function ClientMessagesContent() {
 								<div className="p-6 text-center text-gray-500 dark:text-gray-400">
 									<MessageCircle className="w-12 h-12 mx-auto mb-3 opacity-50" />
 									<p>No conversations found</p>
-									{(searchTerm || showUnreadOnly) && (
-										<p className="text-sm mt-1">Try adjusting your filters</p>
+									{searchTerm && (
+										<p className="text-sm mt-1">Try adjusting your search</p>
 									)}
 								</div>
 							)}
@@ -726,9 +701,9 @@ function ClientMessagesContent() {
 					</div>
 
 				{/* Chat Area */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} flex-1 bg-white dark:bg-gray-800 flex flex-col min-h-0 sm:h-[650px] md:h-[700px] lg:h-[750px]`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} flex-1 bg-white dark:bg-gray-800 flex flex-col min-h-0 h-full`}>
 					{/* Chat Header */}
-					<div className="bg-white dark:bg-gray-800  p-4 flex items-center justify-between flex-shrink-0 rounded-lg">
+					<div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between flex-shrink-0 rounded-lg">
 						<div className="flex items-center gap-3">
 							{/* Back button for mobile */}
 							<button
@@ -755,6 +730,9 @@ function ClientMessagesContent() {
 									</div>
 									<div>
 										<h2 className="text-lg font-semibold text-gray-900 dark:text-white">{activePartner.partnerName}</h2>
+										<span className="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+											Client
+										</span>
 									</div>
 								</>
 							)}
@@ -859,24 +837,28 @@ function ClientMessagesContent() {
 																</div>
 
 																<div className="py-1">
-																	<button
-																		onClick={(e) => {
-																			e.stopPropagation()
-																			setOpenDropdownId(null)
-																			deleteMessageForEveryone(m.id)
-																		}}
-																		className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
-																	>
-																		<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
-																			<Trash2 size={14} />
-																		</div>
-																		<div className="flex-1 min-w-0">
-																			<div className="font-medium">Delete for everyone</div>
-																			<div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Removes message permanently</div>
-																		</div>
-																	</button>
+																	{isMine && (
+																		<>
+																			<button
+																				onClick={(e) => {
+																					e.stopPropagation()
+																					setOpenDropdownId(null)
+																					deleteMessageForEveryone(m.id)
+																				}}
+																				className="w-full text-left px-3 py-2.5 text-sm hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 flex items-center gap-3 transition-all duration-150"
+																			>
+																				<div className="p-1.5 rounded-lg bg-red-100 dark:bg-red-900/30 flex-shrink-0">
+																					<Trash2 size={14} />
+																				</div>
+																				<div className="flex-1 min-w-0">
+																					<div className="font-medium">Delete for everyone</div>
+																					<div className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Removes message permanently</div>
+																				</div>
+																			</button>
 
-																	<div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-3"></div>
+																			<div className="h-px bg-gray-100 dark:bg-gray-700 my-1 mx-3"></div>
+																		</>
+																	)}
 
 																	<button
 																		onClick={(e) => {
@@ -912,7 +894,7 @@ function ClientMessagesContent() {
 						})}
 					</div>
 					{/* Input Area */}
-					<div className="bg-white dark:bg-gray-800 p-4 flex-shrink-0 rounded-lg">
+					<div className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 flex-shrink-0 rounded-lg">
 						{selectedFile && (
 							<div className="mb-2 p-2 bg-gray-100 dark:bg-gray-700 rounded flex items-center justify-between">
 								<div className="flex items-center gap-2">
@@ -982,15 +964,12 @@ function ClientMessagesContent() {
 					</div>
 				</div>
 				</div>
+				</>
 			)}
 		</div>
 	)
 }
 
-export default function ClientMessagesPage() {
-	return (
-		<ProtectedRoute allowedRoles={['client']}>
-			<ClientMessagesContent />
-		</ProtectedRoute>
-	)
+export default function CoachMessagesPage() {
+	return <CoachMessagesContent />
 }

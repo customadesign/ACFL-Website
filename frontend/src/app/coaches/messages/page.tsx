@@ -542,13 +542,18 @@ function CoachMessagesContent() {
 	}
 
 	return (
-		<div className="flex flex-col h-full max-h-screen bg-gray-50 dark:bg-gray-900">
-			{initialLoad ? (
+		<div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+				{initialLoad ? (
 				<MessagesSkeleton />
-			) : (
-				<div className="flex flex-1 min-h-0 overflow-hidden gap-4">
+				) : (
+					<>
+						{/* Page Title */}
+						<div className="px-4 py-3">
+							<h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Messages</h1>
+						</div>
+						<div className="flex flex-1 min-h-0 overflow-hidden gap-4">
 					{/* Sidebar */}
-					<div className={`${showMobileChat ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-[600px] sm:h-[650px] md:h-[700px] lg:h-[750px] bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col rounded-lg`}>
+					<div className={`${showMobileChat ? 'hidden sm:flex' : 'flex'} w-full sm:w-80 h-full min-h-0 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex-col rounded-lg`}>
 						{/* Header */}
 						<div className="p-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
 							<h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Chats</h1>
@@ -696,7 +701,7 @@ function CoachMessagesContent() {
 					</div>
 
 				{/* Chat Area */}
-				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} flex-1 bg-white dark:bg-gray-800 flex flex-col min-h-0 sm:h-[650px] md:h-[700px] lg:h-[750px]`}>
+				<div className={`${showMobileChat ? 'fixed inset-0 z-50 sm:relative sm:inset-auto' : 'hidden sm:flex'} flex-1 bg-white dark:bg-gray-800 flex flex-col min-h-0 h-full`}>
 					{/* Chat Header */}
 					<div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between flex-shrink-0 rounded-lg">
 						<div className="flex items-center gap-3">
@@ -959,6 +964,7 @@ function CoachMessagesContent() {
 					</div>
 				</div>
 				</div>
+				</>
 			)}
 		</div>
 	)

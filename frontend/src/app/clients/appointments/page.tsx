@@ -416,7 +416,7 @@ function AppointmentsContent() {
       <div className="mb-8">
         <div className="flex justify-between items-start">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">My Appointments</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">Calendar & Appointments</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage your coaching sessions and appointments</p>
           </div>
         </div>
